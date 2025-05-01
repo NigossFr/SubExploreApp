@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!--  Palette océanique principale  -->
+    <Color x:Key="Primary">#006994</Color>
+    <!--  Bleu océan profond  -->
+    <Color x:Key="PrimaryDark">#004F6F</Color>
+    <!--  Bleu océan profond - plus foncé  -->
+    <Color x:Key="Secondary">#00B4D8</Color>
+    <!--  Bleu lagon  -->
+    <Color x:Key="Accent">#48CAE4</Color>
+    <!--  Bleu clair  -->
+    <Color x:Key="Warning">#FF9F1C</Color>
+    <!--  Orange corail  -->
+    <Color x:Key="Success">#2EC4B6</Color>
+    <!--  Turquoise  -->
+    <Color x:Key="Error">#E63946</Color>
+    <!--  Rouge corail  -->
+    <Color x:Key="Background">#F8FDFF</Color>
+    <!--  Blanc azuré  -->
+    <Color x:Key="Surface">#FFFFFF</Color>
+    <!--  Blanc pur  -->
+
+    <!--  Textes  -->
+    <Color x:Key="TextPrimary">#333333</Color>
+    <!--  Texte principal  -->
+    <Color x:Key="TextSecondary">#666666</Color>
+    <!--  Texte secondaire  -->
+    <Color x:Key="PrimaryDarkText">#FFFFFF</Color>
+    <!--  Texte sur fond foncé  -->
+    <Color x:Key="SecondaryDarkText">#EEEEEE</Color>
+    <!--  Texte secondaire sur fond foncé  -->
+
+    <!--  Couleurs supplémentaires  -->
+    <Color x:Key="MidnightBlue">#003366</Color>
+    <!--  Bleu profond de nuit  -->
+    <Color x:Key="DeepBlue">#001F54</Color>
+    <!--  Bleu des profondeurs  -->
+    <Color x:Key="CoralRed">#FF4D6D</Color>
+    <!--  Rouge corail vif  -->
+    <Color x:Key="SeafoamGreen">#7AE582</Color>
+    <!--  Vert écume de mer  -->
+    <Color x:Key="SandyBeige">#F9DCC4</Color>
+    <!--  Beige sable  -->
+    <Color x:Key="Magenta">#E91E63</Color>
+    <!--  Accent pour tests/debug  -->
+
+    <!--  Tons de gris  -->
+    <Color x:Key="White">White</Color>
+    <Color x:Key="Black">Black</Color>
+    <Color x:Key="OffBlack">#121212</Color>
+    <!--  Presque noir (pour mode sombre)  -->
+    <Color x:Key="Gray100">#E1E1E1</Color>
+    <Color x:Key="Gray200">#C8C8C8</Color>
+    <Color x:Key="Gray300">#ACACAC</Color>
+    <Color x:Key="Gray400">#919191</Color>
+    <Color x:Key="Gray500">#6E6E6E</Color>
+    <Color x:Key="Gray600">#404040</Color>
+    <Color x:Key="Gray900">#212121</Color>
+    <Color x:Key="Gray950">#141414</Color>
+
+    <!--  Brosses solides standard  -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
+    <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDark}" />
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource Accent}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource Warning}" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Success}" />
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource Error}" />
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource Background}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource Surface}" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimary}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondary}" />
+
+    <!--  Brosses solides additionnelles  -->
+    <SolidColorBrush x:Key="MidnightBlueBrush" Color="{StaticResource MidnightBlue}" />
+    <SolidColorBrush x:Key="DeepBlueBrush" Color="{StaticResource DeepBlue}" />
+    <SolidColorBrush x:Key="CoralRedBrush" Color="{StaticResource CoralRed}" />
+    <SolidColorBrush x:Key="SeafoamGreenBrush" Color="{StaticResource SeafoamGreen}" />
+    <SolidColorBrush x:Key="SandyBeigeBrush" Color="{StaticResource SandyBeige}" />
+
+    <!--  Brosses pour les tons de gris  -->
+    <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource White}" />
+    <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource Black}" />
+    <SolidColorBrush x:Key="OffBlackBrush" Color="{StaticResource OffBlack}" />
+    <SolidColorBrush x:Key="Gray100Brush" Color="{StaticResource Gray100}" />
+    <SolidColorBrush x:Key="Gray200Brush" Color="{StaticResource Gray200}" />
+    <SolidColorBrush x:Key="Gray300Brush" Color="{StaticResource Gray300}" />
+    <SolidColorBrush x:Key="Gray400Brush" Color="{StaticResource Gray400}" />
+    <SolidColorBrush x:Key="Gray500Brush" Color="{StaticResource Gray500}" />
+    <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}" />
+    <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}" />
+    <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}" />
+</ResourceDictionary>

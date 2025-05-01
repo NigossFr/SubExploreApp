@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Settings.DatabaseTestPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Settings"
+    Title="{Binding Title}"
+    x:DataType="viewmodels:DatabaseTestViewModel">
+
+    <ContentPage.Resources>
+        <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+    </ContentPage.Resources>
+
+    <Grid
+        Padding="20"
+        RowDefinitions="Auto,*,Auto"
+        RowSpacing="20">
+        <StackLayout Grid.Row="0" Spacing="15">
+            <Label
+                FontAttributes="Bold"
+                FontSize="20"
+                Text="Status de la Base de Données" />
+            <Frame
+                Padding="15"
+                BorderColor="#DDDDDD"
+                CornerRadius="10">
+                <StackLayout Spacing="10">
+                    <Label FontAttributes="Bold" Text="État de la connexion" />
+                    <Label Text="{Binding CanConnect, StringFormat='Connexion: {0}'}" TextColor="Magenta" />
+                    <Button Command="{Binding TestConnectionCommand}" Text="Tester la connexion" />
+                </StackLayout>
+            </Frame>
+            <Frame
+                Padding="15"
+                BorderColor="#DDDDDD"
+                CornerRadius="10">
+                <StackLayout Spacing="10">
+                    <Label FontAttributes="Bold" Text="Structure de la base de données" />
+                    <Label Text="{Binding IsDataSeeded, StringFormat='Données initialisées: {0}'}" TextColor="Magenta" />
+                    <Button Command="{Binding EnsureDatabaseCreatedCommand}" Text="Créer le schéma" />
+                </StackLayout>
+            </Frame>
+            <Frame
+                Padding="15"
+                BorderColor="#DDDDDD"
+                CornerRadius="10">
+                <StackLayout Spacing="10">
+                    <Label FontAttributes="Bold" Text="Données initiales" />
+                    <Label Text="{Binding IsDataSeeded, StringFormat='Données initialisées: {0}'}">
+                        <Label.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsDataSeeded}"
+                                TargetType="Label"
+                                Value="True">
+                                <Setter Property="TextColor" Value="Green" />
+                            </DataTrigger>
+                            <DataTrigger
+                                Binding="{Binding IsDataSeeded}"
+                                TargetType="Label"
+                                Value="False">
+                                <Setter Property="TextColor" Value="Red" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Button Command="{Binding SeedDatabaseCommand}" Text="Initialiser les données" />
+                </StackLayout>
+            </Frame>
+        </StackLayout>
+        <Frame
+            Grid.Row="1"
+            Padding="15"
+            BackgroundColor="#F8F8F8"
+            BorderColor="#DDDDDD"
+            CornerRadius="10">
+            <ScrollView>
+                <Label
+                    FontFamily="Courier New"
+                    FontSize="12"
+                    Text="{Binding LogMessages}" />
+            </ScrollView>
+        </Frame>
+        <ActivityIndicator
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            HorizontalOptions="Center"
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            VerticalOptions="Center" />
+    </Grid>
+</ContentPage>

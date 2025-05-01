@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
+             xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Map"
+             x:Class="SubExplore.Views.Map.MapPage"
+             Title="Carte"
+             BackgroundColor="{StaticResource Background}">
+
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Barre de filtres -->
+        <Frame Grid.Row="0" Margin="10,5" Padding="5" BorderColor="{StaticResource Secondary}" 
+               CornerRadius="25" BackgroundColor="{StaticResource Surface}">
+            <HorizontalStackLayout Spacing="5">
+                <Button Text="Plongée" 
+                        Command="{Binding FilterSpotsCommand}" 
+                        CommandParameter="Diving"
+                        Style="{StaticResource ButtonFilterStyle}"/>
+                <Button Text="Apnée" 
+                        Command="{Binding FilterSpotsCommand}" 
+                        CommandParameter="Freediving"
+                        Style="{StaticResource ButtonFilterStyle}"/>
+                <Button Text="Randonnée" 
+                        Command="{Binding FilterSpotsCommand}" 
+                        CommandParameter="Snorkeling"
+                        Style="{StaticResource ButtonFilterStyle}"/>
+            </HorizontalStackLayout>
+        </Frame>
+
+        <!-- Carte -->
+        <maps:Map Grid.Row="1" 
+                 IsShowingUser="{Binding IsLocationAvailable}"
+                 MapType="Street">
+            <!-- Vous devrez créer une logique personnalisée pour les pins des spots -->
+        </maps:Map>
+
+        <!-- Barre d'actions -->
+        <Frame Grid.Row="2" Margin="10,5" Padding="0" BorderColor="{StaticResource Secondary}" 
+               CornerRadius="25" BackgroundColor="{StaticResource Surface}">
+            <Grid ColumnDefinitions="*,*,*" Padding="5">
+                <Button Grid.Column="0" 
+                        Text="Actualiser"
+                        Command="{Binding LoadSpotsCommand}"
+                        Style="{StaticResource ButtonActionStyle}"/>
+                <Button Grid.Column="1" 
+                        Text="Ma position"
+                        Command="{Binding RefreshLocationCommand}"
+                        Style="{StaticResource ButtonActionStyle}"/>
+                <Button Grid.Column="2"
+                        Text="Nouveau"
+                        Command="{Binding NavigateToAddSpotCommand}"
+                        Style="{StaticResource ButtonPrimaryStyle}"/>
+            </Grid>
+        </Frame>
+
+        <!-- Indicateur de chargement -->
+        <ActivityIndicator Grid.Row="1" 
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           Color="{StaticResource Primary}" />
+    </Grid>
+</ContentPage>
