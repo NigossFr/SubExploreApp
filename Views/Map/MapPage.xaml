@@ -1,65 +1,132 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
-             xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Map"
-             x:Class="SubExplore.Views.Map.MapPage"
-             Title="Carte"
-             BackgroundColor="{StaticResource Background}">
+<ContentPage
+    x:Class="SubExplore.Views.Map.MapPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Map"
+    Title="Carte"
+    BackgroundColor="{StaticResource Background}">
 
+    <ContentPage.Behaviors>
+        <toolkit:EventToCommandBehavior Command="{Binding InitializeCommand}" EventName="Appearing" />
+    </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        <!-- Barre de filtres -->
-        <Frame Grid.Row="0" Margin="10,5" Padding="5" BorderColor="{StaticResource Secondary}" 
-               CornerRadius="25" BackgroundColor="{StaticResource Surface}">
-            <HorizontalStackLayout Spacing="5">
-                <Button Text="Plongée" 
-                        Command="{Binding FilterSpotsCommand}" 
-                        CommandParameter="Diving"
-                        Style="{StaticResource ButtonFilterStyle}"/>
-                <Button Text="Apnée" 
-                        Command="{Binding FilterSpotsCommand}" 
-                        CommandParameter="Freediving"
-                        Style="{StaticResource ButtonFilterStyle}"/>
-                <Button Text="Randonnée" 
-                        Command="{Binding FilterSpotsCommand}" 
-                        CommandParameter="Snorkeling"
-                        Style="{StaticResource ButtonFilterStyle}"/>
-            </HorizontalStackLayout>
-        </Frame>
-
-        <!-- Carte -->
-        <maps:Map Grid.Row="1" 
-                 IsShowingUser="{Binding IsLocationAvailable}"
-                 MapType="Street">
-            <!-- Vous devrez créer une logique personnalisée pour les pins des spots -->
-        </maps:Map>
-
-        <!-- Barre d'actions -->
-        <Frame Grid.Row="2" Margin="10,5" Padding="0" BorderColor="{StaticResource Secondary}" 
-               CornerRadius="25" BackgroundColor="{StaticResource Surface}">
-            <Grid ColumnDefinitions="*,*,*" Padding="5">
-                <Button Grid.Column="0" 
-                        Text="Actualiser"
-                        Command="{Binding LoadSpotsCommand}"
-                        Style="{StaticResource ButtonActionStyle}"/>
-                <Button Grid.Column="1" 
-                        Text="Ma position"
-                        Command="{Binding RefreshLocationCommand}"
-                        Style="{StaticResource ButtonActionStyle}"/>
-                <Button Grid.Column="2"
-                        Text="Nouveau"
-                        Command="{Binding NavigateToAddSpotCommand}"
-                        Style="{StaticResource ButtonPrimaryStyle}"/>
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!--  Barre de recherche  -->
+        <Frame
+            Grid.Row="0"
+            Margin="10,5"
+            Padding="5"
+            BackgroundColor="{StaticResource Surface}"
+            BorderColor="{StaticResource Secondary}"
+            CornerRadius="25">
+            <Grid ColumnDefinitions="*,Auto">
+                <Entry
+                    Grid.Column="0"
+                    Margin="5,0"
+                    ClearButtonVisibility="WhileEditing"
+                    Placeholder="Rechercher un spot..."
+                    ReturnCommand="{Binding SearchSpotsCommand}"
+                    ReturnType="Search"
+                    Text="{Binding SearchText}" />
+                <Button
+                    Grid.Column="1"
+                    Command="{Binding SearchSpotsCommand}"
+                    Style="{StaticResource ButtonActionStyle}"
+                    Text="🔍" />
             </Grid>
         </Frame>
 
-        <!-- Indicateur de chargement -->
-        <ActivityIndicator Grid.Row="1" 
-                           IsRunning="{Binding IsLoading}"
-                           IsVisible="{Binding IsLoading}"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center"
-                           Color="{StaticResource Primary}" />
+        <!--  Barre de filtres  -->
+        <Frame
+            Grid.Row="1"
+            Margin="10,0,10,5"
+            Padding="5"
+            BackgroundColor="{StaticResource Surface}"
+            BorderColor="{StaticResource Secondary}"
+            CornerRadius="25">
+            <ScrollView HorizontalScrollBarVisibility="Never" Orientation="Horizontal">
+                <HorizontalStackLayout Spacing="5">
+                    <Button
+                        BackgroundColor="{StaticResource Primary}"
+                        Command="{Binding ClearFiltersCommand}"
+                        Style="{StaticResource ButtonFilterStyle}"
+                        Text="Tous"
+                        TextColor="White" />
+
+                    <CollectionView
+                        HeightRequest="40"
+                        ItemsSource="{Binding SpotTypes}"
+                        SelectedItem="{Binding SelectedSpotType}"
+                        SelectionChangedCommand="{Binding FilterSpotsByTypeCommand}"
+                        SelectionChangedCommandParameter="{Binding SelectedSpotType}"
+                        SelectionMode="Single">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout ItemSpacing="5" Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Button
+                                    BackgroundColor="{Binding ColorCode}"
+                                    Style="{StaticResource ButtonFilterStyle}"
+                                    Text="{Binding Name}"
+                                    TextColor="White" />
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </HorizontalStackLayout>
+            </ScrollView>
+        </Frame>
+
+        <!--  Carte  -->
+        <maps:Map
+            Grid.Row="2"
+            IsShowingUser="{Binding IsLocationAvailable}"
+            ItemsSource="{Binding Pins}"
+            MapClicked="OnMapClicked"
+            MapType="Street">
+            <maps:Map.MapElements>
+                <!--  Vous pouvez ajouter des éléments de carte personnalisés ici  -->
+            </maps:Map.MapElements>
+        </maps:Map>
+
+        <!--  Barre d'actions  -->
+        <Frame
+            Grid.Row="3"
+            Margin="10,5"
+            Padding="0"
+            BackgroundColor="{StaticResource Surface}"
+            BorderColor="{StaticResource Secondary}"
+            CornerRadius="25">
+            <Grid Padding="5" ColumnDefinitions="*,*,*">
+                <Button
+                    Grid.Column="0"
+                    Command="{Binding LoadSpotsCommand}"
+                    Style="{StaticResource ButtonActionStyle}"
+                    Text="Actualiser" />
+                <Button
+                    Grid.Column="1"
+                    Command="{Binding RefreshLocationCommand}"
+                    Style="{StaticResource ButtonActionStyle}"
+                    Text="Ma position" />
+                <Button
+                    Grid.Column="2"
+                    Command="{Binding NavigateToAddSpotCommand}"
+                    Style="{StaticResource ButtonPrimaryStyle}"
+                    Text="Nouveau" />
+            </Grid>
+        </Frame>
+
+        <!--  Indicateur de chargement  -->
+        <ActivityIndicator
+            Grid.Row="0"
+            Grid.RowSpan="4"
+            HorizontalOptions="Center"
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            VerticalOptions="Center"
+            Color="{StaticResource Primary}" />
     </Grid>
 </ContentPage>

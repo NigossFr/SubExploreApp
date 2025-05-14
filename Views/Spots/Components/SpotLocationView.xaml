@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="SubExplore.Views.Spot.Components.SpotLocationView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps">
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+            <Label Style="{StaticResource Headline}" Text="Localisation du spot" />
+
+            <!--  Carte  -->
+            <Frame
+                Padding="0"
+                BorderColor="{StaticResource Secondary}"
+                HeightRequest="250"
+                IsClippedToBounds="True">
+                <Grid>
+                    <maps:Map IsShowingUser="{Binding HasUserLocation}" MapType="Street">
+                        <maps:Map.Pins>
+                            <maps:Pin
+                                Label="Spot"
+                                Location="{Binding ., Converter={StaticResource CoordinatesToPositionConverter}}"
+                                Type="Generic" />
+                        </maps:Map.Pins>
+                    </maps:Map>
+
+                    <!--  Centre de la carte (marqueur de position)  -->
+                    <Image
+                        HeightRequest="40"
+                        HorizontalOptions="Center"
+                        Source="marker_spot.png"
+                        VerticalOptions="Center"
+                        WidthRequest="40" />
+                </Grid>
+            </Frame>
+
+            <!--  Coordonnées  -->
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Text="Latitude" />
+                <Entry
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Margin="0,0,5,0"
+                    Keyboard="Numeric"
+                    Text="{Binding Latitude}" />
+
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Text="Longitude" />
+                <Entry
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="5,0,0,0"
+                    Keyboard="Numeric"
+                    Text="{Binding Longitude}" />
+            </Grid>
+
+            <!--  Bouton pour obtenir la position actuelle  -->
+            <Button
+                Command="{Binding GetCurrentLocationCommand}"
+                Style="{StaticResource ButtonSecondaryStyle}"
+                Text="Utiliser ma position actuelle" />
+
+            <!--  Description de l'accès  -->
+            <Label Margin="0,10,0,0" Text="Description de l'accès *" />
+            <Frame Padding="10" BorderColor="{StaticResource Secondary}">
+                <Editor
+                    AutoSize="TextChanges"
+                    HeightRequest="150"
+                    Placeholder="Décrivez comment accéder au spot (parking, sentier, etc.)"
+                    Text="{Binding AccessDescription}" />
+            </Frame>
+
+            <!--  Avertissement  -->
+            <Frame
+                Padding="15"
+                BackgroundColor="#FFF3E0"
+                BorderColor="{StaticResource Warning}">
+                <StackLayout Orientation="Horizontal">
+                    <Label
+                        FontSize="20"
+                        Text="⚠️"
+                        VerticalOptions="Center" />
+                    <Label
+                        Margin="10,0,0,0"
+                        FontSize="14"
+                        Text="Vérifiez que l'accès est autorisé et sécurisé. Les spots sur propriété privée ou dans des zones protégées ne seront pas validés."
+                        TextColor="#E65100" />
+                </StackLayout>
+            </Frame>
+        </StackLayout>
+    </ScrollView>
+</ContentView>

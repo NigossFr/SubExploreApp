@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SubExplore.Views.Spot.Components.SpotPhotosView">
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+            <Label Text="Photos du spot" Style="{StaticResource Headline}" />
+
+            <!-- Instructions -->
+            <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                <StackLayout Spacing="5">
+                    <Label Text="Ajoutez jusqu'à 3 photos de qualité" FontAttributes="Bold" />
+                    <Label Text="Format JPG/PNG - Max 5MB par photo" FontSize="12" TextColor="{StaticResource TextSecondary}" />
+                </StackLayout>
+            </Frame>
+
+            <!-- Photo principale -->
+            <Label Text="Photo principale *" Margin="0,10,0,0" />
+            <Frame Padding="0" HeightRequest="200" CornerRadius="10" IsClippedToBounds="True" BorderColor="{StaticResource Secondary}">
+                <Grid>
+                    <!-- Photo si disponible, sinon placeholder -->
+                    <Image Source="{Binding PrimaryPhotoPath}" 
+                           Aspect="AspectFill"
+                           IsVisible="{Binding PrimaryPhotoPath, Converter={StaticResource StringNotEmptyConverter}}" />
+
+                    <!-- Placeholder si pas de photo -->
+                    <StackLayout VerticalOptions="Center" 
+                                HorizontalOptions="Center"
+                                IsVisible="{Binding PrimaryPhotoPath, Converter={StaticResource StringEmptyConverter}}">
+                        <Frame HeightRequest="50" 
+                               WidthRequest="50" 
+                               CornerRadius="25" 
+                               BackgroundColor="{StaticResource Secondary}"
+                               HorizontalOptions="Center">
+                            <Label Text="📷" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center"
+                                   FontSize="24" />
+                        </Frame>
+                        <Label Text="Vue générale du site conseillée" 
+                               Margin="0,10,0,0"
+                               TextColor="{StaticResource TextSecondary}"
+                               HorizontalOptions="Center" />
+                    </StackLayout>
+                </Grid>
+            </Frame>
+
+            <!-- Boutons d'ajout de photos -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0" 
+                        Text="Prendre une photo" 
+                        Command="{Binding TakePhotoCommand}"
+                        Style="{StaticResource ButtonSecondaryStyle}" />
+                <Button Grid.Column="1" 
+                        Text="Choisir une photo" 
+                        Command="{Binding PickPhotoCommand}"
+                        Style="{StaticResource ButtonOutlinedStyle}" />
+            </Grid>
+
+            <!-- Photos additionnelles -->
+            <Label Text="Photos additionnelles" Margin="0,15,0,0" />
+            <CollectionView ItemsSource="{Binding PhotosPaths}" 
+                           SelectionMode="None"
+                           EmptyView="Aucune photo ajoutée"
+                           HeightRequest="{Binding PhotosPaths.Count, Converter={StaticResource CollectionCountToHeightConverter}, FallbackValue=100}">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" 
+                                     Span="2"
+                                     VerticalItemSpacing="10"
+                                     HorizontalItemSpacing="10" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Padding="0" CornerRadius="10" IsClippedToBounds="True"
+                               BorderColor="{Binding ., Converter={StaticResource StringEqualConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.PrimaryPhotoPath}}">
+                            <Grid>
+                                <Image Source="{Binding .}" 
+                                       Aspect="AspectFill"
+                                       HeightRequest="120" />
+
+                                <!-- Overlay avec boutons d'action -->
+                                <Grid BackgroundColor="#80000000" 
+                                      IsVisible="False">
+                                    <Grid.Triggers>
+                                        <DataTrigger TargetType="Grid"
+                                                    Binding="{Binding Source={RelativeSource Self}, Path=Parent, Mode=OneWay}"
+                                                    Value="{x:Null}">
+                                            <Setter Property="IsVisible" Value="True" />
+                                        </DataTrigger>
+                                    </Grid.Triggers>
+
+                                    <HorizontalStackLayout HorizontalOptions="Center" 
+                                                          VerticalOptions="Center"
+                                                          Spacing="10">
+                                        <Button Text="🗑️" 
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.RemovePhotoCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="{StaticResource Error}"
+                                                TextColor="White"
+                                                CornerRadius="20"
+                                                HeightRequest="40"
+                                                WidthRequest="40"
+                                                Padding="0" />
+
+                                        <Button Text="⭐" 
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SetPrimaryPhotoCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="{StaticResource Primary}"
+                                                TextColor="White"
+                                                CornerRadius="20"
+                                                HeightRequest="40"
+                                                WidthRequest="40"
+                                                Padding="0" />
+                                    </HorizontalStackLayout>
+                                </Grid>
+
+                                <!-- Badge "Principale" si c'est la photo principale -->
+                                <Frame BackgroundColor="{StaticResource Primary}"
+                                      Padding="5"
+                                      CornerRadius="10"
+                                      HorizontalOptions="End"
+                                      VerticalOptions="Start"
+                                      Margin="5"
+                                      IsVisible="{Binding ., Converter={StaticResource StringEqualConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.PrimaryPhotoPath}}">
+                                    <Label Text="Principale" 
+                                           TextColor="White"
+                                           FontSize="10" />
+                                </Frame>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Conseils -->
+            <Frame Padding="15" BackgroundColor="#E3F2FD" BorderColor="{StaticResource Secondary}" Margin="0,15,0,0">
+                <StackLayout Spacing="8">
+                    <Label Text="Conseils pour les photos" FontAttributes="Bold" />
+                    <Label Text="• Privilégiez la lumière naturelle" FontSize="12" />
+                    <Label Text="• Montrez les points de repère importants" FontSize="12" />
+                    <Label Text="• Évitez les photos trop sombres ou floues" FontSize="12" />
+                </StackLayout>
+            </Frame>
+
+            <!-- Indicateur de chargement -->
+            <ActivityIndicator IsRunning="{Binding IsUploading}"
+                               IsVisible="{Binding IsUploading}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               Color="{StaticResource Primary}" />
+        </StackLayout>
+    </ScrollView>
+</ContentView>

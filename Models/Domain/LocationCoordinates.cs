@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace SubExplore.Models.Domain
 {
     public class LocationCoordinates

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Spot.SpotDetailsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spot"
+    Title="{Binding Title}"
+    BackgroundColor="{StaticResource Background}">
+
+    <ContentPage.Content>
+        <ScrollView>
+            <VerticalStackLayout Padding="15" Spacing="15">
+
+                <!--  Carousel de photos  -->
+                <Frame
+                    Padding="0"
+                    CornerRadius="10"
+                    HeightRequest="250"
+                    IsClippedToBounds="True">
+                    <CarouselView
+                        HeightRequest="250"
+                        IndicatorView="indicatorView"
+                        ItemsSource="{Binding SpotMedias}">
+                        <CarouselView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Image Aspect="AspectFill" Source="{Binding MediaUrl}" />
+                                </Grid>
+                            </DataTemplate>
+                        </CarouselView.ItemTemplate>
+                    </CarouselView>
+                </Frame>
+
+                <IndicatorView
+                    x:Name="indicatorView"
+                    HorizontalOptions="Center"
+                    IndicatorColor="{StaticResource Gray400}"
+                    SelectedIndicatorColor="{StaticResource Primary}" />
+
+                <!--  En-tête avec infos principales  -->
+                <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label
+                            FontAttributes="Bold"
+                            FontSize="24"
+                            Text="{Binding Spot.Name}"
+                            TextColor="{StaticResource Primary}" />
+
+                        <FlexLayout AlignItems="Center" JustifyContent="SpaceBetween">
+                            <Label
+                                FontAttributes="Bold"
+                                Text="{Binding Spot.Type.Name}"
+                                TextColor="{StaticResource Secondary}" />
+
+                            <Label Text="{Binding Spot.DifficultyLevel, StringFormat='Difficulté: {0}'}" TextColor="{StaticResource TextSecondary}" />
+                        </FlexLayout>
+
+                        <FlexLayout AlignItems="Center" JustifyContent="SpaceBetween">
+                            <Label Text="{Binding Spot.MaxDepth, StringFormat='Profondeur: {0}m'}" />
+
+                            <Label Text="{Binding Spot.CurrentStrength, StringFormat='Courant: {0}'}" />
+                        </FlexLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!--  Carte de localisation  -->
+                <Frame
+                    Padding="0"
+                    CornerRadius="10"
+                    HeightRequest="200"
+                    IsClippedToBounds="True">
+                    <Grid>
+                        <maps:Map
+                            x:Name="spotMap"
+                            IsScrollEnabled="False"
+                            IsShowingUser="True"
+                            MapType="Street" />
+
+                        <Button
+                            Margin="10"
+                            Command="{Binding OpenInExternalMapCommand}"
+                            HorizontalOptions="End"
+                            Opacity="0.8"
+                            Text="Ouvrir dans Maps"
+                            VerticalOptions="End" />
+                    </Grid>
+                </Frame>
+
+                <!--  Description et notes de sécurité  -->
+                <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label
+                            FontAttributes="Bold"
+                            Text="Description"
+                            TextColor="{StaticResource Primary}" />
+
+                        <Label Text="{Binding Spot.Description}" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!--  Notes de sécurité  -->
+                <Frame
+                    Padding="15"
+                    BackgroundColor="#FFF3E0"
+                    BorderColor="{StaticResource Warning}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label
+                            FontAttributes="Bold"
+                            Text="Notes de sécurité"
+                            TextColor="{StaticResource Primary}" />
+
+                        <Label Text="{Binding Spot.SafetyNotes}" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!--  Informations complémentaires  -->
+                <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label
+                            FontAttributes="Bold"
+                            Text="Informations complémentaires"
+                            TextColor="{StaticResource Primary}" />
+
+                        <Grid
+                            ColumnDefinitions="Auto,*"
+                            ColumnSpacing="10"
+                            RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                            RowSpacing="10">
+                            <Label
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                FontAttributes="Bold"
+                                Text="Équipement requis:" />
+                            <Label
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Text="{Binding Spot.RequiredEquipment}" />
+
+                            <Label
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                FontAttributes="Bold"
+                                Text="Meilleures conditions:" />
+                            <Label
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Text="{Binding Spot.BestConditions}" />
+
+                            <Label
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                FontAttributes="Bold"
+                                Text="Créé par:" />
+                            <Label
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Text="{Binding CreatorName}" />
+
+                            <Label
+                                Grid.Row="3"
+                                Grid.Column="0"
+                                FontAttributes="Bold"
+                                Text="Ajouté le:" />
+                            <Label
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                Text="{Binding Spot.CreatedAt, StringFormat='{0:dd/MM/yyyy}'}" />
+
+                            <Label
+                                Grid.Row="4"
+                                Grid.Column="0"
+                                FontAttributes="Bold"
+                                Text="Dernière vérification:" />
+                            <Label
+                                Grid.Row="4"
+                                Grid.Column="1"
+                                Text="{Binding Spot.LastSafetyReview, StringFormat='{0:dd/MM/yyyy}'}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!--  Boutons d'action  -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Button
+                        Grid.Column="0"
+                        Command="{Binding ShareSpotCommand}"
+                        Style="{StaticResource ButtonOutlinedStyle}"
+                        Text="Partager" />
+
+                    <Button
+                        Grid.Column="1"
+                        Command="{Binding ReportSpotCommand}"
+                        Style="{StaticResource ButtonDangerStyle}"
+                        Text="Signaler" />
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+</ContentPage>

@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Spot.AddSpotPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:SubExplore.Views.Spot.Components"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spot"
+    Title="{Binding Title}"
+    BackgroundColor="{StaticResource Background}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!--  Header avec progression  -->
+        <Frame
+            Grid.Row="0"
+            Margin="10,5"
+            Padding="10"
+            BorderColor="{StaticResource Secondary}">
+            <Grid ColumnDefinitions="*,*,*,*">
+                <!--  Étapes  -->
+                <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                    <Frame
+                        BackgroundColor="{Binding CurrentStep, Converter={StaticResource IntEqualConverter}, ConverterParameter=1, FallbackValue={StaticResource Primary}, TargetNullValue={StaticResource Primary}}"
+                        CornerRadius="20"
+                        HeightRequest="40"
+                        WidthRequest="40">
+                        <Label
+                            HorizontalOptions="Center"
+                            Text="1"
+                            TextColor="White"
+                            VerticalOptions="Center" />
+                    </Frame>
+                    <Label
+                        FontSize="12"
+                        HorizontalOptions="Center"
+                        Text="Localisation" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                    <Frame
+                        BackgroundColor="{Binding CurrentStep, Converter={StaticResource IntGreaterThanOrEqualConverter}, ConverterParameter=2, FallbackValue={StaticResource Secondary}, TargetNullValue={StaticResource Secondary}}"
+                        CornerRadius="20"
+                        HeightRequest="40"
+                        WidthRequest="40">
+                        <Label
+                            HorizontalOptions="Center"
+                            Text="2"
+                            TextColor="White"
+                            VerticalOptions="Center" />
+                    </Frame>
+                    <Label
+                        FontSize="12"
+                        HorizontalOptions="Center"
+                        Text="Caractéristiques" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                    <Frame
+                        BackgroundColor="{Binding CurrentStep, Converter={StaticResource IntGreaterThanOrEqualConverter}, ConverterParameter=3, FallbackValue={StaticResource Secondary}, TargetNullValue={StaticResource Secondary}}"
+                        CornerRadius="20"
+                        HeightRequest="40"
+                        WidthRequest="40">
+                        <Label
+                            HorizontalOptions="Center"
+                            Text="3"
+                            TextColor="White"
+                            VerticalOptions="Center" />
+                    </Frame>
+                    <Label
+                        FontSize="12"
+                        HorizontalOptions="Center"
+                        Text="Photos" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="3" HorizontalOptions="Center">
+                    <Frame
+                        BackgroundColor="{Binding CurrentStep, Converter={StaticResource IntGreaterThanOrEqualConverter}, ConverterParameter=4, FallbackValue={StaticResource Secondary}, TargetNullValue={StaticResource Secondary}}"
+                        CornerRadius="20"
+                        HeightRequest="40"
+                        WidthRequest="40">
+                        <Label
+                            HorizontalOptions="Center"
+                            Text="4"
+                            TextColor="White"
+                            VerticalOptions="Center" />
+                    </Frame>
+                    <Label
+                        FontSize="12"
+                        HorizontalOptions="Center"
+                        Text="Validation" />
+                </StackLayout>
+            </Grid>
+        </Frame>
+
+        <!--  Contenu dynamique selon l'étape (Utilisation d'un Grid pour permettre la superposition)  -->
+        <Grid x:Name="StepContent" Grid.Row="1">
+            <!--  Le contenu sera remplacé dynamiquement selon l'étape courante  -->
+
+            <!--  Étape 1: Localisation  -->
+            <components:SpotLocationView IsVisible="{Binding CurrentStep, Converter={StaticResource IntEqualConverter}, ConverterParameter=1}" />
+
+            <!--  Étape 2: Caractéristiques  -->
+            <components:SpotCharacteristicsView IsVisible="{Binding CurrentStep, Converter={StaticResource IntEqualConverter}, ConverterParameter=2}" />
+
+            <!--  Étape 3: Photos  -->
+            <components:SpotPhotosView IsVisible="{Binding CurrentStep, Converter={StaticResource IntEqualConverter}, ConverterParameter=3}" />
+
+            <!--  Étape 4: Récapitulatif  -->
+            <ScrollView IsVisible="{Binding CurrentStep, Converter={StaticResource IntEqualConverter}, ConverterParameter=4}">
+                <StackLayout Padding="20" Spacing="15">
+                    <Label Style="{StaticResource Headline}" Text="Récapitulatif" />
+
+                    <!--  Localisation  -->
+                    <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                        <StackLayout Spacing="10">
+                            <Label FontAttributes="Bold" Text="Localisation" />
+                            <Label Text="{Binding Latitude, StringFormat='Latitude: {0:F6}'}" />
+                            <Label Text="{Binding Longitude, StringFormat='Longitude: {0:F6}'}" />
+                            <Label Text="{Binding AccessDescription, StringFormat='Accès: {0}'}" />
+                        </StackLayout>
+                    </Frame>
+
+                    <!--  Caractéristiques  -->
+                    <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                        <StackLayout Spacing="10">
+                            <Label FontAttributes="Bold" Text="Caractéristiques" />
+                            <Label Text="{Binding SpotName, StringFormat='Nom: {0}'}" />
+                            <Label Text="{Binding SelectedSpotType.Name, StringFormat='Type: {0}'}" />
+                            <Label Text="{Binding SelectedDifficultyLevel, StringFormat='Difficulté: {0}'}" />
+                            <Label Text="{Binding MaxDepth, StringFormat='Profondeur max: {0}m'}" />
+                            <Label Text="{Binding SelectedCurrentStrength, StringFormat='Courant: {0}'}" />
+                        </StackLayout>
+                    </Frame>
+
+                    <!--  Photos  -->
+                    <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                        <StackLayout Spacing="10">
+                            <Label FontAttributes="Bold" Text="Photos" />
+                            <Label Text="{Binding PhotosPaths.Count, StringFormat='{0} photo(s) à télécharger'}" />
+
+                            <CollectionView HeightRequest="150" ItemsSource="{Binding PhotosPaths}">
+                                <CollectionView.ItemsLayout>
+                                    <LinearItemsLayout ItemSpacing="10" Orientation="Horizontal" />
+                                </CollectionView.ItemsLayout>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Frame
+                                            Padding="0"
+                                            BorderColor="{Binding ., Converter={StaticResource StringEqualConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type viewmodels:AddSpotViewModel}}, Path=PrimaryPhotoPath}}"
+                                            CornerRadius="10"
+                                            IsClippedToBounds="True">
+                                            <Image
+                                                Aspect="AspectFill"
+                                                HeightRequest="150"
+                                                Source="{Binding .}"
+                                                WidthRequest="150" />
+                                        </Frame>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </StackLayout>
+                    </Frame>
+
+                    <Label
+                        FontSize="12"
+                        Text="En soumettant ce spot, vous confirmez que les informations sont exactes et que vous disposez des droits sur les photos."
+                        TextColor="{StaticResource TextSecondary}" />
+                </StackLayout>
+            </ScrollView>
+        </Grid>
+
+        <!--  Boutons de navigation  -->
+        <Grid
+            Grid.Row="2"
+            Padding="20,10"
+            ColumnDefinitions="*,*">
+            <Button
+                Grid.Column="0"
+                Margin="0,0,5,0"
+                Command="{Binding CurrentStep, Converter={StaticResource IntEqualConverter}, ConverterParameter=1, FallbackValue={Binding PreviousStepCommand}, TargetNullValue={Binding CancelCommand}}"
+                Style="{StaticResource ButtonOutlinedStyle}"
+                Text="{Binding CurrentStep, Converter={StaticResource IntEqualConverter}, ConverterParameter=1, FallbackValue='Précédent', TargetNullValue='Annuler'}" />
+
+            <Button
+                Grid.Column="1"
+                Margin="5,0,0,0"
+                Command="{Binding NextStepCommand}"
+                IsEnabled="{Binding IsSubmitting, Converter={StaticResource InvertBoolConverter}}"
+                Style="{StaticResource ButtonPrimaryStyle}"
+                Text="{Binding CurrentStep, Converter={StaticResource IntEqualConverter}, ConverterParameter=4, FallbackValue='Suivant', TargetNullValue='Soumettre'}" />
+        </Grid>
+
+        <!--  Indicateur de chargement  -->
+        <ActivityIndicator
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            HorizontalOptions="Center"
+            IsRunning="{Binding IsSubmitting}"
+            IsVisible="{Binding IsSubmitting}"
+            VerticalOptions="Center"
+            Color="{StaticResource Primary}" />
+    </Grid>
+</ContentPage>

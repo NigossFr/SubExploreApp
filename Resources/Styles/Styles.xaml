@@ -424,7 +424,7 @@
 
     <!--  Styles personnalisés pour SubExplore  -->
     <Style x:Key="ButtonFilterStyle" TargetType="Button">
-        <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Surface}}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Surface}}" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}" />
         <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}" />
         <Setter Property="BorderWidth" Value="1" />
@@ -434,18 +434,62 @@
     </Style>
 
     <Style x:Key="ButtonActionStyle" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Padding" Value="10,5" />
     </Style>
 
     <Style x:Key="ButtonPrimaryStyle" TargetType="Button">
-        <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}" />
         <Setter Property="TextColor" Value="White" />
         <Setter Property="CornerRadius" Value="20" />
         <Setter Property="Padding" Value="15,8" />
         <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <Style x:Key="ButtonSecondaryStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="Padding" Value="15,8" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <Style x:Key="ButtonOutlinedStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}" />
+        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="Padding" Value="15,8" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <Style x:Key="ButtonDangerStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Error}, Dark={StaticResource Error}}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="Padding" Value="15,8" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <Style x:Key="ButtonSuccessStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="Padding" Value="15,8" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <Style x:Key="BodyText" TargetType="Label">
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource White}}" />
+        <Setter Property="FontSize" Value="16" />
+    </Style>
+
+    <Style x:Key="Caption" TargetType="Label">
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource Gray200}}" />
+        <Setter Property="FontSize" Value="12" />
     </Style>
 
 </ResourceDictionary>
