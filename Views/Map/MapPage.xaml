@@ -9,6 +9,7 @@
     Title="Carte"
     BackgroundColor="{StaticResource Background}">
 
+
     <ContentPage.Behaviors>
         <toolkit:EventToCommandBehavior Command="{Binding InitializeCommand}" EventName="Appearing" />
     </ContentPage.Behaviors>

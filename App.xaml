@@ -5,27 +5,41 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
     xmlns:local="clr-namespace:SubExplore">
+
     <Application.Resources>
         <ResourceDictionary>
+
+            <!--
+                1. Dictionnaires de ressources fusionnés :
+                - Colors.xaml doit venir en premier pour que les couleurs soient disponibles pour Styles.xaml.
+                - Styles.xaml contient les styles qui peuvent utiliser les couleurs définies dans Colors.xaml.
+            -->
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+
+                <!--  Si vous avez d'autres dictionnaires de ressources (par exemple, pour des polices, des thèmes spécifiques), ajoutez-les ici.  -->
+
             </ResourceDictionary.MergedDictionaries>
 
-            <!--  Convertisseurs  -->
+            <!--
+                2. Convertisseurs et autres ressources globales :
+                - Définissez ici les convertisseurs de valeur, les modèles de données globaux
+                ou toute autre ressource partagée qui n'est ni une couleur ni un style.
+            -->
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <!--  Ajoutez d'autres convertisseurs ou ressources globales ici si nécessaire  -->
 
-            <!--  Couleurs  -->
-            <Color x:Key="Primary">#006994</Color>
-            <Color x:Key="Secondary">#00B4D8</Color>
-            <Color x:Key="Accent">#48CAE4</Color>
-            <Color x:Key="Warning">#FF9F1C</Color>
-            <Color x:Key="Success">#2EC4B6</Color>
-            <Color x:Key="Error">#E63946</Color>
-            <Color x:Key="Background">#F8FDFF</Color>
-            <Color x:Key="Surface">#FFFFFF</Color>
-            <Color x:Key="TextPrimary">#333333</Color>
-            <Color x:Key="TextSecondary">#666666</Color>
+            <!--
+            NOTE IMPORTANTE :
+            Ne redéfinissez PAS les couleurs (comme <Color x:Key="Background">...</Color>) ici
+            si elles sont déjà définies dans Resources/Styles/Colors.xaml.
+            Les garder dans Colors.xaml centralise leur gestion.
+            Une redéfinition ici surchargerait la valeur de Colors.xaml, ce qui peut être
+            intentionnel dans certains cas, mais généralement pas pour les définitions de base.
+            -->
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

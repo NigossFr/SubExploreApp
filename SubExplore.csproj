@@ -36,6 +36,7 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -43,8 +44,9 @@
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
-
+		<!-- <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" /> -->
+		<MauiSplashScreen Include="Resources\Splash\splashsplashscreen.png" />
+		
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
 		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
@@ -61,9 +63,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Content Include="appsettings.json">
+	  <EmbeddedResource Include="appsettings.json">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
+	  </EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -102,28 +104,41 @@
 	  <Folder Include="Views\Controls\" />
 	</ItemGroup>
 
+	      
 	<ItemGroup>
-	  <MauiXaml Update="Views\Map\MapPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\Settings\DatabaseTestPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\Spots\AddSpotPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\Spots\Components\SpotCharacteristicsView.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\Spots\Components\SpotLocationView.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\Spots\Components\SpotPhotosView.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\Spots\SpotDetailsPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	</ItemGroup>
+	<MauiXaml Update="App.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Resources\Styles\Colors.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Resources\Styles\Styles.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Views\Map\MapPage.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Views\Settings\DatabaseTestPage.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Views\Spots\AddSpotPage.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Views\Spots\Components\SpotCharacteristicsView.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Views\Spots\Components\SpotLocationView.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Views\Spots\Components\SpotPhotosView.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Views\Spots\SpotDetailsPage.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+  <!-- Ajoutez ici d'autres fichiers XAML (Pages, Vues, Dictionnaires de Ressources) si vous en avez -->
+</ItemGroup>
+
+    
 
 </Project>
