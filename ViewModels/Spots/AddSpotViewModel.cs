@@ -14,6 +14,7 @@ using SubExplore.Repositories.Interfaces;
 using SubExplore.Models.Validation;
 using SubExplore.Services.Validation;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Graphics;
 
 namespace SubExplore.ViewModels.Spots
 {
@@ -21,6 +22,11 @@ namespace SubExplore.ViewModels.Spots
     {
         [ObservableProperty]
         private bool _isSelected;
+
+        partial void OnIsSelectedChanged(bool value)
+        {
+            OnPropertyChanged(nameof(BackgroundColor));
+        }
 
         public SpotType SpotType { get; set; }
         
@@ -35,6 +41,25 @@ namespace SubExplore.ViewModels.Spots
         public string ValidationCriteria => SpotType.ValidationCriteria;
         public DateTime CreatedAt => SpotType.CreatedAt;
         public DateTime? UpdatedAt => SpotType.UpdatedAt;
+
+        public Color BackgroundColor
+        {
+            get
+            {
+                if (IsSelected && !string.IsNullOrEmpty(ColorCode))
+                {
+                    try
+                    {
+                        return Color.FromArgb(ColorCode);
+                    }
+                    catch
+                    {
+                        return Colors.Green;
+                    }
+                }
+                return Colors.White;
+            }
+        }
     }
 
     public partial class AddSpotViewModel : ViewModelBase
@@ -443,6 +468,21 @@ namespace SubExplore.ViewModels.Spots
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private void GoToStep(int stepNumber)
+        {
+            // Only allow navigation to previous steps or current step
+            if (stepNumber <= CurrentStep && stepNumber >= 1)
+            {
+                CurrentStep = stepNumber;
+                _logger.LogInformation("Navigated to step {StepNumber}", stepNumber);
+            }
+            else
+            {
+                _logger.LogWarning("Invalid step navigation attempted: {StepNumber} (current: {CurrentStep})", stepNumber, CurrentStep);
             }
         }
 

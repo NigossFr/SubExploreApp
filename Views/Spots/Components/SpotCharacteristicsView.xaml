@@ -31,7 +31,7 @@
                         <DataTemplate>
                             <Grid Padding="5">
                                 <Frame BorderColor="{Binding ColorCode}" 
-                                     BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter={Binding ColorCode}}"
+                                     BackgroundColor="{Binding BackgroundColor}"
                                      Padding="10"
                                      CornerRadius="10"
                                      HasShadow="True">

@@ -19,14 +19,21 @@
             SemanticProperties.Description="Progression de création du spot">
             <Grid ColumnDefinitions="*,*,*,*">
                 <!--  Étapes  -->
-                <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                <StackLayout Grid.Column="0" HorizontalOptions="FillAndExpand">
                     <Frame
                         BackgroundColor="{Binding CurrentStep, Converter={StaticResource IntEqualConverter}, ConverterParameter=1, FallbackValue={StaticResource Primary}, TargetNullValue={StaticResource Primary}}"
                         CornerRadius="20"
-                        MinimumHeightRequest="44"
-                        MinimumWidthRequest="44"
+                        HeightRequest="44"
+                        HorizontalOptions="FillAndExpand"
                         AutomationId="Step1Indicator"
                         SemanticProperties.Description="Étape 1 : Localisation du spot">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoToStepCommand}">
+                                <TapGestureRecognizer.CommandParameter>
+                                    <x:Int32>1</x:Int32>
+                                </TapGestureRecognizer.CommandParameter>
+                            </TapGestureRecognizer>
+                        </Frame.GestureRecognizers>
                         <Label
                             HorizontalOptions="Center"
                             Text="1"
@@ -40,14 +47,21 @@
                         SemanticProperties.Description="Première étape : définir la localisation du spot" />
                 </StackLayout>
 
-                <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                <StackLayout Grid.Column="1" HorizontalOptions="FillAndExpand">
                     <Frame
                         BackgroundColor="{Binding CurrentStep, Converter={StaticResource IntGreaterThanOrEqualConverter}, ConverterParameter=2, FallbackValue={StaticResource Secondary}, TargetNullValue={StaticResource Secondary}}"
                         CornerRadius="20"
-                        MinimumHeightRequest="44"
-                        MinimumWidthRequest="44"
+                        HeightRequest="44"
+                        HorizontalOptions="FillAndExpand"
                         AutomationId="Step2Indicator"
                         SemanticProperties.Description="Étape 2 : Caractéristiques du spot">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoToStepCommand}">
+                                <TapGestureRecognizer.CommandParameter>
+                                    <x:Int32>2</x:Int32>
+                                </TapGestureRecognizer.CommandParameter>
+                            </TapGestureRecognizer>
+                        </Frame.GestureRecognizers>
                         <Label
                             HorizontalOptions="Center"
                             Text="2"
@@ -61,14 +75,21 @@
                         SemanticProperties.Description="Deuxième étape : définir les caractéristiques du spot" />
                 </StackLayout>
 
-                <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                <StackLayout Grid.Column="2" HorizontalOptions="FillAndExpand">
                     <Frame
                         BackgroundColor="{Binding CurrentStep, Converter={StaticResource IntGreaterThanOrEqualConverter}, ConverterParameter=3, FallbackValue={StaticResource Secondary}, TargetNullValue={StaticResource Secondary}}"
                         CornerRadius="20"
-                        MinimumHeightRequest="44"
-                        MinimumWidthRequest="44"
+                        HeightRequest="44"
+                        HorizontalOptions="FillAndExpand"
                         AutomationId="Step3Indicator"
                         SemanticProperties.Description="Étape 3 : Photos du spot">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoToStepCommand}">
+                                <TapGestureRecognizer.CommandParameter>
+                                    <x:Int32>3</x:Int32>
+                                </TapGestureRecognizer.CommandParameter>
+                            </TapGestureRecognizer>
+                        </Frame.GestureRecognizers>
                         <Label
                             HorizontalOptions="Center"
                             Text="3"
@@ -82,14 +103,21 @@
                         SemanticProperties.Description="Troisième étape : ajouter des photos du spot" />
                 </StackLayout>
 
-                <StackLayout Grid.Column="3" HorizontalOptions="Center">
+                <StackLayout Grid.Column="3" HorizontalOptions="FillAndExpand">
                     <Frame
                         BackgroundColor="{Binding CurrentStep, Converter={StaticResource IntGreaterThanOrEqualConverter}, ConverterParameter=4, FallbackValue={StaticResource Secondary}, TargetNullValue={StaticResource Secondary}}"
                         CornerRadius="20"
-                        MinimumHeightRequest="44"
-                        MinimumWidthRequest="44"
+                        HeightRequest="44"
+                        HorizontalOptions="FillAndExpand"
                         AutomationId="Step4Indicator"
                         SemanticProperties.Description="Étape 4 : Validation et soumission du spot">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoToStepCommand}">
+                                <TapGestureRecognizer.CommandParameter>
+                                    <x:Int32>4</x:Int32>
+                                </TapGestureRecognizer.CommandParameter>
+                            </TapGestureRecognizer>
+                        </Frame.GestureRecognizers>
                         <Label
                             HorizontalOptions="Center"
                             Text="4"
@@ -147,7 +175,31 @@
                         <StackLayout Spacing="10">
                             <Label FontAttributes="Bold" Text="Caractéristiques" />
                             <Label Text="{Binding SpotName, StringFormat='Nom: {0}'}" />
-                            <Label Text="{Binding SelectedSpotType.Name, StringFormat='Type: {0}'}" />
+                            <StackLayout Orientation="Horizontal" Spacing="10">
+                                <Label Text="Types:" FontAttributes="Bold" VerticalOptions="Center" />
+                                <CollectionView ItemsSource="{Binding SelectedSpotTypes}" 
+                                              SelectionMode="None"
+                                              HeightRequest="30"
+                                              BackgroundColor="Transparent">
+                                    <CollectionView.ItemsLayout>
+                                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="5" />
+                                    </CollectionView.ItemsLayout>
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Frame BackgroundColor="{Binding ColorCode}" 
+                                                   BorderColor="{Binding ColorCode}"
+                                                   Padding="8,4"
+                                                   CornerRadius="10"
+                                                   HasShadow="False">
+                                                <Label Text="{Binding Name}" 
+                                                       TextColor="White"
+                                                       FontSize="12"
+                                                       FontAttributes="Bold" />
+                                            </Frame>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </StackLayout>
                             <Label Text="{Binding SelectedDifficultyLevel, StringFormat='Difficulté: {0}'}" />
                             <Label Text="{Binding MaxDepth, StringFormat='Profondeur max: {0}m'}" />
                             <Label Text="{Binding SelectedCurrentStrength, StringFormat='Courant: {0}'}" />

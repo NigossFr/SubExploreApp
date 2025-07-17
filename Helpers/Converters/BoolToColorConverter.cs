@@ -14,9 +14,17 @@ namespace SubExplore.Helpers.Converters
         {
             if (value is bool isSelected)
             {
-                if (parameter is string colorCode && isSelected)
+                if (parameter is string colorCode && !string.IsNullOrEmpty(colorCode) && isSelected)
                 {
-                    return Color.FromArgb(colorCode);
+                    try
+                    {
+                        return Color.FromArgb(colorCode);
+                    }
+                    catch
+                    {
+                        // Fallback to default color if parsing fails
+                        return isSelected ? Colors.Green : Colors.White;
+                    }
                 }
                 return isSelected ? Colors.Green : Colors.White;
             }
