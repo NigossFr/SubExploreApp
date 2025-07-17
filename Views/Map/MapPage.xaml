@@ -198,62 +198,63 @@
         </Grid>
 
         <!--  Barre d'actions améliorée  -->
-        <Frame
+        <Grid 
             Grid.Row="3"
             Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
-            Padding="0"
-            BackgroundColor="{StaticResource Surface}"
-            BorderColor="{StaticResource Secondary}"
-            CornerRadius="25"
-            HasShadow="True"
-            AutomationId="ActionsFrame"
+            Padding="8"
+            ColumnDefinitions="*,*,*"
+            ColumnSpacing="8"
+            AutomationId="ActionsGrid"
             SemanticProperties.Description="Barre d'actions principales">
-            <Grid Padding="5" ColumnDefinitions="*,*,Auto">
-                <Button
-                    Grid.Column="0"
-                    Command="{Binding LoadSpotsCommand}"
-                    Style="{StaticResource ButtonActionStyle}"
-                    Text="Actualiser"
-                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"
-                    AutomationId="RefreshSpotsButton"
-                    SemanticProperties.Description="Actualiser les spots sur la carte"
-                    SemanticProperties.Hint="Appuyez pour recharger les spots depuis le serveur">
-                    <Button.Triggers>
-                        <DataTrigger TargetType="Button" Binding="{Binding IsBusy}" Value="True">
-                            <Setter Property="Text" Value="🔄" />
-                        </DataTrigger>
-                    </Button.Triggers>
-                </Button>
-                <Button
-                    Grid.Column="1"
-                    Command="{Binding RefreshLocationCommand}"
-                    Style="{StaticResource ButtonActionStyle}"
-                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                    AutomationId="MyLocationButton"
-                    SemanticProperties.Description="Centrer la carte sur ma position actuelle"
-                    SemanticProperties.Hint="Appuyez pour obtenir votre position GPS et centrer la carte">
-                    <Button.Triggers>
-                        <DataTrigger TargetType="Button" Binding="{Binding IsLocationAvailable}" Value="True">
-                            <Setter Property="Text" Value="📍 Ma position" />
-                        </DataTrigger>
-                        <DataTrigger TargetType="Button" Binding="{Binding IsLocationAvailable}" Value="False">
-                            <Setter Property="Text" Value="📍 Localiser" />
-                        </DataTrigger>
-                    </Button.Triggers>
-                </Button>
-                <Button
-                    Grid.Column="2"
-                    Command="{Binding NavigateToAddSpotCommand}"
-                    Style="{StaticResource ButtonPrimaryStyle}"
-                    Text="➕ Nouveau"
-                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                    Padding="15,8"
-                    AutomationId="AddSpotButton"
-                    SemanticProperties.Description="Ajouter un nouveau spot de plongée"
-                    SemanticProperties.Hint="Appuyez pour commencer l'ajout d'un nouveau spot" />
-            </Grid>
-        </Frame>
+            <Button
+                Grid.Column="0"
+                Command="{Binding LoadSpotsCommand}"
+                Style="{StaticResource ButtonActionStyle}"
+                Text="Actualiser"
+                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                CornerRadius="8"
+                Padding="14,8"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"
+                AutomationId="RefreshSpotsButton"
+                SemanticProperties.Description="Actualiser les spots sur la carte"
+                SemanticProperties.Hint="Appuyez pour recharger les spots depuis le serveur">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding IsBusy}" Value="True">
+                        <Setter Property="Text" Value="🔄" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+            <Button
+                Grid.Column="1"
+                Command="{Binding RefreshLocationCommand}"
+                Style="{StaticResource ButtonActionStyle}"
+                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                CornerRadius="8"
+                Padding="14,8"
+                AutomationId="MyLocationButton"
+                SemanticProperties.Description="Centrer la carte sur ma position actuelle"
+                SemanticProperties.Hint="Appuyez pour obtenir votre position GPS et centrer la carte">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding IsLocationAvailable}" Value="True">
+                        <Setter Property="Text" Value="📍 Ma position" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding IsLocationAvailable}" Value="False">
+                        <Setter Property="Text" Value="📍 Localiser" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+            <Button
+                Grid.Column="2"
+                Command="{Binding NavigateToAddSpotCommand}"
+                Style="{StaticResource ButtonPrimaryStyle}"
+                Text="➕ Nouveau"
+                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                CornerRadius="8"
+                Padding="14,8"
+                AutomationId="AddSpotButton"
+                SemanticProperties.Description="Ajouter un nouveau spot de plongée"
+                SemanticProperties.Hint="Appuyez pour commencer l'ajout d'un nouveau spot" />
+        </Grid>
 
         <!--  Indicateur de chargement amélioré  -->
         <Grid
