@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="SubExplore.Views.Spots.Components.SpotCharacteristicsView">
+             x:Class="SubExplore.Views.Spots.Components.SpotCharacteristicsView"
+             x:Name="RootView">
     <ScrollView>
         <StackLayout Padding="20" Spacing="15">
             <Label Text="Caractéristiques du spot" Style="{StaticResource Headline}" />
@@ -17,12 +18,9 @@
             <!-- Type d'activité -->
             <Label Text="Type d'activité *" Margin="0,10,0,0" />
             <Frame Padding="10" BorderColor="{StaticResource Secondary}">
-                <CollectionView ItemsSource="{Binding SpotTypes}" 
-                              SelectionMode="Single"
-                              SelectedItem="{Binding SelectedSpotType}"
-                              SelectionChangedCommand="{Binding SpotTypeSelectedCommand}"
-                              SelectionChangedCommandParameter="{Binding SelectedSpotType}"
-                              HeightRequest="120">
+                <CollectionView ItemsSource="{Binding AvailableSpotTypes}" 
+                              SelectionMode="None"
+                              HeightRequest="200">
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout Orientation="Vertical" 
                                         Span="2"
@@ -33,17 +31,22 @@
                         <DataTemplate>
                             <Grid Padding="5">
                                 <Frame BorderColor="{Binding ColorCode}" 
-                                     BackgroundColor="{Binding ., Converter={StaticResource SelectedItemToBgConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectedSpotType}}"
+                                     BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter={Binding ColorCode}}"
                                      Padding="10"
-                                     CornerRadius="10">
+                                     CornerRadius="10"
+                                     HasShadow="True">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={x:Reference RootView}, Path=BindingContext.SpotTypeSelectedCommand}" 
+                                                            CommandParameter="{Binding}" />
+                                    </Frame.GestureRecognizers>
                                     <StackLayout Spacing="5">
                                         <Label Text="{Binding Name}" 
-                                              TextColor="{Binding ., Converter={StaticResource SelectedItemToTextColorConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectedSpotType}}"
+                                              TextColor="{Binding IsSelected, Converter={StaticResource BoolToTextColorConverter}}"
                                               FontAttributes="Bold"
                                               HorizontalOptions="Center" />
                                         <Label Text="{Binding Description}" 
                                               FontSize="12"
-                                              TextColor="{Binding ., Converter={StaticResource SelectedItemToTextColorConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectedSpotType}}"
+                                              TextColor="{Binding IsSelected, Converter={StaticResource BoolToTextColorConverter}}"
                                               HorizontalOptions="Center" />
                                     </StackLayout>
                                 </Frame>
@@ -54,7 +57,7 @@
             </Frame>
 
             <!-- Profondeur max -->
-            <Label Text="Profondeur maximale (m) *" Margin="0,10,0,0" />
+            <Label Text="Profondeur maximale (m)" Margin="0,10,0,0" />
             <Frame Padding="5" BorderColor="{StaticResource Secondary}">
                 <StackLayout Orientation="Horizontal">
                     <Entry Text="{Binding MaxDepth}" 
@@ -67,7 +70,7 @@
             </Frame>
 
             <!-- Niveau de difficulté -->
-            <Label Text="Niveau de difficulté *" Margin="0,10,0,0" />
+            <Label Text="Niveau de difficulté" Margin="0,10,0,0" />
             <Frame Padding="10" BorderColor="{StaticResource Secondary}">
                 <Picker ItemsSource="{Binding DifficultyLevels}"
                        SelectedItem="{Binding SelectedDifficultyLevel}"
@@ -92,7 +95,7 @@
             </Frame>
 
             <!-- Notes de sécurité -->
-            <Label Text="Notes de sécurité *" Margin="0,10,0,0" />
+            <Label Text="Notes de sécurité" Margin="0,10,0,0" />
             <Frame Padding="10" BorderColor="{StaticResource Secondary}">
                 <Editor Text="{Binding SafetyNotes}" 
                        Placeholder="Précautions de sécurité à prendre"

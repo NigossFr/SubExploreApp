@@ -29,6 +29,7 @@
                 ou toute autre ressource partagée qui n'est ni une couleur ni un style.
             -->
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:BoolToTextColorConverter x:Key="BoolToTextColorConverter" />
             <converters:IntEqualConverter x:Key="IntEqualConverter" />
             <converters:IntGreaterThanConverter x:Key="IntGreaterThanConverter" />
             <converters:IntLessThanConverter x:Key="IntLessThanConverter" />

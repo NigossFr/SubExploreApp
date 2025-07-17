@@ -29,12 +29,8 @@ namespace SubExplore.Services.Validation
                 errors.Add("La longitude doit être comprise entre -180 et 180 degrés.");
             }
 
-            // Validate access description
-            if (string.IsNullOrWhiteSpace(data.AccessDescription))
-            {
-                errors.Add("La description de l'accès est requise.");
-            }
-            else if (data.AccessDescription.Length < 10)
+            // Validate access description (optional - only validate if provided)
+            if (!string.IsNullOrWhiteSpace(data.AccessDescription) && data.AccessDescription.Length < 10)
             {
                 errors.Add("La description de l'accès doit contenir au moins 10 caractères.");
             }
@@ -66,13 +62,13 @@ namespace SubExplore.Services.Validation
                 errors.Add("Le nom du spot doit contenir au moins 3 caractères.");
             }
 
-            // Validate spot type
+            // Validate spot type - at least one must be selected
             if (data.SelectedSpotType == null)
             {
-                errors.Add("Le type de spot est requis.");
+                errors.Add("Au moins un type d'activité doit être sélectionné.");
             }
 
-            // Validate depth
+            // Optional validations - only validate if provided
             if (data.MaxDepth < 0)
             {
                 errors.Add("La profondeur maximale ne peut pas être négative.");
@@ -82,23 +78,9 @@ namespace SubExplore.Services.Validation
                 errors.Add("La profondeur maximale ne peut pas dépasser 200 mètres.");
             }
 
-            // Validate required equipment
-            if (string.IsNullOrWhiteSpace(data.RequiredEquipment))
-            {
-                errors.Add("L'équipement requis est obligatoire.");
-            }
-
-            // Validate safety notes
-            if (string.IsNullOrWhiteSpace(data.SafetyNotes))
-            {
-                errors.Add("Les notes de sécurité sont obligatoires.");
-            }
-
-            // Validate best conditions
-            if (string.IsNullOrWhiteSpace(data.BestConditions))
-            {
-                errors.Add("Les meilleures conditions sont obligatoires.");
-            }
+            // Required equipment is now optional
+            // Safety notes are now optional  
+            // Best conditions are now optional
 
             return errors.Count == 0 
                 ? ValidationResult.Success(StepName)
@@ -117,17 +99,13 @@ namespace SubExplore.Services.Validation
         {
             var errors = new List<string>();
 
-            // Validate photo count
-            if (data.PhotosPaths.Count == 0)
-            {
-                errors.Add("Au moins une photo est requise.");
-            }
-            else if (data.PhotosPaths.Count > data.MaxPhotosAllowed)
+            // Validate photo count (photos are now optional)
+            if (data.PhotosPaths.Count > data.MaxPhotosAllowed)
             {
                 errors.Add($"Le nombre maximum de photos autorisées est {data.MaxPhotosAllowed}.");
             }
 
-            // Validate primary photo
+            // Validate primary photo (only if photos are provided)
             if (data.PhotosPaths.Count > 0 && string.IsNullOrEmpty(data.PrimaryPhotoPath))
             {
                 errors.Add("Une photo principale doit être sélectionnée.");

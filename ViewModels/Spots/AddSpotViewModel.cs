@@ -17,6 +17,26 @@ using Microsoft.Extensions.Logging;
 
 namespace SubExplore.ViewModels.Spots
 {
+    public partial class SpotTypeItem : ObservableObject
+    {
+        [ObservableProperty]
+        private bool _isSelected;
+
+        public SpotType SpotType { get; set; }
+        
+        public string Name => SpotType.Name;
+        public string Description => SpotType.Description;
+        public string ColorCode => SpotType.ColorCode;
+        public int Id => SpotType.Id;
+        public ActivityCategory Category => SpotType.Category;
+        public bool RequiresExpertValidation => SpotType.RequiresExpertValidation;
+        public bool IsActive => SpotType.IsActive;
+        public string IconPath => SpotType.IconPath;
+        public string ValidationCriteria => SpotType.ValidationCriteria;
+        public DateTime CreatedAt => SpotType.CreatedAt;
+        public DateTime? UpdatedAt => SpotType.UpdatedAt;
+    }
+
     public partial class AddSpotViewModel : ViewModelBase
     {
         private readonly ILocationService _locationService;
@@ -40,7 +60,10 @@ namespace SubExplore.ViewModels.Spots
         private Models.Domain.Spot _newSpot;
 
         [ObservableProperty]
-        private ObservableCollection<SpotType> _availableSpotTypes;
+        private ObservableCollection<SpotTypeItem> _availableSpotTypes;
+
+        [ObservableProperty]
+        private ObservableCollection<SpotType> _selectedSpotTypes;
 
         [ObservableProperty]
         private ObservableCollection<string> _photosPaths;
@@ -122,7 +145,8 @@ namespace SubExplore.ViewModels.Spots
             _photosValidator = new PhotosStepValidator();
             _summaryValidator = new SummaryStepValidator();
 
-            AvailableSpotTypes = new ObservableCollection<SpotType>();
+            AvailableSpotTypes = new ObservableCollection<SpotTypeItem>();
+            SelectedSpotTypes = new ObservableCollection<SpotType>();
             PhotosPaths = new ObservableCollection<string>();
             CurrentStep = 1;
             Title = "Nouveau spot";
@@ -150,7 +174,13 @@ namespace SubExplore.ViewModels.Spots
             {
                 CreatorId = 1, // À remplacer par l'ID de l'utilisateur connecté
                 CreatedAt = DateTime.UtcNow,
-                ValidationStatus = SpotValidationStatus.Draft
+                ValidationStatus = SpotValidationStatus.Draft,
+                Name = string.Empty,
+                Description = string.Empty,
+                RequiredEquipment = string.Empty,
+                SafetyNotes = string.Empty,
+                BestConditions = string.Empty,
+                TypeId = 1 // Default value, will be updated when user selects
             };
 
             SelectedCurrentStrength = CurrentStrength.Light;
@@ -199,13 +229,11 @@ namespace SubExplore.ViewModels.Spots
                 AvailableSpotTypes.Clear();
                 foreach (var type in types)
                 {
-                    AvailableSpotTypes.Add(type);
+                    AvailableSpotTypes.Add(new SpotTypeItem { SpotType = type, IsSelected = false });
                 }
 
-                if (AvailableSpotTypes.Count > 0)
-                {
-                    SelectedSpotType = AvailableSpotTypes[0];
-                }
+                // Don't auto-select any spot type, let user choose
+                SelectedSpotType = null;
             }
             catch (Exception ex)
             {
@@ -419,10 +447,36 @@ namespace SubExplore.ViewModels.Spots
         }
 
         [RelayCommand]
-        private void SpotTypeSelected(SpotType selectedType)
+        private void SpotTypeSelected(SpotTypeItem selectedItem)
         {
-            SelectedSpotType = selectedType;
-            _logger.LogInformation("Spot type selected: {SpotTypeName}", selectedType?.Name ?? "null");
+            if (selectedItem == null) return;
+
+            // Toggle selection state
+            selectedItem.IsSelected = !selectedItem.IsSelected;
+
+            // Update selected types collection
+            if (selectedItem.IsSelected)
+            {
+                SelectedSpotTypes.Add(selectedItem.SpotType);
+                _logger.LogInformation("Spot type selected: {SpotTypeName}", selectedItem.SpotType?.Name ?? "null");
+            }
+            else
+            {
+                SelectedSpotTypes.Remove(selectedItem.SpotType);
+                _logger.LogInformation("Spot type deselected: {SpotTypeName}", selectedItem.SpotType?.Name ?? "null");
+            }
+
+            // Update the primary selected spot type (for backward compatibility)
+            if (SelectedSpotTypes.Count > 0)
+            {
+                SelectedSpotType = SelectedSpotTypes[0];
+            }
+            else
+            {
+                SelectedSpotType = null;
+            }
+
+            _logger.LogInformation("Total selected spot types: {Count}", SelectedSpotTypes.Count);
         }
 
         private async Task<bool> ValidateCurrentStep()
@@ -446,7 +500,7 @@ namespace SubExplore.ViewModels.Spots
                     var characteristicsData = new CharacteristicsStepData
                     {
                         SpotName = SpotName,
-                        SelectedSpotType = SelectedSpotType,
+                        SelectedSpotType = SelectedSpotTypes.Count > 0 ? SelectedSpotTypes[0] : null, // Use first selected type for validation
                         SelectedDifficultyLevel = SelectedDifficultyLevel,
                         MaxDepth = MaxDepth,
                         RequiredEquipment = RequiredEquipment,
@@ -525,12 +579,12 @@ namespace SubExplore.ViewModels.Spots
 
                 case 2: // Caractéristiques
                     NewSpot.Name = SpotName;
-                    NewSpot.TypeId = SelectedSpotType.Id;
+                    NewSpot.TypeId = SelectedSpotTypes.Count > 0 ? SelectedSpotTypes[0].Id : 1; // Use first selected type
                     NewSpot.DifficultyLevel = SelectedDifficultyLevel;
                     NewSpot.MaxDepth = MaxDepth;
-                    NewSpot.RequiredEquipment = RequiredEquipment;
-                    NewSpot.SafetyNotes = SafetyNotes;
-                    NewSpot.BestConditions = BestConditions;
+                    NewSpot.RequiredEquipment = RequiredEquipment ?? string.Empty;
+                    NewSpot.SafetyNotes = SafetyNotes ?? string.Empty;
+                    NewSpot.BestConditions = BestConditions ?? string.Empty;
                     NewSpot.CurrentStrength = SelectedCurrentStrength;
                     break;
 

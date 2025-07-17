@@ -181,6 +181,78 @@ namespace SubExplore.Services.Implementations
                             MinDifficultyLevel = 3
                         }),
                         IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Épave",
+                        IconPath = "marker_wreck.png",
+                        ColorCode = "#8B4513",
+                        Category = ActivityCategory.Diving,
+                        Description = "Sites d'épaves historiques ou artificielles",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes", "RequiredEquipment" },
+                            MaxDepthRange = new[] { 5, 100 }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Grotte marine",
+                        IconPath = "marker_cave.png",
+                        ColorCode = "#2F4F4F",
+                        Category = ActivityCategory.Diving,
+                        Description = "Grottes et cavernes sous-marines",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes", "RequiredEquipment" },
+                            MaxDepthRange = new[] { 5, 40 },
+                            MinDifficultyLevel = 2
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Tombant",
+                        IconPath = "marker_wall.png",
+                        ColorCode = "#4169E1",
+                        Category = ActivityCategory.Diving,
+                        Description = "Murs et tombants sous-marins",
+                        RequiresExpertValidation = false,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" },
+                            MaxDepthRange = new[] { 10, 60 }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Récif corallien",
+                        IconPath = "marker_reef.png",
+                        ColorCode = "#FF6347",
+                        Category = ActivityCategory.Snorkeling,
+                        Description = "Récifs coralliens et jardins de corail",
+                        RequiresExpertValidation = false,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "DifficultyLevel", "SafetyNotes" },
+                            MaxDepthRange = new[] { 0, 25 }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Plongée de nuit",
+                        IconPath = "marker_night.png",
+                        ColorCode = "#191970",
+                        Category = ActivityCategory.Diving,
+                        Description = "Sites adaptés à la plongée nocturne",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes", "RequiredEquipment" },
+                            MaxDepthRange = new[] { 5, 30 },
+                            MinDifficultyLevel = 2
+                        }),
+                        IsActive = true
                     }
                     };
 
