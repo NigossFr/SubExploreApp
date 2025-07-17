@@ -91,6 +91,38 @@ namespace SubExplore.Helpers.Converters
         }
     }
 
+    public class IntGreaterThanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null || parameter == null) return false;
+
+            bool isGreater = int.Parse(value.ToString()) > int.Parse(parameter.ToString());
+            return isGreater;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class IntLessThanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null || parameter == null) return false;
+
+            bool isLess = int.Parse(value.ToString()) < int.Parse(parameter.ToString());
+            return isLess;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class SelectedItemToBgConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

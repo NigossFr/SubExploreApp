@@ -29,6 +29,17 @@
                 ou toute autre ressource partagée qui n'est ni une couleur ni un style.
             -->
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:IntEqualConverter x:Key="IntEqualConverter" />
+            <converters:IntGreaterThanConverter x:Key="IntGreaterThanConverter" />
+            <converters:IntLessThanConverter x:Key="IntLessThanConverter" />
+            <converters:IntGreaterThanOrEqualConverter x:Key="IntGreaterThanOrEqualConverter" />
+            <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+            <converters:StringEmptyConverter x:Key="StringEmptyConverter" />
+            <converters:StringEqualConverter x:Key="StringEqualConverter" />
+            <converters:SelectedItemToBgConverter x:Key="SelectedItemToBgConverter" />
+            <converters:SelectedItemToTextColorConverter x:Key="SelectedItemToTextColorConverter" />
+            <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
+            <converters:CollectionCountToHeightConverter x:Key="CollectionCountToHeightConverter" />
             <!--  Ajoutez d'autres convertisseurs ou ressources globales ici si nécessaire  -->
 
             <!--

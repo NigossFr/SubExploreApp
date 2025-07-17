@@ -26,7 +26,7 @@
                     <Image
                         HeightRequest="40"
                         HorizontalOptions="Center"
-                        Source="marker_spot.png"
+                        Source="marker_spot.svg"
                         VerticalOptions="Center"
                         WidthRequest="40" />
                 </Grid>

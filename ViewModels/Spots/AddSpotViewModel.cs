@@ -90,6 +90,12 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private bool _isLocationReady;
 
+        [ObservableProperty]
+        private ObservableCollection<DifficultyLevel> _difficultyLevels;
+
+        [ObservableProperty]
+        private ObservableCollection<CurrentStrength> _currentStrengths;
+
         public AddSpotViewModel(
             ILocationService locationService,
             ISpotRepository spotRepository,
@@ -120,6 +126,24 @@ namespace SubExplore.ViewModels.Spots
             PhotosPaths = new ObservableCollection<string>();
             CurrentStep = 1;
             Title = "Nouveau spot";
+
+            // Initialize collections with enum values
+            DifficultyLevels = new ObservableCollection<DifficultyLevel>
+            {
+                DifficultyLevel.Beginner,
+                DifficultyLevel.Intermediate,
+                DifficultyLevel.Advanced,
+                DifficultyLevel.Expert
+            };
+
+            CurrentStrengths = new ObservableCollection<CurrentStrength>
+            {
+                CurrentStrength.None,
+                CurrentStrength.Light,
+                CurrentStrength.Moderate,
+                CurrentStrength.Strong,
+                CurrentStrength.Extreme
+            };
 
             // Initialiser un nouveau spot
             NewSpot = new Models.Domain.Spot
@@ -355,6 +379,50 @@ namespace SubExplore.ViewModels.Spots
             {
                 CurrentStep = 1;
             }
+        }
+
+
+        [RelayCommand]
+        private async Task GetCurrentLocation()
+        {
+            try
+            {
+                IsLoading = true;
+                _logger.LogInformation("Getting current location...");
+                
+                var location = await _locationService.GetCurrentLocationAsync();
+                if (location != null)
+                {
+                    Latitude = (decimal)location.Latitude;
+                    Longitude = (decimal)location.Longitude;
+                    HasUserLocation = true;
+                    IsLocationReady = true;
+                    
+                    _logger.LogInformation("Successfully obtained current location: {Latitude}, {Longitude}", Latitude, Longitude);
+                    await DialogService.ShowAlertAsync("Succès", "Position actuelle obtenue avec succès.", "OK");
+                }
+                else
+                {
+                    _logger.LogWarning("Unable to get current location");
+                    await DialogService.ShowAlertAsync("Erreur", "Impossible d'obtenir la position actuelle. Vérifiez les permissions de localisation.", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting current location");
+                await DialogService.ShowAlertAsync("Erreur", "Erreur lors de l'obtention de la position. Vérifiez les permissions de localisation.", "OK");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private void SpotTypeSelected(SpotType selectedType)
+        {
+            SelectedSpotType = selectedType;
+            _logger.LogInformation("Spot type selected: {SpotTypeName}", selectedType?.Name ?? "null");
         }
 
         private async Task<bool> ValidateCurrentStep()
