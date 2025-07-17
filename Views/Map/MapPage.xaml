@@ -5,24 +5,35 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Map"
     Title="Carte"
     BackgroundColor="{StaticResource Background}">
+    
+    <ContentPage.Resources>
+        <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
+        <converters:ResponsiveFontSizeConverter x:Key="ResponsiveFontSizeConverter" />
+        <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />
+    </ContentPage.Resources>
 
 
     <ContentPage.Behaviors>
         <toolkit:EventToCommandBehavior Command="{Binding InitializeCommand}" EventName="Appearing" />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto">
-        <!--  Barre de recherche  -->
+    <RefreshView Command="{Binding LoadSpotsCommand}" IsRefreshing="{Binding IsBusy}">
+        <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!--  Barre de recherche améliorée  -->
         <Frame
             Grid.Row="0"
-            Margin="10,5"
+            Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
             Padding="5"
             BackgroundColor="{StaticResource Surface}"
             BorderColor="{StaticResource Secondary}"
-            CornerRadius="25">
+            CornerRadius="25"
+            HasShadow="True"
+            AutomationId="SearchFrame"
+            SemanticProperties.Description="Zone de recherche de spots">
             <Grid ColumnDefinitions="*,Auto">
                 <Entry
                     Grid.Column="0"
@@ -32,39 +43,65 @@
                     ReturnCommand="{Binding SearchSpotsCommand}"
                     ReturnType="Search"
                     Text="{Binding SearchText}"
+                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='1.0'}"
+                    IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
                     AutomationId="SearchEntry"
                     SemanticProperties.Description="Rechercher des spots de plongée par nom ou localisation"
-                    SemanticProperties.Hint="Entrez le nom d'un spot ou d'une localisation pour effectuer une recherche" />
+                    SemanticProperties.Hint="Entrez le nom d'un spot ou d'une localisation pour effectuer une recherche">
+                    <Entry.Behaviors>
+                        <toolkit:EventToCommandBehavior EventName="TextChanged" Command="{Binding SearchTextChangedCommand}" />
+                    </Entry.Behaviors>
+                </Entry>
                 <Button
                     Grid.Column="1"
                     Command="{Binding SearchSpotsCommand}"
                     Style="{StaticResource ButtonActionStyle}"
                     Text="🔍"
+                    IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
                     AutomationId="SearchButton"
                     SemanticProperties.Description="Lancer la recherche de spots"
-                    SemanticProperties.Hint="Appuyez pour rechercher des spots correspondant au texte saisi" />
+                    SemanticProperties.Hint="Appuyez pour rechercher des spots correspondant au texte saisi">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsSearching}" Value="True">
+                            <Setter Property="Text" Value="⏳" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
             </Grid>
         </Frame>
 
-        <!--  Barre de filtres  -->
+        <!--  Barre de filtres améliorée  -->
         <Frame
             Grid.Row="1"
-            Margin="10,0,10,5"
+            Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
             Padding="5"
             BackgroundColor="{StaticResource Surface}"
             BorderColor="{StaticResource Secondary}"
-            CornerRadius="25">
+            CornerRadius="25"
+            HasShadow="True"
+            AutomationId="FiltersFrame"
+            SemanticProperties.Description="Zone de filtres des spots">
             <ScrollView HorizontalScrollBarVisibility="Never" Orientation="Horizontal">
                 <HorizontalStackLayout Spacing="5">
                     <Button
-                        BackgroundColor="{StaticResource Primary}"
                         Command="{Binding ClearFiltersCommand}"
                         Style="{StaticResource ButtonFilterStyle}"
                         Text="Tous"
-                        TextColor="White"
+                        FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
                         AutomationId="ClearFiltersButton"
                         SemanticProperties.Description="Afficher tous les types de spots"
-                        SemanticProperties.Hint="Appuyez pour supprimer tous les filtres et afficher tous les spots" />
+                        SemanticProperties.Hint="Appuyez pour supprimer tous les filtres et afficher tous les spots">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                <Setter Property="TextColor" Value="White" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
+                                <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
 
                     <CollectionView
                         ItemsSource="{Binding SpotTypes}"
@@ -84,6 +121,9 @@
                                     Style="{StaticResource ButtonFilterStyle}"
                                     Text="{Binding Name}"
                                     TextColor="White"
+                                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=FilterSpotsByTypeCommand}"
+                                    CommandParameter="{Binding .}"
                                     AutomationId="{Binding Name, StringFormat='Filter{0}Button'}"
                                     SemanticProperties.Description="{Binding Name, StringFormat='Filtrer par {0}'}"
                                     SemanticProperties.Hint="{Binding Name, StringFormat='Appuyez pour afficher uniquement les spots de type {0}'}" />
@@ -94,75 +134,156 @@
             </ScrollView>
         </Frame>
 
-        <!--  Carte  -->
-        <maps:Map
-            Grid.Row="2"
-            x:Name="MainMap"
-            IsShowingUser="{Binding IsLocationAvailable}"
-            ItemsSource="{Binding Pins}"
-            MapClicked="OnMapClicked"
-            MapType="Street"
-            HeightRequest="400"
-            HorizontalOptions="FillAndExpand"
-            VerticalOptions="FillAndExpand"
-            IsZoomEnabled="True"
-            IsScrollEnabled="True"
-            AutomationId="MainMap"
-            SemanticProperties.Description="Carte interactive des spots de plongée"
-            SemanticProperties.Hint="Explorez les spots de plongée sur la carte, appuyez sur un marqueur pour voir les détails">
+        <!--  Carte responsive  -->
+        <Grid Grid.Row="2">
+            <maps:Map
+                x:Name="MainMap"
+                IsShowingUser="{Binding IsLocationAvailable}"
+                ItemsSource="{Binding Pins}"
+                MapClicked="OnMapClicked"
+                MapType="Street"
+                HorizontalOptions="FillAndExpand"
+                VerticalOptions="FillAndExpand"
+                IsZoomEnabled="True"
+                IsScrollEnabled="True"
+                AutomationId="MainMap"
+                SemanticProperties.Description="Carte interactive des spots de plongée"
+                SemanticProperties.Hint="Explorez les spots de plongée sur la carte, appuyez sur un marqueur pour voir les détails">
             <maps:Map.MapElements>
                 <!--  Vous pouvez ajouter des éléments de carte personnalisés ici  -->
             </maps:Map.MapElements>
-        </maps:Map>
+            </maps:Map>
+            
+            <!--  État vide  -->
+            <StackLayout
+                IsVisible="{Binding IsEmptyState}"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Spacing="10">
+                <Label
+                    Text="🗺️"
+                    FontSize="48"
+                    HorizontalOptions="Center" />
+                <Label
+                    Text="Aucun spot trouvé"
+                    Style="{StaticResource SubHeadline}"
+                    HorizontalOptions="Center" />
+                <Label
+                    Text="Essayez d'ajuster vos filtres ou votre recherche"
+                    Style="{StaticResource Caption}"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center" />
+            </StackLayout>
+            
+            <!--  État d'erreur réseau  -->
+            <StackLayout
+                IsVisible="{Binding IsNetworkError}"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Spacing="10">
+                <Label
+                    Text="📶"
+                    FontSize="48"
+                    HorizontalOptions="Center" />
+                <Label
+                    Text="Connexion limitée"
+                    Style="{StaticResource SubHeadline}"
+                    HorizontalOptions="Center" />
+                <Button
+                    Text="Réessayer"
+                    Command="{Binding LoadSpotsCommand}"
+                    Style="{StaticResource ButtonPrimaryStyle}"
+                    HorizontalOptions="Center" />
+            </StackLayout>
+        </Grid>
 
-        <!--  Barre d'actions  -->
+        <!--  Barre d'actions améliorée  -->
         <Frame
             Grid.Row="3"
-            Margin="10,5"
+            Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
             Padding="0"
             BackgroundColor="{StaticResource Surface}"
             BorderColor="{StaticResource Secondary}"
-            CornerRadius="25">
-            <Grid Padding="5" ColumnDefinitions="*,*,*">
+            CornerRadius="25"
+            HasShadow="True"
+            AutomationId="ActionsFrame"
+            SemanticProperties.Description="Barre d'actions principales">
+            <Grid Padding="5" ColumnDefinitions="*,*,Auto">
                 <Button
                     Grid.Column="0"
                     Command="{Binding LoadSpotsCommand}"
                     Style="{StaticResource ButtonActionStyle}"
                     Text="Actualiser"
+                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"
                     AutomationId="RefreshSpotsButton"
                     SemanticProperties.Description="Actualiser les spots sur la carte"
-                    SemanticProperties.Hint="Appuyez pour recharger les spots depuis le serveur" />
+                    SemanticProperties.Hint="Appuyez pour recharger les spots depuis le serveur">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Text" Value="🔄" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
                 <Button
                     Grid.Column="1"
                     Command="{Binding RefreshLocationCommand}"
                     Style="{StaticResource ButtonActionStyle}"
-                    Text="Ma position"
+                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
                     AutomationId="MyLocationButton"
                     SemanticProperties.Description="Centrer la carte sur ma position actuelle"
-                    SemanticProperties.Hint="Appuyez pour obtenir votre position GPS et centrer la carte" />
+                    SemanticProperties.Hint="Appuyez pour obtenir votre position GPS et centrer la carte">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsLocationAvailable}" Value="True">
+                            <Setter Property="Text" Value="📍 Ma position" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsLocationAvailable}" Value="False">
+                            <Setter Property="Text" Value="📍 Localiser" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
                 <Button
                     Grid.Column="2"
                     Command="{Binding NavigateToAddSpotCommand}"
                     Style="{StaticResource ButtonPrimaryStyle}"
-                    Text="Nouveau"
+                    Text="➕ Nouveau"
+                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                    Padding="15,8"
                     AutomationId="AddSpotButton"
                     SemanticProperties.Description="Ajouter un nouveau spot de plongée"
                     SemanticProperties.Hint="Appuyez pour commencer l'ajout d'un nouveau spot" />
             </Grid>
         </Frame>
 
-        <!--  Indicateur de chargement  -->
-        <ActivityIndicator
+        <!--  Indicateur de chargement amélioré  -->
+        <Grid
             Grid.Row="0"
             Grid.RowSpan="4"
-            HorizontalOptions="Center"
-            IsRunning="{Binding IsBusy}"
             IsVisible="{Binding IsBusy}"
-            VerticalOptions="Center"
-            Color="{StaticResource Primary}"
-            AutomationId="LoadingIndicator"
-            SemanticProperties.Description="Chargement des données en cours"
-            SemanticProperties.Hint="Veuillez patienter pendant le chargement des spots" />
+            BackgroundColor="{AppThemeBinding Light=#80000000, Dark=#80FFFFFF}"
+            AutomationId="LoadingOverlay">
+            <Frame
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                BackgroundColor="{StaticResource Surface}"
+                CornerRadius="15"
+                Padding="20"
+                HasShadow="True">
+                <StackLayout Orientation="Horizontal" Spacing="10">
+                    <ActivityIndicator
+                        IsRunning="{Binding IsBusy}"
+                        Color="{StaticResource Primary}"
+                        AutomationId="LoadingIndicator" />
+                    <Label
+                        Text="Chargement..."
+                        VerticalOptions="Center"
+                        Style="{StaticResource BodyText}"
+                        SemanticProperties.Description="Chargement des données en cours"
+                        SemanticProperties.Hint="Veuillez patienter pendant le chargement des spots" />
+                </StackLayout>
+            </Frame>
+        </Grid>
 
-    </Grid>
+        </Grid>
+    </RefreshView>
 </ContentPage>

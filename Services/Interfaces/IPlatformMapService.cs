@@ -37,5 +37,10 @@ namespace SubExplore.Services.Interfaces
         /// Apply platform-specific map optimizations
         /// </summary>
         void ApplyMapOptimizations(MapControl map);
+        
+        /// <summary>
+        /// Refresh map display with platform-specific optimizations
+        /// </summary>
+        void RefreshMapDisplay(MapControl map);
     }
 }

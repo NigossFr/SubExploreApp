@@ -125,9 +125,11 @@ namespace SubExplore.Views.Map
                     System.Diagnostics.Debug.WriteLine($"[INFO] Map positioned to: {ViewModel.MapLatitude}, {ViewModel.MapLongitude}, zoom: {ViewModel.MapZoomLevel}, distance: {distanceKm}km, loaded: {_isMapLoaded}");
                     System.Diagnostics.Debug.WriteLine($"[DEBUG] Map type: {MainMap.MapType}, IsZoomEnabled: {MainMap.IsZoomEnabled}, IsScrollEnabled: {MainMap.IsScrollEnabled}");
                     
-                    // Force map to refresh after positioning
-                    MainMap.IsVisible = false;
-                    MainMap.IsVisible = true;
+                    // Remove inefficient visibility toggle - use proper refresh method
+                    if (_platformMapService != null)
+                    {
+                        _platformMapService.RefreshMapDisplay(MainMap);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -138,6 +140,28 @@ namespace SubExplore.Views.Map
             else
             {
                 System.Diagnostics.Debug.WriteLine($"[WARNING] UpdateMapPosition called but ViewModel={ViewModel != null}, MainMap={MainMap != null}, loaded: {_isMapLoaded}");
+            }
+        }
+        
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            
+            // Cleanup map resources for better memory management
+            if (MainMap != null)
+            {
+                MainMap.Loaded -= OnMapLoaded;
+            }
+            
+            System.Diagnostics.Debug.WriteLine("[INFO] MapPage OnDisappearing - resources cleaned up");
+        }
+        
+        private void OnMapRegionChanged(object sender, EventArgs e)
+        {
+            // Update ViewModel with current visible region for better performance
+            if (ViewModel != null && MainMap != null)
+            {
+                ViewModel.VisibleRegion = MainMap.VisibleRegion;
             }
         }
     }

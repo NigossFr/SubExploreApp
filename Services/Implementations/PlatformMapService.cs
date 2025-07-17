@@ -356,5 +356,46 @@ namespace SubExplore.Services.Implementations
 
             return urls;
         }
+        
+        public void RefreshMapDisplay(MapControl map)
+        {
+            try
+            {
+                if (map == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[WARNING] RefreshMapDisplay called with null map");
+                    return;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[INFO] Refreshing map display for platform: {DeviceInfo.Platform}");
+                
+                // Simple map refresh without breaking changes
+                Application.Current?.Dispatcher.Dispatch(() =>
+                {
+                    try
+                    {
+                        // Force a simple layout update to refresh map display
+                        var currentVisible = map.IsVisible;
+                        if (currentVisible)
+                        {
+                            // Use a minimal opacity change to trigger refresh
+                            var currentOpacity = map.Opacity;
+                            map.Opacity = 0.99;
+                            map.Opacity = currentOpacity;
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine("[INFO] Map display refreshed successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to refresh map display: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] RefreshMapDisplay failed: {ex.Message}");
+            }
+        }
     }
 }

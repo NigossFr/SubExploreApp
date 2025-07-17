@@ -76,6 +76,15 @@ namespace SubExplore.ViewModels.Map
         [ObservableProperty]
         private MapSpan _visibleRegion;
 
+        [ObservableProperty]
+        private bool _isEmptyState;
+
+        [ObservableProperty]
+        private bool _isNetworkError;
+
+        [ObservableProperty]
+        private System.Threading.CancellationTokenSource _searchCancellationToken;
+
         public MapViewModel(
             ISpotRepository spotRepository,
             ILocationService locationService,
@@ -108,6 +117,10 @@ namespace SubExplore.ViewModels.Map
             System.Diagnostics.Debug.WriteLine($"[INFO] MapViewModel initialized with default coordinates: {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}");
 
             Title = "Carte";
+            
+            // Initialize empty and network error states
+            UpdateEmptyState();
+            CheckNetworkConnectivity();
         }
 
         public override async Task InitializeAsync(object parameter = null)
@@ -391,6 +404,32 @@ namespace SubExplore.ViewModels.Map
         }
 
         [RelayCommand]
+        private async Task SearchTextChanged()
+        {
+            // Cancel previous search
+            _searchCancellationToken?.Cancel();
+            _searchCancellationToken = new System.Threading.CancellationTokenSource();
+            
+            // Debounce search - wait 500ms after user stops typing
+            try
+            {
+                await Task.Delay(500, _searchCancellationToken.Token);
+                if (!string.IsNullOrWhiteSpace(SearchText) && SearchText.Length >= 2)
+                {
+                    await SearchSpots();
+                }
+                else if (string.IsNullOrWhiteSpace(SearchText))
+                {
+                    await LoadSpots();
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Search was cancelled - this is expected
+            }
+        }
+
+        [RelayCommand]
         private async Task SearchSpots()
         {
             if (string.IsNullOrWhiteSpace(SearchText) || IsBusy)
@@ -637,6 +676,65 @@ namespace SubExplore.ViewModels.Map
                     SpotTypes.Add(type);
                 }
             });
+        }
+        
+        private void UpdateEmptyState()
+        {
+            Application.Current?.Dispatcher.Dispatch(() => {
+                IsEmptyState = !IsBusy && (Spots?.Count ?? 0) == 0 && !IsNetworkError;
+            });
+        }
+        
+        private void CheckNetworkConnectivity()
+        {
+            try
+            {
+                var connectivity = Connectivity.Current;
+                IsNetworkError = connectivity.NetworkAccess != NetworkAccess.Internet;
+                
+                // Subscribe to connectivity changes
+                connectivity.ConnectivityChanged += OnConnectivityChanged;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to check network connectivity: {ex.Message}");
+                IsNetworkError = false;
+            }
+        }
+        
+        private void OnConnectivityChanged(object sender, Microsoft.Maui.Networking.ConnectivityChangedEventArgs e)
+        {
+            Application.Current?.Dispatcher.Dispatch(() => {
+                var wasNetworkError = IsNetworkError;
+                IsNetworkError = e.NetworkAccess != NetworkAccess.Internet;
+                
+                // If we just regained connectivity, reload spots
+                if (wasNetworkError && !IsNetworkError)
+                {
+                    LoadSpotsCommand.Execute(null);
+                }
+                
+                UpdateEmptyState();
+            });
+        }
+        
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _searchCancellationToken?.Cancel();
+                _searchCancellationToken?.Dispose();
+                
+                // Unsubscribe from connectivity events
+                try
+                {
+                    Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WARNING] Failed to unsubscribe from connectivity events: {ex.Message}");
+                }
+            }
         }
 
     }
