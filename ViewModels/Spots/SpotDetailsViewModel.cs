@@ -15,7 +15,7 @@ using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
 
 
-namespace SubExplore.ViewModels.Spot
+namespace SubExplore.ViewModels.Spots
 {
     public partial class SpotDetailsViewModel : ViewModelBase
     {

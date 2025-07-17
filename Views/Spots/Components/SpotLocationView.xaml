@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView
-    x:Class="SubExplore.Views.Spot.Components.SpotLocationView"
+    x:Class="SubExplore.Views.Spots.Components.SpotLocationView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps">
@@ -15,13 +15,11 @@
                 HeightRequest="250"
                 IsClippedToBounds="True">
                 <Grid>
-                    <maps:Map IsShowingUser="{Binding HasUserLocation}" MapType="Street">
-                        <maps:Map.Pins>
-                            <maps:Pin
-                                Label="Spot"
-                                Location="{Binding ., Converter={StaticResource CoordinatesToPositionConverter}}"
-                                Type="Generic" />
-                        </maps:Map.Pins>
+                    <maps:Map 
+                        x:Name="spotMap"
+                        IsShowingUser="{Binding HasUserLocation}" 
+                        MapType="Street">
+                        <!-- Pins will be added programmatically after coordinates are ready -->
                     </maps:Map>
 
                     <!--  Centre de la carte (marqueur de position)  -->

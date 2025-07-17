@@ -9,11 +9,11 @@ using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
 using SubExplore.ViewModels.Settings;
 using SubExplore.ViewModels.Map;
-using SubExplore.ViewModels.Spot;
-using SubExplore.Views.Spot.Components;
+using SubExplore.ViewModels.Spots;
+using SubExplore.Views.Spots.Components;
 using SubExplore.Views.Settings;
 using SubExplore.Views.Map;
-using SubExplore.Views.Spot;
+using SubExplore.Views.Spots;
 using System.Reflection;
 using CommunityToolkit.Maui;
 using Microsoft.Maui.Controls.Maps;
@@ -157,6 +157,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<IImageCacheService, ImageCacheService>();
         builder.Services.AddSingleton<IMapDiagnosticService, MapDiagnosticService>();
         builder.Services.AddSingleton<IPlatformMapService, PlatformMapService>();
+        
+        // Configure logging
+        builder.Services.AddLogging(configure => configure.AddDebug());
         
         // Add HttpClient for image caching
         builder.Services.AddHttpClient<ImageCacheService>(client =>

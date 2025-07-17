@@ -1,10 +1,17 @@
-using SubExplore.ViewModels.Spot;
+using SubExplore.ViewModels.Spots;
 
-namespace SubExplore.Views.Spot
+namespace SubExplore.Views.Spots
 {
+    [QueryProperty(nameof(LocationParameter), "location")]
+    [QueryProperty(nameof(LatitudeParameter), "latitude")]
+    [QueryProperty(nameof(LongitudeParameter), "longitude")]
     public partial class AddSpotPage : ContentPage
     {
         private readonly AddSpotViewModel _viewModel;
+        
+        public string LocationParameter { get; set; }
+        public string LatitudeParameter { get; set; }
+        public string LongitudeParameter { get; set; }
 
         public AddSpotPage(AddSpotViewModel viewModel)
         {
@@ -18,7 +25,17 @@ namespace SubExplore.Views.Spot
             base.OnAppearing();
             try
             {
-                await _viewModel.InitializeAsync();
+                // Initialize with location parameters if provided
+                object parameter = null;
+                if (!string.IsNullOrEmpty(LatitudeParameter) && !string.IsNullOrEmpty(LongitudeParameter))
+                {
+                    if (decimal.TryParse(LatitudeParameter, out decimal lat) && decimal.TryParse(LongitudeParameter, out decimal lng))
+                    {
+                        parameter = new { Latitude = lat, Longitude = lng, LocationParameter };
+                    }
+                }
+                
+                await _viewModel.InitializeAsync(parameter);
             }
             catch (Exception ex)
             {

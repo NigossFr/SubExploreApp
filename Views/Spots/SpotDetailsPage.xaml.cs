@@ -1,9 +1,9 @@
 using Microsoft.Maui.Controls.Maps; 
 using Microsoft.Maui.Maps;          
-using SubExplore.ViewModels.Spot;
+using SubExplore.ViewModels.Spots;
 using System.ComponentModel; 
 
-namespace SubExplore.Views.Spot
+namespace SubExplore.Views.Spots
 {
     public partial class SpotDetailsPage : ContentPage
     {
@@ -15,15 +15,15 @@ namespace SubExplore.Views.Spot
             BindingContext = viewModel;
             _viewModel = viewModel;
 
-            // Écouter les changements de propriété sur le ViewModel
-            // Surtout IsLoading pour savoir quand les données sont prêtes
+            // ï¿½couter les changements de propriï¿½tï¿½ sur le ViewModel
+            // Surtout IsLoading pour savoir quand les donnï¿½es sont prï¿½tes
             if (_viewModel != null)
             {
                 _viewModel.PropertyChanged += ViewModel_PropertyChanged;
             }
         }
 
-        // N'oubliez pas de vous désabonner pour éviter les fuites mémoire
+        // N'oubliez pas de vous dï¿½sabonner pour ï¿½viter les fuites mï¿½moire
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
@@ -38,71 +38,71 @@ namespace SubExplore.Views.Spot
         {
             base.OnAppearing();
 
-            // Mettre à jour la carte si les données sont déjà chargées
+            // Mettre ï¿½ jour la carte si les donnï¿½es sont dï¿½jï¿½ chargï¿½es
             // (peut arriver si on revient sur la page)
             if (_viewModel != null && !_viewModel.IsLoading && _viewModel.Spot != null)
             {
                 UpdateMap();
             }
-            // Si le ViewModel est toujours en cours de chargement, l'événement PropertyChanged
+            // Si le ViewModel est toujours en cours de chargement, l'ï¿½vï¿½nement PropertyChanged
             // s'en chargera via ViewModel_PropertyChanged.
         }
 
-        // Méthode pour mettre à jour la carte après le chargement des données
+        // Mï¿½thode pour mettre ï¿½ jour la carte aprï¿½s le chargement des donnï¿½es
         private void UpdateMap()
         {
             if (_viewModel == null || spotMap == null)
             {
-                System.Diagnostics.Debug.WriteLine("ViewModel ou Map non prêts pour UpdateMap.");
+                System.Diagnostics.Debug.WriteLine("ViewModel ou Map non prï¿½ts pour UpdateMap.");
                 return;
             }
 
             // Nettoyez les pins actuels
             spotMap.Pins.Clear();
 
-            // Appelez la méthode CreatePin() du ViewModel pour obtenir le Pin
+            // Appelez la mï¿½thode CreatePin() du ViewModel pour obtenir le Pin
             Pin? spotPin = _viewModel.CreatePin(); // Utilise Pin? pour le nullable
 
-            // Si un pin valide a été créé, ajoutez-le à la carte
+            // Si un pin valide a ï¿½tï¿½ crï¿½ï¿½, ajoutez-le ï¿½ la carte
             if (spotPin != null)
             {
                 spotMap.Pins.Add(spotPin);
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("Impossible de créer le Pin pour UpdateMap.");
+                System.Diagnostics.Debug.WriteLine("Impossible de crï¿½er le Pin pour UpdateMap.");
                 // Optionnel : afficher un message ou ne rien faire
             }
 
-            // Appelez la méthode GetMapSpan() du ViewModel pour obtenir la région
+            // Appelez la mï¿½thode GetMapSpan() du ViewModel pour obtenir la rï¿½gion
             MapSpan? mapRegion = _viewModel.GetMapSpan(); // Utilise MapSpan? pour le nullable
 
-            // Si une région valide a été créée, déplacez la carte
+            // Si une rï¿½gion valide a ï¿½tï¿½ crï¿½ï¿½e, dï¿½placez la carte
             if (mapRegion != null)
             {
                 spotMap.MoveToRegion(mapRegion);
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("Impossible de créer le MapSpan pour UpdateMap.");
-                // Optionnel : centrer sur une position par défaut si Spot est null mais la carte doit s'afficher
+                System.Diagnostics.Debug.WriteLine("Impossible de crï¿½er le MapSpan pour UpdateMap.");
+                // Optionnel : centrer sur une position par dï¿½faut si Spot est null mais la carte doit s'afficher
                 // spotMap.MoveToRegion(MapSpan.FromCenterAndRadius(new Location(0, 0), Distance.FromKilometers(5)));
             }
         }
 
-        // Gestionnaire pour réagir aux changements dans le ViewModel
+        // Gestionnaire pour rï¿½agir aux changements dans le ViewModel
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            // Vérifie si la propriété IsLoading a changé ET qu'elle est maintenant false
-            // ET que le Spot est chargé (important !)
+            // Vï¿½rifie si la propriï¿½tï¿½ IsLoading a changï¿½ ET qu'elle est maintenant false
+            // ET que le Spot est chargï¿½ (important !)
             if (e.PropertyName == nameof(SpotDetailsViewModel.IsLoading) &&
                 _viewModel != null && !_viewModel.IsLoading && _viewModel.Spot != null)
             {
-                // Les données sont chargées, mettez à jour l'interface utilisateur (la carte)
-                // Assurez-vous que cela s'exécute sur le thread UI si nécessaire
+                // Les donnï¿½es sont chargï¿½es, mettez ï¿½ jour l'interface utilisateur (la carte)
+                // Assurez-vous que cela s'exï¿½cute sur le thread UI si nï¿½cessaire
                 MainThread.BeginInvokeOnMainThread(() => UpdateMap());
             }
-            // Vous pourriez aussi écouter les changements sur _viewModel.Spot directement
+            // Vous pourriez aussi ï¿½couter les changements sur _viewModel.Spot directement
             // if (e.PropertyName == nameof(SpotDetailsViewModel.Spot) && _viewModel?.Spot != null) ...
         }
     }

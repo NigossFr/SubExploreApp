@@ -8,7 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels.Base;
 
-namespace SubExplore.ViewModels.Spot
+namespace SubExplore.ViewModels.Spots
 {
     public partial class SpotLocationViewModel : ViewModelBase
     {

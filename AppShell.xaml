@@ -4,12 +4,26 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:SubExplore"
+    xmlns:map="clr-namespace:SubExplore.Views.Map"
+    xmlns:spots="clr-namespace:SubExplore.Views.Spots"
     Shell.FlyoutBehavior="Disabled"
     Title="SubExplore">
 
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Title="Map"
+        ContentTemplate="{DataTemplate map:MapPage}"
+        Route="map" />
+
+    <!-- Add Spot Page Route -->
+    <ShellContent
+        Title="Add Spot"
+        ContentTemplate="{DataTemplate spots:AddSpotPage}"
+        Route="addspot" />
+
+    <!-- Spot Details Page Route -->
+    <ShellContent
+        Title="Spot Details"
+        ContentTemplate="{DataTemplate spots:SpotDetailsPage}"
+        Route="spotdetails" />
 
 </Shell>

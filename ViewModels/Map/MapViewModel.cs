@@ -393,14 +393,49 @@ namespace SubExplore.ViewModels.Map
             if (spot == null) return;
 
             // Pour naviguer vers les détails du spot
-            await NavigationService.NavigateToAsync<ViewModels.Spot.SpotDetailsViewModel>(spot.Id).ConfigureAwait(false);
+            await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spot.Id).ConfigureAwait(false);
         }
 
         [RelayCommand]
         private async Task NavigateToAddSpot()
         {
-            // Pour naviguer vers l'ajout d'un spot
-            await NavigationService.NavigateToAsync<ViewModels.Spot.AddSpotViewModel>().ConfigureAwait(false);
+            try
+            {
+                // Create location parameter object with current user location if available
+                object locationParameter = null;
+                
+                if (IsLocationAvailable)
+                {
+                    locationParameter = new
+                    {
+                        Latitude = (decimal)UserLatitude,
+                        Longitude = (decimal)UserLongitude,
+                        LocationParameter = $"Current Location ({UserLatitude:F6}, {UserLongitude:F6})"
+                    };
+                    
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAddSpot with location: {UserLatitude}, {UserLongitude}");
+                }
+                else
+                {
+                    // Use map center as fallback
+                    locationParameter = new
+                    {
+                        Latitude = (decimal)MapLatitude,
+                        Longitude = (decimal)MapLongitude,
+                        LocationParameter = $"Map Center ({MapLatitude:F6}, {MapLongitude:F6})"
+                    };
+                    
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAddSpot with map center: {MapLatitude}, {MapLongitude}");
+                }
+
+                // Navigate to AddSpot with location parameters
+                await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToAddSpot failed: {ex.Message}");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de naviguer vers l'ajout de spot. Veuillez réessayer.", "OK");
+            }
         }
 
         [RelayCommand]
@@ -494,10 +529,40 @@ namespace SubExplore.ViewModels.Map
         }
 
         [RelayCommand]
-        private void MapClicked(Microsoft.Maui.Controls.Maps.MapClickedEventArgs args)
+        private async Task MapClicked(Microsoft.Maui.Controls.Maps.MapClickedEventArgs args)
         {
-            // Gérer les clics sur la carte
-            // Par exemple, vous pourriez permettre l'ajout d'un nouveau spot à cet endroit
+            try
+            {
+                // Handle map clicks for adding spots at specific location
+                if (args?.Location != null)
+                {
+                    var clickedLocation = args.Location;
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Map clicked at: {clickedLocation.Latitude}, {clickedLocation.Longitude}");
+                    
+                    // Show option to add spot at clicked location
+                    var result = await DialogService.ShowConfirmationAsync(
+                        "Ajouter un spot", 
+                        "Voulez-vous ajouter un spot à cet endroit ?", 
+                        "Oui", 
+                        "Non");
+                    
+                    if (result)
+                    {
+                        var locationParameter = new
+                        {
+                            Latitude = (decimal)clickedLocation.Latitude,
+                            Longitude = (decimal)clickedLocation.Longitude,
+                            LocationParameter = $"Map Click ({clickedLocation.Latitude:F6}, {clickedLocation.Longitude:F6})"
+                        };
+                        
+                        await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] MapClicked failed: {ex.Message}");
+            }
         }
 
         [RelayCommand]

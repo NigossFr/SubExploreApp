@@ -1,4 +1,4 @@
-namespace SubExplore.Views.Spot.Components;
+namespace SubExplore.Views.Spots.Components;
 
 public partial class SpotPhotosView : ContentView
 {
