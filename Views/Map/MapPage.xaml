@@ -71,68 +71,68 @@
         </Frame>
 
         <!--  Barre de filtres améliorée  -->
-        <Frame
+        <ScrollView 
             Grid.Row="1"
             Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
-            Padding="5"
-            BackgroundColor="{StaticResource Surface}"
-            BorderColor="{StaticResource Secondary}"
-            CornerRadius="25"
-            HasShadow="True"
-            AutomationId="FiltersFrame"
-            SemanticProperties.Description="Zone de filtres des spots">
-            <ScrollView HorizontalScrollBarVisibility="Never" Orientation="Horizontal">
-                <HorizontalStackLayout Spacing="5">
-                    <Button
-                        Command="{Binding ClearFiltersCommand}"
-                        Style="{StaticResource ButtonFilterStyle}"
-                        Text="Tous"
-                        FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                        AutomationId="ClearFiltersButton"
-                        SemanticProperties.Description="Afficher tous les types de spots"
-                        SemanticProperties.Hint="Appuyez pour supprimer tous les filtres et afficher tous les spots">
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
-                                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                <Setter Property="TextColor" Value="White" />
-                            </DataTrigger>
-                            <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
-                                <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
-                                <Setter Property="TextColor" Value="{StaticResource Primary}" />
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
+            HorizontalScrollBarVisibility="Never" 
+            Orientation="Horizontal"
+            AutomationId="FiltersScrollView"
+            SemanticProperties.Description="Zone de filtres des spots - Balayez horizontalement pour voir plus d'options"
+            SemanticProperties.Hint="Balayez vers la droite pour découvrir d'autres types de spots">
+            <HorizontalStackLayout Spacing="6" Padding="8,8,24,8">
+                <Button
+                    Command="{Binding ClearFiltersCommand}"
+                    Style="{StaticResource ButtonFilterStyle}"
+                    Text="Tous"
+                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                    CornerRadius="8"
+                    Padding="14,8"
+                    AutomationId="ClearFiltersButton"
+                    SemanticProperties.Description="Afficher tous les types de spots"
+                    SemanticProperties.Hint="Appuyez pour supprimer tous les filtres et afficher tous les spots">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
+                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                            <Setter Property="TextColor" Value="White" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
+                            <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
+                            <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
 
-                    <CollectionView
-                        ItemsSource="{Binding SpotTypes}"
-                        SelectedItem="{Binding SelectedSpotType}"
-                        SelectionChangedCommand="{Binding FilterSpotsByTypeCommand}"
-                        SelectionChangedCommandParameter="{Binding SelectedSpotType}"
-                        SelectionMode="Single"
-                        AutomationId="SpotTypesFilter"
-                        SemanticProperties.Description="Filtrer les spots par type d'activité">
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout ItemSpacing="5" Orientation="Horizontal" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <Button
-                                    BackgroundColor="{Binding ColorCode}"
-                                    Style="{StaticResource ButtonFilterStyle}"
-                                    Text="{Binding Name}"
-                                    TextColor="White"
-                                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=FilterSpotsByTypeCommand}"
-                                    CommandParameter="{Binding .}"
-                                    AutomationId="{Binding Name, StringFormat='Filter{0}Button'}"
-                                    SemanticProperties.Description="{Binding Name, StringFormat='Filtrer par {0}'}"
-                                    SemanticProperties.Hint="{Binding Name, StringFormat='Appuyez pour afficher uniquement les spots de type {0}'}" />
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </HorizontalStackLayout>
-            </ScrollView>
-        </Frame>
+                <CollectionView
+                    ItemsSource="{Binding SpotTypes}"
+                    SelectedItem="{Binding SelectedSpotType}"
+                    SelectionChangedCommand="{Binding FilterSpotsByTypeCommand}"
+                    SelectionChangedCommandParameter="{Binding SelectedSpotType}"
+                    SelectionMode="Single"
+                    AutomationId="SpotTypesFilter"
+                    SemanticProperties.Description="Filtrer les spots par type d'activité - Balayez pour voir plus d'options">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout ItemSpacing="6" Orientation="Horizontal" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Button
+                                BackgroundColor="{Binding ColorCode}"
+                                Style="{StaticResource ButtonFilterStyle}"
+                                Text="{Binding Name}"
+                                TextColor="White"
+                                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                                CornerRadius="8"
+                                Padding="14,8"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=FilterSpotsByTypeCommand}"
+                                CommandParameter="{Binding .}"
+                                AutomationId="{Binding Name, StringFormat='Filter{0}Button'}"
+                                SemanticProperties.Description="{Binding Name, StringFormat='Filtrer par {0}'}"
+                                SemanticProperties.Hint="{Binding Name, StringFormat='Appuyez pour afficher uniquement les spots de type {0}'}" />
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </HorizontalStackLayout>
+        </ScrollView>
 
         <!--  Carte responsive  -->
         <Grid Grid.Row="2">
