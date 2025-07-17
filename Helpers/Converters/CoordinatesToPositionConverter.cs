@@ -27,17 +27,14 @@ namespace SubExplore.Helpers.Converters
                     System.Diagnostics.Debug.WriteLine($"Erreur dans CoordinatesToPositionConverter lors de la conversion: {ex.Message}");
                     // Retourne null ou une valeur par défaut appropriée si la conversion échoue
                     return null;
-                    // Alternative : retourner une position par défaut si la liaison l'exige absolument
-                    // return new Location(0, 0);
                 }
             }
 
-            // Si la valeur n'est pas un SpotLocationViewModel ou est null, retourne null/défaut
+            // Si la valeur n'est pas un SpotLocationViewModel ou est null, retourne null
             return null;
-            // Alternative : return new Location(0, 0);
         }
 
-        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             // Généralement non implémenté pour les conversions unidirectionnelles
             throw new NotImplementedException();

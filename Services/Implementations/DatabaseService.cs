@@ -84,28 +84,33 @@ namespace SubExplore.Services.Implementations
                 _logger.LogInformation("Vérification des données existantes...");
 
                 // Vérifier si des données existent déjà
-                bool hasData = false;
+                bool hasSpotTypes = false;
+                bool hasSpots = false;
 
                 try
                 {
-                    hasData = await _context.SpotTypes.AnyAsync();
+                    hasSpotTypes = await _context.SpotTypes.AnyAsync();
+                    hasSpots = await _context.Spots.AnyAsync();
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Impossible de vérifier l'existence de données. Cela peut être normal si le schéma n'existe pas encore.");
-                    hasData = false;
+                    hasSpotTypes = false;
+                    hasSpots = false;
                 }
 
-                if (hasData)
+                if (hasSpotTypes && hasSpots)
                 {
-                    _logger.LogInformation("La base de données contient déjà des données");
+                    _logger.LogInformation("La base de données contient déjà des données complètes");
                     return true;
                 }
 
                 _logger.LogInformation("Initialisation des données de base...");
 
-                // Ajouter les types de spots
-                var spotTypes = new List<SpotType>
+                // Ajouter les types de spots seulement s'ils n'existent pas
+                if (!hasSpotTypes)
+                {
+                    var spotTypes = new List<SpotType>
                 {
                     new SpotType
                     {
@@ -177,12 +182,20 @@ namespace SubExplore.Services.Implementations
                         }),
                         IsActive = true
                     }
-                };
+                    };
 
-                _context.SpotTypes.AddRange(spotTypes);
-                _logger.LogInformation("Types de spots ajoutés");
+                    _context.SpotTypes.AddRange(spotTypes);
+                    _logger.LogInformation("Types de spots ajoutés");
+                }
+                else
+                {
+                    _logger.LogInformation("Types de spots déjà présents, ignorés");
+                }
 
-                // Création d'un compte administrateur
+                // Création d'un compte administrateur seulement s'il n'existe pas
+                var existingAdmin = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com");
+                if (existingAdmin == null)
+                {
                 var adminUser = new User
                 {
                     Email = "admin@subexplore.com",
@@ -207,12 +220,20 @@ namespace SubExplore.Services.Implementations
                         Language = "fr",
                         CreatedAt = DateTime.UtcNow
                     }
-                };
+                    };
 
-                _context.Users.Add(adminUser);
-                _logger.LogInformation("Compte administrateur ajouté");
+                    _context.Users.Add(adminUser);
+                    _logger.LogInformation("Compte administrateur ajouté");
+                }
+                else
+                {
+                    _logger.LogInformation("Compte administrateur déjà présent, ignoré");
+                }
 
-                // Création d'un utilisateur de test
+                // Création d'un utilisateur de test seulement s'il n'existe pas
+                var existingTestUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "test@subexplore.com");
+                if (existingTestUser == null)
+                {
                 var testUser = new User
                 {
                     Email = "test@subexplore.com",
@@ -237,13 +258,129 @@ namespace SubExplore.Services.Implementations
                         Language = "fr",
                         CreatedAt = DateTime.UtcNow
                     }
-                };
+                    };
 
-                _context.Users.Add(testUser);
-                _logger.LogInformation("Utilisateur de test ajouté");
+                    _context.Users.Add(testUser);
+                    _logger.LogInformation("Utilisateur de test ajouté");
+                }
+                else
+                {
+                    _logger.LogInformation("Utilisateur de test déjà présent, ignoré");
+                }
 
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Données initialisées avec succès");
+                _logger.LogInformation("Users et SpotTypes initialisés avec succès");
+
+                // Ajouter des spots d'exemple seulement s'ils n'existent pas
+                if (!hasSpots)
+                {
+                    // Récupérer les IDs des données créées pour les spots
+                    var divingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Plongée récréative");
+                    var freedivingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Apnée");
+                    var snorkelingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Randonnée palmée");
+                    var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com");
+                    var adminUserId = adminUser?.Id ?? 1;
+
+                    // Ajouter des spots d'exemple
+                var sampleSpots = new List<Spot>
+                {
+                    new Spot
+                    {
+                        Name = "Calanque de Sormiou",
+                        Description = "Magnifique calanque avec une eau cristalline, idéale pour la plongée et le snorkeling. Fonds rocheux avec une faune variée.",
+                        Latitude = 43.2148m,
+                        Longitude = 5.4203m,
+                        MaxDepth = 25,
+                        DifficultyLevel = DifficultyLevel.Intermediate,
+                        ValidationStatus = SpotValidationStatus.Approved,
+                        TypeId = divingType?.Id ?? 1,
+                        CreatorId = adminUserId,
+                        CreatedAt = DateTime.UtcNow,
+                        CurrentStrength = CurrentStrength.Moderate,
+                        BestConditions = "Mer calme, visibilité 15-20m",
+                        SafetyNotes = "Attention aux bateaux de plaisance en été",
+                        RequiredEquipment = "Palmes, masque, tuba, combinaison recommandée"
+                    },
+                    new Spot
+                    {
+                        Name = "Île Maïre",
+                        Description = "Site de plongée emblématique de Marseille avec tombant et grottes. Biodiversité exceptionnelle.",
+                        Latitude = 43.2105m,
+                        Longitude = 5.3520m,
+                        MaxDepth = 40,
+                        DifficultyLevel = DifficultyLevel.Advanced,
+                        ValidationStatus = SpotValidationStatus.Approved,
+                        TypeId = divingType?.Id ?? 1,
+                        CreatorId = adminUserId,
+                        CreatedAt = DateTime.UtcNow,
+                        CurrentStrength = CurrentStrength.Strong,
+                        BestConditions = "Mer peu agitée, visibilité 20-25m",
+                        SafetyNotes = "Plongée technique, niveau 2 minimum requis",
+                        RequiredEquipment = "Équipement complet de plongée, lampe obligatoire"
+                    },
+                    new Spot
+                    {
+                        Name = "Calanque de Cassis",
+                        Description = "Site parfait pour l'apnée avec une profondeur progressive et une faune accessible.",
+                        Latitude = 43.2148m,
+                        Longitude = 5.5385m,
+                        MaxDepth = 15,
+                        DifficultyLevel = DifficultyLevel.Beginner,
+                        ValidationStatus = SpotValidationStatus.Approved,
+                        TypeId = freedivingType?.Id ?? 2,
+                        CreatorId = adminUserId,
+                        CreatedAt = DateTime.UtcNow,
+                        CurrentStrength = CurrentStrength.Light,
+                        BestConditions = "Mer calme, visibilité 10-15m",
+                        SafetyNotes = "Idéal pour débutants, surveiller les autres utilisateurs",
+                        RequiredEquipment = "Palmes, masque, tuba"
+                    },
+                    new Spot
+                    {
+                        Name = "Plage de la Pointe Rouge",
+                        Description = "Excellent spot de snorkeling accessible à tous, avec parking et commodités.",
+                        Latitude = 43.2380m,
+                        Longitude = 5.3590m,
+                        MaxDepth = 5,
+                        DifficultyLevel = DifficultyLevel.Beginner,
+                        ValidationStatus = SpotValidationStatus.Approved,
+                        TypeId = snorkelingType?.Id ?? 3,
+                        CreatorId = adminUserId,
+                        CreatedAt = DateTime.UtcNow,
+                        CurrentStrength = CurrentStrength.Light,
+                        BestConditions = "Toute condition, protégé du mistral",
+                        SafetyNotes = "Attention aux baigneurs en été",
+                        RequiredEquipment = "Palmes, masque, tuba"
+                    },
+                    new Spot
+                    {
+                        Name = "Cap Croisette",
+                        Description = "Site de plongée avec épave accessible, parfait pour la photographie sous-marine.",
+                        Latitude = 43.2065m,
+                        Longitude = 5.4810m,
+                        MaxDepth = 30,
+                        DifficultyLevel = DifficultyLevel.Intermediate,
+                        ValidationStatus = SpotValidationStatus.Approved,
+                        TypeId = divingType?.Id ?? 1,
+                        CreatorId = adminUserId,
+                        CreatedAt = DateTime.UtcNow,
+                        CurrentStrength = CurrentStrength.Moderate,
+                        BestConditions = "Mer calme, visibilité 15-20m",
+                        SafetyNotes = "Épave à 25m, attention aux filets",
+                        RequiredEquipment = "Équipement complet de plongée, appareil photo étanche"
+                    }
+                    };
+
+                    _context.Spots.AddRange(sampleSpots);
+                    _logger.LogInformation("Spots d'exemple ajoutés: {Count}", sampleSpots.Count);
+
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    _logger.LogInformation("Spots déjà présents, ignorés");
+                }
+                _logger.LogInformation("Toutes les données initialisées avec succès");
                 return true;
             }
             catch (Exception ex)

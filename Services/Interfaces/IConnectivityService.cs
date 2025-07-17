@@ -19,6 +19,11 @@ namespace SubExplore.Services.Interfaces
         bool IsUsingCellularNetwork { get; }
 
         /// <summary>
+        /// Obtient l'état d'accès réseau actuel
+        /// </summary>
+        NetworkAccess NetworkAccess { get; }
+
+        /// <summary>
         /// Se produit lorsque la connectivité réseau change
         /// </summary>
         event EventHandler<ConnectivityChangedEventArgs> ConnectivityChanged;

@@ -27,17 +27,14 @@ namespace SubExplore.Helpers.Converters
                     System.Diagnostics.Debug.WriteLine($"Erreur dans SpotToMapPositionConverter: {ex.Message}");
                     // Retourne null ou une valeur par défaut en cas d'erreur
                     return null;
-                    // Alternative si un retour non-null est absolument requis :
-                    // return new Location(0, 0);
                 }
             }
 
-            // Si la valeur n'est pas un objet Spot ou est null, retourne null/défaut
+            // Si la valeur n'est pas un objet Spot ou est null, retourne null
             return null;
-            // Alternative : return new Location(0, 0);
         }
 
-        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             // La conversion inverse n'est généralement pas nécessaire ici
             throw new NotImplementedException();

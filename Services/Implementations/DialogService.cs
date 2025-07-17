@@ -13,31 +13,40 @@ namespace SubExplore.Services.Implementations
     {
         public Task ShowAlertAsync(string title, string message, string buttonText)
         {
-            return Application.Current.MainPage.DisplayAlert(title, message, buttonText);
+            return Application.Current.Dispatcher.DispatchAsync(() =>
+                Application.Current.MainPage.DisplayAlert(title, message, buttonText));
         }
 
         public Task<bool> ShowConfirmationAsync(string title, string message, string okText, string cancelText)
         {
-            return Application.Current.MainPage.DisplayAlert(title, message, okText, cancelText);
+            return Application.Current.Dispatcher.DispatchAsync(() =>
+                Application.Current.MainPage.DisplayAlert(title, message, okText, cancelText));
         }
 
         public Task<string> ShowPromptAsync(string title, string message, string okText, string cancelText, string placeholder = "", string initialValue = "")
         {
-            return Application.Current.MainPage.DisplayPromptAsync(title, message, okText, cancelText, placeholder, initialValue: initialValue);
+            return Application.Current.Dispatcher.DispatchAsync(() =>
+                Application.Current.MainPage.DisplayPromptAsync(title, message, okText, cancelText, placeholder, initialValue: initialValue));
         }
 
         public async Task ShowToastAsync(string message, int durationInSeconds = 2)
         {
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            await Application.Current.Dispatcher.DispatchAsync(async () =>
+            {
+                CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
-            var toast = Toast.Make(message, CommunityToolkit.Maui.Core.ToastDuration.Short, 14);
-            await toast.Show(cancellationTokenSource.Token);
+                var toast = Toast.Make(message, CommunityToolkit.Maui.Core.ToastDuration.Short, 14);
+                await toast.Show(cancellationTokenSource.Token);
+            });
         }
 
         public async Task<IDisposable> ShowLoadingAsync(string message = "Chargement...")
         {
             var loadingPage = new LoadingIndicator(message);
-            await Application.Current.MainPage.Navigation.PushModalAsync(loadingPage, false);
+            await Application.Current.Dispatcher.DispatchAsync(async () =>
+            {
+                await Application.Current.MainPage.Navigation.PushModalAsync(loadingPage, false);
+            });
 
             return new LoadingDisposable(loadingPage);
         }

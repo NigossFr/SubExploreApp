@@ -70,28 +70,41 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                // Dans les nouvelles versions de .NET MAUI, on utilise cette méthode
-                var status = await Geolocation.GetLastKnownLocationAsync();
-                return status != null;
+                // Check if location services are enabled on device
+                var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+                
+                if (status == PermissionStatus.Granted)
+                {
+                    // Try to get location with timeout to verify service is working
+                    var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(5));
+                    var location = await Geolocation.GetLocationAsync(request);
+                    return location != null;
+                }
+                
+                return false;
             }
             catch (FeatureNotSupportedException)
             {
                 // Géolocalisation non prise en charge sur l'appareil
+                System.Diagnostics.Debug.WriteLine("[LocationService] Geolocation not supported on device");
                 return false;
             }
             catch (FeatureNotEnabledException)
             {
                 // Localisation désactivée sur l'appareil
+                System.Diagnostics.Debug.WriteLine("[LocationService] Location services disabled on device");
                 return false;
             }
             catch (PermissionException)
             {
                 // Permissions non accordées
+                System.Diagnostics.Debug.WriteLine("[LocationService] Location permission not granted");
                 return false;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // Autres erreurs
+                System.Diagnostics.Debug.WriteLine($"[LocationService] Error checking location service: {ex.Message}");
                 return false;
             }
         }

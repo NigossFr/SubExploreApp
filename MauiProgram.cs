@@ -38,6 +38,11 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
+#if ANDROID
+        // Additional Android-specific Google Maps configuration will be handled by the platform-specific code
+        Debug.WriteLine("[INFO] Android Google Maps configuration ready");
+#endif
+
         // Charger la configuration depuis appsettings.json
         var assembly = Assembly.GetExecutingAssembly();
         var appSettingsResourceName = "SubExplore.appsettings.json"; // Assurez-vous que cela correspond
@@ -115,12 +120,23 @@ public static class MauiProgram
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                throw new InvalidOperationException("La chaîne de connexion à la base de données n'est pas configurée ou introuvable.");
+                var errorMessage = "La chaîne de connexion à la base de données n'est pas configurée ou introuvable.";
+                Debug.WriteLine($"[ERROR] {errorMessage}");
+                throw new InvalidOperationException(errorMessage);
             }
 
-            Debug.WriteLine($"Chaîne de connexion utilisée : {connectionString}"); // Attention, ne pas logger en production si elle contient des mots de passe !
+            Debug.WriteLine($"Chaîne de connexion utilisée : {connectionString.Replace("password=", "password=***")}"); // Masquer le mot de passe dans les logs
 
-            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            try
+            {
+                // Test de la connexion avant de continuer
+                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ERROR] Database connection failed: {ex.Message}");
+                throw new InvalidOperationException($"Database connection failed: {ex.Message}", ex);
+            }
         });
 
         // Enregistrement des repositories
@@ -138,6 +154,16 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMediaService, MediaService>();
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
         builder.Services.AddSingleton<IConnectivityService, ConnectivityService>();
+        builder.Services.AddSingleton<IImageCacheService, ImageCacheService>();
+        builder.Services.AddSingleton<IMapDiagnosticService, MapDiagnosticService>();
+        builder.Services.AddSingleton<IPlatformMapService, PlatformMapService>();
+        
+        // Add HttpClient for image caching
+        builder.Services.AddHttpClient<ImageCacheService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Add("User-Agent", "SubExplore/1.0");
+        });
 
         // Enregistrement des ViewModels
         // Pour les ViewModels, AddTransient est souvent un bon choix, mais AddScoped peut aussi être pertinent
@@ -163,6 +189,17 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
+
+        // Add global exception handling
+        AppDomain.CurrentDomain.UnhandledException += (sender, e) => {
+            var exception = e.ExceptionObject as Exception;
+            Debug.WriteLine($"[FATAL] Unhandled exception: {exception?.Message}");
+            Debug.WriteLine($"[FATAL] Stack trace: {exception?.StackTrace}");
+            if (exception?.InnerException != null)
+            {
+                Debug.WriteLine($"[FATAL] Inner exception: {exception.InnerException.Message}");
+            }
+        };
 
         return builder.Build();
     }

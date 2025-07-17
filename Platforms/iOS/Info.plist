@@ -28,5 +28,23 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	
+	<!-- Location permission usage descriptions -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SubExplore utilise votre localisation pour afficher les spots de plongée à proximité et vous aider à naviguer.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>SubExplore utilise votre localisation pour afficher les spots de plongée à proximité et vous aider à naviguer.</string>
+	
+	<!-- Camera permission for spot photos -->
+	<key>NSCameraUsageDescription</key>
+	<string>SubExplore utilise l'appareil photo pour prendre des photos des spots de plongée.</string>
+	
+	<!-- Photo library permission for spot photos -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SubExplore accède à votre photothèque pour sélectionner des photos des spots de plongée.</string>
+	
+	<!-- Google Maps API Key for iOS -->
+	<key>GoogleMapsAPIKey</key>
+	<string>AIzaSyDAKkZk5ceq0-hFQDO00D26tWfjSp2RCaM</string>
 </dict>
 </plist>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="SubExplore.Views.Common.LoadingStateView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    
+    <Grid>
+        <!-- Loading State -->
+        <Frame 
+            BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}"
+            Padding="20"
+            CornerRadius="10"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            IsVisible="{Binding IsLoading}">
+            <StackLayout Spacing="15" HorizontalOptions="Center">
+                <ActivityIndicator 
+                    Color="{StaticResource Primary}"
+                    IsRunning="{Binding IsLoading}"
+                    HeightRequest="40"
+                    WidthRequest="40"
+                    AutomationId="LoadingIndicator"
+                    SemanticProperties.Description="Chargement en cours"
+                    SemanticProperties.Hint="Veuillez patienter pendant le chargement des données" />
+                
+                <Label 
+                    Text="{Binding LoadingMessage, FallbackValue='Chargement...'}"
+                    FontSize="{Binding Source=1.1, Converter={StaticResource ResponsiveFontSizeConverter}}"
+                    HorizontalOptions="Center"
+                    TextColor="{StaticResource TextPrimary}"
+                    AutomationId="LoadingMessage"
+                    SemanticProperties.Description="Message de chargement" />
+            </StackLayout>
+        </Frame>
+
+        <!-- Error State -->
+        <Frame 
+            BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}"
+            Padding="20"
+            CornerRadius="10"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            IsVisible="{Binding IsError}">
+            <StackLayout Spacing="15" HorizontalOptions="Center">
+                <Label 
+                    Text="⚠️"
+                    FontSize="40"
+                    HorizontalOptions="Center"
+                    TextColor="{StaticResource Warning}"
+                    SemanticProperties.Description="Icône d'erreur" />
+                
+                <Label 
+                    Text="{Binding ErrorTitle, FallbackValue='Erreur'}"
+                    FontSize="{Binding Source=1.2, Converter={StaticResource ResponsiveFontSizeConverter}}"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Center"
+                    TextColor="{StaticResource Error}"
+                    AutomationId="ErrorTitle"
+                    SemanticProperties.Description="Titre de l'erreur" />
+                
+                <Label 
+                    Text="{Binding ErrorMessage, FallbackValue='Une erreur s\'est produite'}"
+                    FontSize="{Binding Source=1.0, Converter={StaticResource ResponsiveFontSizeConverter}}"
+                    HorizontalOptions="Center"
+                    TextColor="{StaticResource TextSecondary}"
+                    HorizontalTextAlignment="Center"
+                    MaxLines="3"
+                    LineBreakMode="TailTruncation"
+                    AutomationId="ErrorMessage"
+                    SemanticProperties.Description="Message d'erreur détaillé" />
+                
+                <Button 
+                    Text="Réessayer"
+                    Style="{StaticResource ButtonPrimaryStyle}"
+                    Command="{Binding RetryCommand}"
+                    IsVisible="{Binding CanRetry}"
+                    AutomationId="RetryButton"
+                    SemanticProperties.Description="Bouton pour réessayer l'opération"
+                    SemanticProperties.Hint="Appuyez pour réessayer l'opération qui a échoué" />
+            </StackLayout>
+        </Frame>
+
+        <!-- Empty State -->
+        <Frame 
+            BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}"
+            Padding="20"
+            CornerRadius="10"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            IsVisible="{Binding IsEmpty}">
+            <StackLayout Spacing="15" HorizontalOptions="Center">
+                <Label 
+                    Text="{Binding EmptyIcon, FallbackValue='🏊'}"
+                    FontSize="60"
+                    HorizontalOptions="Center"
+                    TextColor="{StaticResource Secondary}"
+                    SemanticProperties.Description="Icône d'état vide" />
+                
+                <Label 
+                    Text="{Binding EmptyTitle, FallbackValue='Aucun élément trouvé'}"
+                    FontSize="{Binding Source=1.2, Converter={StaticResource ResponsiveFontSizeConverter}}"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Center"
+                    TextColor="{StaticResource TextPrimary}"
+                    AutomationId="EmptyTitle"
+                    SemanticProperties.Description="Titre de l'état vide" />
+                
+                <Label 
+                    Text="{Binding EmptyMessage, FallbackValue='Aucun élément à afficher pour le moment'}"
+                    FontSize="{Binding Source=1.0, Converter={StaticResource ResponsiveFontSizeConverter}}"
+                    HorizontalOptions="Center"
+                    TextColor="{StaticResource TextSecondary}"
+                    HorizontalTextAlignment="Center"
+                    MaxLines="3"
+                    LineBreakMode="WordWrap"
+                    AutomationId="EmptyMessage"
+                    SemanticProperties.Description="Message d'état vide détaillé" />
+                
+                <Button 
+                    Text="{Binding EmptyActionText, FallbackValue='Actualiser'}"
+                    Style="{StaticResource ButtonSecondaryStyle}"
+                    Command="{Binding EmptyActionCommand}"
+                    IsVisible="{Binding HasEmptyAction}"
+                    AutomationId="EmptyActionButton"
+                    SemanticProperties.Description="Bouton d'action pour l'état vide"
+                    SemanticProperties.Hint="Appuyez pour effectuer une action quand aucun élément n'est affiché" />
+            </StackLayout>
+        </Frame>
+    </Grid>
+</ContentView>

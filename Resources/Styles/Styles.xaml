@@ -1,5 +1,13 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
-<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:converters="clr-namespace:SubExplore.Helpers.Converters">
+
+    <!--  Responsive Converters  -->
+    <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />
+    <converters:ResponsiveWidthConverter x:Key="ResponsiveWidthConverter" />
+    <converters:ResponsiveFontSizeConverter x:Key="ResponsiveFontSizeConverter" />
+    <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
+    <converters:ResponsiveColumnsConverter x:Key="ResponsiveColumnsConverter" />
+    <converters:OrientationBasedConverter x:Key="OrientationBasedConverter" />
 
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />

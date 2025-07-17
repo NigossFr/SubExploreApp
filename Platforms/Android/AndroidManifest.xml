@@ -1,31 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-	<application
-        android:allowBackup="true"
-        android:icon="@mipmap/appicon"
-        android:supportsRtl="true"
-        android:label="SubExplore">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.companyname.subexplore">
+	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:supportsRtl="true" android:label="SubExplore">
 		<!-- Optionnel : ajoutez un label pour l'app si vous ne l'avez pas ailleurs -->
-
 		<!-- Clé API Google Maps pour Android -->
-		<meta-data android:name="com.google.android.geo.API_KEY"
-                   android:value="AIzaSyBYY1Hj_oYPqBfn_Asf4KEObl1IAlK4t4w" />
-
+		<meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyDAKkZk5ceq0-hFQDO00D26tWfjSp2RCaM" />
 		<!-- MainActivity (généralement ajouté automatiquement par MAUI) -->
 		<!-- Si une activité est déjà définie par le build MAUI, ne la dupliquez pas ici.
              Cette section meta-data doit être à l'intérieur de la balise <application>.
              Le build MAUI ajoute généralement une entrée comme celle-ci :
         <activity android:name=".MainActivity" ... />
         -->
-
 	</application>
-
 	<!-- Permissions -->
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-
 	<!-- La permission WRITE_EXTERNAL_STORAGE est largement obsolète pour les nouvelles versions d'Android (API 29+).
          Pour l'accès aux médias, utilisez MediaStore ou Storage Access Framework.
          Pour les fichiers de l'application, utilisez le stockage spécifique à l'application.
@@ -34,17 +24,16 @@
          en dépendait pour une raison spécifique, mais soyez conscient de son obsolescence. -->
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 	<!--  maxSdkVersion="28" est une bonne pratique si vous n'en avez plus besoin pour API 29+ -->
-
 	<!-- Si vous utilisez la caméra ou la galerie via MAUI Essentials ou MediaPicker -->
 	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 	<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 	<uses-permission android:name="android.permission.CAMERA" />
-
+	<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
 	<!-- Fonctionnalités matérielles (MAUI les ajoute souvent si nécessaires) -->
 	<uses-feature android:name="android.hardware.location" android:required="false" />
 	<uses-feature android:name="android.hardware.location.gps" android:required="false" />
 	<uses-feature android:name="android.hardware.location.network" android:required="false" />
 	<uses-feature android:name="android.hardware.camera" android:required="false" />
 	<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
-
 </manifest>

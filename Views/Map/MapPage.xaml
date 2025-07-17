@@ -31,12 +31,18 @@
                     Placeholder="Rechercher un spot..."
                     ReturnCommand="{Binding SearchSpotsCommand}"
                     ReturnType="Search"
-                    Text="{Binding SearchText}" />
+                    Text="{Binding SearchText}"
+                    AutomationId="SearchEntry"
+                    SemanticProperties.Description="Rechercher des spots de plongée par nom ou localisation"
+                    SemanticProperties.Hint="Entrez le nom d'un spot ou d'une localisation pour effectuer une recherche" />
                 <Button
                     Grid.Column="1"
                     Command="{Binding SearchSpotsCommand}"
                     Style="{StaticResource ButtonActionStyle}"
-                    Text="🔍" />
+                    Text="🔍"
+                    AutomationId="SearchButton"
+                    SemanticProperties.Description="Lancer la recherche de spots"
+                    SemanticProperties.Hint="Appuyez pour rechercher des spots correspondant au texte saisi" />
             </Grid>
         </Frame>
 
@@ -55,15 +61,19 @@
                         Command="{Binding ClearFiltersCommand}"
                         Style="{StaticResource ButtonFilterStyle}"
                         Text="Tous"
-                        TextColor="White" />
+                        TextColor="White"
+                        AutomationId="ClearFiltersButton"
+                        SemanticProperties.Description="Afficher tous les types de spots"
+                        SemanticProperties.Hint="Appuyez pour supprimer tous les filtres et afficher tous les spots" />
 
                     <CollectionView
-                        HeightRequest="40"
                         ItemsSource="{Binding SpotTypes}"
                         SelectedItem="{Binding SelectedSpotType}"
                         SelectionChangedCommand="{Binding FilterSpotsByTypeCommand}"
                         SelectionChangedCommandParameter="{Binding SelectedSpotType}"
-                        SelectionMode="Single">
+                        SelectionMode="Single"
+                        AutomationId="SpotTypesFilter"
+                        SemanticProperties.Description="Filtrer les spots par type d'activité">
                         <CollectionView.ItemsLayout>
                             <LinearItemsLayout ItemSpacing="5" Orientation="Horizontal" />
                         </CollectionView.ItemsLayout>
@@ -73,7 +83,10 @@
                                     BackgroundColor="{Binding ColorCode}"
                                     Style="{StaticResource ButtonFilterStyle}"
                                     Text="{Binding Name}"
-                                    TextColor="White" />
+                                    TextColor="White"
+                                    AutomationId="{Binding Name, StringFormat='Filter{0}Button'}"
+                                    SemanticProperties.Description="{Binding Name, StringFormat='Filtrer par {0}'}"
+                                    SemanticProperties.Hint="{Binding Name, StringFormat='Appuyez pour afficher uniquement les spots de type {0}'}" />
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
@@ -84,10 +97,19 @@
         <!--  Carte  -->
         <maps:Map
             Grid.Row="2"
+            x:Name="MainMap"
             IsShowingUser="{Binding IsLocationAvailable}"
             ItemsSource="{Binding Pins}"
             MapClicked="OnMapClicked"
-            MapType="Street">
+            MapType="Street"
+            HeightRequest="400"
+            HorizontalOptions="FillAndExpand"
+            VerticalOptions="FillAndExpand"
+            IsZoomEnabled="True"
+            IsScrollEnabled="True"
+            AutomationId="MainMap"
+            SemanticProperties.Description="Carte interactive des spots de plongée"
+            SemanticProperties.Hint="Explorez les spots de plongée sur la carte, appuyez sur un marqueur pour voir les détails">
             <maps:Map.MapElements>
                 <!--  Vous pouvez ajouter des éléments de carte personnalisés ici  -->
             </maps:Map.MapElements>
@@ -106,17 +128,26 @@
                     Grid.Column="0"
                     Command="{Binding LoadSpotsCommand}"
                     Style="{StaticResource ButtonActionStyle}"
-                    Text="Actualiser" />
+                    Text="Actualiser"
+                    AutomationId="RefreshSpotsButton"
+                    SemanticProperties.Description="Actualiser les spots sur la carte"
+                    SemanticProperties.Hint="Appuyez pour recharger les spots depuis le serveur" />
                 <Button
                     Grid.Column="1"
                     Command="{Binding RefreshLocationCommand}"
                     Style="{StaticResource ButtonActionStyle}"
-                    Text="Ma position" />
+                    Text="Ma position"
+                    AutomationId="MyLocationButton"
+                    SemanticProperties.Description="Centrer la carte sur ma position actuelle"
+                    SemanticProperties.Hint="Appuyez pour obtenir votre position GPS et centrer la carte" />
                 <Button
                     Grid.Column="2"
                     Command="{Binding NavigateToAddSpotCommand}"
                     Style="{StaticResource ButtonPrimaryStyle}"
-                    Text="Nouveau" />
+                    Text="Nouveau"
+                    AutomationId="AddSpotButton"
+                    SemanticProperties.Description="Ajouter un nouveau spot de plongée"
+                    SemanticProperties.Hint="Appuyez pour commencer l'ajout d'un nouveau spot" />
             </Grid>
         </Frame>
 
@@ -128,6 +159,10 @@
             IsRunning="{Binding IsBusy}"
             IsVisible="{Binding IsBusy}"
             VerticalOptions="Center"
-            Color="{StaticResource Primary}" />
+            Color="{StaticResource Primary}"
+            AutomationId="LoadingIndicator"
+            SemanticProperties.Description="Chargement des données en cours"
+            SemanticProperties.Hint="Veuillez patienter pendant le chargement des spots" />
+
     </Grid>
 </ContentPage>

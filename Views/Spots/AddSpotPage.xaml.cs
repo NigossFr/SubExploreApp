@@ -16,7 +16,19 @@ namespace SubExplore.Views.Spot
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            await _viewModel.InitializeAsync();
+            try
+            {
+                await _viewModel.InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] AddSpotPage OnAppearing failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                }
+            }
         }
     }
 }

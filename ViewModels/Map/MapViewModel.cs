@@ -19,6 +19,17 @@ namespace SubExplore.ViewModels.Map
         private readonly ILocationService _locationService;
         private readonly ISpotTypeRepository _spotTypeRepository;
         private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
+        private readonly IPlatformMapService _platformMapService;
+
+        // Map Configuration Constants
+        private const double DEFAULT_SEARCH_RADIUS_KM = 10.0;
+        private const int MAX_SPOTS_LIMIT = 100;
+        private const int MIN_SPOTS_FOR_AUTO_ZOOM = 1;
+        private const int MAX_SPOTS_FOR_AUTO_ZOOM = 5;
+        private const double MIN_ZOOM_LEVEL = 1.0;
+        private const double MAX_ZOOM_LEVEL = 18.0;
+        private const int SPOTS_BATCH_SIZE = 20;
+        private const int MAP_UPDATE_DELAY_MS = 500;
 
         [ObservableProperty]
         private ObservableCollection<Models.Domain.Spot> _spots;
@@ -70,6 +81,7 @@ namespace SubExplore.ViewModels.Map
             ILocationService locationService,
             ISpotTypeRepository spotTypeRepository,
             Microsoft.Extensions.Configuration.IConfiguration configuration,
+            IPlatformMapService platformMapService,
             IDialogService dialogService,
             INavigationService navigationService)
             : base(dialogService, navigationService)
@@ -78,6 +90,7 @@ namespace SubExplore.ViewModels.Map
             _locationService = locationService;
             _spotTypeRepository = spotTypeRepository;
             _configuration = configuration;
+            _platformMapService = platformMapService;
 
             Spots = new ObservableCollection<Models.Domain.Spot>();
             Pins = new ObservableCollection<Pin>();
@@ -91,6 +104,8 @@ namespace SubExplore.ViewModels.Map
             MapLatitude = defaultLat;
             MapLongitude = defaultLong;
             MapZoomLevel = defaultZoom;
+            
+            System.Diagnostics.Debug.WriteLine($"[INFO] MapViewModel initialized with default coordinates: {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}");
 
             Title = "Carte";
         }
@@ -99,17 +114,43 @@ namespace SubExplore.ViewModels.Map
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] MapViewModel InitializeAsync started");
+                
+                // Initialize platform-specific map configuration
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Initializing platform map service");
+                var mapInitialized = await _platformMapService.InitializePlatformMapAsync();
+                if (!mapInitialized)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ERROR] Platform map initialization failed");
+                    await DialogService.ShowAlertAsync("Erreur", "Impossible d'initialiser les cartes pour cette plateforme", "OK");
+                }
+                
+                // Validate map configuration
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Validating map configuration");
+                var configValid = await _platformMapService.ValidateMapConfigurationAsync();
+                if (!configValid)
+                {
+                    System.Diagnostics.Debug.WriteLine("[WARNING] Map configuration validation failed");
+                }
+                
                 // Récupération des types de spots pour les filtres
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types");
                 await LoadSpotTypesCommand.ExecuteAsync(null);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded {SpotTypes?.Count ?? 0} spot types");
 
                 // Tentative de géolocalisation
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Refreshing location");
                 await RefreshLocationCommand.ExecuteAsync(null);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Location available: {IsLocationAvailable}");
 
                 // Chargement des spots
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots");
                 await LoadSpotsCommand.ExecuteAsync(null);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] InitializeAsync failed: {ex.Message}");
                 await DialogService.ShowAlertAsync("Erreur", $"Une erreur est survenue lors de l'initialisation : {ex.Message}", "OK");
             }
         }
@@ -122,34 +163,50 @@ namespace SubExplore.ViewModels.Map
             try
             {
                 IsBusy = true;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpots started. IsLocationAvailable: {IsLocationAvailable}");
 
                 IEnumerable<Models.Domain.Spot> spots;
 
                 // Si la géolocalisation est disponible, récupérer les spots à proximité
                 if (IsLocationAvailable)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Loading nearby spots for location: {UserLatitude}, {UserLongitude}");
                     spots = await _spotRepository.GetNearbySpots(
                         (decimal)UserLatitude,
                         (decimal)UserLongitude,
-                        10.0, // 10km de rayon
-                        100); // Maximum 100 spots
+                        DEFAULT_SEARCH_RADIUS_KM,
+                        MAX_SPOTS_LIMIT);
                 }
                 else
                 {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading all approved spots (no location available)");
                     // Sinon, récupérer tous les spots validés
                     spots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
                 }
 
-                Spots.Clear();
-                foreach (var spot in spots)
+                var spotsCount = spots?.Count() ?? 0;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Retrieved {spotsCount} spots from repository");
+
+                if (spotsCount == 0)
                 {
-                    Spots.Add(spot);
+                    System.Diagnostics.Debug.WriteLine("[WARNING] No spots found in repository");
+                    await DialogService.ShowToastAsync("Aucun spot trouvé dans la région");
+                }
+                else
+                {
+                    foreach (var spot in spots.Take(3)) // Log first 3 spots for debugging
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Sample spot: {spot.Name} at {spot.Latitude}, {spot.Longitude}");
+                    }
                 }
 
+                RefreshSpotsList(spots);
                 UpdatePins();
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpots failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                 await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les spots. Veuillez réessayer plus tard.", "OK");
             }
             finally
@@ -169,11 +226,7 @@ namespace SubExplore.ViewModels.Map
 
                 var types = await _spotTypeRepository.GetActiveTypesAsync();
 
-                SpotTypes.Clear();
-                foreach (var type in types)
-                {
-                    SpotTypes.Add(type);
-                }
+                RefreshSpotTypesList(types);
             }
             catch (Exception ex)
             {
@@ -215,6 +268,11 @@ namespace SubExplore.ViewModels.Map
 
                     // Recharger les spots à proximité
                     await LoadSpotsCommand.ExecuteAsync(null);
+                    
+                    // Notify that map position has changed
+                    OnPropertyChanged(nameof(MapLatitude));
+                    OnPropertyChanged(nameof(MapLongitude));
+                    OnPropertyChanged(nameof(MapZoomLevel));
                 }
                 else
                 {
@@ -260,20 +318,15 @@ namespace SubExplore.ViewModels.Map
 
                 if (typeId > 0)
                 {
-                    var filteredSpots = await _spotRepository.GetSpotsByTypeAsync(typeId);
+                    var filteredSpots = await _spotRepository.GetSpotsByTypeAsync(typeId).ConfigureAwait(false);
 
-                    Spots.Clear();
-                    foreach (var spot in filteredSpots)
-                    {
-                        Spots.Add(spot);
-                    }
-
+                    RefreshSpotsList(filteredSpots);
                     UpdatePins();
                 }
                 else
                 {
                     // Si pas de filtre valide, charger tous les spots
-                    await LoadSpotsCommand.ExecuteAsync(null);
+                    await LoadSpotsCommand.ExecuteAsync(null).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -299,18 +352,13 @@ namespace SubExplore.ViewModels.Map
                 IsFiltering = true;
                 SelectedSpotType = spotType;
 
-                var filteredSpots = await _spotRepository.GetSpotsByTypeAsync(spotType.Id);
+                var filteredSpots = await _spotRepository.GetSpotsByTypeAsync(spotType.Id).ConfigureAwait(false);
 
-                Spots.Clear();
-                foreach (var spot in filteredSpots)
-                {
-                    Spots.Add(spot);
-                }
-
+                RefreshSpotsList(filteredSpots);
                 UpdatePins();
 
                 // Optionnel : zoomer sur les résultats si peu nombreux
-                if (Spots.Count > 0 && Spots.Count <= 5)
+                if (Spots.Count >= MIN_SPOTS_FOR_AUTO_ZOOM && Spots.Count <= MAX_SPOTS_FOR_AUTO_ZOOM)
                 {
                     CenterMapOnSpots(Spots);
                 }
@@ -332,14 +380,14 @@ namespace SubExplore.ViewModels.Map
             if (spot == null) return;
 
             // Pour naviguer vers les détails du spot
-            await NavigationService.NavigateToAsync<ViewModels.Spot.SpotDetailsViewModel>(spot.Id);
+            await NavigationService.NavigateToAsync<ViewModels.Spot.SpotDetailsViewModel>(spot.Id).ConfigureAwait(false);
         }
 
         [RelayCommand]
         private async Task NavigateToAddSpot()
         {
             // Pour naviguer vers l'ajout d'un spot
-            await NavigationService.NavigateToAsync<ViewModels.Spot.AddSpotViewModel>();
+            await NavigationService.NavigateToAsync<ViewModels.Spot.AddSpotViewModel>().ConfigureAwait(false);
         }
 
         [RelayCommand]
@@ -353,14 +401,9 @@ namespace SubExplore.ViewModels.Map
                 IsBusy = true;
                 IsSearching = true;
 
-                var searchResults = await _spotRepository.SearchSpotsAsync(SearchText);
+                var searchResults = await _spotRepository.SearchSpotsAsync(SearchText).ConfigureAwait(false);
 
-                Spots.Clear();
-                foreach (var spot in searchResults)
-                {
-                    Spots.Add(spot);
-                }
-
+                RefreshSpotsList(searchResults);
                 UpdatePins();
 
                 // Zoom sur les résultats de recherche
@@ -370,12 +413,12 @@ namespace SubExplore.ViewModels.Map
                 }
                 else
                 {
-                    await DialogService.ShowToastAsync("Aucun spot trouvé pour cette recherche");
+                    await DialogService.ShowToastAsync("Aucun spot trouvé pour cette recherche").ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible d'effectuer la recherche. Veuillez réessayer plus tard.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible d'effectuer la recherche. Veuillez réessayer plus tard.", "OK").ConfigureAwait(false);
             }
             finally
             {
@@ -394,6 +437,12 @@ namespace SubExplore.ViewModels.Map
 
             // Recharger tous les spots
             LoadSpotsCommand.Execute(null);
+        }
+
+        [RelayCommand]
+        private async Task Initialize()
+        {
+            await InitializeAsync();
         }
 
         [RelayCommand]
@@ -421,32 +470,100 @@ namespace SubExplore.ViewModels.Map
             // si l'utilisateur a déplacé la carte d'une distance significative
         }
 
+        public void ForceMapRefresh()
+        {
+            // Force UI to refresh map position
+            OnPropertyChanged(nameof(MapLatitude));
+            OnPropertyChanged(nameof(MapLongitude));
+            OnPropertyChanged(nameof(MapZoomLevel));
+            OnPropertyChanged(nameof(Pins));
+            
+            System.Diagnostics.Debug.WriteLine($"[INFO] ForceMapRefresh called: {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}, pins: {Pins?.Count}");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Map coordinates valid: Lat={MapLatitude >= -90 && MapLatitude <= 90}, Lng={MapLongitude >= -180 && MapLongitude <= 180}");
+            
+            // Additional map debugging
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Current map state - Location available: {IsLocationAvailable}, User position: {UserLatitude}, {UserLongitude}");
+        }
+        
+        public void InitializeMapPosition()
+        {
+            // Ensure we have valid coordinates
+            if (MapLatitude == 0 && MapLongitude == 0)
+            {
+                // Use default coordinates from configuration
+                double defaultLat = _configuration.GetValue<double>("AppSettings:DefaultLatitude", 43.2965);
+                double defaultLong = _configuration.GetValue<double>("AppSettings:DefaultLongitude", 5.3698);
+                double defaultZoom = _configuration.GetValue<double>("AppSettings:DefaultZoomLevel", 12);
+                
+                MapLatitude = defaultLat;
+                MapLongitude = defaultLong;
+                MapZoomLevel = defaultZoom;
+                
+                System.Diagnostics.Debug.WriteLine($"[INFO] Map initialized with default coordinates: {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}");
+            }
+            
+            ForceMapRefresh();
+        }
+
         private void UpdatePins()
         {
             Application.Current?.Dispatcher.Dispatch(() => {
-                Pins.Clear();
-
-                foreach (var spot in Spots)
+                try
                 {
-                    var pin = new Pin
-                    {
-                        Label = spot.Name,
-                        Address = $"{spot.Type?.Name ?? "Spot"} - {spot.DifficultyLevel}",
-                        Location = new Location(Convert.ToDouble(spot.Latitude), Convert.ToDouble(spot.Longitude)),
-                        Type = PinType.Place,
-                        BindingContext = spot
-                    };
+                    var validPins = Spots
+                        .Select(CreatePinFromSpot)
+                        .Where(pin => pin != null)
+                        .ToList();
 
-                    // Code couleur selon le type
-                    if (spot.Type?.ColorCode != null)
+                    // Efficient batch update
+                    Pins.Clear();
+                    foreach (var pin in validPins)
                     {
-                        // Vous pourriez définir une propriété personnalisée pour la couleur du pin
-                        // pin.ImageSource = spot.Type.IconPath;
+                        Pins.Add(pin!);
                     }
-
-                    Pins.Add(pin);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] UpdatePins failed: {ex.Message}");
                 }
             });
+        }
+
+        private Pin CreatePinFromSpot(Models.Domain.Spot spot)
+        {
+            try
+            {
+                double lat = Convert.ToDouble(spot.Latitude);
+                double lon = Convert.ToDouble(spot.Longitude);
+
+                // Add this debug line
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Creating pin for {spot.Name} at {lat}, {lon}");
+
+                // Validate coordinates
+                if (double.IsNaN(lat) || double.IsInfinity(lat) || lat < -90 || lat > 90 ||
+                    double.IsNaN(lon) || double.IsInfinity(lon) || lon < -180 || lon > 180)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Invalid coordinates for spot {spot.Name}: Lat={spot.Latitude}, Lng={spot.Longitude}");
+                    return null; // Return null for invalid coordinates
+                }
+
+                var pin = new Pin
+                {
+                    Label = spot.Name,
+                    Address = $"{spot.Type?.Name ?? "Spot"} - {spot.DifficultyLevel}",
+                    Location = new Location(lat, lon),
+                    Type = PinType.Place,
+                    BindingContext = spot
+                };
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Successfully created pin for {spot.Name}");
+                return pin;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to create pin for spot {spot.Name}: {ex.Message}");
+                return null;
+            }
         }
 
         private void CenterMapOnSpots(IEnumerable<Models.Domain.Spot> spots)
@@ -476,8 +593,51 @@ namespace SubExplore.ViewModels.Map
             if (maxSpan > 0)
             {
                 // Cette formule est approximative et dépend de l'API de carte utilisée
-                MapZoomLevel = Math.Max(1, Math.Min(18, Math.Log(180 / maxSpan) / Math.Log(2)));
+                MapZoomLevel = Math.Max(MIN_ZOOM_LEVEL, Math.Min(MAX_ZOOM_LEVEL, Math.Log(180 / maxSpan) / Math.Log(2)));
             }
+            
+            // Notify that map position has changed
+            OnPropertyChanged(nameof(MapLatitude));
+            OnPropertyChanged(nameof(MapLongitude));
+            OnPropertyChanged(nameof(MapZoomLevel));
         }
+
+        private void RefreshSpotsList(IEnumerable<Models.Domain.Spot> spots)
+        {
+            Application.Current?.Dispatcher.Dispatch(() => {
+                try
+                {
+                    var spotsList = spots.ToList();
+                    Spots.Clear();
+                    
+                    // Efficient batch processing
+                    for (int i = 0; i < spotsList.Count; i += SPOTS_BATCH_SIZE)
+                    {
+                        var batch = spotsList.Skip(i).Take(SPOTS_BATCH_SIZE);
+                        foreach (var spot in batch)
+                        {
+                            Spots.Add(spot);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] RefreshSpotsList failed: {ex.Message}");
+                }
+            });
+        }
+
+        private void RefreshSpotTypesList(IEnumerable<SpotType> types)
+        {
+            // Use batch update for better performance
+            Application.Current?.Dispatcher.Dispatch(() => {
+                SpotTypes.Clear();
+                foreach (var type in types)
+                {
+                    SpotTypes.Add(type);
+                }
+            });
+        }
+
     }
 }

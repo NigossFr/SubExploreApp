@@ -14,6 +14,8 @@ namespace SubExplore.Services.Implementations
 
         public bool IsUsingCellularNetwork => Connectivity.ConnectionProfiles.Contains(ConnectionProfile.Cellular);
 
+        public NetworkAccess NetworkAccess => Connectivity.NetworkAccess;
+
         // Définir l'événement avec le type correct
         public event EventHandler<SubExplore.Services.Interfaces.ConnectivityChangedEventArgs> ConnectivityChanged;
 

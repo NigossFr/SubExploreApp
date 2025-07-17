@@ -16,7 +16,19 @@ namespace SubExplore.Views.Settings
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            await _viewModel.InitializeAsync(new Dictionary<string, object>());
+            try
+            {
+                await _viewModel.InitializeAsync(new Dictionary<string, object>());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] DatabaseTestPage OnAppearing failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                }
+            }
         }
     }
 }
