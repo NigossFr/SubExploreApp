@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:menu="clr-namespace:SubExplore.Views.Menu"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
+             x:Class="SubExplore.Views.Common.PageHeaderView">
+    
+    <ContentView.Resources>
+        <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
+        <converters:ResponsiveFontSizeConverter x:Key="ResponsiveFontSizeConverter" />
+        <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
+        
+        <Style x:Key="HeaderFrame" TargetType="Frame">
+            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+            <Setter Property="BorderColor" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Padding" Value="15,10" />
+            <Setter Property="HasShadow" Value="True" />
+        </Style>
+        
+        <Style x:Key="HeaderTitle" TargetType="Label">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+        
+        <Style x:Key="MenuIconButton" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="BorderColor" Value="Transparent" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="WidthRequest" Value="44" />
+            <Setter Property="HeightRequest" Value="44" />
+            <Setter Property="CornerRadius" Value="22" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        
+        <Style x:Key="SearchFrame" TargetType="Frame">
+            <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
+            <Setter Property="BorderColor" Value="{StaticResource Secondary}" />
+            <Setter Property="CornerRadius" Value="25" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="HasShadow" Value="True" />
+        </Style>
+    </ContentView.Resources>
+    
+    <Grid>
+        <!-- Simple Header Frame -->
+        <Frame Style="{StaticResource HeaderFrame}">
+            <Grid ColumnDefinitions="Auto,*">
+                
+                <!-- Back Button (Optional) -->
+                <Button Grid.Column="0"
+                        x:Name="BackButton"
+                        Style="{StaticResource MenuIconButton}"
+                        Text="◀"
+                        IsVisible="{Binding ShowBackButton}"
+                        Command="{Binding BackCommand}"
+                        AutomationId="BackButton"
+                        SemanticProperties.Description="Retour à la page précédente"
+                        SemanticProperties.Hint="Appuyez pour revenir à la page précédente" />
+                
+                <!-- Page Title -->
+                <Label Grid.Column="1"
+                       Text="{Binding Title}"
+                       Style="{StaticResource HeaderTitle}"
+                       HorizontalOptions="Center"
+                       AutomationId="PageTitle"
+                       SemanticProperties.Description="Titre de la page actuelle" />
+                
+            </Grid>
+        </Frame>
+    </Grid>
+</ContentView>

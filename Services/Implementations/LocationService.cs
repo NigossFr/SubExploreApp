@@ -70,18 +70,12 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                // Check if location services are enabled on device
+                // Only check if location services are enabled on device (without requesting permission)
                 var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
                 
-                if (status == PermissionStatus.Granted)
-                {
-                    // Try to get location with timeout to verify service is working
-                    var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(5));
-                    var location = await Geolocation.GetLocationAsync(request);
-                    return location != null;
-                }
-                
-                return false;
+                // Return true if location services are available (either granted or not determined yet)
+                // This indicates that the user could potentially use location services
+                return status != PermissionStatus.Disabled;
             }
             catch (FeatureNotSupportedException)
             {
@@ -93,12 +87,6 @@ namespace SubExplore.Services.Implementations
             {
                 // Localisation désactivée sur l'appareil
                 System.Diagnostics.Debug.WriteLine("[LocationService] Location services disabled on device");
-                return false;
-            }
-            catch (PermissionException)
-            {
-                // Permissions non accordées
-                System.Diagnostics.Debug.WriteLine("[LocationService] Location permission not granted");
                 return false;
             }
             catch (Exception ex)

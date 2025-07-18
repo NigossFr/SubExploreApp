@@ -10,6 +10,8 @@ using SubExplore.Models.Enums;
 using SubExplore.Repositories.Interfaces;
 using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels.Base;
+using SubExplore.Models.Menu;
+using MenuItemModel = SubExplore.Models.Menu.MenuItem;
 
 namespace SubExplore.ViewModels.Map
 {
@@ -85,12 +87,33 @@ namespace SubExplore.ViewModels.Map
         [ObservableProperty]
         private System.Threading.CancellationTokenSource _searchCancellationToken;
 
+        // Menu-related properties
+        [ObservableProperty]
+        private bool _isMenuOpen;
+
+        [ObservableProperty]
+        private ObservableCollection<MenuSection> _menuSections;
+
+        [ObservableProperty]
+        private string _userDisplayName;
+
+        [ObservableProperty]
+        private string _userEmail;
+
+        [ObservableProperty]
+        private string _userAvatarUrl;
+
+        private readonly IDatabaseService _databaseService;
+        private readonly IUserRepository _userRepository;
+
         public MapViewModel(
             ISpotRepository spotRepository,
             ILocationService locationService,
             ISpotTypeRepository spotTypeRepository,
             Microsoft.Extensions.Configuration.IConfiguration configuration,
             IPlatformMapService platformMapService,
+            IDatabaseService databaseService,
+            IUserRepository userRepository,
             IDialogService dialogService,
             INavigationService navigationService)
             : base(dialogService, navigationService)
@@ -98,12 +121,15 @@ namespace SubExplore.ViewModels.Map
             _spotRepository = spotRepository;
             _locationService = locationService;
             _spotTypeRepository = spotTypeRepository;
+            _databaseService = databaseService;
+            _userRepository = userRepository;
             _configuration = configuration;
             _platformMapService = platformMapService;
 
             Spots = new ObservableCollection<Models.Domain.Spot>();
             Pins = new ObservableCollection<Pin>();
             SpotTypes = new ObservableCollection<SpotType>();
+            MenuSections = new ObservableCollection<MenuSection>();
 
             // Valeurs par défaut, seront remplacées par la géolocalisation si disponible
             double defaultLat = _configuration.GetValue<double>("AppSettings:DefaultLatitude", 43.2965);
@@ -117,6 +143,9 @@ namespace SubExplore.ViewModels.Map
             System.Diagnostics.Debug.WriteLine($"[INFO] MapViewModel initialized with default coordinates: {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}");
 
             Title = "Carte";
+            
+            // Initialize menu
+            InitializeMenu();
             
             // Initialize empty and network error states
             UpdateEmptyState();
@@ -146,15 +175,43 @@ namespace SubExplore.ViewModels.Map
                     System.Diagnostics.Debug.WriteLine("[WARNING] Map configuration validation failed");
                 }
                 
+                // Initialize database and seed data
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Initializing database");
+                var databaseCreated = await _databaseService.EnsureDatabaseCreatedAsync();
+                if (databaseCreated)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Database created successfully");
+                    
+                    // Seed database with initial data
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Seeding database");
+                    var dataSeeded = await _databaseService.SeedDatabaseAsync();
+                    if (dataSeeded)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] Database seeded successfully");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[WARNING] Database seeding failed or was not needed");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[ERROR] Database initialization failed");
+                }
+                
                 // Récupération des types de spots pour les filtres
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types");
                 await LoadSpotTypesCommand.ExecuteAsync(null);
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded {SpotTypes?.Count ?? 0} spot types");
 
-                // Tentative de géolocalisation
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Refreshing location");
-                await RefreshLocationCommand.ExecuteAsync(null);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Location available: {IsLocationAvailable}");
+                // Load user information for menu
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading user for menu");
+                await LoadCurrentUser();
+
+                // Check if location services are available (without requesting permission)
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Checking location service availability");
+                IsLocationAvailable = await _locationService.IsLocationServiceEnabledAsync();
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Location service available: {IsLocationAvailable}");
 
                 // Chargement des spots
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots");
@@ -215,6 +272,7 @@ namespace SubExplore.ViewModels.Map
 
                 RefreshSpotsList(spots);
                 UpdatePins();
+                UpdateEmptyState();
             }
             catch (Exception ex)
             {
@@ -225,6 +283,7 @@ namespace SubExplore.ViewModels.Map
             finally
             {
                 IsBusy = false;
+                UpdateEmptyState();
             }
         }
 
@@ -243,6 +302,7 @@ namespace SubExplore.ViewModels.Map
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotTypes failed: {ex.Message}");
                 await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les types de spots.", "OK");
             }
             finally
@@ -256,13 +316,28 @@ namespace SubExplore.ViewModels.Map
         {
             try
             {
-                // Vérifier si nous avons déjà les permissions
+                // Check current permission status first
+                var currentStatus = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+                
+                if (currentStatus == PermissionStatus.Denied)
+                {
+                    // If permission was previously denied, inform user and suggest settings
+                    IsLocationAvailable = false;
+                    await DialogService.ShowAlertAsync("Permissions", 
+                        "L'accès à la localisation a été refusé. Vous pouvez l'activer dans les paramètres de l'application.", 
+                        "OK");
+                    return;
+                }
+                
+                // Request permission if not already granted
                 bool hasPermission = await _locationService.RequestLocationPermissionAsync();
 
                 if (!hasPermission)
                 {
                     IsLocationAvailable = false;
-                    await DialogService.ShowAlertAsync("Permissions", "L'accès à la localisation est nécessaire pour utiliser cette fonctionnalité.", "OK");
+                    await DialogService.ShowAlertAsync("Permissions", 
+                        "L'accès à la localisation est nécessaire pour cette fonctionnalité. Vous pouvez l'activer dans les paramètres.", 
+                        "OK");
                     return;
                 }
 
@@ -290,13 +365,17 @@ namespace SubExplore.ViewModels.Map
                 else
                 {
                     IsLocationAvailable = false;
-                    await DialogService.ShowAlertAsync("Localisation", "Impossible d'obtenir votre position. Vérifiez que les services de localisation sont activés.", "OK");
+                    await DialogService.ShowAlertAsync("Localisation", 
+                        "Impossible d'obtenir votre position. Vérifiez que les services de localisation sont activés.", 
+                        "OK");
                 }
             }
             catch (Exception ex)
             {
                 IsLocationAvailable = false;
-                await DialogService.ShowAlertAsync("Localisation", "La géolocalisation n'est pas disponible.", "OK");
+                await DialogService.ShowAlertAsync("Localisation", 
+                    "La géolocalisation n'est pas disponible.", 
+                    "OK");
             }
         }
 
@@ -369,6 +448,7 @@ namespace SubExplore.ViewModels.Map
 
                 RefreshSpotsList(filteredSpots);
                 UpdatePins();
+                UpdateEmptyState();
 
                 // Optionnel : zoomer sur les résultats si peu nombreux
                 if (Spots.Count >= MIN_SPOTS_FOR_AUTO_ZOOM && Spots.Count <= MAX_SPOTS_FOR_AUTO_ZOOM)
@@ -384,6 +464,7 @@ namespace SubExplore.ViewModels.Map
             {
                 IsBusy = false;
                 IsFiltering = false;
+                UpdateEmptyState();
             }
         }
 
@@ -479,6 +560,7 @@ namespace SubExplore.ViewModels.Map
 
                 RefreshSpotsList(searchResults);
                 UpdatePins();
+                UpdateEmptyState();
 
                 // Zoom sur les résultats de recherche
                 if (Spots.Count > 0)
@@ -498,6 +580,7 @@ namespace SubExplore.ViewModels.Map
             {
                 IsBusy = false;
                 IsSearching = false;
+                UpdateEmptyState();
             }
         }
 
@@ -572,6 +655,201 @@ namespace SubExplore.ViewModels.Map
 
             // Vous pourriez déclencher un chargement de spots dans la région visible
             // si l'utilisateur a déplacé la carte d'une distance significative
+        }
+
+        // Menu-related commands
+        [RelayCommand]
+        private void ToggleMenu()
+        {
+            IsMenuOpen = !IsMenuOpen;
+        }
+
+        [RelayCommand]
+        private async Task NavigateToMySpots()
+        {
+            // TODO: Implement MySpots page
+            await DialogService.ShowToastAsync("Fonction à venir");
+            IsMenuOpen = false;
+        }
+
+        [RelayCommand]
+        private async Task NavigateToProfile()
+        {
+            // TODO: Implement Profile page
+            await DialogService.ShowToastAsync("Fonction à venir");
+            IsMenuOpen = false;
+        }
+
+        [RelayCommand]
+        private async Task NavigateToFavorites()
+        {
+            // TODO: Implement Favorites page
+            await DialogService.ShowToastAsync("Fonction à venir");
+            IsMenuOpen = false;
+        }
+
+        [RelayCommand]
+        private async Task NavigateToHistory()
+        {
+            // TODO: Implement History page
+            await DialogService.ShowToastAsync("Fonction à venir");
+            IsMenuOpen = false;
+        }
+
+        [RelayCommand]
+        private async Task NavigateToSettings()
+        {
+            // TODO: Implement Settings page
+            await DialogService.ShowToastAsync("Fonction à venir");
+            IsMenuOpen = false;
+        }
+
+        [RelayCommand]
+        private async Task NavigateToAbout()
+        {
+            // TODO: Implement About page
+            await DialogService.ShowToastAsync("Fonction à venir");
+            IsMenuOpen = false;
+        }
+
+        [RelayCommand]
+        private async Task Logout()
+        {
+            var confirmed = await DialogService.ShowConfirmationAsync(
+                "Déconnexion",
+                "Êtes-vous sûr de vouloir vous déconnecter ?",
+                "Oui",
+                "Annuler");
+
+            if (confirmed)
+            {
+                // TODO: Implement logout logic
+                await DialogService.ShowToastAsync("Déconnexion réussie");
+                IsMenuOpen = false;
+            }
+        }
+
+        // Menu helper methods
+        private void InitializeMenu()
+        {
+            MenuSections.Clear();
+            
+            // Main Navigation Section
+            var mainSection = new MenuSection
+            {
+                Title = "Navigation",
+                Items = new ObservableCollection<MenuItemModel>
+                {
+                    new MenuItemModel
+                    {
+                        Title = "Mes Spots",
+                        Icon = "📍",
+                        Description = "Vos spots créés",
+                        Command = NavigateToMySpotsCommand,
+                        IsEnabled = true
+                    },
+                    new MenuItemModel
+                    {
+                        Title = "Ajouter un Spot",
+                        Icon = "➕",
+                        Description = "Créer un nouveau spot",
+                        Command = NavigateToAddSpotCommand,
+                        IsEnabled = true
+                    }
+                }
+            };
+            
+            // User Section
+            var userSection = new MenuSection
+            {
+                Title = "Utilisateur",
+                Items = new ObservableCollection<MenuItemModel>
+                {
+                    new MenuItemModel
+                    {
+                        Title = "Profil",
+                        Icon = "👤",
+                        Description = "Gérer votre profil",
+                        Command = NavigateToProfileCommand,
+                        IsEnabled = true
+                    },
+                    new MenuItemModel
+                    {
+                        Title = "Favoris",
+                        Icon = "❤️",
+                        Description = "Vos spots favoris",
+                        Command = NavigateToFavoritesCommand,
+                        IsEnabled = true
+                    },
+                    new MenuItemModel
+                    {
+                        Title = "Historique",
+                        Icon = "📋",
+                        Description = "Vos plongées récentes",
+                        Command = NavigateToHistoryCommand,
+                        IsEnabled = true
+                    }
+                }
+            };
+            
+            // Settings Section
+            var settingsSection = new MenuSection
+            {
+                Title = "Paramètres",
+                Items = new ObservableCollection<MenuItemModel>
+                {
+                    new MenuItemModel
+                    {
+                        Title = "Préférences",
+                        Icon = "⚙️",
+                        Description = "Configurer l'application",
+                        Command = NavigateToSettingsCommand,
+                        IsEnabled = true
+                    },
+                    new MenuItemModel
+                    {
+                        Title = "À propos",
+                        Icon = "ℹ️",
+                        Description = "Informations sur l'app",
+                        Command = NavigateToAboutCommand,
+                        IsEnabled = true
+                    }
+                }
+            };
+            
+            MenuSections.Add(mainSection);
+            MenuSections.Add(userSection);
+            MenuSections.Add(settingsSection);
+        }
+
+        private async Task LoadCurrentUser()
+        {
+            try
+            {
+                // TODO: Replace with actual user authentication
+                var userId = 1; // Temporary hard-coded user ID
+                var currentUser = await _userRepository.GetByIdAsync(userId);
+                
+                if (currentUser != null)
+                {
+                    UserDisplayName = $"{currentUser.FirstName} {currentUser.LastName}";
+                    UserEmail = currentUser.Email;
+                    UserAvatarUrl = currentUser.AvatarUrl ?? "default_avatar.png";
+                }
+                else
+                {
+                    UserDisplayName = "Utilisateur Invité";
+                    UserEmail = "guest@subexplore.com";
+                    UserAvatarUrl = "default_avatar.png";
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadCurrentUser failed: {ex.Message}");
+                UserDisplayName = "Utilisateur Invité";
+                UserEmail = "guest@subexplore.com";
+                UserAvatarUrl = "default_avatar.png";
+            }
         }
 
         public void ForceMapRefresh()
@@ -746,7 +1024,17 @@ namespace SubExplore.ViewModels.Map
         private void UpdateEmptyState()
         {
             Application.Current?.Dispatcher.Dispatch(() => {
-                IsEmptyState = !IsBusy && (Spots?.Count ?? 0) == 0 && !IsNetworkError;
+                // Only show empty state if:
+                // 1. Not busy loading
+                // 2. No spots are loaded
+                // 3. No network error
+                // 4. Not currently searching or filtering (to avoid showing empty state during search)
+                IsEmptyState = !IsBusy && 
+                              (Spots?.Count ?? 0) == 0 && 
+                              !IsNetworkError && 
+                              !IsSearching && 
+                              !IsFiltering &&
+                              string.IsNullOrEmpty(SearchText);
             });
         }
         

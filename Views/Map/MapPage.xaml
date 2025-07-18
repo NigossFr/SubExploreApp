@@ -7,6 +7,7 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Map"
+    xmlns:common="clr-namespace:SubExplore.Views.Common"
     Title="Carte"
     BackgroundColor="{StaticResource Background}">
     
@@ -14,6 +15,8 @@
         <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
         <converters:ResponsiveFontSizeConverter x:Key="ResponsiveFontSizeConverter" />
         <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />
+        <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
+        <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
     </ContentPage.Resources>
 
 
@@ -21,46 +24,88 @@
         <toolkit:EventToCommandBehavior Command="{Binding InitializeCommand}" EventName="Appearing" />
     </ContentPage.Behaviors>
 
-    <RefreshView Command="{Binding LoadSpotsCommand}" IsRefreshing="{Binding IsBusy}">
-        <Grid RowDefinitions="Auto,Auto,*,Auto">
-        <!--  Barre de recherche améliorée  -->
-        <Frame
-            Grid.Row="0"
-            Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
-            Padding="5"
-            BackgroundColor="{StaticResource Surface}"
-            BorderColor="{StaticResource Secondary}"
-            CornerRadius="25"
-            HasShadow="True"
-            AutomationId="SearchFrame"
-            SemanticProperties.Description="Zone de recherche de spots">
+    <Grid>
+        <!-- Main Content -->
+        <Grid RowDefinitions="Auto,Auto,*">
+            <!-- Page Header with Menu Icon -->
+            <Frame Grid.Row="0" 
+               BackgroundColor="{StaticResource Primary}"
+               BorderColor="Transparent"
+               CornerRadius="0"
+               Padding="15,10"
+               HasShadow="True">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                
+                <!-- Empty space for symmetry -->
+                <Label Grid.Column="0" />
+                
+                <!-- Page Title -->
+                <Label Grid.Column="1"
+                       Text="{Binding Title}"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       AutomationId="PageTitle"
+                       SemanticProperties.Description="Titre de la page actuelle" />
+                
+                <!-- Menu Icon Button -->
+                <Button Grid.Column="2"
+                        x:Name="MenuButton"
+                        Text="👤"
+                        BackgroundColor="Transparent"
+                        BorderColor="Transparent"
+                        TextColor="White"
+                        FontSize="20"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        CornerRadius="22"
+                        Padding="0"
+                        Command="{Binding ToggleMenuCommand}"
+                        AutomationId="UserMenuButton"
+                        SemanticProperties.Description="Ouvrir le menu utilisateur"
+                        SemanticProperties.Hint="Appuyez pour ouvrir le menu utilisateur avec profil et navigation" />
+            </Grid>
+        </Frame>
+        
+        <!-- Search Bar -->
+        <Frame Grid.Row="1" 
+               BackgroundColor="{StaticResource Surface}"
+               BorderColor="{StaticResource Secondary}"
+               CornerRadius="25"
+               Padding="5"
+               HasShadow="True"
+               Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
+               AutomationId="SearchFrame"
+               SemanticProperties.Description="Zone de recherche de spots"
+               IsVisible="{Binding IsMenuOpen, Converter={StaticResource InvertBoolConverter}}">
             <Grid ColumnDefinitions="*,Auto">
-                <Entry
-                    Grid.Column="0"
-                    Margin="5,0"
-                    ClearButtonVisibility="WhileEditing"
-                    Placeholder="Rechercher un spot..."
-                    ReturnCommand="{Binding SearchSpotsCommand}"
-                    ReturnType="Search"
-                    Text="{Binding SearchText}"
-                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='1.0'}"
-                    IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
-                    AutomationId="SearchEntry"
-                    SemanticProperties.Description="Rechercher des spots de plongée par nom ou localisation"
-                    SemanticProperties.Hint="Entrez le nom d'un spot ou d'une localisation pour effectuer une recherche">
+                <Entry Grid.Column="0"
+                       x:Name="SearchEntry"
+                       Margin="5,0"
+                       ClearButtonVisibility="WhileEditing"
+                       Placeholder="Rechercher un spot..."
+                       ReturnCommand="{Binding SearchSpotsCommand}"
+                       ReturnType="Search"
+                       Text="{Binding SearchText}"
+                       FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='1.0'}"
+                       IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
+                       AutomationId="SearchEntry"
+                       SemanticProperties.Description="Rechercher des spots de plongée par nom ou localisation"
+                       SemanticProperties.Hint="Entrez le nom d'un spot ou d'une localisation pour effectuer une recherche">
                     <Entry.Behaviors>
                         <toolkit:EventToCommandBehavior EventName="TextChanged" Command="{Binding SearchTextChangedCommand}" />
                     </Entry.Behaviors>
                 </Entry>
-                <Button
-                    Grid.Column="1"
-                    Command="{Binding SearchSpotsCommand}"
-                    Style="{StaticResource ButtonActionStyle}"
-                    Text="🔍"
-                    IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
-                    AutomationId="SearchButton"
-                    SemanticProperties.Description="Lancer la recherche de spots"
-                    SemanticProperties.Hint="Appuyez pour rechercher des spots correspondant au texte saisi">
+                <Button Grid.Column="1"
+                        Command="{Binding SearchSpotsCommand}"
+                        Style="{StaticResource ButtonActionStyle}"
+                        Text="🔍"
+                        IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
+                        AutomationId="SearchButton"
+                        SemanticProperties.Description="Lancer la recherche de spots"
+                        SemanticProperties.Hint="Appuyez pour rechercher des spots correspondant au texte saisi">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button" Binding="{Binding IsSearching}" Value="True">
                             <Setter Property="Text" Value="⏳" />
@@ -69,73 +114,72 @@
                 </Button>
             </Grid>
         </Frame>
+        
+        <RefreshView Grid.Row="2" Command="{Binding LoadSpotsCommand}" IsRefreshing="{Binding IsBusy}" IsVisible="{Binding IsMenuOpen, Converter={StaticResource InvertBoolConverter}}">
+            <Grid RowDefinitions="Auto,*,Auto">
+                
+                <!--  Barre de filtres intégrée  -->
+                <ScrollView 
+                    Grid.Row="0"
+                    Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
+                    HorizontalScrollBarVisibility="Never" 
+                    Orientation="Horizontal"
+                    AutomationId="FiltersScrollView"
+                    SemanticProperties.Description="Zone de filtres des spots - Balayez horizontalement pour voir plus d'options"
+                    SemanticProperties.Hint="Balayez vers la droite pour découvrir d'autres types de spots">
+                    <HorizontalStackLayout Spacing="6" Padding="8,8,24,8">
+                        <Button
+                            Command="{Binding ClearFiltersCommand}"
+                            Style="{StaticResource ButtonFilterStyle}"
+                            Text="Tous"
+                            FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                            CornerRadius="8"
+                            Padding="14,8"
+                            AutomationId="ClearFiltersButton"
+                            SemanticProperties.Description="Afficher tous les types de spots"
+                            SemanticProperties.Hint="Appuyez pour supprimer tous les filtres et afficher tous les spots">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                    <Setter Property="TextColor" Value="White" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
 
-        <!--  Barre de filtres améliorée  -->
-        <ScrollView 
-            Grid.Row="1"
-            Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
-            HorizontalScrollBarVisibility="Never" 
-            Orientation="Horizontal"
-            AutomationId="FiltersScrollView"
-            SemanticProperties.Description="Zone de filtres des spots - Balayez horizontalement pour voir plus d'options"
-            SemanticProperties.Hint="Balayez vers la droite pour découvrir d'autres types de spots">
-            <HorizontalStackLayout Spacing="6" Padding="8,8,24,8">
-                <Button
-                    Command="{Binding ClearFiltersCommand}"
-                    Style="{StaticResource ButtonFilterStyle}"
-                    Text="Tous"
-                    FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                    CornerRadius="8"
-                    Padding="14,8"
-                    AutomationId="ClearFiltersButton"
-                    SemanticProperties.Description="Afficher tous les types de spots"
-                    SemanticProperties.Hint="Appuyez pour supprimer tous les filtres et afficher tous les spots">
-                    <Button.Triggers>
-                        <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
-                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                            <Setter Property="TextColor" Value="White" />
-                        </DataTrigger>
-                        <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
-                            <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
-                            <Setter Property="TextColor" Value="{StaticResource Primary}" />
-                        </DataTrigger>
-                    </Button.Triggers>
-                </Button>
-
-                <CollectionView
-                    ItemsSource="{Binding SpotTypes}"
-                    SelectedItem="{Binding SelectedSpotType}"
-                    SelectionChangedCommand="{Binding FilterSpotsByTypeCommand}"
-                    SelectionChangedCommandParameter="{Binding SelectedSpotType}"
-                    SelectionMode="Single"
-                    AutomationId="SpotTypesFilter"
-                    SemanticProperties.Description="Filtrer les spots par type d'activité - Balayez pour voir plus d'options">
-                    <CollectionView.ItemsLayout>
-                        <LinearItemsLayout ItemSpacing="6" Orientation="Horizontal" />
-                    </CollectionView.ItemsLayout>
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Button
-                                BackgroundColor="{Binding ColorCode}"
-                                Style="{StaticResource ButtonFilterStyle}"
-                                Text="{Binding Name}"
-                                TextColor="White"
-                                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                                CornerRadius="8"
-                                Padding="14,8"
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=FilterSpotsByTypeCommand}"
-                                CommandParameter="{Binding .}"
-                                AutomationId="{Binding Name, StringFormat='Filter{0}Button'}"
-                                SemanticProperties.Description="{Binding Name, StringFormat='Filtrer par {0}'}"
-                                SemanticProperties.Hint="{Binding Name, StringFormat='Appuyez pour afficher uniquement les spots de type {0}'}" />
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </HorizontalStackLayout>
-        </ScrollView>
+                        <CollectionView
+                            ItemsSource="{Binding SpotTypes}"
+                            SelectedItem="{Binding SelectedSpotType}"
+                            SelectionChangedCommand="{Binding FilterSpotsByTypeCommand}"
+                            SelectionChangedCommandParameter="{Binding SelectedSpotType}"
+                            SelectionMode="Single"
+                            AutomationId="SpotTypesFilter"
+                            SemanticProperties.Description="Filtrer les spots par type d'activité - Balayez pour voir plus d'options">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout ItemSpacing="6" Orientation="Horizontal" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        BackgroundColor="{Binding ColorCode}"
+                                        Style="{StaticResource ButtonFilterStyle}"
+                                        Text="{Binding Name}"
+                                        TextColor="White"
+                                        FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
+                                        CornerRadius="8"
+                                        Padding="14,8"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=FilterSpotsByTypeCommand}"
+                                        CommandParameter="{Binding .}"
+                                        AutomationId="{Binding Name, StringFormat='Filter{0}Button'}"
+                                        SemanticProperties.Description="{Binding Name, StringFormat='Filtrer par {0}'}"
+                                        SemanticProperties.Hint="{Binding Name, StringFormat='Appuyez pour afficher uniquement les spots de type {0}'}" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </HorizontalStackLayout>
+                </ScrollView>
 
         <!--  Carte responsive  -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <maps:Map
                 x:Name="MainMap"
                 IsShowingUser="{Binding IsLocationAvailable}"
@@ -199,7 +243,7 @@
 
         <!--  Barre d'actions améliorée  -->
         <Grid 
-            Grid.Row="3"
+            Grid.Row="2"
             Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
             Padding="8"
             ColumnDefinitions="*,*,*"
@@ -256,13 +300,16 @@
                 SemanticProperties.Hint="Appuyez pour commencer l'ajout d'un nouveau spot" />
         </Grid>
 
-        <!--  Indicateur de chargement amélioré  -->
-        <Grid
-            Grid.Row="0"
-            Grid.RowSpan="4"
-            IsVisible="{Binding IsBusy}"
-            BackgroundColor="{AppThemeBinding Light=#80000000, Dark=#80FFFFFF}"
-            AutomationId="LoadingOverlay">
+            </Grid>
+        </RefreshView>
+        
+            <!--  Indicateur de chargement amélioré  -->
+            <Grid
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                IsVisible="{Binding IsBusy}"
+                BackgroundColor="{AppThemeBinding Light=#80000000, Dark=#80FFFFFF}"
+                AutomationId="LoadingOverlay">
             <Frame
                 HorizontalOptions="Center"
                 VerticalOptions="Center"
@@ -284,7 +331,170 @@
                 </StackLayout>
             </Frame>
         </Grid>
-
         </Grid>
-    </RefreshView>
+        
+        <!-- Menu Overlay - Now at top level -->
+        <Grid IsVisible="{Binding IsMenuOpen}">
+            <!-- Menu Background -->
+            <BoxView BackgroundColor="Black" Opacity="0.3">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleMenuCommand}" />
+                </BoxView.GestureRecognizers>
+            </BoxView>
+            
+            <!-- Menu Content -->
+            <Frame BackgroundColor="{StaticResource Background}"
+                   BorderColor="{StaticResource Secondary}"
+                   CornerRadius="20"
+                   Padding="0"
+                   HorizontalOptions="Start"
+                   VerticalOptions="FillAndExpand"
+                   WidthRequest="320"
+                   HasShadow="True">
+                
+                <ScrollView>
+                    <StackLayout Spacing="0">
+                        
+                        <!-- User Header -->
+                        <Frame BackgroundColor="{StaticResource Primary}"
+                               Padding="20"
+                               CornerRadius="0"
+                               HasShadow="False">
+                            <Grid ColumnDefinitions="60,*,Auto">
+                                
+                                <!-- User Avatar -->
+                                <Frame Grid.Column="0"
+                                       BackgroundColor="White"
+                                       CornerRadius="30"
+                                       Padding="0"
+                                       WidthRequest="60"
+                                       HeightRequest="60"
+                                       HasShadow="False">
+                                    <Label Text="👤" FontSize="40" HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Frame>
+                                
+                                <!-- User Info -->
+                                <StackLayout Grid.Column="1"
+                                           Margin="15,0,0,0"
+                                           VerticalOptions="Center">
+                                    <Label Text="{Binding UserDisplayName}"
+                                           FontSize="18"
+                                           FontAttributes="Bold"
+                                           TextColor="White" />
+                                    <Label Text="{Binding UserEmail}"
+                                           FontSize="14"
+                                           TextColor="White"
+                                           Opacity="0.8" />
+                                </StackLayout>
+                                
+                                <!-- Close Button -->
+                                <Button Grid.Column="2"
+                                        Text="✕"
+                                        FontSize="18"
+                                        BackgroundColor="Transparent"
+                                        TextColor="White"
+                                        Command="{Binding ToggleMenuCommand}"
+                                        WidthRequest="40"
+                                        HeightRequest="40"
+                                        CornerRadius="20" />
+                            </Grid>
+                        </Frame>
+                        
+                        <!-- Menu Sections -->
+                        <CollectionView ItemsSource="{Binding MenuSections}"
+                                      SelectionMode="None"
+                                      BackgroundColor="Transparent">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackLayout>
+                                        
+                                        <!-- Section Title -->
+                                        <Label Text="{Binding Title}"
+                                               FontSize="14"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource Primary}"
+                                               Margin="15,15,15,5" />
+                                        
+                                        <!-- Section Items -->
+                                        <CollectionView ItemsSource="{Binding Items}"
+                                                      SelectionMode="None"
+                                                      BackgroundColor="Transparent">
+                                            <CollectionView.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Frame BackgroundColor="Transparent"
+                                                           BorderColor="Transparent"
+                                                           Padding="15,10"
+                                                           Margin="5,2"
+                                                           CornerRadius="8"
+                                                           HasShadow="False">
+                                                        <Frame.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding Command}" />
+                                                        </Frame.GestureRecognizers>
+                                                        
+                                                        <Grid ColumnDefinitions="40,*">
+                                                            
+                                                            <!-- Icon -->
+                                                            <Label Grid.Column="0"
+                                                                   Text="{Binding Icon}"
+                                                                   FontSize="20"
+                                                                   HorizontalOptions="Center"
+                                                                   VerticalOptions="Center" />
+                                                            
+                                                            <!-- Title and Description -->
+                                                            <StackLayout Grid.Column="1"
+                                                                       Margin="10,0,0,0"
+                                                                       VerticalOptions="Center">
+                                                                <Label Text="{Binding Title}"
+                                                                       FontSize="16"
+                                                                       TextColor="{StaticResource TextPrimary}"
+                                                                       VerticalOptions="Center" />
+                                                                <Label Text="{Binding Description}"
+                                                                       FontSize="12"
+                                                                       TextColor="{StaticResource TextSecondary}"
+                                                                       VerticalOptions="Center"
+                                                                       IsVisible="{Binding Description, Converter={StaticResource StringNotEmptyConverter}}" />
+                                                            </StackLayout>
+                                                        </Grid>
+                                                    </Frame>
+                                                </DataTemplate>
+                                            </CollectionView.ItemTemplate>
+                                        </CollectionView>
+                                    </StackLayout>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        
+                        <!-- Logout Button -->
+                        <Frame BackgroundColor="{StaticResource Accent}"
+                               BorderColor="{StaticResource Accent}"
+                               Padding="15,10"
+                               Margin="15,20,15,15"
+                               CornerRadius="8"
+                               HasShadow="False">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding LogoutCommand}" />
+                            </Frame.GestureRecognizers>
+                            
+                            <Grid ColumnDefinitions="40,*">
+                                <Label Grid.Column="0"
+                                       Text="🚪"
+                                       FontSize="20"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                                
+                                <Label Grid.Column="1"
+                                       Text="Déconnexion"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="White"
+                                       Margin="10,0,0,0"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </Frame>
+                        
+                    </StackLayout>
+                </ScrollView>
+            </Frame>
+        </Grid>
+    </Grid>
 </ContentPage>
