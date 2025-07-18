@@ -157,6 +157,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IImageCacheService, ImageCacheService>();
         builder.Services.AddSingleton<IMapDiagnosticService, MapDiagnosticService>();
         builder.Services.AddSingleton<IPlatformMapService, PlatformMapService>();
+        builder.Services.AddSingleton<IMenuService, MenuService>();
         
         // Configure logging
         builder.Services.AddLogging(configure => configure.AddDebug());

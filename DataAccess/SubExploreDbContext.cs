@@ -50,6 +50,15 @@ namespace SubExplore.DataAccess
                       .WithOne(e => e.Spot)
                       .HasForeignKey(e => e.SpotId);
             });
+
+            // Seed data pour les types de spots
+            modelBuilder.Entity<SpotType>().HasData(
+                new SpotType { Id = 1, Name = "Plongée bouteille", Description = "Plongée avec équipement complet", ColorCode = "#1E88E5", IsActive = true, Category = Models.Enums.ActivityCategory.Diving },
+                new SpotType { Id = 2, Name = "Apnée", Description = "Plongée en apnée", ColorCode = "#43A047", IsActive = true, Category = Models.Enums.ActivityCategory.Freediving },
+                new SpotType { Id = 3, Name = "Snorkeling", Description = "Observation en surface", ColorCode = "#FF7043", IsActive = true, Category = Models.Enums.ActivityCategory.Snorkeling },
+                new SpotType { Id = 4, Name = "Plongée technique", Description = "Plongée technique avancée", ColorCode = "#8E24AA", IsActive = true, Category = Models.Enums.ActivityCategory.Diving },
+                new SpotType { Id = 5, Name = "Plongée de nuit", Description = "Plongée nocturne", ColorCode = "#3949AB", IsActive = true, Category = Models.Enums.ActivityCategory.Diving }
+            );
         }
     }
 }

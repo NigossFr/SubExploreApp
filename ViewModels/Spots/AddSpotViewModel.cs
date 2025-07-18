@@ -711,5 +711,8 @@ namespace SubExplore.ViewModels.Spots
                 await NavigationService.GoBackAsync();
             }
         }
+
+        // Back command for header navigation
+        public IRelayCommand BackCommand => CancelCommand;
     }
 }

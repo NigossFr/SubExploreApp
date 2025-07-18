@@ -14,7 +14,7 @@ namespace SubExplore.Views.Spots
             InitializeComponent();
             BindingContext = viewModel;
             _viewModel = viewModel;
-
+            
             // �couter les changements de propri�t� sur le ViewModel
             // Surtout IsLoading pour savoir quand les donn�es sont pr�tes
             if (_viewModel != null)

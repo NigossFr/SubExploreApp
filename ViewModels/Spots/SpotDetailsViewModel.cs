@@ -259,5 +259,13 @@ namespace SubExplore.ViewModels.Spots
                 await DialogService.ShowAlertAsync("Erreur", $"Impossible d'ouvrir la carte: {ex.Message}", "OK");
             }
         }
+
+        [RelayCommand]
+        private async Task Back()
+        {
+            await NavigationService.GoBackAsync();
+        }
+
+        // Back command for header navigation is auto-generated as BackCommand
     }
 }

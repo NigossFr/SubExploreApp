@@ -5,13 +5,20 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:SubExplore.Views.Spots.Components"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spots"
+    xmlns:common="clr-namespace:SubExplore.Views.Common"
     Title="{Binding Title}"
     BackgroundColor="{StaticResource Background}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Page Header with Menu -->
+        <common:PageHeaderView x:Name="PageHeader" 
+                               Grid.Row="0"
+                               Title="{Binding Title}"
+                               ShowBackButton="True"
+                               BackCommand="{Binding BackCommand}" />
         <!--  Header avec progression  -->
         <Frame
-            Grid.Row="0"
+            Grid.Row="1"
             Margin="10,5"
             Padding="10"
             BorderColor="{StaticResource Secondary}"
@@ -134,7 +141,7 @@
         </Frame>
 
         <!--  Contenu dynamique selon l'étape (Utilisation d'un Grid pour permettre la superposition)  -->
-        <Grid x:Name="StepContent" Grid.Row="1">
+        <Grid x:Name="StepContent" Grid.Row="2">
             <!--  Le contenu sera remplacé dynamiquement selon l'étape courante  -->
 
             <!--  Étape 1: Localisation  -->
@@ -245,7 +252,7 @@
 
         <!--  Boutons de navigation  -->
         <Grid
-            Grid.Row="2"
+            Grid.Row="3"
             Padding="20,10"
             ColumnDefinitions="*,*">
             <Button
