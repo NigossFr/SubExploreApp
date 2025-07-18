@@ -10,10 +10,13 @@ using SubExplore.Services.Implementations;
 using SubExplore.ViewModels.Settings;
 using SubExplore.ViewModels.Map;
 using SubExplore.ViewModels.Spots;
+using SubExplore.ViewModels.Profile;
+using SubExplore.ViewModels.Menu;
 using SubExplore.Views.Spots.Components;
 using SubExplore.Views.Settings;
 using SubExplore.Views.Map;
 using SubExplore.Views.Spots;
+using SubExplore.Views.Profile;
 using System.Reflection;
 using CommunityToolkit.Maui;
 using Microsoft.Maui.Controls.Maps;
@@ -158,6 +161,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMapDiagnosticService, MapDiagnosticService>();
         builder.Services.AddSingleton<IPlatformMapService, PlatformMapService>();
         builder.Services.AddSingleton<IMenuService, MenuService>();
+        builder.Services.AddScoped<IUserProfileService, UserProfileService>();
         
         // Configure logging
         builder.Services.AddLogging(configure => configure.AddDebug());
@@ -179,6 +183,10 @@ public static class MauiProgram
         builder.Services.AddTransient<SpotLocationViewModel>();
         builder.Services.AddTransient<SpotCharacteristicsViewModel>();
         builder.Services.AddTransient<SpotPhotosViewModel>();
+        builder.Services.AddTransient<UserProfileViewModel>();
+        builder.Services.AddTransient<UserPreferencesViewModel>();
+        builder.Services.AddTransient<UserStatsViewModel>();
+        builder.Services.AddTransient<MenuViewModel>();
 
         // Enregistrement des vues (Pages et Views)
         // Pour les Pages et Views, AddTransient est généralement correct.
@@ -189,6 +197,9 @@ public static class MauiProgram
         builder.Services.AddTransient<SpotLocationView>(); // Si c'est une ContentView, c'est bien
         builder.Services.AddTransient<SpotCharacteristicsView>(); // Idem
         builder.Services.AddTransient<SpotPhotosView>(); // Idem
+        builder.Services.AddTransient<UserProfilePage>();
+        builder.Services.AddTransient<UserPreferencesPage>();
+        builder.Services.AddTransient<UserStatsPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();

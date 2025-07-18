@@ -6,6 +6,7 @@
     xmlns:local="clr-namespace:SubExplore"
     xmlns:map="clr-namespace:SubExplore.Views.Map"
     xmlns:spots="clr-namespace:SubExplore.Views.Spots"
+    xmlns:profile="clr-namespace:SubExplore.Views.Profile"
     Shell.FlyoutBehavior="Disabled"
     Title="SubExplore">
 
@@ -25,5 +26,23 @@
         Title="Spot Details"
         ContentTemplate="{DataTemplate spots:SpotDetailsPage}"
         Route="spotdetails" />
+
+    <!-- User Profile Page Route -->
+    <ShellContent
+        Title="User Profile"
+        ContentTemplate="{DataTemplate profile:UserProfilePage}"
+        Route="userprofile" />
+
+    <!-- User Preferences Page Route -->
+    <ShellContent
+        Title="User Preferences"
+        ContentTemplate="{DataTemplate profile:UserPreferencesPage}"
+        Route="userpreferences" />
+
+    <!-- User Stats Page Route -->
+    <ShellContent
+        Title="User Stats"
+        ContentTemplate="{DataTemplate profile:UserStatsPage}"
+        Route="userstats" />
 
 </Shell>

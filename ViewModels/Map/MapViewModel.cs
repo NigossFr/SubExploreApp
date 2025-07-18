@@ -10,6 +10,7 @@ using SubExplore.Models.Enums;
 using SubExplore.Repositories.Interfaces;
 using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels.Base;
+using SubExplore.ViewModels.Profile;
 using SubExplore.Models.Menu;
 using MenuItemModel = SubExplore.Models.Menu.MenuItem;
 
@@ -105,6 +106,7 @@ namespace SubExplore.ViewModels.Map
 
         private readonly IDatabaseService _databaseService;
         private readonly IUserRepository _userRepository;
+        private readonly ISettingsService _settingsService;
 
         public MapViewModel(
             ISpotRepository spotRepository,
@@ -115,7 +117,8 @@ namespace SubExplore.ViewModels.Map
             IDatabaseService databaseService,
             IUserRepository userRepository,
             IDialogService dialogService,
-            INavigationService navigationService)
+            INavigationService navigationService,
+            ISettingsService settingsService)
             : base(dialogService, navigationService)
         {
             _spotRepository = spotRepository;
@@ -123,6 +126,7 @@ namespace SubExplore.ViewModels.Map
             _spotTypeRepository = spotTypeRepository;
             _databaseService = databaseService;
             _userRepository = userRepository;
+            _settingsService = settingsService;
             _configuration = configuration;
             _platformMapService = platformMapService;
 
@@ -675,8 +679,7 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private async Task NavigateToProfile()
         {
-            // TODO: Implement Profile page
-            await DialogService.ShowToastAsync("Fonction à venir");
+            await NavigateToAsync<UserProfileViewModel>();
             IsMenuOpen = false;
         }
 
@@ -835,12 +838,20 @@ namespace SubExplore.ViewModels.Map
                     UserDisplayName = $"{currentUser.FirstName} {currentUser.LastName}";
                     UserEmail = currentUser.Email;
                     UserAvatarUrl = currentUser.AvatarUrl ?? "default_avatar.png";
+                    
+                    // Set the current user ID in settings service for UserProfileService
+                    _settingsService.Set("CurrentUserId", userId);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Set CurrentUserId in settings: {userId}");
                 }
                 else
                 {
                     UserDisplayName = "Utilisateur Invité";
                     UserEmail = "guest@subexplore.com";
                     UserAvatarUrl = "default_avatar.png";
+                    
+                    // Clear current user ID if no user found
+                    _settingsService.Remove("CurrentUserId");
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Cleared CurrentUserId from settings (no user found)");
                 }
             }
             catch (Exception ex)
@@ -849,6 +860,9 @@ namespace SubExplore.ViewModels.Map
                 UserDisplayName = "Utilisateur Invité";
                 UserEmail = "guest@subexplore.com";
                 UserAvatarUrl = "default_avatar.png";
+                
+                // Clear current user ID on error
+                _settingsService.Remove("CurrentUserId");
             }
         }
 

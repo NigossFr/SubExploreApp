@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Profile.UserPreferencesPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SubExplore.ViewModels.Profile"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:DataType="vm:UserPreferencesViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <StackLayout Padding="16" Spacing="20">
+            
+            <!-- Loading Indicator -->
+            <ActivityIndicator IsVisible="{Binding IsLoading}" 
+                             IsRunning="{Binding IsLoading}"
+                             Color="{StaticResource Primary}"
+                             VerticalOptions="Center" />
+
+            <!-- Error Message -->
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding IsError}" />
+
+            <!-- Preferences Content -->
+            <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}" Spacing="20">
+                
+                <!-- Appearance Settings -->
+                <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12">
+                    <StackLayout Spacing="16">
+                        <Label Text="Appearance" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{StaticResource Primary}" />
+
+                        <!-- Theme -->
+                        <StackLayout>
+                            <Label Text="Theme" FontSize="14" TextColor="{StaticResource Gray600}" />
+                            <Picker ItemsSource="{Binding ThemeOptions}" 
+                                    SelectedItem="{Binding SelectedTheme}" 
+                                    BackgroundColor="White"
+                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                        </StackLayout>
+
+                        <!-- Language -->
+                        <StackLayout>
+                            <Label Text="Language" FontSize="14" TextColor="{StaticResource Gray600}" />
+                            <Picker ItemsSource="{Binding LanguageOptions}" 
+                                    SelectedItem="{Binding SelectedLanguage}" 
+                                    BackgroundColor="White"
+                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                        </StackLayout>
+
+                        <!-- Display Name -->
+                        <StackLayout>
+                            <Label Text="Display Name Preference" FontSize="14" TextColor="{StaticResource Gray600}" />
+                            <Picker ItemsSource="{Binding DisplayNameOptions}" 
+                                    SelectedItem="{Binding SelectedDisplayName}" 
+                                    BackgroundColor="White"
+                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Notification Settings -->
+                <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12">
+                    <StackLayout Spacing="16">
+                        <Label Text="Notifications" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{StaticResource Primary}" />
+
+                        <!-- Push Notifications -->
+                        <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                            <Label Text="Push Notifications" 
+                                   FontSize="14" 
+                                   TextColor="{StaticResource Gray600}" 
+                                   VerticalOptions="Center" 
+                                   HorizontalOptions="StartAndExpand" />
+                            <Switch IsToggled="{Binding PushNotifications}" 
+                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                        </StackLayout>
+
+                        <!-- Email Notifications -->
+                        <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                            <Label Text="Email Notifications" 
+                                   FontSize="14" 
+                                   TextColor="{StaticResource Gray600}" 
+                                   VerticalOptions="Center" 
+                                   HorizontalOptions="StartAndExpand" />
+                            <Switch IsToggled="{Binding EmailNotifications}" 
+                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                        </StackLayout>
+
+                        <!-- Spots Nearby -->
+                        <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                            <Label Text="Spots Nearby" 
+                                   FontSize="14" 
+                                   TextColor="{StaticResource Gray600}" 
+                                   VerticalOptions="Center" 
+                                   HorizontalOptions="StartAndExpand" />
+                            <Switch IsToggled="{Binding SpotsNearby}" 
+                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                        </StackLayout>
+
+                        <!-- Community Updates -->
+                        <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                            <Label Text="Community Updates" 
+                                   FontSize="14" 
+                                   TextColor="{StaticResource Gray600}" 
+                                   VerticalOptions="Center" 
+                                   HorizontalOptions="StartAndExpand" />
+                            <Switch IsToggled="{Binding CommunityUpdates}" 
+                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                        </StackLayout>
+
+                        <!-- Safety Alerts -->
+                        <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                            <Label Text="Safety Alerts" 
+                                   FontSize="14" 
+                                   TextColor="{StaticResource Gray600}" 
+                                   VerticalOptions="Center" 
+                                   HorizontalOptions="StartAndExpand" />
+                            <Switch IsToggled="{Binding SafetyAlerts}" 
+                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Action Buttons -->
+                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="16">
+                    <Button Text="Back" 
+                            Command="{Binding GoBackCommand}"
+                            BackgroundColor="{StaticResource Gray300}"
+                            TextColor="Black"
+                            IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                    
+                    <Button Text="Save Preferences" 
+                            Command="{Binding SavePreferencesCommand}"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="White"
+                            IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
+                </StackLayout>
+
+                <!-- Updating Indicator -->
+                <ActivityIndicator IsVisible="{Binding IsUpdating}" 
+                                 IsRunning="{Binding IsUpdating}"
+                                 Color="{StaticResource Primary}"
+                                 HorizontalOptions="Center" />
+            </StackLayout>
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

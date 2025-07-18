@@ -133,6 +133,9 @@ namespace SubExplore.Services.Implementations
                 "MapViewModel" => "map",
                 "AddSpotViewModel" => "addspot",
                 "SpotDetailsViewModel" => "spotdetails",
+                "UserProfileViewModel" => "userprofile",
+                "UserPreferencesViewModel" => "userpreferences",
+                "UserStatsViewModel" => "userstats",
                 _ => ConvertViewModelNameToRoute(viewModelName)
             };
         }
@@ -155,6 +158,9 @@ namespace SubExplore.Services.Implementations
                 "SpotDetailsPage" => "SubExplore.Views.Spots.SpotDetailsPage",
                 "SettingsPage" => "SubExplore.Views.Settings.SettingsPage",
                 "DatabaseTestPage" => "SubExplore.Views.Settings.DatabaseTestPage",
+                "UserProfilePage" => "SubExplore.Views.Profile.UserProfilePage",
+                "UserPreferencesPage" => "SubExplore.Views.Profile.UserPreferencesPage",
+                "UserStatsPage" => "SubExplore.Views.Profile.UserStatsPage",
                 _ => $"SubExplore.Views.{viewTypeName}" // Default fallback
             };
         }

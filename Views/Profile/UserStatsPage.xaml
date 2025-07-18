@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Profile.UserStatsPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SubExplore.ViewModels.Profile"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:DataType="vm:UserStatsViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <StackLayout Padding="16" Spacing="20">
+            
+            <!-- Loading Indicator -->
+            <ActivityIndicator IsVisible="{Binding IsLoading}" 
+                             IsRunning="{Binding IsLoading}"
+                             Color="{StaticResource Primary}"
+                             VerticalOptions="Center" />
+
+            <!-- Error Message -->
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding IsError}" />
+
+            <!-- Stats Content -->
+            <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}" Spacing="20">
+                
+                <!-- General Stats -->
+                <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12">
+                    <StackLayout Spacing="16">
+                        <Label Text="General Statistics" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{StaticResource Primary}" />
+
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*">
+                            <!-- Total Spots -->
+                            <StackLayout Grid.Row="0" Grid.Column="0" HorizontalOptions="Center">
+                                <Label Text="{Binding UserStats.TotalSpots}"
+                                       FontSize="24"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Primary}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Total Spots"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Validated Spots -->
+                            <StackLayout Grid.Row="0" Grid.Column="1" HorizontalOptions="Center">
+                                <Label Text="{Binding UserStats.ValidatedSpots}"
+                                       FontSize="24"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Success}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Validated Spots"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Pending Spots -->
+                            <StackLayout Grid.Row="1" Grid.Column="0" HorizontalOptions="Center">
+                                <Label Text="{Binding UserStats.PendingSpots}"
+                                       FontSize="24"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Warning}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Pending Spots"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Total Photos -->
+                            <StackLayout Grid.Row="1" Grid.Column="1" HorizontalOptions="Center">
+                                <Label Text="{Binding UserStats.TotalPhotos}"
+                                       FontSize="24"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Info}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Total Photos"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Validation Rate -->
+                            <StackLayout Grid.Row="2" Grid.Column="0" HorizontalOptions="Center">
+                                <Label Text="{Binding ValidationRate}"
+                                       FontSize="20"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Success}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Validation Rate"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Photos per Spot -->
+                            <StackLayout Grid.Row="2" Grid.Column="1" HorizontalOptions="Center">
+                                <Label Text="{Binding PhotosPerSpotDisplay}"
+                                       FontSize="20"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Info}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Photos per Spot"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Contribution Score -->
+                            <StackLayout Grid.Row="3" Grid.ColumnSpan="2" HorizontalOptions="Center">
+                                <Label Text="{Binding UserStats.ContributionScore}"
+                                       FontSize="28"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Warning}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="{Binding ContributionLevel}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Primary}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Diving Stats -->
+                <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12" IsVisible="{Binding HasSpots}">
+                    <StackLayout Spacing="16">
+                        <Label Text="Diving Statistics" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{StaticResource Primary}" />
+
+                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*">
+                            <!-- Average Depth -->
+                            <StackLayout Grid.Row="0" Grid.Column="0" HorizontalOptions="Center">
+                                <Label Text="{Binding AverageDepthDisplay}"
+                                       FontSize="20"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Primary}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Average Depth"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Max Depth -->
+                            <StackLayout Grid.Row="0" Grid.Column="1" HorizontalOptions="Center">
+                                <Label Text="{Binding MaxDepthDisplay}"
+                                       FontSize="20"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Danger}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Max Depth"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Expertise Level -->
+                            <StackLayout Grid.Row="1" Grid.Column="0" HorizontalOptions="Center">
+                                <Label Text="{Binding ExpertiseLevelDisplay}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Primary}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Expertise Level"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Days Active -->
+                            <StackLayout Grid.Row="1" Grid.Column="1" HorizontalOptions="Center">
+                                <Label Text="{Binding UserStats.DaysActive}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Info}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Days Active"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Favorite Spot Type -->
+                            <StackLayout Grid.Row="2" Grid.ColumnSpan="2" HorizontalOptions="Center" IsVisible="{Binding HasSpotsByType}">
+                                <Label Text="{Binding UserStats.FavoriteSpotType}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Primary}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Favorite Spot Type"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Activity Timeline -->
+                <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12">
+                    <StackLayout Spacing="16">
+                        <Label Text="Activity Timeline" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{StaticResource Primary}" />
+
+                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,*">
+                            <!-- Last Activity -->
+                            <StackLayout Grid.Row="0" Grid.Column="0" HorizontalOptions="Center">
+                                <Label Text="{Binding LastActivityDisplay}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Primary}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Last Activity"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+
+                            <!-- Last Spot Created -->
+                            <StackLayout Grid.Row="0" Grid.Column="1" HorizontalOptions="Center">
+                                <Label Text="{Binding LastSpotCreatedDisplay}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Success}"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Last Spot Created"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Certifications -->
+                <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12" IsVisible="{Binding HasCertifications}">
+                    <StackLayout Spacing="16">
+                        <Label Text="Recent Certifications" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{StaticResource Primary}" />
+
+                        <CollectionView ItemsSource="{Binding UserStats.RecentCertifications}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8">
+                                        <Frame BackgroundColor="White" HasShadow="False" CornerRadius="8" Padding="12">
+                                            <Label Text="{Binding .}" 
+                                                   FontSize="14" 
+                                                   TextColor="{StaticResource Primary}" 
+                                                   HorizontalTextAlignment="Center" />
+                                        </Frame>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Back Button -->
+                <Button Text="Back" 
+                        Command="{Binding GoBackCommand}"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White"
+                        HorizontalOptions="Center"
+                        WidthRequest="120" />
+            </StackLayout>
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

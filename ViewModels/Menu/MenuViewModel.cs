@@ -8,6 +8,7 @@ using SubExplore.Models.Menu;
 using Microsoft.Extensions.Logging;
 using SubExplore.ViewModels.Map;
 using SubExplore.ViewModels.Spots;
+using SubExplore.ViewModels.Profile;
 using SubExplore.Repositories.Interfaces;
 using MenuItemModel = SubExplore.Models.Menu.MenuItem;
 
@@ -200,6 +201,10 @@ namespace SubExplore.ViewModels.Menu
             {
                 // TODO: Replace with actual user authentication
                 var userId = 1; // Temporary hard-coded user ID
+                
+                // Set the current user ID in settings service for UserProfileService
+                _settingsService.Set("CurrentUserId", userId);
+                
                 CurrentUser = await _userRepository.GetByIdAsync(userId);
                 
                 if (CurrentUser != null)
@@ -255,8 +260,7 @@ namespace SubExplore.ViewModels.Menu
         [RelayCommand]
         private async Task NavigateToProfile()
         {
-            // TODO: Implement Profile page
-            await ShowToastAsync("Fonction à venir");
+            await NavigateToAsync<UserProfileViewModel>();
             IsMenuOpen = false;
         }
 
