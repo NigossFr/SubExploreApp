@@ -24,7 +24,8 @@
       "Bash(adb shell:*)",
       "Bash(aapt:*)",
       "Bash(del nul)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
