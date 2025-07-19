@@ -23,7 +23,8 @@
       "Bash(adb logcat:*)",
       "Bash(adb shell:*)",
       "Bash(aapt:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
