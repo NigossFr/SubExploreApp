@@ -12,17 +12,20 @@ using SubExplore.ViewModels.Map;
 using SubExplore.ViewModels.Spots;
 using SubExplore.ViewModels.Profile;
 using SubExplore.ViewModels.Menu;
+using SubExplore.ViewModels.Auth;
 using SubExplore.Views.Spots.Components;
 using SubExplore.Views.Settings;
 using SubExplore.Views.Map;
 using SubExplore.Views.Spots;
 using SubExplore.Views.Profile;
+using SubExplore.Views.Auth;
 using System.Reflection;
 using CommunityToolkit.Maui;
 using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
 using Microsoft.Maui.Devices; // Ajouté pour DeviceInfo
 using System.Diagnostics; // Ajouté pour Debug.WriteLine
+using DotNetEnv; // Pour charger les variables d'environnement
 
 namespace SubExplore;
 
@@ -30,6 +33,18 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+        // Load environment variables from .env file
+        try
+        {
+            Env.Load();
+            Debug.WriteLine("[INFO] Environment variables loaded from .env file");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[WARNING] Could not load .env file: {ex.Message}");
+            // Continue without .env file - environment variables can still be set manually
+        }
+
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
@@ -37,8 +52,9 @@ public static class MauiProgram
             .UseMauiMaps()
             .ConfigureFonts(fonts =>
             {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                // Temporarily commented out to fix font loading issues
+                // fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                // fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
 #if ANDROID
@@ -148,9 +164,11 @@ public static class MauiProgram
         builder.Services.AddScoped<ISpotTypeRepository, SpotTypeRepository>();
         builder.Services.AddScoped<ISpotMediaRepository, SpotMediaRepository>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IRevokedTokenRepository, RevokedTokenRepository>();
 
         // Enregistrement des services
         builder.Services.AddScoped<IDatabaseService, DatabaseService>();
+        builder.Services.AddScoped<IDatabaseInitializationService, DatabaseInitializationService>();
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<ILocationService, LocationService>();
@@ -162,6 +180,16 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPlatformMapService, PlatformMapService>();
         builder.Services.AddSingleton<IMenuService, MenuService>();
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+        
+        // Authentication services
+        builder.Services.AddSingleton<ISecureSettingsService>(provider =>
+        {
+            var baseSettings = provider.GetRequiredService<ISettingsService>();
+            return new SecureSettingsService(baseSettings);
+        });
+        builder.Services.AddSingleton<ISecureConfigurationService, SecureConfigurationService>();
+        builder.Services.AddScoped<ITokenService, TokenService>();
+        builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
         
         // Configure logging
         builder.Services.AddLogging(configure => configure.AddDebug());
@@ -187,6 +215,10 @@ public static class MauiProgram
         builder.Services.AddTransient<UserPreferencesViewModel>();
         builder.Services.AddTransient<UserStatsViewModel>();
         builder.Services.AddTransient<MenuViewModel>();
+        
+        // Authentication ViewModels
+        builder.Services.AddTransient<SubExplore.ViewModels.Auth.LoginViewModel>();
+        builder.Services.AddTransient<SubExplore.ViewModels.Auth.RegistrationViewModel>();
 
         // Enregistrement des vues (Pages et Views)
         // Pour les Pages et Views, AddTransient est généralement correct.
@@ -200,6 +232,17 @@ public static class MauiProgram
         builder.Services.AddTransient<UserProfilePage>();
         builder.Services.AddTransient<UserPreferencesPage>();
         builder.Services.AddTransient<UserStatsPage>();
+        
+        // Authentication Pages
+        builder.Services.AddTransient<SubExplore.Views.Auth.LoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.DiagnosticLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.SimpleLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.WorkingLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.MinimalLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.RegistrationPage>();
+        
+        // Test Pages
+        builder.Services.AddTransient<SubExplore.Views.TestPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();

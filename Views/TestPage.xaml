@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.TestPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Test Page"
+    BackgroundColor="White">
+
+    <StackLayout Padding="20" Spacing="20" VerticalOptions="Center">
+        
+        <Label Text="🌊 TEST PAGE"
+               FontSize="32"
+               FontAttributes="Bold"
+               TextColor="Blue"
+               HorizontalOptions="Center" />
+        
+        <Label Text="This is a test page to verify the app is working"
+               FontSize="16"
+               TextColor="Gray"
+               HorizontalOptions="Center" />
+
+        <Button Text="TEST BUTTON"
+                BackgroundColor="Blue"
+                TextColor="White"
+                FontSize="16"
+                CornerRadius="8"
+                HeightRequest="50" />
+    </StackLayout>
+</ContentPage>

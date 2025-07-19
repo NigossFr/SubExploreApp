@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.SimpleLoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Simple Login Test"
+    BackgroundColor="White">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20">
+            
+            <!-- Simple Header -->
+            <Label Text="🌊 SubExplore Login Test" 
+                   FontSize="32"
+                   FontAttributes="Bold"
+                   TextColor="Blue"
+                   HorizontalOptions="Center" />
+            
+            <!-- Debugging Info -->
+            <Label Text="If you see this, the page is working!" 
+                   FontSize="16"
+                   TextColor="Green"
+                   HorizontalOptions="Center" />
+            
+            <!-- Simple Form -->
+            <StackLayout Spacing="15">
+                
+                <!-- Email -->
+                <Label Text="Email:" FontSize="16" TextColor="Black" />
+                <Entry Text="{Binding Email}" 
+                       Placeholder="Enter your email"
+                       FontSize="16"
+                       BackgroundColor="LightGray" />
+                
+                <!-- Password -->
+                <Label Text="Password:" FontSize="16" TextColor="Black" />
+                <Entry Text="{Binding Password}" 
+                       Placeholder="Enter your password"
+                       IsPassword="True"
+                       FontSize="16"
+                       BackgroundColor="LightGray" />
+                
+                <!-- Login Button -->
+                <Button Text="Login" 
+                        Command="{Binding LoginCommand}"
+                        BackgroundColor="Blue"
+                        TextColor="White"
+                        FontSize="18"
+                        HeightRequest="50"
+                        Margin="0,20,0,0" />
+                
+                <!-- Simple Status -->
+                <Label Text="{Binding LoginErrorMessage}" 
+                       TextColor="Red"
+                       FontSize="14"
+                       IsVisible="{Binding HasLoginError}"
+                       HorizontalOptions="Center" />
+                
+                <!-- Skip Button -->
+                <Button Text="Continue without login" 
+                        Command="{Binding NavigateToMainWithoutLoginCommand}"
+                        BackgroundColor="Gray"
+                        TextColor="White"
+                        FontSize="16"
+                        HeightRequest="45"
+                        Margin="0,10,0,0" />
+                
+            </StackLayout>
+            
+        </StackLayout>
+    </ScrollView>
+    
+</ContentPage>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.DiagnosticLoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Diagnostic Login"
+    BackgroundColor="LightBlue"
+    Shell.NavBarIsVisible="False">
+
+    <StackLayout Padding="30" Spacing="20" BackgroundColor="White">
+        
+        <!-- Header -->
+        <Label Text="🌊 SubExplore Diagnostic Login" 
+               FontSize="24"
+               FontAttributes="Bold"
+               TextColor="DarkBlue"
+               HorizontalOptions="Center"
+               BackgroundColor="LightYellow"
+               Padding="10" />
+        
+        <!-- Status Info -->
+        <Label Text="{Binding Title, StringFormat='Title: {0}'}" 
+               FontSize="16"
+               TextColor="Black"
+               BackgroundColor="LightGreen"
+               Padding="10" />
+               
+        <Label Text="{Binding Email, StringFormat='Email: {0}'}" 
+               FontSize="16"
+               TextColor="Black"
+               BackgroundColor="LightCoral"
+               Padding="10" />
+        
+        <!-- Simple Login Form -->
+        <StackLayout Spacing="15" BackgroundColor="LightGray" Padding="20">
+            
+            <Label Text="Email:" FontSize="16" TextColor="Black" />
+            <Entry Text="{Binding Email}" 
+                   Placeholder="admin@subexplore.com"
+                   FontSize="16"
+                   BackgroundColor="White" />
+            
+            <Label Text="Password:" FontSize="16" TextColor="Black" />
+            <Entry Text="{Binding Password}" 
+                   Placeholder="Admin123!"
+                   IsPassword="True"
+                   FontSize="16"
+                   BackgroundColor="White" />
+            
+            <Button Text="Login" 
+                    Command="{Binding LoginCommand}"
+                    BackgroundColor="DarkBlue"
+                    TextColor="White"
+                    FontSize="18"
+                    HeightRequest="50" />
+                    
+            <Button Text="Continue without login" 
+                    Command="{Binding NavigateToMainWithoutLoginCommand}"
+                    BackgroundColor="Gray"
+                    TextColor="White"
+                    FontSize="16"
+                    HeightRequest="45" />
+        </StackLayout>
+        
+        <!-- Debug Info -->
+        <StackLayout BackgroundColor="Yellow" Padding="15" Spacing="5">
+            <Label Text="DEBUG INFO:" FontAttributes="Bold" TextColor="Red" />
+            <Label Text="{Binding HasLoginError, StringFormat='HasLoginError: {0}'}" TextColor="Black" />
+            <Label Text="{Binding LoginErrorMessage, StringFormat='Error: {0}'}" TextColor="Red" />
+            <Label Text="{Binding IsLoginInProgress, StringFormat='IsLoginInProgress: {0}'}" TextColor="Black" />
+        </StackLayout>
+        
+    </StackLayout>
+
+</ContentPage>

@@ -19,7 +19,7 @@ namespace SubExplore.Services.Implementations
             _serviceProvider = serviceProvider;
         }
 
-        public async Task NavigateToAsync<TViewModel>(object parameter = null) where TViewModel : ViewModelBase
+        public async Task NavigateToAsync<TViewModel>(object parameter = null)
         {
             // Use Shell navigation if available
             if (Application.Current.MainPage is Shell)
@@ -58,7 +58,7 @@ namespace SubExplore.Services.Implementations
             }
         }
 
-        public async Task NavigateToModalAsync<TViewModel>(object parameter = null) where TViewModel : ViewModelBase
+        public async Task NavigateToModalAsync<TViewModel>(object parameter = null)
         {
             var page = await CreateAndInitializePage<TViewModel>(parameter);
             await Application.Current.MainPage.Navigation.PushModalAsync(page);
@@ -81,13 +81,13 @@ namespace SubExplore.Services.Implementations
             await Application.Current.MainPage.Navigation.PopModalAsync();
         }
 
-        public async Task InitializeAsync<TViewModel>() where TViewModel : ViewModelBase
+        public async Task InitializeAsync<TViewModel>()
         {
             var page = await CreateAndInitializePage<TViewModel>();
             Application.Current.MainPage = new NavigationPage(page);
         }
 
-        private async Task<Page> CreateAndInitializePage<TViewModel>(object parameter = null) where TViewModel : ViewModelBase
+        private async Task<Page> CreateAndInitializePage<TViewModel>(object parameter = null)
         {
             var viewModel = _serviceProvider.GetService<TViewModel>();
             if (viewModel == null)
@@ -111,19 +111,26 @@ namespace SubExplore.Services.Implementations
 
             page.BindingContext = viewModel;
 
-            if (parameter != null)
+            // Check if ViewModel has InitializeAsync method
+            var initMethod = viewModel.GetType().GetMethod("InitializeAsync", new[] { typeof(object) });
+            if (initMethod != null)
             {
-                await viewModel.InitializeAsync(parameter);
+                await (Task)initMethod.Invoke(viewModel, new[] { parameter });
             }
             else
             {
-                await viewModel.InitializeAsync();
+                // Try method without parameters
+                var initMethodNoParam = viewModel.GetType().GetMethod("InitializeAsync", Type.EmptyTypes);
+                if (initMethodNoParam != null)
+                {
+                    await (Task)initMethodNoParam.Invoke(viewModel, null);
+                }
             }
 
             return page;
         }
 
-        private string GetRouteForViewModel<TViewModel>() where TViewModel : ViewModelBase
+        private string GetRouteForViewModel<TViewModel>()
         {
             var viewModelName = typeof(TViewModel).Name;
             
@@ -161,6 +168,8 @@ namespace SubExplore.Services.Implementations
                 "UserProfilePage" => "SubExplore.Views.Profile.UserProfilePage",
                 "UserPreferencesPage" => "SubExplore.Views.Profile.UserPreferencesPage",
                 "UserStatsPage" => "SubExplore.Views.Profile.UserStatsPage",
+                "LoginPage" => "SubExplore.Views.Auth.LoginPage",
+                "RegistrationPage" => "SubExplore.Views.Auth.RegistrationPage",
                 _ => $"SubExplore.Views.{viewTypeName}" // Default fallback
             };
         }

@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.ProductionLoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
+    Title="{Binding Title}"
+    BackgroundColor="#F8FDFF"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
+        <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <Grid RowDefinitions="Auto,*,Auto" Padding="30,60,30,30">
+            
+            <!-- Header Section -->
+            <StackLayout Grid.Row="0" Spacing="30" Margin="0,0,0,50">
+                <!-- App Logo/Icon -->
+                <Frame BackgroundColor="#006994"
+                       CornerRadius="35"
+                       HeightRequest="70"
+                       WidthRequest="70"
+                       HorizontalOptions="Center"
+                       HasShadow="False"
+                       BorderColor="Transparent">
+                    <Label Text="S"
+                           FontSize="28"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           TextColor="White" />
+                </Frame>
+
+                <!-- Welcome Text -->
+                <StackLayout Spacing="12">
+                    <Label Text="Bienvenue sur SubExplore"
+                           FontSize="32"
+                           FontAttributes="Bold"
+                           TextColor="#006994"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                    
+                    <Label Text="Découvrez et partagez les plus beaux spots de plongée"
+                           FontSize="16"
+                           TextColor="#666666"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           Margin="0,0,0,10" />
+                </StackLayout>
+            </StackLayout>
+
+            <!-- Login Form -->
+            <StackLayout Grid.Row="1" Spacing="25">
+                
+                <!-- Error Message -->
+                <Frame BackgroundColor="#E63946"
+                       CornerRadius="12"
+                       Padding="20,15"
+                       IsVisible="{Binding HasLoginError}"
+                       BorderColor="Transparent"
+                       HasShadow="False">
+                    <Label Text="{Binding LoginErrorMessage}"
+                           TextColor="White"
+                           FontSize="14"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                </Frame>
+
+                <!-- Login Credentials Card -->
+                <Frame BackgroundColor="#FFFFFF"
+                       BorderColor="#C8C8C8"
+                       CornerRadius="12"
+                       HasShadow="False"
+                       Padding="25,30"
+                       Margin="0,10">
+                    <StackLayout Spacing="25">
+                        
+                        <!-- Email Field -->
+                        <StackLayout Spacing="10">
+                            <Label Text="Adresse email"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="#333333" />
+                            
+                            <Frame BackgroundColor="#FFFFFF"
+                                   BorderColor="#C8C8C8"
+                                   CornerRadius="8"
+                                   HasShadow="False"
+                                   Padding="0">
+                                <Entry Text="{Binding Email}"
+                                       Placeholder="admin@subexplore.com"
+                                       Keyboard="Email"
+                                       FontSize="16"
+                                       TextColor="#333333"
+                                       PlaceholderColor="#919191"
+                                       BackgroundColor="Transparent"
+                                       Margin="20,0"
+                                       HeightRequest="50" />
+                            </Frame>
+                        </StackLayout>
+
+                        <!-- Password Field -->
+                        <StackLayout Spacing="10">
+                            <Label Text="Mot de passe"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="#333333" />
+                            
+                            <Frame BackgroundColor="#FFFFFF"
+                                   BorderColor="#C8C8C8"
+                                   CornerRadius="8"
+                                   HasShadow="False"
+                                   Padding="0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Entry Grid.Column="0"
+                                           Text="{Binding Password}"
+                                           Placeholder="Admin123!"
+                                           IsPassword="{Binding IsPasswordVisible, Converter={StaticResource InvertBoolConverter}}"
+                                           FontSize="16"
+                                           TextColor="#333333"
+                                           PlaceholderColor="#919191"
+                                           BackgroundColor="Transparent"
+                                           Margin="20,0,0,0"
+                                           HeightRequest="50" />
+                                    
+                                    <Button Grid.Column="1"
+                                            Text="{Binding IsPasswordVisible, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='🙈|👁️'}"
+                                            FontSize="18"
+                                            BackgroundColor="Transparent"
+                                            TextColor="#6E6E6E"
+                                            Padding="15"
+                                            Command="{Binding TogglePasswordVisibilityCommand}" />
+                                </Grid>
+                            </Frame>
+                        </StackLayout>
+
+                        <!-- Remember Me -->
+                        <StackLayout Orientation="Horizontal" Spacing="12" Margin="0,5,0,0">
+                            <CheckBox IsChecked="{Binding RememberMe}"
+                                      Color="#006994" />
+                            <Label Text="Se souvenir de moi"
+                                   FontSize="14"
+                                   TextColor="#666666"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
+                        
+                    </StackLayout>
+                </Frame>
+
+                <!-- Login Button -->
+                <Button Text="Se connecter"
+                        Command="{Binding LoginCommand}"
+                        BackgroundColor="#006994"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        CornerRadius="12"
+                        HeightRequest="55"
+                        Margin="0,10"
+                        IsEnabled="{Binding IsLoginInProgress, Converter={StaticResource InvertBoolConverter}}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsLoginInProgress}" Value="True">
+                            <Setter Property="Text" Value="Connexion..." />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+
+                <!-- Forgot Password Link -->
+                <Button Text="Mot de passe oublié ?"
+                        Command="{Binding NavigateToForgotPasswordCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="#006994"
+                        FontSize="14"
+                        FontAttributes="Bold"
+                        Padding="0"
+                        HorizontalOptions="Center"
+                        Margin="0,5,0,0" />
+
+                <!-- Divider -->
+                <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,30,0,20">
+                    <BoxView BackgroundColor="#ACACAC"
+                             HeightRequest="1"
+                             VerticalOptions="Center"
+                             HorizontalOptions="FillAndExpand" />
+                    <Label Text="ou"
+                           FontSize="14"
+                           TextColor="#6E6E6E"
+                           VerticalOptions="Center" />
+                    <BoxView BackgroundColor="#ACACAC"
+                             HeightRequest="1"
+                             VerticalOptions="Center"
+                             HorizontalOptions="FillAndExpand" />
+                </StackLayout>
+
+                <!-- Continue Without Login -->
+                <Button Text="Continuer sans compte"
+                        Command="{Binding NavigateToMainWithoutLoginCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="#00B4D8"
+                        FontSize="16"
+                        BorderColor="#00B4D8"
+                        BorderWidth="2"
+                        CornerRadius="12"
+                        HeightRequest="50"
+                        HorizontalOptions="FillAndExpand" />
+            </StackLayout>
+
+            <!-- Footer Section -->
+            <StackLayout Grid.Row="2" Spacing="15" Margin="0,40,0,20">
+                
+                <!-- Registration Link -->
+                <StackLayout Orientation="Horizontal" 
+                             HorizontalOptions="Center" 
+                             Spacing="8">
+                    <Label Text="Pas encore de compte ?"
+                           FontSize="15"
+                           TextColor="#666666"
+                           VerticalOptions="Center" />
+                    
+                    <Button Text="S'inscrire"
+                            Command="{Binding NavigateToRegistrationCommand}"
+                            BackgroundColor="Transparent"
+                            TextColor="#006994"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            Padding="0"
+                            VerticalOptions="Center" />
+                </StackLayout>
+
+                <!-- Version Info -->
+                <Label Text="SubExplore v1.0 - Explorez en toute sécurité"
+                       FontSize="12"
+                       TextColor="#919191"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,15,0,0" />
+            </StackLayout>
+
+        </Grid>
+    </ScrollView>
+
+    <!-- Loading Overlay -->
+    <Grid IsVisible="{Binding IsLoginInProgress}"
+          BackgroundColor="#80000000">
+        <Frame BackgroundColor="#FFFFFF"
+               CornerRadius="8"
+               WidthRequest="120"
+               HeightRequest="120"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               HasShadow="False"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center">
+                <ActivityIndicator IsRunning="{Binding IsLoginInProgress}"
+                                   Color="#006994"
+                                   WidthRequest="40"
+                                   HeightRequest="40" />
+                <Label Text="Connexion..."
+                       FontSize="14"
+                       TextColor="#333333"
+                       HorizontalOptions="Center" />
+            </StackLayout>
+        </Frame>
+    </Grid>
+
+</ContentPage>

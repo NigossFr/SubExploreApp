@@ -20,6 +20,7 @@ namespace SubExplore.DataAccess
         public DbSet<Spot> Spots { get; set; }
         public DbSet<SpotMedia> SpotMedia { get; set; }
         public DbSet<SpotType> SpotTypes { get; set; }
+        public DbSet<RevokedToken> RevokedTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +50,19 @@ namespace SubExplore.DataAccess
                 entity.HasMany(e => e.Media)
                       .WithOne(e => e.Spot)
                       .HasForeignKey(e => e.SpotId);
+            });
+
+            modelBuilder.Entity<RevokedToken>(entity =>
+            {
+                entity.HasIndex(e => e.TokenHash).IsUnique();
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.RevokedAt);
+                entity.HasIndex(e => e.ExpiresAt);
+
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
             // Seed data pour les types de spots

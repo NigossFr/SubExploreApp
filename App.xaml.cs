@@ -1,5 +1,7 @@
 ﻿using Microsoft.Maui.Controls;
 using SubExplore.Views.Map;
+using SubExplore.Views.Auth;
+using SubExplore.Services.Interfaces;
 using System.Diagnostics;
 
 namespace SubExplore
@@ -14,17 +16,234 @@ namespace SubExplore
 
             Debug.WriteLine("[App.xaml.cs] Constructeur App - Après InitializeComponent()");
 
-            var mapPageInstance = services.GetService<MapPage>();
-            if (mapPageInstance == null)
+            // PROPER AUTHENTICATION FLOW: Initialize authentication before setting MainPage
+            try
             {
-                Debug.WriteLine("[App.xaml.cs] ERREUR: Impossible de résoudre MapPage depuis le conteneur de services dans le constructeur App!");
-                // Solution de secours très basique
-                MainPage = new ContentPage { Content = new Label { Text = "Erreur: MapPage non résolue au démarrage", TextColor = Colors.Red } };
+                Debug.WriteLine("[App.xaml.cs] Starting authentication-based initialization");
+                
+                // Set a loading page initially
+                MainPage = new ContentPage
+                {
+                    Content = new StackLayout
+                    {
+                        Children =
+                        {
+                            new ActivityIndicator { IsRunning = true, Color = Colors.Blue },
+                            new Label 
+                            { 
+                                Text = "Initializing SubExplore...", 
+                                HorizontalOptions = LayoutOptions.Center,
+                                FontSize = 16
+                            }
+                        },
+                        VerticalOptions = LayoutOptions.Center,
+                        HorizontalOptions = LayoutOptions.Center,
+                        Spacing = 20
+                    }
+                };
+                
+                // Initialize authentication system and set appropriate MainPage
+                Device.BeginInvokeOnMainThread(async () =>
+                {
+                    await InitializeAuthenticationAndNavigationAsync(services);
+                });
             }
-            else
+            catch (Exception ex)
             {
-                Debug.WriteLine("[App.xaml.cs] MapPage résolue dans le constructeur App. Création de NavigationPage.");
-                MainPage = new NavigationPage(mapPageInstance);
+                Debug.WriteLine($"[App.xaml.cs] CRITICAL ERROR: {ex.Message}");
+                Debug.WriteLine($"[App.xaml.cs] Stack trace: {ex.StackTrace}");
+                
+                // Last resort: Create a simple error page
+                MainPage = new ContentPage 
+                { 
+                    Content = new Label 
+                    { 
+                        Text = $"Error: {ex.Message}", 
+                        TextColor = Colors.Red,
+                        FontSize = 16,
+                        HorizontalOptions = LayoutOptions.Center,
+                        VerticalOptions = LayoutOptions.Center
+                    } 
+                };
+            }
+        }
+
+        private async Task InitializeAuthenticationAndNavigationAsync(IServiceProvider services)
+        {
+            try
+            {
+                Debug.WriteLine("[App.xaml.cs] Initializing database and authentication services");
+                
+                // Initialize database first
+                var dbInitService = services.GetService<IDatabaseInitializationService>();
+                if (dbInitService != null)
+                {
+                    await dbInitService.InitializeDatabaseAsync();
+                    Debug.WriteLine("[App.xaml.cs] Database initialization completed");
+                }
+                
+                var authService = services.GetService<IAuthenticationService>();
+                if (authService != null)
+                {
+                    await authService.InitializeAsync();
+                    Debug.WriteLine($"[App.xaml.cs] Authentication service initialized. IsAuthenticated: {authService.IsAuthenticated}");
+                    
+                    // Determine initial page based on authentication status
+                    if (authService.IsAuthenticated)
+                    {
+                        Debug.WriteLine("[App.xaml.cs] User is authenticated, showing MapPage");
+                        var mapPageInstance = services.GetService<MapPage>();
+                        if (mapPageInstance != null)
+                        {
+                            MainPage = new NavigationPage(mapPageInstance);
+                        }
+                        else
+                        {
+                            Debug.WriteLine("[App.xaml.cs] ERROR: MapPage not found, falling back to login");
+                            ShowLoginPage(services);
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine("[App.xaml.cs] User not authenticated, showing LoginPage");
+                        ShowLoginPage(services);
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("[App.xaml.cs] ERROR: Authentication service not found, showing LoginPage");
+                    // If authentication service is not available, show login page
+                    ShowLoginPage(services);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App.xaml.cs] ERROR: Failed to initialize authentication and navigation: {ex.Message}");
+                Debug.WriteLine($"[App.xaml.cs] Stack trace: {ex.StackTrace}");
+                
+                // Show login page as fallback
+                Debug.WriteLine("[App.xaml.cs] Showing login page as error fallback");
+                ShowLoginPage(services);
+            }
+        }
+
+        private void ShowLoginPage(IServiceProvider services)
+        {
+            try
+            {
+                Debug.WriteLine("[App.xaml.cs] === DETAILED LOGIN PAGE DIAGNOSIS ===");
+                
+                // Test each service individually
+                var loginViewModel = services.GetService<SubExplore.ViewModels.Auth.LoginViewModel>();
+                Debug.WriteLine($"[App.xaml.cs] LoginViewModel: {(loginViewModel != null ? "✓ Found" : "✗ Not found")}");
+                
+                var loginPageInstance = services.GetService<LoginPage>();
+                Debug.WriteLine($"[App.xaml.cs] LoginPage: {(loginPageInstance != null ? "✓ Found" : "✗ Not found")}");
+                
+                var authService = services.GetService<IAuthenticationService>();
+                Debug.WriteLine($"[App.xaml.cs] AuthenticationService: {(authService != null ? "✓ Found" : "✗ Not found")}");
+                
+                var dialogService = services.GetService<IDialogService>();
+                Debug.WriteLine($"[App.xaml.cs] DialogService: {(dialogService != null ? "✓ Found" : "✗ Not found")}");
+                
+                var navService = services.GetService<INavigationService>();
+                Debug.WriteLine($"[App.xaml.cs] NavigationService: {(navService != null ? "✓ Found" : "✗ Not found")}");
+                
+                // Try to create the beautiful LoginPage
+                if (loginViewModel != null)
+                {
+                    Debug.WriteLine("[App.xaml.cs] Creating MinimalLoginPage - ultra-simple to avoid performance issues");
+                    try
+                    {
+                        // Use the minimal login page to avoid OpenGL/rendering performance issues
+                        var minimalLoginPage = new SubExplore.Views.Auth.MinimalLoginPage(loginViewModel);
+                        Debug.WriteLine("[App.xaml.cs] MinimalLoginPage created successfully");
+                        
+                        MainPage = new NavigationPage(minimalLoginPage);
+                        Debug.WriteLine("[App.xaml.cs] ✓ MinimalLoginPage set as MainPage successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[App.xaml.cs] Original LoginPage failed: {ex.Message}");
+                        Debug.WriteLine($"[App.xaml.cs] Original LoginPage error details: {ex.StackTrace}");
+                        
+                        // Fallback to DiagnosticLoginPage
+                        try
+                        {
+                            var diagnosticLoginPage = new SubExplore.Views.Auth.DiagnosticLoginPage(loginViewModel);
+                            Debug.WriteLine("[App.xaml.cs] DiagnosticLoginPage created successfully as fallback");
+                            
+                            MainPage = new NavigationPage(diagnosticLoginPage);
+                            Debug.WriteLine("[App.xaml.cs] ✓ DiagnosticLoginPage set as MainPage successfully");
+                        }
+                        catch (Exception diagEx)
+                        {
+                            Debug.WriteLine($"[App.xaml.cs] DiagnosticLoginPage also failed: {diagEx.Message}");
+                            
+                            // Fallback to SimpleLoginPage
+                            Debug.WriteLine("[App.xaml.cs] Falling back to SimpleLoginPage");
+                            try
+                            {
+                                var simpleLoginPage = new SubExplore.Views.Auth.SimpleLoginPage(loginViewModel);
+                                Debug.WriteLine("[App.xaml.cs] SimpleLoginPage created successfully");
+                                
+                                MainPage = new NavigationPage(simpleLoginPage);
+                                Debug.WriteLine("[App.xaml.cs] ✓ SimpleLoginPage set as MainPage successfully");
+                            }
+                            catch (Exception simpleEx)
+                            {
+                                Debug.WriteLine($"[App.xaml.cs] ✗ SimpleLoginPage also failed: {simpleEx.Message}");
+                                
+                                // Last resort: Create basic manual login page
+                                CreateBasicLoginPage();
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("[App.xaml.cs] ✗ Cannot create LoginPage - ViewModel not found");
+                    MainPage = new ContentPage 
+                    { 
+                        Content = new StackLayout
+                        {
+                            Children =
+                            {
+                                new Label { Text = "Services d'authentification non trouvés", TextColor = Colors.Red, FontSize = 16 },
+                                new Label { Text = $"LoginViewModel: {(loginViewModel != null ? "OK" : "MISSING")}", FontSize = 14 },
+                                new Label { Text = $"AuthService: {(authService != null ? "OK" : "MISSING")}", FontSize = 14 },
+                                new Label { Text = $"DialogService: {(dialogService != null ? "OK" : "MISSING")}", FontSize = 14 },
+                                new Label { Text = $"NavigationService: {(navService != null ? "OK" : "MISSING")}", FontSize = 14 }
+                            },
+                            Padding = 20,
+                            Spacing = 10
+                        }
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App.xaml.cs] ✗ CRITICAL ERROR in ShowLoginPage: {ex.Message}");
+                Debug.WriteLine($"[App.xaml.cs] Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"[App.xaml.cs] Inner exception: {ex.InnerException.Message}");
+                }
+                
+                MainPage = new ContentPage 
+                { 
+                    Content = new StackLayout
+                    {
+                        Children =
+                        {
+                            new Label { Text = "Erreur critique:", TextColor = Colors.Red, FontSize = 16, FontAttributes = FontAttributes.Bold },
+                            new Label { Text = ex.Message, TextColor = Colors.Red, FontSize = 14 },
+                            new Label { Text = "Voir les logs pour plus de détails", FontSize = 12, TextColor = Colors.Gray }
+                        },
+                        Padding = 20,
+                        Spacing = 10
+                    }
+                };
             }
         }
 
@@ -62,6 +281,97 @@ namespace SubExplore
                 }
             };
             return window;
+        }
+
+        private void ShowSimpleTestPage(IServiceProvider services)
+        {
+            try
+            {
+                Debug.WriteLine("[App.xaml.cs] Creating SimpleTestPage for debugging");
+                var testPage = new SubExplore.Views.Auth.SimpleTestPage(services);
+                MainPage = new NavigationPage(testPage);
+                Debug.WriteLine("[App.xaml.cs] ✓ SimpleTestPage set as MainPage successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App.xaml.cs] ✗ CRITICAL ERROR creating SimpleTestPage: {ex.Message}");
+                
+                // Last resort: basic error page
+                CreateBasicLoginPage();
+            }
+        }
+
+        private void CreateBasicLoginPage()
+        {
+            Debug.WriteLine("[App.xaml.cs] Creating basic manual login page");
+            
+            MainPage = new ContentPage 
+            { 
+                Title = "SubExplore Login",
+                BackgroundColor = Colors.LightBlue,
+                Content = new ScrollView
+                {
+                    Content = new StackLayout
+                    {
+                        Children =
+                        {
+                            new Label 
+                            { 
+                                Text = "🌊 SubExplore", 
+                                FontSize = 28, 
+                                FontAttributes = FontAttributes.Bold,
+                                TextColor = Colors.DarkBlue,
+                                HorizontalOptions = LayoutOptions.Center,
+                                Margin = new Thickness(0, 50, 0, 30)
+                            },
+                            new Label 
+                            { 
+                                Text = "Connexion", 
+                                FontSize = 20,
+                                TextColor = Colors.DarkBlue,
+                                HorizontalOptions = LayoutOptions.Center,
+                                Margin = new Thickness(0, 0, 0, 30)
+                            },
+                            new Entry 
+                            { 
+                                Placeholder = "admin@subexplore.com",
+                                Text = "admin@subexplore.com",
+                                FontSize = 16,
+                                Margin = new Thickness(20, 10)
+                            },
+                            new Entry 
+                            { 
+                                Placeholder = "Admin123!",
+                                Text = "Admin123!",
+                                IsPassword = true,
+                                FontSize = 16,
+                                Margin = new Thickness(20, 10)
+                            },
+                            new Button 
+                            { 
+                                Text = "Se connecter",
+                                BackgroundColor = Colors.DarkBlue,
+                                TextColor = Colors.White,
+                                FontSize = 16,
+                                HeightRequest = 50,
+                                Margin = new Thickness(20, 20)
+                            },
+                            new Label 
+                            { 
+                                Text = "Page de connexion basique - Fonctionnalité limitée",
+                                FontSize = 12,
+                                TextColor = Colors.Gray,
+                                HorizontalOptions = LayoutOptions.Center,
+                                Margin = new Thickness(0, 30, 0, 0)
+                            }
+                        },
+                        Padding = 20,
+                        Spacing = 10
+                    }
+                }
+            };
+            
+            Debug.WriteLine("[App.xaml.cs] ✓ Basic login page created successfully");
         }
     }
 }

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.TestLoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="TEST LOGIN"
+    BackgroundColor="LightBlue">
+
+    <StackLayout Padding="40" Spacing="20" BackgroundColor="White">
+        
+        <Label Text="🔵 PAGE DE TEST"
+               FontSize="24"
+               FontAttributes="Bold"
+               TextColor="DarkBlue"
+               HorizontalOptions="Center" />
+        
+        <Label Text="Si vous voyez ce texte, le rendu fonctionne"
+               FontSize="16"
+               TextColor="Black"
+               HorizontalOptions="Center" />
+               
+        <Entry Placeholder="Email de test"
+               BackgroundColor="LightGray"
+               TextColor="Black" />
+               
+        <Entry Placeholder="Mot de passe de test"
+               IsPassword="True"
+               BackgroundColor="LightGray"
+               TextColor="Black" />
+               
+        <Button Text="BOUTON DE TEST"
+                BackgroundColor="DarkBlue"
+                TextColor="White"
+                HeightRequest="50" />
+                
+        <Label Text="Version de test ultra simplifiée"
+               FontSize="12"
+               TextColor="Gray"
+               HorizontalOptions="Center" />
+               
+    </StackLayout>
+
+</ContentPage>

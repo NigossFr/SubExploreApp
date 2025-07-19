@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.WorkingLoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="SubExplore"
+    BackgroundColor="LightCyan">
+
+    <ScrollView>
+        <StackLayout Padding="40,60,40,40" Spacing="25" BackgroundColor="White" Margin="20">
+            
+            <!-- Header -->
+            <StackLayout Spacing="15">
+                <Label Text="🌊 SubExplore"
+                       FontSize="32"
+                       FontAttributes="Bold"
+                       TextColor="DarkBlue"
+                       HorizontalOptions="Center" />
+                       
+                <Label Text="Connexion"
+                       FontSize="20"
+                       TextColor="Gray"
+                       HorizontalOptions="Center" />
+            </StackLayout>
+
+            <!-- Error Message -->
+            <Label Text="{Binding LoginErrorMessage}"
+                   TextColor="Red"
+                   FontSize="14"
+                   IsVisible="{Binding HasLoginError}"
+                   HorizontalOptions="Center" />
+
+            <!-- Login Form -->
+            <StackLayout Spacing="20">
+                
+                <!-- Email -->
+                <StackLayout Spacing="8">
+                    <Label Text="Email"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="DarkBlue" />
+                    <Entry Text="{Binding Email}"
+                           Placeholder="admin@subexplore.com"
+                           Keyboard="Email"
+                           FontSize="16"
+                           BackgroundColor="LightGray"
+                           HeightRequest="50" />
+                </StackLayout>
+
+                <!-- Password -->
+                <StackLayout Spacing="8">
+                    <Label Text="Mot de passe"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="DarkBlue" />
+                    <Entry Text="{Binding Password}"
+                           Placeholder="Admin123!"
+                           IsPassword="True"
+                           FontSize="16"
+                           BackgroundColor="LightGray"
+                           HeightRequest="50" />
+                </StackLayout>
+
+                <!-- Remember Me -->
+                <StackLayout Orientation="Horizontal" Spacing="10">
+                    <CheckBox IsChecked="{Binding RememberMe}"
+                              Color="DarkBlue" />
+                    <Label Text="Se souvenir de moi"
+                           FontSize="14"
+                           VerticalOptions="Center" />
+                </StackLayout>
+
+                <!-- Login Button -->
+                <Button Text="Se connecter"
+                        Command="{Binding LoginCommand}"
+                        BackgroundColor="DarkBlue"
+                        TextColor="White"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        HeightRequest="55" />
+
+                <!-- Alternative Login -->
+                <Button Text="Continuer sans compte"
+                        Command="{Binding NavigateToMainWithoutLoginCommand}"
+                        BackgroundColor="LightBlue"
+                        TextColor="DarkBlue"
+                        FontSize="16"
+                        HeightRequest="50" />
+
+            </StackLayout>
+
+            <!-- Footer -->
+            <StackLayout Spacing="10" Margin="0,30,0,0">
+                <StackLayout Orientation="Horizontal" 
+                             HorizontalOptions="Center" 
+                             Spacing="8">
+                    <Label Text="Pas de compte ?"
+                           FontSize="14"
+                           VerticalOptions="Center" />
+                    <Button Text="S'inscrire"
+                            Command="{Binding NavigateToRegistrationCommand}"
+                            BackgroundColor="Transparent"
+                            TextColor="DarkBlue"
+                            FontSize="14"
+                            FontAttributes="Bold" />
+                </StackLayout>
+
+                <Label Text="SubExplore v1.0"
+                       FontSize="12"
+                       TextColor="Gray"
+                       HorizontalOptions="Center" />
+            </StackLayout>
+
+        </StackLayout>
+    </ScrollView>
+
+    <!-- Loading Overlay (simplified) -->
+    <StackLayout IsVisible="{Binding IsLoginInProgress}"
+                 BackgroundColor="#80000000"
+                 HorizontalOptions="FillAndExpand"
+                 VerticalOptions="FillAndExpand">
+        <StackLayout HorizontalOptions="Center"
+                     VerticalOptions="Center"
+                     BackgroundColor="White"
+                     Padding="30">
+            <ActivityIndicator IsRunning="{Binding IsLoginInProgress}"
+                               Color="DarkBlue"
+                               WidthRequest="40"
+                               HeightRequest="40" />
+            <Label Text="Connexion..."
+                   FontSize="14"
+                   HorizontalOptions="Center"
+                   Margin="0,10,0,0" />
+        </StackLayout>
+    </StackLayout>
+
+</ContentPage>

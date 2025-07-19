@@ -19,6 +19,7 @@ namespace SubExplore.ViewModels.Menu
         private readonly ILogger<MenuViewModel> _logger;
         private readonly IUserRepository _userRepository;
         private readonly ISettingsService _settingsService;
+        private readonly IAuthenticationService _authenticationService;
 
         [ObservableProperty]
         private User _currentUser;
@@ -43,12 +44,14 @@ namespace SubExplore.ViewModels.Menu
             IUserRepository userRepository,
             ISettingsService settingsService,
             IDialogService dialogService,
-            INavigationService navigationService)
+            INavigationService navigationService,
+            IAuthenticationService authenticationService)
             : base(dialogService, navigationService)
         {
             _logger = logger;
             _userRepository = userRepository;
             _settingsService = settingsService;
+            _authenticationService = authenticationService;
             
             Title = "Menu";
             MenuSections = new ObservableCollection<MenuSection>();
@@ -199,34 +202,45 @@ namespace SubExplore.ViewModels.Menu
         {
             try
             {
-                // TODO: Replace with actual user authentication
-                var userId = 1; // Temporary hard-coded user ID
-                
-                // Set the current user ID in settings service for UserProfileService
-                _settingsService.Set("CurrentUserId", userId);
-                
-                CurrentUser = await _userRepository.GetByIdAsync(userId);
-                
-                if (CurrentUser != null)
+                // Use authentication service to get current user
+                if (_authenticationService.IsAuthenticated)
                 {
-                    UserDisplayName = $"{CurrentUser.FirstName} {CurrentUser.LastName}";
-                    UserEmail = CurrentUser.Email;
-                    UserAvatarUrl = CurrentUser.AvatarUrl ?? "default_avatar.png";
+                    CurrentUser = _authenticationService.CurrentUser;
+                    
+                    if (CurrentUser != null)
+                    {
+                        UserDisplayName = $"{CurrentUser.FirstName} {CurrentUser.LastName}";
+                        UserEmail = CurrentUser.Email;
+                        UserAvatarUrl = CurrentUser.AvatarUrl ?? "default_avatar.png";
+                        
+                        _logger.LogInformation("Loaded authenticated user: {UserId}", CurrentUser.Id);
+                    }
+                    else
+                    {
+                        // Should not happen if IsAuthenticated is true, but handle gracefully
+                        HandleUnauthenticatedUser();
+                    }
                 }
                 else
                 {
-                    UserDisplayName = "Utilisateur Invité";
-                    UserEmail = "guest@subexplore.com";
-                    UserAvatarUrl = "default_avatar.png";
+                    HandleUnauthenticatedUser();
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading current user");
-                UserDisplayName = "Utilisateur Invité";
-                UserEmail = "guest@subexplore.com";
-                UserAvatarUrl = "default_avatar.png";
+                HandleUnauthenticatedUser();
             }
+        }
+        
+        private void HandleUnauthenticatedUser()
+        {
+            CurrentUser = null;
+            UserDisplayName = "Utilisateur Invité";
+            UserEmail = "guest@subexplore.com";
+            UserAvatarUrl = "default_avatar.png";
+            
+            _logger.LogDebug("User not authenticated - showing guest info");
         }
 
         [RelayCommand]
@@ -331,9 +345,21 @@ namespace SubExplore.ViewModels.Menu
 
             if (confirmed)
             {
-                // TODO: Implement logout logic
-                await ShowToastAsync("Déconnexion réussie");
-                IsMenuOpen = false;
+                try
+                {
+                    await _authenticationService.LogoutAsync();
+                    await ShowToastAsync("Déconnexion réussie");
+                    
+                    // Update UI to reflect logout
+                    await LoadCurrentUser();
+                    
+                    IsMenuOpen = false;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Logout failed");
+                    await ShowAlertAsync("Erreur", "Erreur lors de la déconnexion", "OK");
+                }
             }
         }
     }

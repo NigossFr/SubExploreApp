@@ -41,6 +41,14 @@
             <converters:SelectedItemToTextColorConverter x:Key="SelectedItemToTextColorConverter" />
             <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
             <converters:CollectionCountToHeightConverter x:Key="CollectionCountToHeightConverter" />
+            
+            <!-- Responsive Converters -->
+            <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />
+            <converters:ResponsiveWidthConverter x:Key="ResponsiveWidthConverter" />
+            <converters:ResponsiveFontSizeConverter x:Key="ResponsiveFontSizeConverter" />
+            <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
+            <converters:ResponsiveColumnsConverter x:Key="ResponsiveColumnsConverter" />
+            <converters:OrientationBasedConverter x:Key="OrientationBasedConverter" />
             <!--  Ajoutez d'autres convertisseurs ou ressources globales ici si nécessaire  -->
 
             <!--

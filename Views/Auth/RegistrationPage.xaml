@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.RegistrationPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Auth"
+    Title="{Binding Title}"
+    BackgroundColor="{StaticResource Background}"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
+        <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+        <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
+        <converters:ResponsiveFontSizeConverter x:Key="ResponsiveFontSizeConverter" />
+        <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <Grid RowDefinitions="Auto,*,Auto" Padding="{Binding ., Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='20,40,20,20'}">
+            
+            <!-- Header Section -->
+            <StackLayout Grid.Row="0" Spacing="15" Margin="0,20,0,30">
+                <!-- Back Button -->
+                <Button Text="← Retour"
+                        Command="{Binding NavigateToLoginCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource Primary}"
+                        FontSize="16"
+                        Padding="0"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Start" />
+
+                <!-- App Logo/Icon -->
+                <Frame BackgroundColor="{StaticResource Primary}"
+                       CornerRadius="30"
+                       HeightRequest="60"
+                       WidthRequest="60"
+                       HorizontalOptions="Center"
+                       HasShadow="True"
+                       BorderColor="Transparent">
+                    <Label Text="🌊"
+                           FontSize="24"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           TextColor="White" />
+                </Frame>
+
+                <!-- Welcome Text -->
+                <StackLayout Spacing="8">
+                    <Label Text="Rejoignez SubExplore"
+                           FontSize="{Binding ., Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='24'}"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}"
+                           HorizontalOptions="Center" />
+                    
+                    <Label Text="Créez votre compte pour découvrir et partager les meilleurs spots de plongée"
+                           FontSize="{Binding ., Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='14'}"
+                           TextColor="{StaticResource TextSecondary}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </StackLayout>
+
+            <!-- Registration Form -->
+            <StackLayout Grid.Row="1" Spacing="20">
+                
+                <!-- Error Message -->
+                <Frame BackgroundColor="{StaticResource Error}"
+                       CornerRadius="8"
+                       Padding="15,10"
+                       IsVisible="{Binding HasRegistrationError}"
+                       BorderColor="Transparent">
+                    <Label Text="{Binding RegistrationErrorMessage}"
+                           TextColor="White"
+                           FontSize="14"
+                           HorizontalOptions="Center" />
+                </Frame>
+
+                <!-- Name Fields -->
+                <Grid ColumnDefinitions="*,10,*">
+                    <!-- First Name -->
+                    <StackLayout Grid.Column="0" Spacing="8">
+                        <Label Text="Prénom"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextPrimary}" />
+                        
+                        <Frame BackgroundColor="{StaticResource Surface}"
+                               BorderColor="{StaticResource Gray300}"
+                               CornerRadius="8"
+                               Padding="0"
+                               HasShadow="False">
+                            <Entry Text="{Binding FirstName}"
+                                   Placeholder="Prénom"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   PlaceholderColor="{StaticResource Gray400}"
+                                   BackgroundColor="Transparent"
+                                   Margin="15,0" />
+                        </Frame>
+                    </StackLayout>
+
+                    <!-- Last Name -->
+                    <StackLayout Grid.Column="2" Spacing="8">
+                        <Label Text="Nom"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextPrimary}" />
+                        
+                        <Frame BackgroundColor="{StaticResource Surface}"
+                               BorderColor="{StaticResource Gray300}"
+                               CornerRadius="8"
+                               Padding="0"
+                               HasShadow="False">
+                            <Entry Text="{Binding LastName}"
+                                   Placeholder="Nom"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   PlaceholderColor="{StaticResource Gray400}"
+                                   BackgroundColor="Transparent"
+                                   Margin="15,0" />
+                        </Frame>
+                    </StackLayout>
+                </Grid>
+
+                <!-- Username Field -->
+                <StackLayout Spacing="8">
+                    <Label Text="Nom d'utilisateur"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource TextPrimary}" />
+                    
+                    <Frame BackgroundColor="{StaticResource Surface}"
+                           BorderColor="{StaticResource Gray300}"
+                           CornerRadius="8"
+                           Padding="0"
+                           HasShadow="False">
+                        <Entry Text="{Binding Username}"
+                               Placeholder="nom_utilisateur"
+                               FontSize="16"
+                               TextColor="{StaticResource TextPrimary}"
+                               PlaceholderColor="{StaticResource Gray400}"
+                               BackgroundColor="Transparent"
+                               Margin="15,0" />
+                    </Frame>
+                </StackLayout>
+
+                <!-- Email Field -->
+                <StackLayout Spacing="8">
+                    <Label Text="Adresse email"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource TextPrimary}" />
+                    
+                    <Frame BackgroundColor="{StaticResource Surface}"
+                           BorderColor="{StaticResource Gray300}"
+                           CornerRadius="8"
+                           Padding="0"
+                           HasShadow="False">
+                        <Entry Text="{Binding Email}"
+                               Placeholder="votre@email.com"
+                               Keyboard="Email"
+                               FontSize="16"
+                               TextColor="{StaticResource TextPrimary}"
+                               PlaceholderColor="{StaticResource Gray400}"
+                               BackgroundColor="Transparent"
+                               Margin="15,0" />
+                    </Frame>
+                </StackLayout>
+
+                <!-- Password Field -->
+                <StackLayout Spacing="8">
+                    <StackLayout Orientation="Horizontal" Spacing="10">
+                        <Label Text="Mot de passe"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextPrimary}"
+                               VerticalOptions="Center" />
+                        
+                        <Label Text="✓"
+                               FontSize="16"
+                               TextColor="{StaticResource Success}"
+                               IsVisible="{Binding IsPasswordValid}"
+                               VerticalOptions="Center" />
+                    </StackLayout>
+                    
+                    <Frame BackgroundColor="{StaticResource Surface}"
+                           BorderColor="{StaticResource Gray300}"
+                           CornerRadius="8"
+                           Padding="0"
+                           HasShadow="False">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Entry Grid.Column="0"
+                                   Text="{Binding Password}"
+                                   Placeholder="Minimum 8 caractères"
+                                   IsPassword="{Binding IsPasswordVisible, Converter={StaticResource InvertBoolConverter}}"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   PlaceholderColor="{StaticResource Gray400}"
+                                   BackgroundColor="Transparent"
+                                   Margin="15,0,0,0" />
+                            
+                            <Button Grid.Column="1"
+                                    Text="{Binding IsPasswordVisible, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='🙈|👁️'}"
+                                    FontSize="16"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource Gray500}"
+                                     Padding="10"
+                                    Command="{Binding TogglePasswordVisibilityCommand}" />
+                        </Grid>
+                    </Frame>
+                </StackLayout>
+
+                <!-- Confirm Password Field -->
+                <StackLayout Spacing="8">
+                    <StackLayout Orientation="Horizontal" Spacing="10">
+                        <Label Text="Confirmation du mot de passe"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextPrimary}"
+                               VerticalOptions="Center" />
+                        
+                        <Label Text="✓"
+                               FontSize="16"
+                               TextColor="{StaticResource Success}"
+                               IsVisible="{Binding IsPasswordConfirmationValid}"
+                               VerticalOptions="Center" />
+                    </StackLayout>
+                    
+                    <Frame BackgroundColor="{StaticResource Surface}"
+                           BorderColor="{StaticResource Gray300}"
+                           CornerRadius="8"
+                           Padding="0"
+                           HasShadow="False">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Entry Grid.Column="0"
+                                   Text="{Binding ConfirmPassword}"
+                                   Placeholder="Confirmez votre mot de passe"
+                                   IsPassword="{Binding IsConfirmPasswordVisible, Converter={StaticResource InvertBoolConverter}}"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   PlaceholderColor="{StaticResource Gray400}"
+                                   BackgroundColor="Transparent"
+                                   Margin="15,0,0,0" />
+                            
+                            <Button Grid.Column="1"
+                                    Text="{Binding IsConfirmPasswordVisible, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='🙈|👁️'}"
+                                    FontSize="16"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource Gray500}"
+                                     Padding="10"
+                                    Command="{Binding ToggleConfirmPasswordVisibilityCommand}" />
+                        </Grid>
+                    </Frame>
+                </StackLayout>
+
+                <!-- Terms and Conditions -->
+                <StackLayout Orientation="Horizontal" Spacing="10">
+                    <CheckBox IsChecked="{Binding AcceptTermsAndConditions}"
+                              Color="{StaticResource Primary}"
+                              VerticalOptions="Start" />
+                    <StackLayout Spacing="0" HorizontalOptions="FillAndExpand">
+                        <StackLayout Orientation="Horizontal" Spacing="0">
+                            <Label Text="J'accepte les "
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                            <Button Text="conditions d'utilisation"
+                                    Command="{Binding ShowTermsAndConditionsCommand}"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource Primary}"
+                                    FontSize="14"
+                                     Padding="0"
+                                    VerticalOptions="Center" />
+                        </StackLayout>
+                    </StackLayout>
+                </StackLayout>
+
+                <!-- Register Button -->
+                <Button Text="Créer mon compte"
+                        Command="{Binding RegisterCommand}"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        CornerRadius="8"
+                        HeightRequest="50"
+                        Margin="0,20,0,0"
+                        IsEnabled="{Binding IsRegistrationInProgress, Converter={StaticResource InvertBoolConverter}}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsRegistrationInProgress}" Value="True">
+                            <Setter Property="Text" Value="Création en cours..." />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+
+            </StackLayout>
+
+            <!-- Footer Section -->
+            <StackLayout Grid.Row="2" Spacing="10" Margin="0,30,0,20">
+                
+                <!-- Login Link -->
+                <StackLayout Orientation="Horizontal" 
+                             HorizontalOptions="Center" 
+                             Spacing="5">
+                    <Label Text="Vous avez déjà un compte ?"
+                           FontSize="14"
+                           TextColor="{StaticResource TextSecondary}"
+                           VerticalOptions="Center" />
+                    
+                    <Button Text="Se connecter"
+                            Command="{Binding NavigateToLoginCommand}"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource Primary}"
+                            FontSize="14"
+                            FontAttributes="Bold"
+                            Padding="0"
+                            VerticalOptions="Center" />
+                </StackLayout>
+
+                <!-- Version Info -->
+                <Label Text="SubExplore v1.0 - Explorez en toute sécurité"
+                       FontSize="12"
+                       TextColor="{StaticResource Gray400}"
+                       HorizontalOptions="Center"
+                       Margin="0,10,0,0" />
+            </StackLayout>
+
+        </Grid>
+    </ScrollView>
+
+    <!-- Loading Overlay -->
+    <Grid IsVisible="{Binding IsRegistrationInProgress}"
+          BackgroundColor="#80000000">
+        <Frame BackgroundColor="{StaticResource Surface}"
+               CornerRadius="8"
+               WidthRequest="140"
+               HeightRequest="120"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               HasShadow="True"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center">
+                <ActivityIndicator IsRunning="{Binding IsRegistrationInProgress}"
+                                   Color="{StaticResource Primary}"
+                                   WidthRequest="40"
+                                   HeightRequest="40" />
+                <Label Text="Création du compte..."
+                       FontSize="14"
+                       TextColor="{StaticResource TextPrimary}"
+                       HorizontalOptions="Center" />
+            </StackLayout>
+        </Frame>
+    </Grid>
+
+</ContentPage>

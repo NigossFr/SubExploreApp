@@ -13,12 +13,22 @@ namespace SubExplore.Repositories.Interfaces
         /// <summary>
         /// Récupère un utilisateur par son email
         /// </summary>
-        Task<User> GetByEmailAsync(string email);
+        Task<User?> GetByEmailAsync(string email);
 
         /// <summary>
         /// Récupère un utilisateur par son nom d'utilisateur
         /// </summary>
-        Task<User> GetByUsernameAsync(string username);
+        Task<User?> GetByUsernameAsync(string username);
+
+        /// <summary>
+        /// Get user by email for authentication
+        /// </summary>
+        Task<User?> GetUserByEmailAsync(string email);
+
+        /// <summary>
+        /// Get user by username for authentication
+        /// </summary>
+        Task<User?> GetUserByUsernameAsync(string username);
 
         /// <summary>
         /// Vérifie si un email est déjà utilisé

@@ -107,6 +107,7 @@ namespace SubExplore.ViewModels.Map
         private readonly IDatabaseService _databaseService;
         private readonly IUserRepository _userRepository;
         private readonly ISettingsService _settingsService;
+        private readonly IAuthenticationService _authenticationService;
 
         public MapViewModel(
             ISpotRepository spotRepository,
@@ -118,7 +119,8 @@ namespace SubExplore.ViewModels.Map
             IUserRepository userRepository,
             IDialogService dialogService,
             INavigationService navigationService,
-            ISettingsService settingsService)
+            ISettingsService settingsService,
+            IAuthenticationService authenticationService)
             : base(dialogService, navigationService)
         {
             _spotRepository = spotRepository;
@@ -127,6 +129,7 @@ namespace SubExplore.ViewModels.Map
             _databaseService = databaseService;
             _userRepository = userRepository;
             _settingsService = settingsService;
+            _authenticationService = authenticationService;
             _configuration = configuration;
             _platformMapService = platformMapService;
 
@@ -726,9 +729,21 @@ namespace SubExplore.ViewModels.Map
 
             if (confirmed)
             {
-                // TODO: Implement logout logic
-                await DialogService.ShowToastAsync("Déconnexion réussie");
-                IsMenuOpen = false;
+                try
+                {
+                    await _authenticationService.LogoutAsync();
+                    await DialogService.ShowToastAsync("Déconnexion réussie");
+                    
+                    // Update UI to reflect logout
+                    await LoadCurrentUser();
+                    
+                    IsMenuOpen = false;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Logout failed: {ex.Message}");
+                    await DialogService.ShowAlertAsync("Erreur", "Erreur lors de la déconnexion", "OK");
+                }
             }
         }
 
@@ -829,41 +844,47 @@ namespace SubExplore.ViewModels.Map
         {
             try
             {
-                // TODO: Replace with actual user authentication
-                var userId = 1; // Temporary hard-coded user ID
-                var currentUser = await _userRepository.GetByIdAsync(userId);
-                
-                if (currentUser != null)
+                // Use authentication service to get current user
+                if (_authenticationService.IsAuthenticated)
                 {
-                    UserDisplayName = $"{currentUser.FirstName} {currentUser.LastName}";
-                    UserEmail = currentUser.Email;
-                    UserAvatarUrl = currentUser.AvatarUrl ?? "default_avatar.png";
+                    var currentUser = _authenticationService.CurrentUser;
                     
-                    // Set the current user ID in settings service for UserProfileService
-                    _settingsService.Set("CurrentUserId", userId);
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Set CurrentUserId in settings: {userId}");
+                    if (currentUser != null)
+                    {
+                        UserDisplayName = $"{currentUser.FirstName} {currentUser.LastName}";
+                        UserEmail = currentUser.Email;
+                        UserAvatarUrl = currentUser.AvatarUrl ?? "default_avatar.png";
+                        
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded authenticated user: {currentUser.Id}");
+                    }
+                    else
+                    {
+                        // Should not happen if IsAuthenticated is true, but handle gracefully
+                        await HandleUnauthenticatedUser();
+                    }
                 }
                 else
                 {
-                    UserDisplayName = "Utilisateur Invité";
-                    UserEmail = "guest@subexplore.com";
-                    UserAvatarUrl = "default_avatar.png";
-                    
-                    // Clear current user ID if no user found
-                    _settingsService.Remove("CurrentUserId");
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Cleared CurrentUserId from settings (no user found)");
+                    await HandleUnauthenticatedUser();
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] LoadCurrentUser failed: {ex.Message}");
-                UserDisplayName = "Utilisateur Invité";
-                UserEmail = "guest@subexplore.com";
-                UserAvatarUrl = "default_avatar.png";
-                
-                // Clear current user ID on error
-                _settingsService.Remove("CurrentUserId");
+                await HandleUnauthenticatedUser();
             }
+        }
+        
+        private async Task HandleUnauthenticatedUser()
+        {
+            UserDisplayName = "Utilisateur Invité";
+            UserEmail = "guest@subexplore.com";
+            UserAvatarUrl = "default_avatar.png";
+            
+            System.Diagnostics.Debug.WriteLine("[DEBUG] User not authenticated - showing guest info");
+            
+            // Optional: Show login prompt or redirect to login
+            // For now, just log the state
         }
 
         public void ForceMapRefresh()

@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.LoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Auth"
+    Title="{Binding Title}"
+    BackgroundColor="{StaticResource Background}"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
+        <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+        
+        <!-- Modern UI Styles -->
+        <Style x:Key="ModernEntryStyle" TargetType="Entry">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+            <Setter Property="PlaceholderColor" Value="{StaticResource Gray400}" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="Margin" Value="20,0" />
+            <Setter Property="HeightRequest" Value="50" />
+        </Style>
+        
+        <Style x:Key="ModernFrameStyle" TargetType="Frame">
+            <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
+            <Setter Property="BorderColor" Value="{StaticResource Gray300}" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HasShadow" Value="True" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HeightRequest" Value="55" />
+            <Setter Property="Margin" Value="0,10" />
+        </Style>
+        
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="TextColor" Value="{StaticResource Primary}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <Grid RowDefinitions="Auto,*,Auto" Padding="30,60,30,30">
+            
+            <!-- Header Section -->
+            <StackLayout Grid.Row="0" Spacing="30" Margin="0,0,0,50">
+                <!-- App Logo/Icon SIMPLIFIED for performance -->
+                <Frame BackgroundColor="{StaticResource Primary}"
+                       CornerRadius="35"
+                       HeightRequest="70"
+                       WidthRequest="70"
+                       HorizontalOptions="Center"
+                       HasShadow="False"
+                       BorderColor="Transparent">
+                    <Label Text="S"
+                           FontSize="28"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           TextColor="White" />
+                </Frame>
+
+                <!-- Welcome Text -->
+                <StackLayout Spacing="12">
+                    <Label Text="Bienvenue sur SubExplore"
+                           FontSize="32"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                    
+                    <Label Text="Découvrez et partagez les plus beaux spots de plongée"
+                           FontSize="16"
+                           TextColor="{StaticResource TextSecondary}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           Margin="0,0,0,10" />
+                </StackLayout>
+            </StackLayout>
+
+            <!-- Login Form -->
+            <StackLayout Grid.Row="1" Spacing="25">
+                
+                <!-- Error Message -->
+                <Frame BackgroundColor="{StaticResource Error}"
+                       CornerRadius="12"
+                       Padding="20,15"
+                       IsVisible="{Binding HasLoginError}"
+                       BorderColor="Transparent"
+                       HasShadow="True">
+                    <Label Text="{Binding LoginErrorMessage}"
+                           TextColor="White"
+                           FontSize="14"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                </Frame>
+
+                <!-- Login Credentials Card SIMPLIFIED -->
+                <Frame BackgroundColor="{StaticResource Surface}"
+                       BorderColor="{StaticResource Gray300}"
+                       CornerRadius="12"
+                       HasShadow="False"
+                       Padding="25,30"
+                       Margin="0,10">
+                    <StackLayout Spacing="25">
+                        
+                        <!-- Email Field -->
+                        <StackLayout Spacing="10">
+                            <Label Text="Adresse email"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            
+                            <Frame BackgroundColor="{StaticResource Surface}"
+                                   BorderColor="{StaticResource Gray200}"
+                                   CornerRadius="8"
+                                   HasShadow="False"
+                                   Padding="0">
+                                <Entry Text="{Binding Email}"
+                                       Placeholder="admin@subexplore.com"
+                                       Keyboard="Email"
+                                       Style="{StaticResource ModernEntryStyle}" />
+                            </Frame>
+                        </StackLayout>
+
+                        <!-- Password Field -->
+                        <StackLayout Spacing="10">
+                            <Label Text="Mot de passe"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            
+                            <Frame BackgroundColor="{StaticResource Surface}"
+                                   BorderColor="{StaticResource Gray200}"
+                                   CornerRadius="8"
+                                   HasShadow="False"
+                                   Padding="0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Entry Grid.Column="0"
+                                           Text="{Binding Password}"
+                                           Placeholder="Admin123!"
+                                           IsPassword="{Binding IsPasswordVisible, Converter={StaticResource InvertBoolConverter}}"
+                                           Style="{StaticResource ModernEntryStyle}"
+                                           Margin="20,0,0,0" />
+                                    
+                                    <Button Grid.Column="1"
+                                            Text="{Binding IsPasswordVisible, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='🙈|👁️'}"
+                                            FontSize="18"
+                                            BackgroundColor="Transparent"
+                                            TextColor="{StaticResource Gray500}"
+                                            Padding="15"
+                                            Command="{Binding TogglePasswordVisibilityCommand}" />
+                                </Grid>
+                            </Frame>
+                        </StackLayout>
+
+                        <!-- Remember Me -->
+                        <StackLayout Orientation="Horizontal" Spacing="12" Margin="0,5,0,0">
+                            <CheckBox IsChecked="{Binding RememberMe}"
+                                      Color="{StaticResource Primary}" />
+                            <Label Text="Se souvenir de moi"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
+                        
+                    </StackLayout>
+                </Frame>
+
+                <!-- Login Button -->
+                <Button Text="Se connecter"
+                        Command="{Binding LoginCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        IsEnabled="{Binding IsLoginInProgress, Converter={StaticResource InvertBoolConverter}}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsLoginInProgress}" Value="True">
+                            <Setter Property="Text" Value="Connexion..." />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+
+                <!-- Forgot Password Link -->
+                <Button Text="Mot de passe oublié ?"
+                        Command="{Binding NavigateToForgotPasswordCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        HorizontalOptions="Center"
+                        Margin="0,5,0,0" />
+
+                <!-- Divider -->
+                <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,30,0,20">
+                    <BoxView BackgroundColor="{StaticResource Gray300}"
+                             HeightRequest="1"
+                             VerticalOptions="Center"
+                             HorizontalOptions="FillAndExpand" />
+                    <Label Text="ou"
+                           FontSize="14"
+                           TextColor="{StaticResource Gray500}"
+                           VerticalOptions="Center" />
+                    <BoxView BackgroundColor="{StaticResource Gray300}"
+                             HeightRequest="1"
+                             VerticalOptions="Center"
+                             HorizontalOptions="FillAndExpand" />
+                </StackLayout>
+
+                <!-- Continue Without Login -->
+                <Button Text="Continuer sans compte"
+                        Command="{Binding NavigateToMainWithoutLoginCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource Secondary}"
+                        FontSize="16"
+                        BorderColor="{StaticResource Secondary}"
+                        BorderWidth="2"
+                        CornerRadius="12"
+                        HeightRequest="50"
+                        HorizontalOptions="FillAndExpand" />
+            </StackLayout>
+
+            <!-- Footer Section -->
+            <StackLayout Grid.Row="2" Spacing="15" Margin="0,40,0,20">
+                
+                <!-- Registration Link -->
+                <StackLayout Orientation="Horizontal" 
+                             HorizontalOptions="Center" 
+                             Spacing="8">
+                    <Label Text="Pas encore de compte ?"
+                           FontSize="15"
+                           TextColor="{StaticResource TextSecondary}"
+                           VerticalOptions="Center" />
+                    
+                    <Button Text="S'inscrire"
+                            Command="{Binding NavigateToRegistrationCommand}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            FontSize="15"
+                            VerticalOptions="Center" />
+                </StackLayout>
+
+                <!-- Version Info -->
+                <Label Text="SubExplore v1.0 - Explorez en toute sécurité"
+                       FontSize="12"
+                       TextColor="{StaticResource Gray400}"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,15,0,0" />
+            </StackLayout>
+
+        </Grid>
+    </ScrollView>
+
+    <!-- Loading Overlay -->
+    <Grid IsVisible="{Binding IsLoginInProgress}"
+          BackgroundColor="#80000000">
+        <Frame BackgroundColor="{StaticResource Surface}"
+               CornerRadius="8"
+               WidthRequest="120"
+               HeightRequest="120"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               HasShadow="False"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center">
+                <ActivityIndicator IsRunning="{Binding IsLoginInProgress}"
+                                   Color="{StaticResource Primary}"
+                                   WidthRequest="40"
+                                   HeightRequest="40" />
+                <Label Text="Connexion..."
+                       FontSize="14"
+                       TextColor="{StaticResource TextPrimary}"
+                       HorizontalOptions="Center" />
+            </StackLayout>
+        </Frame>
+    </Grid>
+
+</ContentPage>

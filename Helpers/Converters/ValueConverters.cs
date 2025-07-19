@@ -20,6 +20,19 @@ namespace SubExplore.Helpers.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            // Check if we have a parameter for conditional text (like password visibility toggle)
+            if (parameter is string parameterString && parameterString.Contains('|'))
+            {
+                var parts = parameterString.Split('|');
+                if (parts.Length == 2)
+                {
+                    // Return first part if value is true, second part if false
+                    bool boolValue = value is bool b && b;
+                    return boolValue ? parts[0] : parts[1];
+                }
+            }
+            
+            // Default behavior: check if string is not empty
             return !string.IsNullOrEmpty(value as string);
         }
 

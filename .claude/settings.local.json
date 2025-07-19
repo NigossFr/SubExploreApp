@@ -5,7 +5,25 @@
       "Bash(grep:*)",
       "Bash(keytool:*)",
       "Bash(git add:*)",
-      "Bash(dotnet build)"
+      "Bash(dotnet build)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet ef database:*)",
+      "Bash(mysql:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet run:*)",
+      "Bash(del Program.cs)",
+      "Bash(del TestDatabaseConnection.cs)",
+      "Bash(rm:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(dir:*)",
+      "Bash(adb install:*)",
+      "Bash(adb shell monkey:*)",
+      "Bash(adb logcat:*)",
+      "Bash(adb shell:*)",
+      "Bash(aapt:*)",
+      "Bash(del nul)"
     ],
     "deny": []
   }

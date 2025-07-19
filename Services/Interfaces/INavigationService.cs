@@ -14,14 +14,14 @@ namespace SubExplore.Services.Interfaces
         /// </summary>
         /// <typeparam name="TViewModel">Type du ViewModel cible</typeparam>
         /// <param name="parameter">Paramètre optionnel à passer au ViewModel</param>
-        Task NavigateToAsync<TViewModel>(object parameter = null) where TViewModel : ViewModelBase;
+        Task NavigateToAsync<TViewModel>(object parameter = null);
 
         /// <summary>
         /// Navigue vers une page modale.
         /// </summary>
         /// <typeparam name="TViewModel">Type du ViewModel cible</typeparam>
         /// <param name="parameter">Paramètre optionnel à passer au ViewModel</param>
-        Task NavigateToModalAsync<TViewModel>(object parameter = null) where TViewModel : ViewModelBase;
+        Task NavigateToModalAsync<TViewModel>(object parameter = null);
 
         /// <summary>
         /// Revient à la page précédente.
@@ -37,6 +37,6 @@ namespace SubExplore.Services.Interfaces
         /// Initialise le service de navigation avec la page d'accueil.
         /// </summary>
         /// <typeparam name="TViewModel">ViewModel de la page d'accueil</typeparam>
-        Task InitializeAsync<TViewModel>() where TViewModel : ViewModelBase;
+        Task InitializeAsync<TViewModel>();
     }
 }

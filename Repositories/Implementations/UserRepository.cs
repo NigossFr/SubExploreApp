@@ -17,14 +17,28 @@ namespace SubExplore.Repositories.Implementations
         {
         }
 
-        public async Task<User> GetByEmailAsync(string email)
+        public async Task<User?> GetByEmailAsync(string email)
         {
             return await _context.Users
                 .Include(u => u.Preferences)
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
-        public async Task<User> GetByUsernameAsync(string username)
+        public async Task<User?> GetByUsernameAsync(string username)
+        {
+            return await _context.Users
+                .Include(u => u.Preferences)
+                .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
+        }
+
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            return await _context.Users
+                .Include(u => u.Preferences)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+        }
+
+        public async Task<User?> GetUserByUsernameAsync(string username)
         {
             return await _context.Users
                 .Include(u => u.Preferences)

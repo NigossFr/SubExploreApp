@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Auth.SimpleTestPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="Test Page"
+             BackgroundColor="LightBlue">
+    
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+            <Label Text="🌊 SubExplore Test Page" 
+                   FontSize="24" 
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   TextColor="DarkBlue" />
+            
+            <Label Text="This is a simple test to verify the UI is working correctly."
+                   FontSize="16"
+                   HorizontalOptions="Center"
+                   TextColor="DarkBlue" />
+            
+            <Entry x:Name="EmailEntry" 
+                   Placeholder="admin@subexplore.com"
+                   Text="admin@subexplore.com"
+                   FontSize="16" />
+            
+            <Entry x:Name="PasswordEntry"
+                   Placeholder="Admin123!"
+                   Text="Admin123!"
+                   IsPassword="True"
+                   FontSize="16" />
+            
+            <Button Text="Test Login"
+                    Clicked="OnTestLoginClicked"
+                    BackgroundColor="DarkBlue"
+                    TextColor="White"
+                    FontSize="16"
+                    HeightRequest="50" />
+            
+            <Label x:Name="StatusLabel"
+                   Text="Ready to test"
+                   FontSize="14"
+                   HorizontalOptions="Center"
+                   TextColor="DarkGreen" />
+                   
+            <Button Text="Go to Real Login Page"
+                    Clicked="OnRealLoginClicked"
+                    BackgroundColor="Green"
+                    TextColor="White"
+                    FontSize="14"
+                    HeightRequest="40" />
+                    
+            <Label Text="Debug Info:"
+                   FontSize="14"
+                   FontAttributes="Bold"
+                   TextColor="DarkRed" />
+                   
+            <Label x:Name="DebugLabel"
+                   Text="Loading debug info..."
+                   FontSize="12"
+                   TextColor="DarkRed" />
+        </StackLayout>
+    </ScrollView>
+    
+</ContentPage>
