@@ -56,7 +56,7 @@ namespace SubExplore.Services.Implementations
                 }
 
                 // Find user by email
-                var user = await _userRepository.GetUserByEmailAsync(email);
+                var user = await _userRepository.GetUserByEmailAsync(email).ConfigureAwait(false);
                 if (user == null)
                 {
                     _logger.LogWarning("Login attempt for non-existent email: {Email}", email);

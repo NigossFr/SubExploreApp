@@ -33,6 +33,11 @@ namespace SubExplore.ViewModels.Map
         private const double MAX_ZOOM_LEVEL = 18.0;
         private const int SPOTS_BATCH_SIZE = 20;
         private const int MAP_UPDATE_DELAY_MS = 500;
+        private const int CACHE_EXPIRY_MINUTES = 5;
+
+        // Performance: Cache frequently accessed data
+        private DateTime _lastSpotTypesLoad = DateTime.MinValue;
+        private DateTime _lastSpotsLoad = DateTime.MinValue;
 
         [ObservableProperty]
         private ObservableCollection<Models.Domain.Spot> _spots;
@@ -536,14 +541,14 @@ namespace SubExplore.ViewModels.Map
             // Debounce search - wait 500ms after user stops typing
             try
             {
-                await Task.Delay(500, _searchCancellationToken.Token);
+                await Task.Delay(500, _searchCancellationToken.Token).ConfigureAwait(false);
                 if (!string.IsNullOrWhiteSpace(SearchText) && SearchText.Length >= 2)
                 {
-                    await SearchSpots();
+                    await SearchSpots().ConfigureAwait(false);
                 }
                 else if (string.IsNullOrWhiteSpace(SearchText))
                 {
-                    await LoadSpots();
+                    await LoadSpots().ConfigureAwait(false);
                 }
             }
             catch (TaskCanceledException)

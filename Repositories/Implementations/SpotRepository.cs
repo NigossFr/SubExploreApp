@@ -39,6 +39,7 @@ namespace SubExplore.Repositories.Implementations
             decimal maxLon = longitude + (decimal)lonDelta;
 
             return await _context.Spots
+                .AsNoTracking() // Performance: Disable change tracking for read-only queries
                 .Include(s => s.Type)
                 .Include(s => s.Media.Where(m => m.IsPrimary))
                 .Where(s => s.Latitude >= minLat &&
@@ -50,27 +51,32 @@ namespace SubExplore.Repositories.Implementations
                     Math.Sqrt(Math.Pow((double)(s.Latitude - latitude), 2) +
                              Math.Pow((double)(s.Longitude - longitude), 2)))
                 .Take(limit)
-                .ToListAsync();
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<Spot>> GetSpotsByTypeAsync(int typeId)
         {
             return await _context.Spots
+                .AsNoTracking() // Performance: Disable change tracking for read-only queries
                 .Include(s => s.Type)
                 .Include(s => s.Media.Where(m => m.IsPrimary))
                 .Where(s => s.TypeId == typeId && s.ValidationStatus == SpotValidationStatus.Approved)
                 .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<Spot>> GetSpotsByUserAsync(int userId)
         {
             return await _context.Spots
+                .AsNoTracking() // Performance: Disable change tracking for read-only queries
                 .Include(s => s.Type)
                 .Include(s => s.Media.Where(m => m.IsPrimary))
                 .Where(s => s.CreatorId == userId)
                 .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<Spot>> GetSpotsByValidationStatusAsync(SpotValidationStatus status)
@@ -92,13 +98,15 @@ namespace SubExplore.Repositories.Implementations
             string normalizedQuery = query.ToLower();
 
             return await _context.Spots
+                .AsNoTracking() // Performance: Disable change tracking for read-only queries
                 .Include(s => s.Type)
                 .Include(s => s.Media.Where(m => m.IsPrimary))
-                .Where(s => (s.Name.ToLower().Contains(normalizedQuery) ||
-                            s.Description.ToLower().Contains(normalizedQuery)) &&
+                .Where(s => (EF.Functions.Like(s.Name.ToLower(), $"%{normalizedQuery}%") ||
+                            EF.Functions.Like(s.Description.ToLower(), $"%{normalizedQuery}%")) &&
                             s.ValidationStatus == SpotValidationStatus.Approved)
                 .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
     }
 }
