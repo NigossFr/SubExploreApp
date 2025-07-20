@@ -308,6 +308,7 @@ namespace SubExplore.ViewModels.Map
             {
                 IsBusy = true;
 
+                // Le repository ne retourne maintenant que les 5 types autorisés
                 var types = await _spotTypeRepository.GetActiveTypesAsync();
 
                 RefreshSpotTypesList(types);
@@ -710,9 +711,17 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private async Task NavigateToSettings()
         {
-            // TODO: Implement Settings page
-            await DialogService.ShowToastAsync("Fonction à venir");
-            IsMenuOpen = false;
+            try
+            {
+                await NavigationService.NavigateToAsync<ViewModels.Settings.DatabaseTestViewModel>();
+                IsMenuOpen = false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToSettings failed: {ex.Message}");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible d'accéder aux paramètres", "OK");
+                IsMenuOpen = false;
+            }
         }
 
         [RelayCommand]
@@ -823,9 +832,9 @@ namespace SubExplore.ViewModels.Map
                 {
                     new MenuItemModel
                     {
-                        Title = "Préférences",
-                        Icon = "⚙️",
-                        Description = "Configurer l'application",
+                        Title = "Base de données",
+                        Icon = "🗄️",
+                        Description = "Import des spots et configuration",
                         Command = NavigateToSettingsCommand,
                         IsEnabled = true
                     },

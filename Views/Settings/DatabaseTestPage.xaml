@@ -12,11 +12,8 @@
         <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
     </ContentPage.Resources>
 
-    <Grid
-        Padding="20"
-        RowDefinitions="Auto,*,Auto"
-        RowSpacing="20">
-        <StackLayout Grid.Row="0" Spacing="15">
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
             <Label
                 FontAttributes="Bold"
                 FontSize="20"
@@ -66,26 +63,81 @@
                     <Button Command="{Binding SeedDatabaseCommand}" Text="Initialiser les données" />
                 </StackLayout>
             </Frame>
+            <Frame
+                Padding="15"
+                BorderColor="#FFAA00"
+                CornerRadius="10">
+                <StackLayout Spacing="10">
+                    <Label FontAttributes="Bold" Text="🧹 Nettoyage des filtres" />
+                    <Label Text="{Binding IsSpotTypesCleanedUp, StringFormat='Types de spots nettoyés: {0}'}">
+                        <Label.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsSpotTypesCleanedUp}"
+                                TargetType="Label"
+                                Value="True">
+                                <Setter Property="TextColor" Value="Green" />
+                            </DataTrigger>
+                            <DataTrigger
+                                Binding="{Binding IsSpotTypesCleanedUp}"
+                                TargetType="Label"
+                                Value="False">
+                                <Setter Property="TextColor" Value="Red" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="Supprime les anciens filtres et ne garde que les 5 types requis" FontSize="12" TextColor="Gray" />
+                    <Button Command="{Binding CleanupSpotTypesCommand}" Text="🧹 Nettoyer les filtres obsolètes" BackgroundColor="#FF6B35" TextColor="White" />
+                </StackLayout>
+            </Frame>
+            <Frame
+                Padding="15"
+                BorderColor="#00AA00"
+                CornerRadius="10">
+                <StackLayout Spacing="10">
+                    <Label FontAttributes="Bold" Text="📍 Import des spots réels" />
+                    <Label Text="{Binding IsRealSpotsImported, StringFormat='Spots réels importés: {0}'}">
+                        <Label.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsRealSpotsImported}"
+                                TargetType="Label"
+                                Value="True">
+                                <Setter Property="TextColor" Value="Green" />
+                            </DataTrigger>
+                            <DataTrigger
+                                Binding="{Binding IsRealSpotsImported}"
+                                TargetType="Label"
+                                Value="False">
+                                <Setter Property="TextColor" Value="Red" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="Importe les spots depuis le fichier Data/real_spots.json" FontSize="12" TextColor="Gray" />
+                    <Button Command="{Binding ImportRealSpotsCommand}" Text="📍 Importer les spots réels" BackgroundColor="#28A745" TextColor="White" />
+                </StackLayout>
+            </Frame>
+            
+            <!-- Section des logs -->
+            <Frame
+                Padding="15"
+                BackgroundColor="#F8F8F8"
+                BorderColor="#DDDDDD"
+                CornerRadius="10"
+                HeightRequest="200">
+                <ScrollView>
+                    <Label
+                        FontFamily="Courier New"
+                        FontSize="12"
+                        Text="{Binding LogMessages}" />
+                </ScrollView>
+            </Frame>
+            
+            <!-- Indicateur de chargement -->
+            <ActivityIndicator
+                HorizontalOptions="Center"
+                IsRunning="{Binding IsLoading}"
+                IsVisible="{Binding IsLoading}"
+                VerticalOptions="Center" />
+                
         </StackLayout>
-        <Frame
-            Grid.Row="1"
-            Padding="15"
-            BackgroundColor="#F8F8F8"
-            BorderColor="#DDDDDD"
-            CornerRadius="10">
-            <ScrollView>
-                <Label
-                    FontFamily="Courier New"
-                    FontSize="12"
-                    Text="{Binding LogMessages}" />
-            </ScrollView>
-        </Frame>
-        <ActivityIndicator
-            Grid.Row="0"
-            Grid.RowSpan="3"
-            HorizontalOptions="Center"
-            IsRunning="{Binding IsLoading}"
-            IsVisible="{Binding IsLoading}"
-            VerticalOptions="Center" />
-    </Grid>
+    </ScrollView>
 </ContentPage>

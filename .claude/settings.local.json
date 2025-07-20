@@ -25,7 +25,8 @@
       "Bash(aapt:*)",
       "Bash(del nul)",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

@@ -28,6 +28,12 @@ namespace SubExplore.ViewModels.Settings
         [ObservableProperty]
         private string _logMessages = string.Empty;
 
+        [ObservableProperty]
+        private bool _isSpotTypesCleanedUp;
+
+        [ObservableProperty]
+        private bool _isRealSpotsImported;
+
         public DatabaseTestViewModel(IDatabaseService databaseService, ILogger<DatabaseTestViewModel> logger)
         {
             _databaseService = databaseService;
@@ -129,6 +135,76 @@ namespace SubExplore.ViewModels.Settings
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erreur lors de l'initialisation des données");
+                LogMessages += $"❌ Erreur: {ex.Message}\n";
+                ShowError($"Erreur: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task CleanupSpotTypesAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "Nettoyage des types de spots obsolètes...\n";
+
+                IsSpotTypesCleanedUp = await _databaseService.CleanupSpotTypesAsync();
+
+                if (IsSpotTypesCleanedUp)
+                {
+                    LogMessages += "✅ Types de spots nettoyés avec succès\n";
+                    LogMessages += "Seuls les 5 types requis sont maintenant disponibles :\n";
+                    LogMessages += "- Apnée\n- Photo sous-marine\n- Plongée récréative\n- Plongée technique\n- Randonnée sous marine\n";
+                }
+                else
+                {
+                    LogMessages += "❌ Échec du nettoyage des types de spots\n";
+                    ShowError("Échec du nettoyage des types de spots");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors du nettoyage des types de spots");
+                LogMessages += $"❌ Erreur: {ex.Message}\n";
+                ShowError($"Erreur: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task ImportRealSpotsAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "Import des spots réels en cours...\n";
+
+                IsRealSpotsImported = await _databaseService.ImportRealSpotsAsync();
+
+                if (IsRealSpotsImported)
+                {
+                    LogMessages += "✅ Spots réels importés avec succès\n";
+                    LogMessages += "Les nouveaux spots sont maintenant disponibles sur la carte\n";
+                }
+                else
+                {
+                    LogMessages += "❌ Échec de l'import des spots réels\n";
+                    LogMessages += "Vérifiez que le fichier Data/real_spots.json existe et est bien formaté\n";
+                    ShowError("Échec de l'import des spots réels");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de l'import des spots réels");
                 LogMessages += $"❌ Erreur: {ex.Message}\n";
                 ShowError($"Erreur: {ex.Message}");
             }

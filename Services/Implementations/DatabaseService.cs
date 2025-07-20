@@ -11,6 +11,8 @@ using SubExplore.Services.Interfaces;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
+using System.IO;
+using System.Reflection;
 
 namespace SubExplore.Services.Implementations
 {
@@ -99,10 +101,10 @@ namespace SubExplore.Services.Implementations
                     hasSpots = false;
                 }
 
-                if (hasSpotTypes && hasSpots)
+                // Nettoyer les anciens types de spots non conformes
+                if (hasSpotTypes)
                 {
-                    _logger.LogInformation("La base de données contient déjà des données complètes");
-                    return true;
+                    await CleanupObsoleteSpotTypesAsync();
                 }
 
                 _logger.LogInformation("Initialisation des données de base...");
@@ -110,22 +112,9 @@ namespace SubExplore.Services.Implementations
                 // Ajouter les types de spots seulement s'ils n'existent pas
                 if (!hasSpotTypes)
                 {
+                    // Types de spots conformes aux exigences : 5 types + filtre "Tous"
                     var spotTypes = new List<SpotType>
                 {
-                    new SpotType
-                    {
-                        Name = "Plongée récréative",
-                        IconPath = "marker_diving.png",
-                        ColorCode = "#006994",
-                        Category = ActivityCategory.Diving,
-                        Description = "Sites adaptés à la plongée avec bouteille",
-                        RequiresExpertValidation = true,
-                        ValidationCriteria = JsonSerializer.Serialize(new {
-                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" },
-                            MaxDepthRange = new[] { 0, 50 }
-                        }),
-                        IsActive = true
-                    },
                     new SpotType
                     {
                         Name = "Apnée",
@@ -142,20 +131,6 @@ namespace SubExplore.Services.Implementations
                     },
                     new SpotType
                     {
-                        Name = "Randonnée palmée",
-                        IconPath = "marker_snorkeling.png",
-                        ColorCode = "#48CAE4",
-                        Category = ActivityCategory.Snorkeling,
-                        Description = "Sites de surface accessibles pour le snorkeling",
-                        RequiresExpertValidation = false,
-                        ValidationCriteria = JsonSerializer.Serialize(new {
-                            RequiredFields = new[] { "DifficultyLevel", "SafetyNotes" },
-                            MaxDepthRange = new[] { 0, 5 }
-                        }),
-                        IsActive = true
-                    },
-                    new SpotType
-                    {
                         Name = "Photo sous-marine",
                         IconPath = "marker_photography.png",
                         ColorCode = "#2EC4B6",
@@ -164,6 +139,20 @@ namespace SubExplore.Services.Implementations
                         RequiresExpertValidation = false,
                         ValidationCriteria = JsonSerializer.Serialize(new {
                             RequiredFields = new[] { "DifficultyLevel" }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Plongée récréative",
+                        IconPath = "marker_diving.png",
+                        ColorCode = "#006994",
+                        Category = ActivityCategory.Diving,
+                        Description = "Sites adaptés à la plongée avec bouteille",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" },
+                            MaxDepthRange = new[] { 0, 50 }
                         }),
                         IsActive = true
                     },
@@ -184,73 +173,15 @@ namespace SubExplore.Services.Implementations
                     },
                     new SpotType
                     {
-                        Name = "Épave",
-                        IconPath = "marker_wreck.png",
-                        ColorCode = "#8B4513",
-                        Category = ActivityCategory.Diving,
-                        Description = "Sites d'épaves historiques ou artificielles",
-                        RequiresExpertValidation = true,
-                        ValidationCriteria = JsonSerializer.Serialize(new {
-                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes", "RequiredEquipment" },
-                            MaxDepthRange = new[] { 5, 100 }
-                        }),
-                        IsActive = true
-                    },
-                    new SpotType
-                    {
-                        Name = "Grotte marine",
-                        IconPath = "marker_cave.png",
-                        ColorCode = "#2F4F4F",
-                        Category = ActivityCategory.Diving,
-                        Description = "Grottes et cavernes sous-marines",
-                        RequiresExpertValidation = true,
-                        ValidationCriteria = JsonSerializer.Serialize(new {
-                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes", "RequiredEquipment" },
-                            MaxDepthRange = new[] { 5, 40 },
-                            MinDifficultyLevel = 2
-                        }),
-                        IsActive = true
-                    },
-                    new SpotType
-                    {
-                        Name = "Tombant",
-                        IconPath = "marker_wall.png",
-                        ColorCode = "#4169E1",
-                        Category = ActivityCategory.Diving,
-                        Description = "Murs et tombants sous-marins",
-                        RequiresExpertValidation = false,
-                        ValidationCriteria = JsonSerializer.Serialize(new {
-                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" },
-                            MaxDepthRange = new[] { 10, 60 }
-                        }),
-                        IsActive = true
-                    },
-                    new SpotType
-                    {
-                        Name = "Récif corallien",
-                        IconPath = "marker_reef.png",
-                        ColorCode = "#FF6347",
+                        Name = "Randonnée sous marine",
+                        IconPath = "marker_snorkeling.png",
+                        ColorCode = "#48CAE4",
                         Category = ActivityCategory.Snorkeling,
-                        Description = "Récifs coralliens et jardins de corail",
+                        Description = "Sites de surface accessibles pour la randonnée sous-marine",
                         RequiresExpertValidation = false,
                         ValidationCriteria = JsonSerializer.Serialize(new {
                             RequiredFields = new[] { "DifficultyLevel", "SafetyNotes" },
-                            MaxDepthRange = new[] { 0, 25 }
-                        }),
-                        IsActive = true
-                    },
-                    new SpotType
-                    {
-                        Name = "Plongée de nuit",
-                        IconPath = "marker_night.png",
-                        ColorCode = "#191970",
-                        Category = ActivityCategory.Diving,
-                        Description = "Sites adaptés à la plongée nocturne",
-                        RequiresExpertValidation = true,
-                        ValidationCriteria = JsonSerializer.Serialize(new {
-                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes", "RequiredEquipment" },
-                            MaxDepthRange = new[] { 5, 30 },
-                            MinDifficultyLevel = 2
+                            MaxDepthRange = new[] { 0, 5 }
                         }),
                         IsActive = true
                     }
@@ -349,7 +280,7 @@ namespace SubExplore.Services.Implementations
                     // Récupérer les IDs des données créées pour les spots
                     var divingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Plongée récréative");
                     var freedivingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Apnée");
-                    var snorkelingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Randonnée palmée");
+                    var snorkelingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Randonnée sous marine");
                     var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com");
                     var adminUserId = adminUser?.Id ?? 1;
 
@@ -564,6 +495,335 @@ namespace SubExplore.Services.Implementations
 
                 return false;
             }
+        }
+
+        public async Task<bool> CleanupSpotTypesAsync()
+        {
+            try
+            {
+                await CleanupObsoleteSpotTypesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors du nettoyage des types de spots");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Nettoie les anciens types de spots non conformes aux 5 types requis
+        /// </summary>
+        private async Task CleanupObsoleteSpotTypesAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Nettoyage des anciens types de spots non conformes...");
+
+                // Types autorisés selon les exigences
+                var allowedSpotTypes = new[]
+                {
+                    "Apnée",
+                    "Photo sous-marine", 
+                    "Plongée récréative",
+                    "Plongée technique",
+                    "Randonnée sous marine"
+                };
+
+                // Récupérer tous les types de spots existants
+                var existingSpotTypes = await _context.SpotTypes.ToListAsync();
+                
+                // Identifier les types à supprimer
+                var typesToRemove = existingSpotTypes
+                    .Where(st => !allowedSpotTypes.Contains(st.Name))
+                    .ToList();
+
+                if (typesToRemove.Any())
+                {
+                    _logger.LogInformation("Suppression de {Count} types de spots obsolètes : {Types}", 
+                        typesToRemove.Count, 
+                        string.Join(", ", typesToRemove.Select(t => t.Name)));
+
+                    // Supprimer les spots associés aux types obsolètes
+                    var spotsToRemove = await _context.Spots
+                        .Where(s => typesToRemove.Select(t => t.Id).Contains(s.TypeId))
+                        .ToListAsync();
+
+                    if (spotsToRemove.Any())
+                    {
+                        _logger.LogInformation("Suppression de {Count} spots associés aux types obsolètes", spotsToRemove.Count);
+                        _context.Spots.RemoveRange(spotsToRemove);
+                    }
+
+                    // Supprimer les types obsolètes
+                    _context.SpotTypes.RemoveRange(typesToRemove);
+                    
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Nettoyage terminé avec succès");
+                }
+                else
+                {
+                    _logger.LogInformation("Aucun type de spot obsolète trouvé");
+                }
+
+                // Vérifier si les 5 types requis existent et les ajouter si nécessaire
+                await EnsureRequiredSpotTypesExistAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors du nettoyage des types de spots obsolètes");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// S'assure que les 5 types de spots requis existent dans la base de données
+        /// </summary>
+        private async Task EnsureRequiredSpotTypesExistAsync()
+        {
+            try
+            {
+                var requiredSpotTypes = new[]
+                {
+                    new { Name = "Apnée", IconPath = "marker_freediving.png", ColorCode = "#00B4D8", Category = ActivityCategory.Freediving, Description = "Sites adaptés à la plongée en apnée" },
+                    new { Name = "Photo sous-marine", IconPath = "marker_photography.png", ColorCode = "#2EC4B6", Category = ActivityCategory.UnderwaterPhotography, Description = "Sites d'intérêt pour la photographie sous-marine" },
+                    new { Name = "Plongée récréative", IconPath = "marker_diving.png", ColorCode = "#006994", Category = ActivityCategory.Diving, Description = "Sites adaptés à la plongée avec bouteille" },
+                    new { Name = "Plongée technique", IconPath = "marker_technical.png", ColorCode = "#FF9F1C", Category = ActivityCategory.Diving, Description = "Sites pour plongée technique (profondeur, épaves...)" },
+                    new { Name = "Randonnée sous marine", IconPath = "marker_snorkeling.png", ColorCode = "#48CAE4", Category = ActivityCategory.Snorkeling, Description = "Sites de surface accessibles pour la randonnée sous-marine" }
+                };
+
+                foreach (var requiredType in requiredSpotTypes)
+                {
+                    var existingType = await _context.SpotTypes
+                        .FirstOrDefaultAsync(st => st.Name == requiredType.Name);
+
+                    if (existingType == null)
+                    {
+                        var newSpotType = new SpotType
+                        {
+                            Name = requiredType.Name,
+                            IconPath = requiredType.IconPath,
+                            ColorCode = requiredType.ColorCode,
+                            Category = requiredType.Category,
+                            Description = requiredType.Description,
+                            RequiresExpertValidation = requiredType.Name.Contains("technique") || requiredType.Name.Contains("Apnée") || requiredType.Name.Contains("récréative"),
+                            ValidationCriteria = JsonSerializer.Serialize(new {
+                                RequiredFields = new[] { "DifficultyLevel", "SafetyNotes" }
+                            }),
+                            IsActive = true
+                        };
+
+                        _context.SpotTypes.Add(newSpotType);
+                        _logger.LogInformation("Ajout du type de spot manquant : {Name}", requiredType.Name);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la vérification des types de spots requis");
+                throw;
+            }
+        }
+
+        public async Task<bool> ImportRealSpotsAsync(string jsonFilePath = null)
+        {
+            try
+            {
+                _logger.LogInformation("Début de l'import des spots réels...");
+
+                string jsonContent;
+
+                // Si un chemin spécifique est fourni, l'utiliser, sinon lire depuis les ressources embarquées
+                if (!string.IsNullOrEmpty(jsonFilePath) && File.Exists(jsonFilePath))
+                {
+                    _logger.LogInformation("Lecture du fichier JSON depuis : {FilePath}", jsonFilePath);
+                    jsonContent = await File.ReadAllTextAsync(jsonFilePath);
+                }
+                else
+                {
+                    // Lire depuis les ressources embarquées
+                    _logger.LogInformation("Lecture du fichier JSON depuis les ressources embarquées...");
+                    var assembly = Assembly.GetExecutingAssembly();
+                    var resourceName = "SubExplore.Data.real_spots.json";
+
+                    using var stream = assembly.GetManifestResourceStream(resourceName);
+                    if (stream == null)
+                    {
+                        _logger.LogError("Ressource embarquée non trouvée : {ResourceName}", resourceName);
+                        _logger.LogInformation("Ressources disponibles : {Resources}", 
+                            string.Join(", ", assembly.GetManifestResourceNames()));
+                        return false;
+                    }
+
+                    using var reader = new StreamReader(stream);
+                    jsonContent = await reader.ReadToEndAsync();
+                    _logger.LogInformation("Fichier JSON lu depuis les ressources embarquées avec succès");
+                }
+                var importData = JsonSerializer.Deserialize<Models.Import.SpotsImportFile>(jsonContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (importData?.Spots == null || !importData.Spots.Any())
+                {
+                    _logger.LogWarning("Aucun spot trouvé dans le fichier d'import");
+                    return false;
+                }
+
+                // Récupérer l'utilisateur admin pour créer les spots
+                var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com");
+                if (adminUser == null)
+                {
+                    _logger.LogError("Utilisateur admin introuvable pour l'import des spots");
+                    return false;
+                }
+
+                int importedCount = 0;
+                int skippedCount = 0;
+
+                foreach (var spotData in importData.Spots)
+                {
+                    try
+                    {
+                        // Vérifier si le spot existe déjà
+                        var existingSpot = await _context.Spots
+                            .FirstOrDefaultAsync(s => s.Name == spotData.Name && 
+                                                     s.Latitude == spotData.Latitude && 
+                                                     s.Longitude == spotData.Longitude);
+
+                        if (existingSpot != null)
+                        {
+                            _logger.LogInformation("Spot déjà existant ignoré : {SpotName}", spotData.Name);
+                            skippedCount++;
+                            continue;
+                        }
+
+                        // Trouver le type de spot correspondant
+                        var spotType = await _context.SpotTypes
+                            .FirstOrDefaultAsync(st => st.Name == spotData.SpotType && st.IsActive);
+
+                        if (spotType == null)
+                        {
+                            _logger.LogWarning("Type de spot non trouvé pour : {SpotType}", spotData.SpotType);
+                            skippedCount++;
+                            continue;
+                        }
+
+                        // Convertir les enums avec traduction français -> anglais
+                        var difficultyLevel = ConvertDifficultyLevelFromFrench(spotData.DifficultyLevel);
+                        if (difficultyLevel == null)
+                        {
+                            _logger.LogWarning("Niveau de difficulté invalide : {DifficultyLevel}", spotData.DifficultyLevel);
+                            skippedCount++;
+                            continue;
+                        }
+
+                        var currentStrength = ConvertCurrentStrengthFromFrench(spotData.CurrentStrength);
+                        if (currentStrength == null)
+                        {
+                            _logger.LogWarning("Force de courant invalide : {CurrentStrength}", spotData.CurrentStrength);
+                            skippedCount++;
+                            continue;
+                        }
+
+                        var validationStatus = ConvertValidationStatusFromFrench(spotData.ValidationStatus) ?? Models.Enums.SpotValidationStatus.Pending;
+
+                        // Créer le nouveau spot
+                        var newSpot = new Models.Domain.Spot
+                        {
+                            Name = spotData.Name,
+                            Description = spotData.Description,
+                            Latitude = spotData.Latitude,
+                            Longitude = spotData.Longitude,
+                            MaxDepth = spotData.MaxDepth,
+                            DifficultyLevel = difficultyLevel.Value,
+                            ValidationStatus = validationStatus,
+                            TypeId = spotType.Id,
+                            CreatorId = adminUser.Id,
+                            CreatedAt = DateTime.UtcNow,
+                            CurrentStrength = currentStrength.Value,
+                            BestConditions = spotData.BestConditions,
+                            SafetyNotes = spotData.SafetyNotes,
+                            RequiredEquipment = spotData.RequiredEquipment
+                        };
+
+                        _context.Spots.Add(newSpot);
+                        importedCount++;
+
+                        _logger.LogInformation("Spot préparé pour import : {SpotName}", spotData.Name);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Erreur lors de l'import du spot : {SpotName}", spotData.Name);
+                        skippedCount++;
+                    }
+                }
+
+                // Sauvegarder tous les changements
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Import terminé - Importés: {ImportedCount}, Ignorés: {SkippedCount}", 
+                    importedCount, skippedCount);
+
+                return importedCount > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de l'import des spots réels");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Convertit un niveau de difficulté depuis le français vers l'enum anglais
+        /// </summary>
+        private Models.Enums.DifficultyLevel? ConvertDifficultyLevelFromFrench(string frenchValue)
+        {
+            return frenchValue?.ToLower() switch
+            {
+                "débutant" => Models.Enums.DifficultyLevel.Beginner,
+                "intermédiaire" => Models.Enums.DifficultyLevel.Intermediate,
+                "avancé" => Models.Enums.DifficultyLevel.Advanced,
+                "expert" => Models.Enums.DifficultyLevel.Expert,
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Convertit une force de courant depuis le français vers l'enum anglais
+        /// </summary>
+        private Models.Enums.CurrentStrength? ConvertCurrentStrengthFromFrench(string frenchValue)
+        {
+            return frenchValue?.ToLower() switch
+            {
+                "aucun" => Models.Enums.CurrentStrength.None,
+                "léger" => Models.Enums.CurrentStrength.Light,
+                "modéré" => Models.Enums.CurrentStrength.Moderate,
+                "fort" => Models.Enums.CurrentStrength.Strong,
+                "très fort" => Models.Enums.CurrentStrength.Extreme,
+                "extrême" => Models.Enums.CurrentStrength.Extreme,
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Convertit un statut de validation depuis le français vers l'enum anglais
+        /// </summary>
+        private Models.Enums.SpotValidationStatus? ConvertValidationStatusFromFrench(string frenchValue)
+        {
+            return frenchValue?.ToLower() switch
+            {
+                "brouillon" => Models.Enums.SpotValidationStatus.Draft,
+                "en attente" => Models.Enums.SpotValidationStatus.Pending,
+                "révision nécessaire" => Models.Enums.SpotValidationStatus.NeedsRevision,
+                "en révision" => Models.Enums.SpotValidationStatus.NeedsRevision,
+                "approuvé" => Models.Enums.SpotValidationStatus.Approved,
+                "rejeté" => Models.Enums.SpotValidationStatus.Rejected,
+                "archivé" => Models.Enums.SpotValidationStatus.Archived,
+                _ => null
+            };
         }
     }
 }

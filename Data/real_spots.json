@@ -1,0 +1,123 @@
+{
+  "spots": [
+    {
+      "name": "Calanque de Sormiou",
+      "description": "Magnifique calanque marseillaise avec une eau cristalline et une biodiversité riche. Site emblématique de la côte méditerranéenne.",
+      "latitude": 43.2148,
+      "longitude": 5.4203,
+      "maxDepth": 25,
+      "difficultyLevel": "Intermédiaire",
+      "spotType": "Plongée récréative",
+      "currentStrength": "Modéré",
+      "bestConditions": "Mer calme, visibilité 15-20m, éviter les vents du mistral",
+      "safetyNotes": "Attention aux bateaux de plaisance en été. Zone de baignade surveillée.",
+      "requiredEquipment": "Palmes, masque, tuba, combinaison 5mm recommandée",
+      "accessInfo": "Parking payant en été. Sentier de 20 minutes depuis le parking.",
+      "facilities": "Toilettes, douches, restaurant saisonnier",
+      "bestSeasons": ["Printemps", "Été", "Automne"],
+      "validationStatus": "Approuvé"
+    },
+    {
+      "name": "Île Maïre",
+      "description": "Site de plongée technique avec tombant spectaculaire et grottes sous-marines. Biodiversité exceptionnelle.",
+      "latitude": 43.2105,
+      "longitude": 5.3520,
+      "maxDepth": 40,
+      "difficultyLevel": "Avancé",
+      "spotType": "Plongée technique",
+      "currentStrength": "Fort",
+      "bestConditions": "Mer peu agitée, visibilité 20-25m, pas de vent d'est",
+      "safetyNotes": "Plongée technique - Niveau 2 minimum requis. Courants forts possibles.",
+      "requiredEquipment": "Équipement complet de plongée, lampe obligatoire, parachute de palier",
+      "accessInfo": "Accessible uniquement en bateau. Plusieurs clubs proposent des sorties.",
+      "facilities": "Aucune - site sauvage",
+      "bestSeasons": ["Printemps", "Été"],
+      "validationStatus": "Approuvé"
+    },
+    {
+      "name": "Baie de Cassis",
+      "description": "Site parfait pour l'apnée avec profondeur progressive et faune accessible. Idéal pour débutants.",
+      "latitude": 43.2148,
+      "longitude": 5.5385,
+      "maxDepth": 15,
+      "difficultyLevel": "Débutant",
+      "spotType": "Apnée",
+      "currentStrength": "Léger",
+      "bestConditions": "Mer calme, visibilité 10-15m, température eau >18°C",
+      "safetyNotes": "Idéal pour débutants. Surveiller les autres usagers de la mer.",
+      "requiredEquipment": "Palmes, masque, tuba, combinaison selon saison",
+      "accessInfo": "Parking municipal. Accès direct depuis la plage.",
+      "facilities": "Parking, toilettes, restaurants, location matériel",
+      "bestSeasons": ["Printemps", "Été", "Automne"],
+      "validationStatus": "Approuvé"
+    },
+    {
+      "name": "Port-Cros",
+      "description": "Réserve naturelle marine avec une biodiversité exceptionnelle. Parfait pour la photographie sous-marine.",
+      "latitude": 43.0092,
+      "longitude": 6.3914,
+      "maxDepth": 12,
+      "difficultyLevel": "Débutant",
+      "spotType": "Photo sous-marine",
+      "currentStrength": "Léger",
+      "bestConditions": "Eau calme, excellente visibilité, lumière naturelle optimale",
+      "safetyNotes": "Zone protégée - respecter la faune et la flore. Pêche interdite.",
+      "requiredEquipment": "Appareil photo étanche, palmes, masque, tuba",
+      "accessInfo": "Accessible par ferry depuis Hyères. Réservation conseillée.",
+      "facilities": "Centre d'accueil, sentiers sous-marins balisés",
+      "bestSeasons": ["Printemps", "Été", "Automne"],
+      "validationStatus": "Approuvé"
+    },
+    {
+      "name": "Sentier Sous-Marin de Banyuls",
+      "description": "Parcours balisé idéal pour la randonnée sous-marine familiale. Découverte de la faune méditerranéenne.",
+      "latitude": 42.4875,
+      "longitude": 3.1286,
+      "maxDepth": 5,
+      "difficultyLevel": "Débutant",
+      "spotType": "Randonnée sous marine",
+      "currentStrength": "Aucun",
+      "bestConditions": "Mer calme, visibilité correcte, éviter les jours de tramontane",
+      "safetyNotes": "Parcours familial. Respecter les bouées de balisage.",
+      "requiredEquipment": "Palmes, masque, tuba, lycra anti-UV recommandé",
+      "accessInfo": "Parking gratuit. Accès direct depuis la plage.",
+      "facilities": "Accueil, panneaux d'information, douches",
+      "bestSeasons": ["Printemps", "Été", "Automne"],
+      "validationStatus": "Approuvé"
+    }
+  ],
+  "enums": {
+    "difficultyLevels": ["Débutant", "Intermédiaire", "Avancé", "Expert"],
+    "spotTypes": ["Apnée", "Photo sous-marine", "Plongée récréative", "Plongée technique", "Randonnée sous marine"],
+    "currentStrengths": ["Aucun", "Léger", "Modéré", "Fort", "Extrême"],
+    "validationStatuses": ["Brouillon", "En attente", "Révision nécessaire", "Approuvé", "Rejeté", "Archivé"],
+    "seasons": ["Printemps", "Été", "Automne", "Hiver"]
+  },
+  "instructions": {
+    "description": "Fichier de données pour l'import de spots réels dans SubExplore",
+    "usage": [
+      "1. Complétez la section 'spots' avec de vrais spots de plongée",
+      "2. Respectez les valeurs des enums pour la cohérence",
+      "3. Les coordonnées doivent être en décimal (ex: 43.2148)",
+      "4. maxDepth en mètres",
+      "5. Tous les champs sont requis sauf mention contraire"
+    ],
+    "template": {
+      "name": "Nom du spot (requis)",
+      "description": "Description détaillée du site (requis)",
+      "latitude": "Latitude en décimal (requis)",
+      "longitude": "Longitude en décimal (requis)",
+      "maxDepth": "Profondeur maximale en mètres (requis)",
+      "difficultyLevel": "Niveau de difficulté (voir enums)",
+      "spotType": "Type de spot (voir enums)",
+      "currentStrength": "Force du courant (voir enums)",
+      "bestConditions": "Meilleures conditions (requis)",
+      "safetyNotes": "Notes de sécurité importantes (requis)",
+      "requiredEquipment": "Équipement nécessaire (requis)",
+      "accessInfo": "Informations d'accès (optionnel)",
+      "facilities": "Services disponibles (optionnel)",
+      "bestSeasons": "Meilleures saisons - tableau (optionnel)",
+      "validationStatus": "Statut de validation (voir enums)"
+    }
+  }
+}
