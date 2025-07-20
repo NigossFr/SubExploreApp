@@ -34,10 +34,21 @@
                CornerRadius="0"
                Padding="15,10"
                HasShadow="True">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                 
-                <!-- Empty space for symmetry -->
-                <Label Grid.Column="0" />
+                <!-- Test Button - TEMPORAIRE -->
+                <Button Grid.Column="0"
+                        Text="🔧"
+                        BackgroundColor="Orange"
+                        BorderColor="Transparent"
+                        TextColor="White"
+                        FontSize="16"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"
+                        Padding="0"
+                        Command="{Binding TestDatabaseDirectlyCommand}"
+                        AutomationId="TestButton" />
                 
                 <!-- Page Title -->
                 <Label Grid.Column="1"
@@ -51,7 +62,7 @@
                        SemanticProperties.Description="Titre de la page actuelle" />
                 
                 <!-- Menu Icon Button -->
-                <Button Grid.Column="2"
+                <Button Grid.Column="3"
                         x:Name="MenuButton"
                         Text="👤"
                         BackgroundColor="Transparent"

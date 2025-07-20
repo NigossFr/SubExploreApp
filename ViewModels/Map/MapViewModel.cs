@@ -238,6 +238,41 @@ namespace SubExplore.ViewModels.Map
         }
 
         [RelayCommand]
+        private async Task TestDatabaseDirectly()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Testing database status...");
+                
+                // Vérifier si la base de données est initialisée
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Creating and seeding database...");
+                await _databaseService.EnsureDatabaseCreatedAsync();
+                await _databaseService.SeedDatabaseAsync();
+                
+                // Maintenant test via le repository
+                var repoSpots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Repository query found {repoSpots?.Count() ?? 0} spots");
+                
+                if (repoSpots != null && repoSpots.Any())
+                {
+                    RefreshSpotsList(repoSpots);
+                    UpdatePins();
+                    UpdateEmptyState();
+                    await DialogService.ShowToastAsync($"Test réussi: {repoSpots.Count()} spots chargés");
+                }
+                else
+                {
+                    await DialogService.ShowAlertAsync("Test", "Aucun spot trouvé même après seed", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] TestDatabaseDirectly failed: {ex.Message}");
+                await DialogService.ShowAlertAsync("Erreur", ex.Message, "OK");
+            }
+        }
+
+        [RelayCommand]
         private async Task LoadSpots()
         {
             if (IsBusy) return;
@@ -249,21 +284,26 @@ namespace SubExplore.ViewModels.Map
 
                 IEnumerable<Models.Domain.Spot> spots;
 
-                // Si la géolocalisation est disponible, récupérer les spots à proximité
-                if (IsLocationAvailable)
+                // TEMPORAIRE : Force le chargement de tous les spots approuvés pour diagnostic
+                System.Diagnostics.Debug.WriteLine("[DEBUG] FORCE: Loading all approved spots for debugging");
+                spots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
+                
+                // Log de diagnostic supplémentaire
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] IsLocationAvailable: {IsLocationAvailable}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] UserLatitude: {UserLatitude}, UserLongitude: {UserLongitude}");
+                
+                // Si on obtient des spots, vérifions leur contenu
+                if (spots != null && spots.Any())
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Loading nearby spots for location: {UserLatitude}, {UserLongitude}");
-                    spots = await _spotRepository.GetNearbySpots(
-                        (decimal)UserLatitude,
-                        (decimal)UserLongitude,
-                        DEFAULT_SEARCH_RADIUS_KM,
-                        MAX_SPOTS_LIMIT);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Found {spots.Count()} spots from repository");
+                    foreach (var spot in spots.Take(5))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Spot: {spot.Name} - Status: {spot.ValidationStatus} - TypeId: {spot.TypeId} - Position: {spot.Latitude}, {spot.Longitude}");
+                    }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading all approved spots (no location available)");
-                    // Sinon, récupérer tous les spots validés
-                    spots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] No spots returned from repository - checking database connection");
                 }
 
                 var spotsCount = spots?.Count() ?? 0;
@@ -941,10 +981,21 @@ namespace SubExplore.ViewModels.Map
             Application.Current?.Dispatcher.Dispatch(() => {
                 try
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePins called with {Spots?.Count ?? 0} spots");
+                    
+                    if (Spots == null || !Spots.Any())
+                    {
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] No spots available for pin creation");
+                        Pins.Clear();
+                        return;
+                    }
+
                     var validPins = Spots
                         .Select(CreatePinFromSpot)
                         .Where(pin => pin != null)
                         .ToList();
+
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Created {validPins.Count} valid pins from {Spots.Count} spots");
 
                     // Efficient batch update
                     Pins.Clear();
@@ -952,10 +1003,13 @@ namespace SubExplore.ViewModels.Map
                     {
                         Pins.Add(pin!);
                     }
+                    
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePins completed. Total pins: {Pins.Count}");
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERROR] UpdatePins failed: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                 }
             });
         }
