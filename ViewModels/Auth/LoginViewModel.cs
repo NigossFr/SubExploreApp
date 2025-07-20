@@ -39,6 +39,18 @@ namespace SubExplore.ViewModels.Auth
         [ObservableProperty]
         private bool _hasLoginError = false;
 
+        [ObservableProperty]
+        private bool _isEmailValid = false;
+
+        [ObservableProperty]
+        private bool _isPasswordValid = false;
+
+        [ObservableProperty]
+        private bool _canLogin = false;
+
+        [ObservableProperty]
+        private double _loginProgress = 0.0;
+
         // Services for navigation and dialogs
         private readonly IDialogService _dialogService;
         private readonly INavigationService _navigationService;
@@ -61,11 +73,12 @@ namespace SubExplore.ViewModels.Auth
         [RelayCommand]
         private async Task Login()
         {
-            if (IsLoginInProgress) return;
+            if (IsLoginInProgress || !CanLogin) return;
 
             try
             {
                 IsLoginInProgress = true;
+                LoginProgress = 0.2;
                 ClearLoginError();
 
                 // Validate input
@@ -75,15 +88,24 @@ namespace SubExplore.ViewModels.Auth
                 }
 
                 _logger.LogInformation("Attempting login for email: {Email}", Email);
+                LoginProgress = 0.5;
+
+                // Add slight delay for smooth UX on fast devices
+                await Task.Delay(300);
 
                 // Perform login
                 var result = await _authenticationService.LoginAsync(Email, Password);
+                LoginProgress = 0.8;
 
                 if (result.IsSuccess)
                 {
                     _logger.LogInformation("Login successful for user: {UserId}", result.User?.Id);
+                    LoginProgress = 1.0;
                     
-                    await _dialogService.ShowToastAsync("Connexion réussie !");
+                    await _dialogService.ShowToastAsync("🎉 Connexion réussie !");
+                    
+                    // Small delay for progress completion animation
+                    await Task.Delay(200);
                     
                     // Navigate to main application
                     await _navigationService.NavigateToAsync<MapViewModel>();
@@ -110,6 +132,7 @@ namespace SubExplore.ViewModels.Auth
             finally
             {
                 IsLoginInProgress = false;
+                LoginProgress = 0.0;
             }
         }
 
@@ -267,8 +290,26 @@ namespace SubExplore.ViewModels.Auth
             HasLoginError = false;
         }
 
+        private void UpdateCanLogin()
+        {
+            CanLogin = IsEmailValid && IsPasswordValid && !IsLoginInProgress;
+        }
+
+        private void ValidateEmail()
+        {
+            IsEmailValid = !string.IsNullOrWhiteSpace(Email) && IsValidEmail(Email);
+            UpdateCanLogin();
+        }
+
+        private void ValidatePasswordField()
+        {
+            IsPasswordValid = !string.IsNullOrWhiteSpace(Password) && Password.Length >= 8;
+            UpdateCanLogin();
+        }
+
         partial void OnEmailChanged(string value)
         {
+            ValidateEmail();
             if (HasLoginError)
             {
                 ClearLoginError();
@@ -277,10 +318,16 @@ namespace SubExplore.ViewModels.Auth
 
         partial void OnPasswordChanged(string value)
         {
+            ValidatePasswordField();
             if (HasLoginError)
             {
                 ClearLoginError();
             }
+        }
+
+        partial void OnIsLoginInProgressChanged(bool value)
+        {
+            UpdateCanLogin();
         }
     }
 }

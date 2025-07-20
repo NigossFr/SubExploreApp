@@ -80,13 +80,22 @@
                         
                         <!-- Email Field -->
                         <StackLayout Spacing="10">
-                            <Label Text="Adresse email"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="#333333" />
+                            <StackLayout Orientation="Horizontal" Spacing="8">
+                                <Label Text="Adresse email"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="#333333"
+                                       VerticalOptions="Center" />
+                                
+                                <Label Text="✓"
+                                       FontSize="14"
+                                       TextColor="#28a745"
+                                       IsVisible="{Binding IsEmailValid}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
                             
                             <Frame BackgroundColor="#FFFFFF"
-                                   BorderColor="#C8C8C8"
+                                   BorderColor="{Binding IsEmailValid, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='#28a745|#C8C8C8'}"
                                    CornerRadius="8"
                                    HasShadow="False"
                                    Padding="0">
@@ -98,16 +107,31 @@
                                        PlaceholderColor="#919191"
                                        BackgroundColor="Transparent"
                                        Margin="20,0"
-                                       HeightRequest="50" />
+                                       HeightRequest="50"
+                                       ReturnType="Next" />
+                                <Frame.Triggers>
+                                    <DataTrigger TargetType="Frame" Binding="{Binding IsEmailValid}" Value="True">
+                                        <Setter Property="BorderColor" Value="#28a745" />
+                                    </DataTrigger>
+                                </Frame.Triggers>
                             </Frame>
                         </StackLayout>
 
                         <!-- Password Field -->
                         <StackLayout Spacing="10">
-                            <Label Text="Mot de passe"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="#333333" />
+                            <StackLayout Orientation="Horizontal" Spacing="8">
+                                <Label Text="Mot de passe"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="#333333"
+                                       VerticalOptions="Center" />
+                                
+                                <Label Text="✓"
+                                       FontSize="14"
+                                       TextColor="#28a745"
+                                       IsVisible="{Binding IsPasswordValid}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
                             
                             <Frame BackgroundColor="#FFFFFF"
                                    BorderColor="#C8C8C8"
@@ -117,14 +141,15 @@
                                 <Grid ColumnDefinitions="*,Auto">
                                     <Entry Grid.Column="0"
                                            Text="{Binding Password}"
-                                           Placeholder="Admin123!"
+                                           Placeholder="Minimum 8 caractères"
                                            IsPassword="{Binding IsPasswordVisible, Converter={StaticResource InvertBoolConverter}}"
                                            FontSize="16"
                                            TextColor="#333333"
                                            PlaceholderColor="#919191"
                                            BackgroundColor="Transparent"
                                            Margin="20,0,0,0"
-                                           HeightRequest="50" />
+                                           HeightRequest="50"
+                                           ReturnType="Go" />
                                     
                                     <Button Grid.Column="1"
                                             Text="{Binding IsPasswordVisible, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='🙈|👁️'}"
@@ -134,6 +159,11 @@
                                             Padding="15"
                                             Command="{Binding TogglePasswordVisibilityCommand}" />
                                 </Grid>
+                                <Frame.Triggers>
+                                    <DataTrigger TargetType="Frame" Binding="{Binding IsPasswordValid}" Value="True">
+                                        <Setter Property="BorderColor" Value="#28a745" />
+                                    </DataTrigger>
+                                </Frame.Triggers>
                             </Frame>
                         </StackLayout>
 
@@ -150,23 +180,36 @@
                     </StackLayout>
                 </Frame>
 
-                <!-- Login Button -->
-                <Button Text="Se connecter"
-                        Command="{Binding LoginCommand}"
-                        BackgroundColor="#006994"
-                        TextColor="White"
-                        FontSize="16"
-                        FontAttributes="Bold"
-                        CornerRadius="12"
-                        HeightRequest="55"
-                        Margin="0,10"
-                        IsEnabled="{Binding IsLoginInProgress, Converter={StaticResource InvertBoolConverter}}">
-                    <Button.Triggers>
-                        <DataTrigger TargetType="Button" Binding="{Binding IsLoginInProgress}" Value="True">
-                            <Setter Property="Text" Value="Connexion..." />
-                        </DataTrigger>
-                    </Button.Triggers>
-                </Button>
+                <!-- Login Button with Progress -->
+                <StackLayout Spacing="8">
+                    <!-- Progress Bar -->
+                    <ProgressBar Progress="{Binding LoginProgress}"
+                                 ProgressColor="#006994"
+                                 BackgroundColor="#E0E0E0"
+                                 HeightRequest="4"
+                                 IsVisible="{Binding IsLoginInProgress}" />
+                    
+                    <Button Text="Se connecter"
+                            Command="{Binding LoginCommand}"
+                            BackgroundColor="#006994"
+                            TextColor="White"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            CornerRadius="12"
+                            HeightRequest="55"
+                            Margin="0,5"
+                            IsEnabled="{Binding CanLogin}">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsLoginInProgress}" Value="True">
+                                <Setter Property="Text" Value="⏳ Connexion..." />
+                                <Setter Property="BackgroundColor" Value="#4A90A4" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Button" Binding="{Binding CanLogin}" Value="False">
+                                <Setter Property="BackgroundColor" Value="#CCCCCC" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </StackLayout>
 
                 <!-- Forgot Password Link -->
                 <Button Text="Mot de passe oublié ?"
@@ -242,28 +285,39 @@
         </Grid>
     </ScrollView>
 
-    <!-- Loading Overlay -->
+    <!-- Enhanced Loading Overlay -->
     <Grid IsVisible="{Binding IsLoginInProgress}"
           BackgroundColor="#80000000">
         <Frame BackgroundColor="#FFFFFF"
-               CornerRadius="8"
-               WidthRequest="120"
-               HeightRequest="120"
+               CornerRadius="16"
+               WidthRequest="160"
+               HeightRequest="140"
                HorizontalOptions="Center"
                VerticalOptions="Center"
-               HasShadow="False"
+               HasShadow="True"
                BorderColor="Transparent">
-            <StackLayout Spacing="15"
+            <StackLayout Spacing="20"
                          HorizontalOptions="Center"
                          VerticalOptions="Center">
                 <ActivityIndicator IsRunning="{Binding IsLoginInProgress}"
                                    Color="#006994"
-                                   WidthRequest="40"
-                                   HeightRequest="40" />
-                <Label Text="Connexion..."
-                       FontSize="14"
-                       TextColor="#333333"
-                       HorizontalOptions="Center" />
+                                   WidthRequest="50"
+                                   HeightRequest="50" />
+                
+                <StackLayout Spacing="8">
+                    <Label Text="🔐 Connexion en cours..."
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="#333333"
+                           HorizontalOptions="Center" />
+                    
+                    <ProgressBar Progress="{Binding LoginProgress}"
+                                 ProgressColor="#006994"
+                                 BackgroundColor="#E0E0E0"
+                                 HeightRequest="6"
+                                 WidthRequest="120"
+                                 HorizontalOptions="Center" />
+                </StackLayout>
             </StackLayout>
         </Frame>
     </Grid>

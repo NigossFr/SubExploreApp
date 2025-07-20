@@ -67,6 +67,24 @@ namespace SubExplore.ViewModels.Auth
         [ObservableProperty]
         private bool _isPasswordConfirmationValid = false;
 
+        [ObservableProperty]
+        private bool _isEmailValid = false;
+
+        [ObservableProperty]
+        private bool _isUsernameValid = false;
+
+        [ObservableProperty]
+        private bool _isFirstNameValid = false;
+
+        [ObservableProperty]
+        private bool _isLastNameValid = false;
+
+        [ObservableProperty]
+        private bool _canRegister = false;
+
+        [ObservableProperty]
+        private double _registrationProgress = 0.0;
+
         // Services for navigation and dialogs
         private readonly IDialogService _dialogService;
         private readonly INavigationService _navigationService;
@@ -89,11 +107,12 @@ namespace SubExplore.ViewModels.Auth
         [RelayCommand]
         private async Task Register()
         {
-            if (IsRegistrationInProgress) return;
+            if (IsRegistrationInProgress || !CanRegister) return;
 
             try
             {
                 IsRegistrationInProgress = true;
+                RegistrationProgress = 0.2;
                 ClearRegistrationError();
 
                 // Validate input
@@ -103,6 +122,10 @@ namespace SubExplore.ViewModels.Auth
                 }
 
                 _logger.LogInformation("Attempting registration for email: {Email}", Email);
+                RegistrationProgress = 0.4;
+
+                // Add slight delay for smooth UX
+                await Task.Delay(300);
 
                 // Create registration request
                 var registrationRequest = new UserRegistrationRequest
@@ -116,17 +139,24 @@ namespace SubExplore.ViewModels.Auth
                     AcceptTermsAndConditions = AcceptTermsAndConditions
                 };
 
+                RegistrationProgress = 0.7;
+                
                 // Perform registration
                 var result = await _authenticationService.RegisterAsync(registrationRequest);
+                RegistrationProgress = 0.9;
 
                 if (result.IsSuccess)
                 {
                     _logger.LogInformation("Registration successful for user: {UserId}", result.User?.Id);
+                    RegistrationProgress = 1.0;
                     
                     await _dialogService.ShowAlertAsync(
-                        "Inscription réussie !",
+                        "🎉 Inscription réussie !",
                         "Votre compte a été créé avec succès. Vous êtes maintenant connecté.",
                         "Continuer");
+                    
+                    // Small delay for progress completion
+                    await Task.Delay(200);
                     
                     // Navigate to main application
                     await _navigationService.NavigateToAsync<MapViewModel>();
@@ -153,6 +183,7 @@ namespace SubExplore.ViewModels.Auth
             finally
             {
                 IsRegistrationInProgress = false;
+                RegistrationProgress = 0.0;
             }
         }
 
@@ -314,15 +345,48 @@ namespace SubExplore.ViewModels.Auth
             }
         }
 
+        private void UpdateCanRegister()
+        {
+            CanRegister = IsFirstNameValid && IsLastNameValid && IsUsernameValid && 
+                         IsEmailValid && IsPasswordValid && IsPasswordConfirmationValid && 
+                         AcceptTermsAndConditions && !IsRegistrationInProgress;
+        }
+
+        private void ValidateFirstName()
+        {
+            IsFirstNameValid = !string.IsNullOrWhiteSpace(FirstName) && FirstName.Trim().Length >= 2;
+            UpdateCanRegister();
+        }
+
+        private void ValidateLastName()
+        {
+            IsLastNameValid = !string.IsNullOrWhiteSpace(LastName) && LastName.Trim().Length >= 2;
+            UpdateCanRegister();
+        }
+
+        private void ValidateUsername()
+        {
+            IsUsernameValid = !string.IsNullOrWhiteSpace(Username) && Username.Trim().Length >= 3;
+            UpdateCanRegister();
+        }
+
+        private void ValidateEmailField()
+        {
+            IsEmailValid = !string.IsNullOrWhiteSpace(Email) && IsValidEmail(Email);
+            UpdateCanRegister();
+        }
+
         private void ValidatePassword()
         {
             IsPasswordValid = !string.IsNullOrWhiteSpace(Password) && Password.Length >= 8;
+            UpdateCanRegister();
         }
 
         private void ValidatePasswordConfirmation()
         {
             IsPasswordConfirmationValid = !string.IsNullOrWhiteSpace(ConfirmPassword) && 
                                         Password == ConfirmPassword;
+            UpdateCanRegister();
         }
 
         private void ShowRegistrationError(string message)
@@ -352,6 +416,7 @@ namespace SubExplore.ViewModels.Auth
 
         partial void OnFirstNameChanged(string value)
         {
+            ValidateFirstName();
             if (HasRegistrationError)
             {
                 ClearRegistrationError();
@@ -360,6 +425,7 @@ namespace SubExplore.ViewModels.Auth
 
         partial void OnLastNameChanged(string value)
         {
+            ValidateLastName();
             if (HasRegistrationError)
             {
                 ClearRegistrationError();
@@ -368,6 +434,7 @@ namespace SubExplore.ViewModels.Auth
 
         partial void OnUsernameChanged(string value)
         {
+            ValidateUsername();
             if (HasRegistrationError)
             {
                 ClearRegistrationError();
@@ -376,6 +443,7 @@ namespace SubExplore.ViewModels.Auth
 
         partial void OnEmailChanged(string value)
         {
+            ValidateEmailField();
             if (HasRegistrationError)
             {
                 ClearRegistrationError();
@@ -399,6 +467,16 @@ namespace SubExplore.ViewModels.Auth
             {
                 ClearRegistrationError();
             }
+        }
+
+        partial void OnAcceptTermsAndConditionsChanged(bool value)
+        {
+            UpdateCanRegister();
+        }
+
+        partial void OnIsRegistrationInProgressChanged(bool value)
+        {
+            UpdateCanRegister();
         }
     }
 }
