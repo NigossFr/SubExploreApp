@@ -167,7 +167,7 @@ public static class MauiProgram
         builder.Services.AddScoped<IRevokedTokenRepository, RevokedTokenRepository>();
 
         // Enregistrement des services
-        builder.Services.AddScoped<IDatabaseService, DatabaseService>();
+        builder.Services.AddScoped<IDatabaseService, DatabaseServiceSimple>();
         builder.Services.AddScoped<IDatabaseInitializationService, DatabaseInitializationService>();
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<INavigationService, NavigationService>();

@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SubExplore.Models.Domain;
+using SubExplore.Models.Enums;
+using System.Text.Json;
 
 namespace SubExplore.DataAccess
 {
@@ -65,7 +67,8 @@ namespace SubExplore.DataAccess
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // Note: Seed data désormais géré par DatabaseService pour éviter les doublons
+            // Configuration simple sans seed data
+            // Les données seront gérées par DatabaseService.SeedDatabaseAsync()
         }
     }
 }
