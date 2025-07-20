@@ -116,6 +116,17 @@
                 </StackLayout>
             </Frame>
             
+            <Frame
+                Padding="15"
+                BorderColor="#0066CC"
+                CornerRadius="10">
+                <StackLayout Spacing="10">
+                    <Label FontAttributes="Bold" Text="🔍 Diagnostic de base de données" />
+                    <Label Text="Affiche les statistiques détaillées sur le contenu de la base de données" FontSize="12" TextColor="Gray" />
+                    <Button Command="{Binding ShowDatabaseDiagnosticsCommand}" Text="🔍 Afficher les diagnostics" BackgroundColor="#0066CC" TextColor="White" />
+                </StackLayout>
+            </Frame>
+            
             <!-- Section des logs -->
             <Frame
                 Padding="15"

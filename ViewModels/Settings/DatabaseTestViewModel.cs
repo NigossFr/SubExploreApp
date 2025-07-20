@@ -213,5 +213,29 @@ namespace SubExplore.ViewModels.Settings
                 IsLoading = false;
             }
         }
+
+        [RelayCommand]
+        private async Task ShowDatabaseDiagnosticsAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "Récupération des diagnostics de base de données...\n";
+
+                var diagnostics = await _databaseService.GetDatabaseDiagnosticsAsync();
+                LogMessages += diagnostics + "\n";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la récupération des diagnostics");
+                LogMessages += $"❌ Erreur: {ex.Message}\n";
+                ShowError($"Erreur: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
     }
 }

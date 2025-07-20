@@ -82,12 +82,14 @@ namespace SubExplore.Repositories.Implementations
         public async Task<IEnumerable<Spot>> GetSpotsByValidationStatusAsync(SpotValidationStatus status)
         {
             return await _context.Spots
+                .AsNoTracking() // Performance: Disable change tracking for read-only queries
                 .Include(s => s.Type)
                 .Include(s => s.Creator)
                 .Include(s => s.Media.Where(m => m.IsPrimary))
                 .Where(s => s.ValidationStatus == status)
                 .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<Spot>> SearchSpotsAsync(string query)

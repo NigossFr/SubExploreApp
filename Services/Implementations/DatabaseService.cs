@@ -825,5 +825,77 @@ namespace SubExplore.Services.Implementations
                 _ => null
             };
         }
+
+        /// <summary>
+        /// Méthode de diagnostic pour vérifier le contenu de la base de données
+        /// </summary>
+        public async Task<string> GetDatabaseDiagnosticsAsync()
+        {
+            try
+            {
+                var diagnostics = new StringBuilder();
+                diagnostics.AppendLine("=== DIAGNOSTICS BASE DE DONNÉES ===");
+                
+                // Compter les spots par statut
+                var totalSpots = await _context.Spots.CountAsync();
+                var approvedSpots = await _context.Spots.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Approved);
+                var pendingSpots = await _context.Spots.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Pending);
+                var draftSpots = await _context.Spots.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Draft);
+                
+                diagnostics.AppendLine($"📊 SPOTS:");
+                diagnostics.AppendLine($"  Total: {totalSpots}");
+                diagnostics.AppendLine($"  Approuvés: {approvedSpots}");
+                diagnostics.AppendLine($"  En attente: {pendingSpots}");
+                diagnostics.AppendLine($"  Brouillons: {draftSpots}");
+                
+                // Lister les premiers spots avec leurs détails
+                if (totalSpots > 0)
+                {
+                    var sampleSpots = await _context.Spots
+                        .Include(s => s.Type)
+                        .Take(5)
+                        .ToListAsync();
+                    
+                    diagnostics.AppendLine($"\n📍 EXEMPLES DE SPOTS:");
+                    foreach (var spot in sampleSpots)
+                    {
+                        diagnostics.AppendLine($"  - {spot.Name} ({spot.Type?.Name ?? "Type inconnu"})");
+                        diagnostics.AppendLine($"    Position: {spot.Latitude}, {spot.Longitude}");
+                        diagnostics.AppendLine($"    Statut: {spot.ValidationStatus}");
+                    }
+                }
+                
+                // Compter les types de spots
+                var totalSpotTypes = await _context.SpotTypes.CountAsync();
+                var activeSpotTypes = await _context.SpotTypes.CountAsync(st => st.IsActive);
+                
+                diagnostics.AppendLine($"\n🏷️ TYPES DE SPOTS:");
+                diagnostics.AppendLine($"  Total: {totalSpotTypes}");
+                diagnostics.AppendLine($"  Actifs: {activeSpotTypes}");
+                
+                if (activeSpotTypes > 0)
+                {
+                    var activeTypes = await _context.SpotTypes
+                        .Where(st => st.IsActive)
+                        .Select(st => st.Name)
+                        .ToListAsync();
+                    
+                    diagnostics.AppendLine($"  Types actifs: {string.Join(", ", activeTypes)}");
+                }
+                
+                // Compter les utilisateurs
+                var totalUsers = await _context.Users.CountAsync();
+                diagnostics.AppendLine($"\n👤 UTILISATEURS: {totalUsers}");
+                
+                diagnostics.AppendLine("=== FIN DIAGNOSTICS ===");
+                
+                return diagnostics.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors du diagnostic de base de données");
+                return $"❌ Erreur lors du diagnostic: {ex.Message}";
+            }
+        }
     }
 }
