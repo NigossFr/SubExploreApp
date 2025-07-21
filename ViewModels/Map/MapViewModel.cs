@@ -230,35 +230,48 @@ namespace SubExplore.ViewModels.Map
 
         private async Task LoadDataWithUIYields()
         {
-            // Récupération des types de spots pour les filtres
-            System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types");
-            await LoadSpotTypesCommand.ExecuteAsync(null);
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded {SpotTypes?.Count ?? 0} spot types");
-
-            // Yield to UI thread to prevent blocking
-            await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
-
-            // Load user information for menu
-            System.Diagnostics.Debug.WriteLine("[DEBUG] Loading user for menu");
-            await LoadCurrentUser();
-
-            // Yield to UI thread
-            await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
-
-            // Check if location services are available (without requesting permission)
-            System.Diagnostics.Debug.WriteLine("[DEBUG] Checking location service availability");
-            IsLocationAvailable = await _locationService.IsLocationServiceEnabledAsync();
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Location service available: {IsLocationAvailable}");
-
-            // Yield to UI thread
-            await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
-
-            // Chargement des spots - most expensive operation
-            System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots");
-            await LoadSpotsCommand.ExecuteAsync(null);
+            // Temporarily set IsBusy to false for individual operations
+            var originalBusyState = IsBusy;
             
-            // Final yield to ensure UI responsiveness
-            await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
+            try
+            {
+                // Récupération des types de spots pour les filtres
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types");
+                IsBusy = false; // Allow LoadSpotTypes to execute
+                await LoadSpotTypesCommand.ExecuteAsync(null);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded {SpotTypes?.Count ?? 0} spot types");
+
+                // Yield to UI thread to prevent blocking
+                await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
+
+                // Load user information for menu
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading user for menu");
+                await LoadCurrentUser();
+
+                // Yield to UI thread
+                await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
+
+                // Check if location services are available (without requesting permission)
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Checking location service availability");
+                IsLocationAvailable = await _locationService.IsLocationServiceEnabledAsync();
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Location service available: {IsLocationAvailable}");
+
+                // Yield to UI thread
+                await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
+
+                // Chargement des spots - most expensive operation
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots");
+                IsBusy = false; // Allow LoadSpots to execute
+                await LoadSpotsCommand.ExecuteAsync(null);
+                
+                // Final yield to ensure UI responsiveness
+                await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
+            }
+            finally
+            {
+                // Restore original busy state
+                IsBusy = originalBusyState;
+            }
         }
 
         [RelayCommand]
@@ -551,40 +564,22 @@ namespace SubExplore.ViewModels.Map
         }
 
         [RelayCommand]
-        private async Task FilterSpotsByType(SpotType spotType)
+        private void FilterSpotsByType(SpotType spotType)
         {
-            if (spotType == null || IsBusy)
-                return;
-
             try
             {
-                IsBusy = true;
-                IsFiltering = true;
                 SelectedSpotType = spotType;
-
-                var filteredSpots = await _spotRepository.GetSpotsByTypeAsync(spotType.Id).ConfigureAwait(false);
-
-                RefreshSpotsList(filteredSpots);
-                UpdatePins();
-                UpdateEmptyState();
-
-                // Optionnel : zoomer sur les résultats si peu nombreux
-                if (Spots.Count >= MIN_SPOTS_FOR_AUTO_ZOOM && Spots.Count <= MAX_SPOTS_FOR_AUTO_ZOOM)
-                {
-                    CenterMapOnSpots(Spots);
-                }
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtering spots by type: {spotType?.Name ?? "All"}");
+                
+                // Apply filter and update pins based on current spots in memory
+                ApplySpotTypeFilter();
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de filtrer les spots. Veuillez réessayer plus tard.", "OK");
-            }
-            finally
-            {
-                IsBusy = false;
-                IsFiltering = false;
-                UpdateEmptyState();
+                System.Diagnostics.Debug.WriteLine($"[ERROR] FilterSpotsByType failed: {ex.Message}");
             }
         }
+
 
         [RelayCommand]
         private async Task SpotSelected(Models.Domain.Spot spot)
@@ -594,6 +589,7 @@ namespace SubExplore.ViewModels.Map
             // Pour naviguer vers les détails du spot
             await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spot.Id).ConfigureAwait(false);
         }
+
 
         [RelayCommand]
         private async Task NavigateToAddSpot()
@@ -705,13 +701,21 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private void ClearFilters()
         {
-            SelectedSpotType = null;
-            SearchText = string.Empty;
-            IsFiltering = false;
-            IsSearching = false;
+            try
+            {
+                SelectedSpotType = null;
+                SearchText = string.Empty;
+                IsFiltering = false;
+                IsSearching = false;
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Clearing all filters");
 
-            // Recharger tous les spots
-            LoadSpotsCommand.Execute(null);
+                // Apply filter (null means show all) instead of reloading from database
+                ApplySpotTypeFilter();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ClearFilters failed: {ex.Message}");
+            }
         }
 
         [RelayCommand]
@@ -1247,6 +1251,72 @@ namespace SubExplore.ViewModels.Map
                     SpotTypes.Add(type);
                 }
             });
+        }
+
+        private void ApplySpotTypeFilter()
+        {
+            try
+            {
+                Application.Current?.Dispatcher.Dispatch(() => {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplySpotTypeFilter: SelectedSpotType = {SelectedSpotType?.Name ?? "null"}");
+                    
+                    IEnumerable<Models.Domain.Spot> filteredSpots;
+                    
+                    if (SelectedSpotType == null)
+                    {
+                        // Show all spots
+                        filteredSpots = Spots;
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Showing all {Spots?.Count ?? 0} spots");
+                    }
+                    else
+                    {
+                        // Filter by selected type
+                        filteredSpots = Spots?.Where(s => s.TypeId == SelectedSpotType.Id) ?? new List<Models.Domain.Spot>();
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtered to {filteredSpots.Count()} spots of type {SelectedSpotType.Name}");
+                    }
+                    
+                    // Update pins based on filtered spots
+                    UpdatePinsFromFilteredSpots(filteredSpots);
+                    
+                    // Update empty state
+                    UpdateEmptyState();
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ApplySpotTypeFilter failed: {ex.Message}");
+            }
+        }
+
+        private void UpdatePinsFromFilteredSpots(IEnumerable<Models.Domain.Spot> filteredSpots)
+        {
+            try
+            {
+                var validPins = new List<Pin>();
+                
+                foreach (var spot in filteredSpots)
+                {
+                    var pin = CreatePinFromSpot(spot);
+                    if (pin != null)
+                    {
+                        validPins.Add(pin);
+                    }
+                }
+                
+                // Clear and update pins collection
+                Pins.Clear();
+                foreach (var pin in validPins)
+                {
+                    Pins.Add(pin);
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Updated pins: {Pins.Count} pins from {filteredSpots.Count()} filtered spots");
+                OnPropertyChanged(nameof(Pins));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] UpdatePinsFromFilteredSpots failed: {ex.Message}");
+            }
         }
         
         private void UpdateEmptyState()
