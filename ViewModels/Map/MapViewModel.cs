@@ -520,7 +520,7 @@ namespace SubExplore.ViewModels.Map
 
                 if (typeId > 0)
                 {
-                    var filteredSpots = await _spotRepository.GetSpotsByTypeAsync(typeId).ConfigureAwait(false);
+                    var filteredSpots = await _spotRepository.GetSpotsByTypeAsync(typeId); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
 
                     RefreshSpotsList(filteredSpots);
                     UpdatePins();
@@ -528,7 +528,7 @@ namespace SubExplore.ViewModels.Map
                 else
                 {
                     // Si pas de filtre valide, charger tous les spots
-                    await LoadSpotsCommand.ExecuteAsync(null).ConfigureAwait(false);
+                    await LoadSpotsCommand.ExecuteAsync(null); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
                 }
             }
             catch (Exception ex)
@@ -579,7 +579,7 @@ namespace SubExplore.ViewModels.Map
             if (spot == null) return;
 
             // Pour naviguer vers les détails du spot
-            await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spot.Id).ConfigureAwait(false);
+            await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spot.Id); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
         }
 
 
@@ -616,7 +616,7 @@ namespace SubExplore.ViewModels.Map
                 }
 
                 // Navigate to AddSpot with location parameters
-                await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter).ConfigureAwait(false);
+                await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
             }
             catch (Exception ex)
             {
@@ -638,11 +638,11 @@ namespace SubExplore.ViewModels.Map
                 await Task.Delay(500, _searchCancellationToken.Token).ConfigureAwait(false);
                 if (!string.IsNullOrWhiteSpace(SearchText) && SearchText.Length >= 2)
                 {
-                    await SearchSpots().ConfigureAwait(false);
+                    await SearchSpots(); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
                 }
                 else if (string.IsNullOrWhiteSpace(SearchText))
                 {
-                    await LoadSpots().ConfigureAwait(false);
+                    await LoadSpots(); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
                 }
             }
             catch (TaskCanceledException)
@@ -662,7 +662,7 @@ namespace SubExplore.ViewModels.Map
                 IsBusy = true;
                 IsSearching = true;
 
-                var searchResults = await _spotRepository.SearchSpotsAsync(SearchText).ConfigureAwait(false);
+                var searchResults = await _spotRepository.SearchSpotsAsync(SearchText); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
 
                 RefreshSpotsList(searchResults);
                 UpdatePins();
@@ -675,12 +675,12 @@ namespace SubExplore.ViewModels.Map
                 }
                 else
                 {
-                    await DialogService.ShowToastAsync("Aucun spot trouvé pour cette recherche").ConfigureAwait(false);
+                    await DialogService.ShowToastAsync("Aucun spot trouvé pour cette recherche"); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
                 }
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible d'effectuer la recherche. Veuillez réessayer plus tard.", "OK").ConfigureAwait(false);
+                await DialogService.ShowAlertAsync("Erreur", "Impossible d'effectuer la recherche. Veuillez réessayer plus tard.", "OK"); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
             }
             finally
             {
@@ -752,7 +752,7 @@ namespace SubExplore.ViewModels.Map
                             LocationParameter = $"Map Click ({clickedLocation.Latitude:F6}, {clickedLocation.Longitude:F6})"
                         };
                         
-                        await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter).ConfigureAwait(false);
+                        await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
                     }
                 }
             }
@@ -1021,6 +1021,9 @@ namespace SubExplore.ViewModels.Map
             ForceMapRefresh();
         }
 
+        /// <summary>
+        /// Thread-safe pins update with atomic collection replacement
+        /// </summary>
         private void UpdatePins()
         {
             Application.Current?.Dispatcher.Dispatch(() => {
@@ -1031,7 +1034,7 @@ namespace SubExplore.ViewModels.Map
                     if (Spots == null || !Spots.Any())
                     {
                         System.Diagnostics.Debug.WriteLine("[DEBUG] No spots available for pin creation");
-                        Pins.Clear();
+                        Pins = new ObservableCollection<Pin>(); // ✅ FIXED: Atomic replacement
                         return;
                     }
 
@@ -1043,7 +1046,6 @@ namespace SubExplore.ViewModels.Map
                     }
 
                     var validPins = new List<Pin>();
-                    int invalidCoordCount = 0;
                     int nullPinCount = 0;
 
                     foreach (var spot in Spots)
@@ -1061,24 +1063,23 @@ namespace SubExplore.ViewModels.Map
                         }
                     }
 
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Pin creation summary: {validPins.Count} valid, {nullPinCount} failed, {invalidCoordCount} invalid coordinates");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Pin creation summary: {validPins.Count} valid, {nullPinCount} failed");
 
-                    // Efficient batch update
-                    Pins.Clear();
-                    foreach (var pin in validPins)
-                    {
-                        Pins.Add(pin);
-                    }
+                    // ✅ FIXED: Atomic collection replacement instead of Clear/Add pattern
+                    Pins = new ObservableCollection<Pin>(validPins);
                     
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePins completed. Total pins in collection: {Pins.Count}");
-                    
-                    // Force property change notification
-                    OnPropertyChanged(nameof(Pins));
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePins completed with atomic update. Total pins in collection: {Pins.Count}");
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERROR] UpdatePins failed: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                    
+                    // Ensure we always have a valid collection
+                    if (Pins == null)
+                    {
+                        Pins = new ObservableCollection<Pin>();
+                    }
                 }
             });
         }
@@ -1179,45 +1180,62 @@ namespace SubExplore.ViewModels.Map
             OnPropertyChanged(nameof(MapZoomLevel));
         }
 
+        /// <summary>
+        /// Thread-safe atomic collection update to prevent UI flicker and race conditions
+        /// </summary>
         private void RefreshSpotsList(IEnumerable<Models.Domain.Spot> spots)
         {
             Application.Current?.Dispatcher.Dispatch(() => {
                 try
                 {
-                    var spotsList = spots.ToList();
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Processing {spotsList.Count} spots");
+                    var spotsList = spots?.ToList() ?? new List<Models.Domain.Spot>();
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Processing {spotsList.Count} spots with atomic update");
                     
-                    Spots.Clear();
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Spots collection cleared, current count: {Spots.Count}");
+                    // ✅ FIXED: Atomic collection replacement instead of Clear/Add pattern
+                    // This prevents race conditions and reduces PropertyChanged events from O(n) to O(1)
+                    var newCollection = new ObservableCollection<Models.Domain.Spot>(spotsList);
+                    Spots = newCollection;
                     
-                    // Add spots directly without batching to identify the issue
-                    foreach (var spot in spotsList)
-                    {
-                        Spots.Add(spot);
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Added spot {spot.Name}, collection count now: {Spots.Count}");
-                    }
-                    
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Final collection count: {Spots.Count}");
-                    
-                    // Force property change notification
-                    OnPropertyChanged(nameof(Spots));
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Atomic update completed - {Spots.Count} spots");
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERROR] RefreshSpotsList failed: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                    
+                    // Ensure we always have a valid collection
+                    if (Spots == null)
+                    {
+                        Spots = new ObservableCollection<Models.Domain.Spot>();
+                    }
                 }
             });
         }
 
+        /// <summary>
+        /// Thread-safe atomic SpotTypes collection update
+        /// </summary>
         private void RefreshSpotTypesList(IEnumerable<SpotType> types)
         {
-            // Use batch update for better performance
             Application.Current?.Dispatcher.Dispatch(() => {
-                SpotTypes.Clear();
-                foreach (var type in types)
+                try 
                 {
-                    SpotTypes.Add(type);
+                    var typesList = types?.ToList() ?? new List<SpotType>();
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotTypesList: Atomic update with {typesList.Count} types");
+                    
+                    // ✅ FIXED: Atomic collection replacement
+                    var newCollection = new ObservableCollection<SpotType>(typesList);
+                    SpotTypes = newCollection;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] RefreshSpotTypesList failed: {ex.Message}");
+                    
+                    // Ensure we always have a valid collection
+                    if (SpotTypes == null)
+                    {
+                        SpotTypes = new ObservableCollection<SpotType>();
+                    }
                 }
             });
         }
@@ -1428,63 +1446,72 @@ namespace SubExplore.ViewModels.Map
         }
 
         /// <summary>
-        /// Traite les spots par batches pour maintenir la réactivité de l'UI
+        /// Optimized batch processing with atomic UI updates to eliminate flicker and race conditions
         /// </summary>
         private async Task ProcessSpotsInBatches(IEnumerable<Models.Domain.Spot> spots)
         {
             try
             {
                 var spotsList = spots?.ToList() ?? new List<Models.Domain.Spot>();
-                var batches = spotsList
-                    .Select((spot, index) => new { Spot = spot, Index = index })
-                    .GroupBy(x => x.Index / SPOTS_BATCH_SIZE)
-                    .Select(g => g.Select(x => x.Spot).ToList());
-
-                await MainThread.InvokeOnMainThreadAsync(() =>
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ProcessSpotsInBatches: Processing {spotsList.Count} spots with optimized batching");
+                
+                // ✅ FIXED: Process all data off UI thread
+                var (processedSpots, processedPins) = await Task.Run(() =>
                 {
-                    Spots.Clear();
-                    Pins.Clear();
-                });
-
-                foreach (var batch in batches)
-                {
-                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    var pins = new List<Pin>();
+                    
+                    foreach (var spot in spotsList)
                     {
-                        foreach (var spot in batch)
+                        // Create pins off UI thread
+                        if (IsValidSpotCoordinates(spot))
                         {
-                            Spots.Add(spot);
-                            
-                            // Create pin for each spot
-                            if (spot.Latitude != 0 && spot.Longitude != 0)
+                            var pin = new Pin
                             {
-                                var pin = new Pin
-                                {
-                                    Label = spot.Name ?? "Spot sans nom",
-                                    Address = spot.Description ?? "Aucune description",
-                                    Type = PinType.Place,
-                                    Location = new Location((double)spot.Latitude, (double)spot.Longitude)
-                                };
-                                Pins.Add(pin);
-                            }
+                                Label = spot.Name ?? "Spot sans nom",
+                                Address = spot.Description ?? "Aucune description",
+                                Type = PinType.Place,
+                                Location = new Location((double)spot.Latitude, (double)spot.Longitude)
+                            };
+                            pins.Add(pin);
                         }
-                    });
-
-                    // Small delay between batches to keep UI responsive
-                    await Task.Delay(10);
-                }
-
+                    }
+                    
+                    return (spotsList, pins);
+                });
+                
+                // ✅ FIXED: Single atomic UI update instead of multiple batch updates
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
+                    Spots = new ObservableCollection<Models.Domain.Spot>(processedSpots);
+                    Pins = new ObservableCollection<Pin>(processedPins);
                     UpdateEmptyState();
-                    OnPropertyChanged(nameof(Spots));
-                    OnPropertyChanged(nameof(Pins));
+                    
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] ProcessSpotsInBatches: Atomic update completed - Spots: {Spots.Count}, Pins: {Pins.Count}");
                 });
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] ProcessSpotsInBatches failed: {ex.Message}");
+                
+                // Ensure we have valid collections even on error
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    if (Spots == null) Spots = new ObservableCollection<Models.Domain.Spot>();
+                    if (Pins == null) Pins = new ObservableCollection<Pin>();
+                });
+                
                 throw;
             }
+        }
+        
+        /// <summary>
+        /// Validates spot coordinates for pin creation
+        /// </summary>
+        private bool IsValidSpotCoordinates(Models.Domain.Spot spot)
+        {
+            return spot?.Latitude != null && spot.Longitude != null &&
+                   spot.Latitude != 0 && spot.Longitude != 0 &&
+                   Math.Abs((double)spot.Latitude) <= 90 && Math.Abs((double)spot.Longitude) <= 180;
         }
         
         protected override void Dispose(bool disposing)
