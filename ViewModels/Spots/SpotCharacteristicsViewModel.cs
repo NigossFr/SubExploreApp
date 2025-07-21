@@ -51,6 +51,9 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private ObservableCollection<DifficultyLevel> _difficultyLevels;
 
+        // Alias pour la compatibilité XAML
+        public ObservableCollection<SpotType> AvailableSpotTypes => SpotTypes;
+
         public SpotCharacteristicsViewModel(
             ISpotTypeRepository spotTypeRepository,
             IDialogService dialogService)

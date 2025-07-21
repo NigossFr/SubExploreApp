@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spots"
+             xmlns:domain="clr-namespace:SubExplore.Models.Domain"
              x:Class="SubExplore.Views.Spots.Components.SpotCharacteristicsView"
+             x:DataType="viewmodels:SpotCharacteristicsViewModel"
              x:Name="RootView">
     <ScrollView>
         <StackLayout Padding="20" Spacing="15">
@@ -28,10 +31,10 @@
                                         HorizontalItemSpacing="10" />
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="domain:SpotType">
                             <Grid Padding="5">
                                 <Frame BorderColor="{Binding ColorCode}" 
-                                     BackgroundColor="{Binding BackgroundColor}"
+                                     BackgroundColor="{Binding ColorCode}"
                                      Padding="10"
                                      CornerRadius="10"
                                      HasShadow="True">
@@ -41,12 +44,12 @@
                                     </Frame.GestureRecognizers>
                                     <StackLayout Spacing="5">
                                         <Label Text="{Binding Name}" 
-                                              TextColor="{Binding IsSelected, Converter={StaticResource BoolToTextColorConverter}}"
+                                              TextColor="White"
                                               FontAttributes="Bold"
                                               HorizontalOptions="Center" />
                                         <Label Text="{Binding Description}" 
                                               FontSize="12"
-                                              TextColor="{Binding IsSelected, Converter={StaticResource BoolToTextColorConverter}}"
+                                              TextColor="White"
                                               HorizontalOptions="Center" />
                                     </StackLayout>
                                 </Frame>

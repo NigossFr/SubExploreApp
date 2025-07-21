@@ -25,13 +25,26 @@ namespace SubExplore.Services.Implementations
             {
                 _logger.LogInformation("Starting database initialization");
 
-                // Apply migrations (this will create the database if it doesn't exist)
-                await _context.Database.MigrateAsync();
+                // Vérifier d'abord si la base de données existe et est prête
+                var canConnect = await _context.Database.CanConnectAsync();
+                if (!canConnect)
+                {
+                    _logger.LogWarning("Cannot connect to database, attempting to create...");
+                }
+
+                // Apply migrations avec timeout augmenté pour éviter les blocages
+                using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+                await _context.Database.MigrateAsync(cancellationTokenSource.Token);
                 _logger.LogInformation("Database migrations applied successfully");
 
                 // Migration includes all seed data including admin user and tables
 
                 _logger.LogInformation("Database initialization completed successfully");
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogError("Database initialization timed out after 2 minutes");
+                throw new TimeoutException("Database initialization timed out");
             }
             catch (Exception ex)
             {

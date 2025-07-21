@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using SubExplore.Services.Interfaces;
@@ -29,6 +30,15 @@ namespace SubExplore.ViewModels.Base
 
         [ObservableProperty]
         private bool _isEmpty;
+
+        [ObservableProperty]
+        private string _loadingMessage = "Chargement...";
+
+        [ObservableProperty]
+        private bool _showBackButton;
+
+        [ObservableProperty]
+        private string _errorTitle = "Erreur";
 
         protected ViewModelBase(IDialogService dialogService = null, INavigationService navigationService = null)
         {
@@ -98,6 +108,13 @@ namespace SubExplore.ViewModels.Base
                 await NavigationService.GoBackAsync();
             }
         }
+
+        [RelayCommand]
+        protected async Task GoBack()
+        {
+            await GoBackAsync();
+        }
+
 
         /// <summary>
         /// Dispose pattern implementation for ViewModels

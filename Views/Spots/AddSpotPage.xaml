@@ -6,6 +6,8 @@
     xmlns:components="clr-namespace:SubExplore.Views.Spots.Components"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spots"
     xmlns:common="clr-namespace:SubExplore.Views.Common"
+    xmlns:domain="clr-namespace:SubExplore.Models.Domain"
+    x:DataType="viewmodels:AddSpotViewModel"
     Title="{Binding Title}"
     BackgroundColor="{StaticResource Background}">
 
@@ -192,7 +194,7 @@
                                         <LinearItemsLayout Orientation="Horizontal" ItemSpacing="5" />
                                     </CollectionView.ItemsLayout>
                                     <CollectionView.ItemTemplate>
-                                        <DataTemplate>
+                                        <DataTemplate x:DataType="domain:SpotType">
                                             <Frame BackgroundColor="{Binding ColorCode}" 
                                                    BorderColor="{Binding ColorCode}"
                                                    Padding="8,4"

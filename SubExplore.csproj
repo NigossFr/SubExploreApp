@@ -20,6 +20,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
+		<!-- Performance Optimizations -->
+		<MauiEnableXamlCBinding>true</MauiEnableXamlCBinding>
+		<XamlCBindingMode>Release</XamlCBindingMode>
+
 		<!-- Display name -->
 		<ApplicationTitle>SubExplore</ApplicationTitle>
 

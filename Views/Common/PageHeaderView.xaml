@@ -4,7 +4,9 @@
              xmlns:menu="clr-namespace:SubExplore.Views.Menu"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
-             x:Class="SubExplore.Views.Common.PageHeaderView">
+             xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Base"
+             x:Class="SubExplore.Views.Common.PageHeaderView"
+             x:DataType="viewmodels:ViewModelBase">
     
     <ContentView.Resources>
         <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
@@ -57,7 +59,7 @@
                         Style="{StaticResource MenuIconButton}"
                         Text="◀"
                         IsVisible="{Binding ShowBackButton}"
-                        Command="{Binding BackCommand}"
+                        Command="{Binding GoBackCommand}"
                         AutomationId="BackButton"
                         SemanticProperties.Description="Retour à la page précédente"
                         SemanticProperties.Hint="Appuyez pour revenir à la page précédente" />

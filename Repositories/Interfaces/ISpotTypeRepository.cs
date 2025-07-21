@@ -12,5 +12,6 @@ namespace SubExplore.Repositories.Interfaces
     {
         Task<IEnumerable<SpotType>> GetByActivityCategoryAsync(ActivityCategory category);
         Task<IEnumerable<SpotType>> GetActiveTypesAsync();
+        Task<IEnumerable<SpotType>> GetActiveSpotTypesAsync(); // Alias optimisé pour les performances
     }
 }

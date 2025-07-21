@@ -6,6 +6,8 @@
     xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spots"
     xmlns:common="clr-namespace:SubExplore.Views.Common"
+    xmlns:domain="clr-namespace:SubExplore.Models.Domain"
+    x:DataType="viewmodels:SpotDetailsViewModel"
     Title="{Binding Title}"
     BackgroundColor="{StaticResource Background}">
 
@@ -31,7 +33,7 @@
                         IndicatorView="indicatorView"
                         ItemsSource="{Binding SpotMedias}">
                         <CarouselView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="domain:SpotMedia">
                                 <Grid>
                                     <Image Aspect="AspectFill" Source="{Binding MediaUrl}" />
                                 </Grid>

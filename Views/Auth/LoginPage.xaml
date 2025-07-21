@@ -6,6 +6,7 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Auth"
+    x:DataType="viewmodels:LoginViewModel"
     Title="{Binding Title}"
     BackgroundColor="{StaticResource Background}"
     Shell.NavBarIsVisible="False">

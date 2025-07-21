@@ -186,91 +186,114 @@ namespace SubExplore.ViewModels.Map
                 }
 
                 _isInitializing = true;
-                IsBusy = true;
-                System.Diagnostics.Debug.WriteLine("[DEBUG] MapViewModel InitializeAsync started with async optimization");
+                System.Diagnostics.Debug.WriteLine("[DEBUG] MapViewModel InitializeAsync started with performance optimization");
                 
-                // Initialize platform-specific map configuration asynchronously
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Initializing platform map service");
-                var mapInitialized = await _platformMapService.InitializePlatformMapAsync();
-                if (!mapInitialized)
+                // Démarrer l'initialisation en arrière-plan pour éviter de bloquer l'UI
+                _ = Task.Run(async () =>
                 {
-                    System.Diagnostics.Debug.WriteLine("[ERROR] Platform map initialization failed");
-                    await DialogService.ShowAlertAsync("Erreur", "Impossible d'initialiser les cartes pour cette plateforme", "OK");
-                    return;
-                }
+                    try
+                    {
+                        // Initialize platform-specific map configuration asynchronously
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] Initializing platform map service in background");
+                        var mapInitialized = await _platformMapService.InitializePlatformMapAsync();
+                        if (!mapInitialized)
+                        {
+                            System.Diagnostics.Debug.WriteLine("[ERROR] Platform map initialization failed");
+                            await MainThread.InvokeOnMainThreadAsync(async () =>
+                            {
+                                await DialogService.ShowAlertAsync("Erreur", "Impossible d'initialiser les cartes pour cette plateforme", "OK");
+                            });
+                            return;
+                        }
+                        
+                        // Validate map configuration (non-blocking)
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] Validating map configuration in background");
+                        _ = _platformMapService.ValidateMapConfigurationAsync(); // Fire and forget
+                        
+                        // Load data asynchronously with UI thread yield points to prevent blocking
+                        await LoadDataWithUIYields();
+                        
+                        // Load spots après que les autres données soient prêtes
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots in background");
+                        await LoadSpotsOptimized();
+                        
+                        // Mark initialization as complete
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            _isInitialized = true;
+                            _isInitializing = false;
+                            IsBusy = false;
+                        });
+                        
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Background InitializeAsync completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERROR] Background InitializeAsync failed: {ex.Message}");
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            _isInitializing = false;
+                            IsBusy = false;
+                            await DialogService.ShowAlertAsync("Erreur", $"Une erreur s'est produite lors de l'initialisation : {ex.Message}", "OK");
+                        });
+                    }
+                });
                 
-                // Validate map configuration
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Validating map configuration");
-                var configValid = await _platformMapService.ValidateMapConfigurationAsync();
-                if (!configValid)
-                {
-                    System.Diagnostics.Debug.WriteLine("[WARNING] Map configuration validation failed");
-                }
+                // Retourner immédiatement pour ne pas bloquer l'UI
+                await Task.Delay(10); // Micro-delay pour permettre le démarrage de la tâche
                 
-                // Database should be initialized via migrations in startup
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Database initialization handled by migrations");
-                
-                // Load data asynchronously with UI thread yield points to prevent blocking
-                await LoadDataWithUIYields();
-                
-                // Mark initialization as complete
-                _isInitialized = true;
-                _isInitializing = false;
-                IsBusy = false;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
             }
             catch (Exception ex)
             {
-                _isInitializing = false; // Reset flag on error
+                _isInitializing = false;
                 IsBusy = false;
                 System.Diagnostics.Debug.WriteLine($"[ERROR] InitializeAsync failed: {ex.Message}");
-                await DialogService.ShowAlertAsync("Erreur", $"Une erreur is survenue lors de l'initialisation : {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Une erreur s'est produite lors de l'initialisation : {ex.Message}", "OK");
             }
         }
 
         private async Task LoadDataWithUIYields()
         {
-            // Temporarily set IsBusy to false for individual operations
-            var originalBusyState = IsBusy;
-            
             try
             {
-                // Récupération des types de spots pour les filtres
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types");
-                IsBusy = false; // Allow LoadSpotTypes to execute
-                await LoadSpotTypesCommand.ExecuteAsync(null);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded {SpotTypes?.Count ?? 0} spot types");
-
-                // Yield to UI thread to prevent blocking
-                await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
-
-                // Load user information for menu
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading user for menu");
-                await LoadCurrentUser();
-
-                // Yield to UI thread
-                await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
-
-                // Check if location services are available (without requesting permission)
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Checking location service availability");
-                IsLocationAvailable = await _locationService.IsLocationServiceEnabledAsync();
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Location service available: {IsLocationAvailable}");
-
-                // Yield to UI thread
-                await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
-
-                // Chargement des spots - most expensive operation
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots");
-                IsBusy = false; // Allow LoadSpots to execute
-                await LoadSpotsCommand.ExecuteAsync(null);
+                // Exécuter toutes les opérations de chargement en parallèle pour améliorer les performances
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Starting parallel data loading for better performance");
                 
-                // Final yield to ensure UI responsiveness
-                await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
+                var spotTypesTask = Task.Run(async () =>
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types in background");
+                    await LoadSpotTypesOptimized();
+                });
+                
+                var userTask = Task.Run(async () =>
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading user for menu in background");
+                    await LoadCurrentUser();
+                });
+                
+                var locationTask = Task.Run(async () =>
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Checking location service availability in background");
+                    var isAvailable = await _locationService.IsLocationServiceEnabledAsync();
+                    await MainThread.InvokeOnMainThreadAsync(() => 
+                    {
+                        IsLocationAvailable = isAvailable;
+                    });
+                });
+                
+                // Attendre que toutes les tâches parallèles se terminent
+                await Task.WhenAll(spotTypesTask, userTask, locationTask);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Parallel loading completed - SpotTypes: {SpotTypes?.Count ?? 0}, Location available: {IsLocationAvailable}");
+                
+                // Yield minimal to UI thread
+                await Task.Delay(1);
+                
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Data loading with yields completed");
             }
-            finally
+            catch (Exception ex)
             {
-                // Restore original busy state
-                IsBusy = originalBusyState;
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadDataWithUIYields failed: {ex.Message}");
+                throw;
             }
         }
 
@@ -1337,6 +1360,131 @@ namespace SubExplore.ViewModels.Map
                 
                 UpdateEmptyState();
             });
+        }
+
+        // ===================== MÉTHODES D'OPTIMISATION PERFORMANCE =====================
+
+        /// <summary>
+        /// Version optimisée du chargement des SpotTypes avec cache
+        /// </summary>
+        private async Task LoadSpotTypesOptimized()
+        {
+            try
+            {
+                // Check cache first to avoid unnecessary DB hits
+                if (_lastSpotTypesLoad.AddMinutes(CACHE_EXPIRY_MINUTES) > DateTime.UtcNow && SpotTypes?.Count > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] SpotTypes loaded from cache");
+                    return;
+                }
+
+                var spotTypes = await _spotTypeRepository.GetActiveSpotTypesAsync();
+                
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    RefreshSpotTypesList(spotTypes);
+                    _lastSpotTypesLoad = DateTime.UtcNow;
+                });
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotTypesOptimized completed - {spotTypes?.Count() ?? 0} types loaded");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotTypesOptimized failed: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Version optimisée du chargement des Spots avec traitement par batch
+        /// </summary>
+        private async Task LoadSpotsOptimized()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotsOptimized started");
+
+                // Use Task.Run for database operations to avoid blocking UI
+                var spots = await Task.Run(async () =>
+                {
+                    return await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
+                });
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotsOptimized - Retrieved {spots?.Count() ?? 0} spots from repository");
+
+                // Process spots in batches to maintain UI responsiveness
+                await ProcessSpotsInBatches(spots);
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotsOptimized completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotsOptimized failed: {ex.Message}");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les spots. Veuillez réessayer.", "OK");
+                });
+            }
+        }
+
+        /// <summary>
+        /// Traite les spots par batches pour maintenir la réactivité de l'UI
+        /// </summary>
+        private async Task ProcessSpotsInBatches(IEnumerable<Models.Domain.Spot> spots)
+        {
+            try
+            {
+                var spotsList = spots?.ToList() ?? new List<Models.Domain.Spot>();
+                var batches = spotsList
+                    .Select((spot, index) => new { Spot = spot, Index = index })
+                    .GroupBy(x => x.Index / SPOTS_BATCH_SIZE)
+                    .Select(g => g.Select(x => x.Spot).ToList());
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    Spots.Clear();
+                    Pins.Clear();
+                });
+
+                foreach (var batch in batches)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        foreach (var spot in batch)
+                        {
+                            Spots.Add(spot);
+                            
+                            // Create pin for each spot
+                            if (spot.Latitude != 0 && spot.Longitude != 0)
+                            {
+                                var pin = new Pin
+                                {
+                                    Label = spot.Name ?? "Spot sans nom",
+                                    Address = spot.Description ?? "Aucune description",
+                                    Type = PinType.Place,
+                                    Location = new Location((double)spot.Latitude, (double)spot.Longitude)
+                                };
+                                Pins.Add(pin);
+                            }
+                        }
+                    });
+
+                    // Small delay between batches to keep UI responsive
+                    await Task.Delay(10);
+                }
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    UpdateEmptyState();
+                    OnPropertyChanged(nameof(Spots));
+                    OnPropertyChanged(nameof(Pins));
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ProcessSpotsInBatches failed: {ex.Message}");
+                throw;
+            }
         }
         
         protected override void Dispose(bool disposing)
