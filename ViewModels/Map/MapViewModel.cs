@@ -274,50 +274,6 @@ namespace SubExplore.ViewModels.Map
             }
         }
 
-        [RelayCommand]
-        private async Task TestDatabaseDirectly()
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Testing database status...");
-                
-                // Database initialization handled by migrations
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Testing database connectivity...");
-                await _databaseService.TestConnectionAsync();
-                
-                // Maintenant test via le repository
-                var repoSpots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Repository query found {repoSpots?.Count() ?? 0} spots");
-                
-                if (repoSpots != null && repoSpots.Any())
-                {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] TestDatabaseDirectly found {repoSpots.Count()} spots");
-                    foreach (var spot in repoSpots.Take(3))
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG]   Test spot: {spot.Name} at {spot.Latitude}, {spot.Longitude}");
-                    }
-                    
-                    RefreshSpotsList(repoSpots);
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] After RefreshSpotsList: {Spots?.Count ?? 0} spots in collection");
-                    
-                    UpdatePins();
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] After UpdatePins: {Pins?.Count ?? 0} pins in collection");
-                    
-                    UpdateEmptyState();
-                    await DialogService.ShowToastAsync($"Test réussi: {repoSpots.Count()} spots chargés, {Pins?.Count ?? 0} pins créés");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("[ERROR] TestDatabaseDirectly: No spots found in repository");
-                    await DialogService.ShowAlertAsync("Test", "Aucun spot trouvé même après seed", "OK");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] TestDatabaseDirectly failed: {ex.Message}");
-                await DialogService.ShowAlertAsync("Erreur", ex.Message, "OK");
-            }
-        }
 
         [RelayCommand]
         private async Task LoadSpots()
@@ -817,21 +773,6 @@ namespace SubExplore.ViewModels.Map
             IsMenuOpen = false;
         }
 
-        [RelayCommand]
-        private async Task NavigateToSettings()
-        {
-            try
-            {
-                await NavigationService.NavigateToAsync<ViewModels.Settings.DatabaseTestViewModel>();
-                IsMenuOpen = false;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToSettings failed: {ex.Message}");
-                await DialogService.ShowAlertAsync("Erreur", "Impossible d'accéder aux paramètres", "OK");
-                IsMenuOpen = false;
-            }
-        }
 
         [RelayCommand]
         private async Task NavigateToAbout()
@@ -939,14 +880,6 @@ namespace SubExplore.ViewModels.Map
                 Title = "Paramètres",
                 Items = new ObservableCollection<MenuItemModel>
                 {
-                    new MenuItemModel
-                    {
-                        Title = "Base de données",
-                        Icon = "🗄️",
-                        Description = "Import des spots et configuration",
-                        Command = NavigateToSettingsCommand,
-                        IsEnabled = true
-                    },
                     new MenuItemModel
                     {
                         Title = "À propos",
