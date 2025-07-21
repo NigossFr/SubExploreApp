@@ -186,15 +186,17 @@ namespace SubExplore.ViewModels.Map
                 }
 
                 _isInitializing = true;
-                System.Diagnostics.Debug.WriteLine("[DEBUG] MapViewModel InitializeAsync started");
+                IsBusy = true;
+                System.Diagnostics.Debug.WriteLine("[DEBUG] MapViewModel InitializeAsync started with async optimization");
                 
-                // Initialize platform-specific map configuration
+                // Initialize platform-specific map configuration asynchronously
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Initializing platform map service");
                 var mapInitialized = await _platformMapService.InitializePlatformMapAsync();
                 if (!mapInitialized)
                 {
                     System.Diagnostics.Debug.WriteLine("[ERROR] Platform map initialization failed");
                     await DialogService.ShowAlertAsync("Erreur", "Impossible d'initialiser les cartes pour cette plateforme", "OK");
+                    return;
                 }
                 
                 // Validate map configuration
@@ -208,35 +210,55 @@ namespace SubExplore.ViewModels.Map
                 // Database should be initialized via migrations in startup
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Database initialization handled by migrations");
                 
-                // Récupération des types de spots pour les filtres
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types");
-                await LoadSpotTypesCommand.ExecuteAsync(null);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded {SpotTypes?.Count ?? 0} spot types");
-
-                // Load user information for menu
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading user for menu");
-                await LoadCurrentUser();
-
-                // Check if location services are available (without requesting permission)
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Checking location service availability");
-                IsLocationAvailable = await _locationService.IsLocationServiceEnabledAsync();
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Location service available: {IsLocationAvailable}");
-
-                // Chargement des spots
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots");
-                await LoadSpotsCommand.ExecuteAsync(null);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
+                // Load data asynchronously with UI thread yield points to prevent blocking
+                await LoadDataWithUIYields();
                 
                 // Mark initialization as complete
                 _isInitialized = true;
                 _isInitializing = false;
+                IsBusy = false;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
             }
             catch (Exception ex)
             {
                 _isInitializing = false; // Reset flag on error
+                IsBusy = false;
                 System.Diagnostics.Debug.WriteLine($"[ERROR] InitializeAsync failed: {ex.Message}");
                 await DialogService.ShowAlertAsync("Erreur", $"Une erreur is survenue lors de l'initialisation : {ex.Message}", "OK");
             }
+        }
+
+        private async Task LoadDataWithUIYields()
+        {
+            // Récupération des types de spots pour les filtres
+            System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types");
+            await LoadSpotTypesCommand.ExecuteAsync(null);
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded {SpotTypes?.Count ?? 0} spot types");
+
+            // Yield to UI thread to prevent blocking
+            await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
+
+            // Load user information for menu
+            System.Diagnostics.Debug.WriteLine("[DEBUG] Loading user for menu");
+            await LoadCurrentUser();
+
+            // Yield to UI thread
+            await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
+
+            // Check if location services are available (without requesting permission)
+            System.Diagnostics.Debug.WriteLine("[DEBUG] Checking location service availability");
+            IsLocationAvailable = await _locationService.IsLocationServiceEnabledAsync();
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Location service available: {IsLocationAvailable}");
+
+            // Yield to UI thread
+            await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
+
+            // Chargement des spots - most expensive operation
+            System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots");
+            await LoadSpotsCommand.ExecuteAsync(null);
+            
+            // Final yield to ensure UI responsiveness
+            await Application.Current.Dispatcher.DispatchAsync(async () => await Task.Delay(5));
         }
 
         [RelayCommand]

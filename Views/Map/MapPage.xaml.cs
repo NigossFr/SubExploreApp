@@ -82,20 +82,43 @@ namespace SubExplore.Views.Map
                 try
                 {
                     System.Diagnostics.Debug.WriteLine("[INFO] Starting ViewModel initialization");
-                    await ViewModel.InitializeAsync();
-                    System.Diagnostics.Debug.WriteLine("[INFO] ViewModel initialization completed");
                     
-                    // Give map time to render before positioning
-                    await Task.Delay(500);
-                    
-                    // Force map refresh to ensure pins are displayed
-                    System.Diagnostics.Debug.WriteLine("[INFO] Forcing map refresh");
-                    ViewModel.ForceMapRefresh();
-                    
-                    // Update map position after initialization on main thread
-                    System.Diagnostics.Debug.WriteLine("[INFO] Updating map position");
-                    await Application.Current.Dispatcher.DispatchAsync(UpdateMapPosition);
-                    System.Diagnostics.Debug.WriteLine("[INFO] Map position update completed");
+                    // Run initialization in background to prevent UI blocking
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await ViewModel.InitializeAsync();
+                            System.Diagnostics.Debug.WriteLine("[INFO] ViewModel initialization completed");
+                            
+                            // Schedule UI updates on main thread
+                            await Application.Current.Dispatcher.DispatchAsync(async () =>
+                            {
+                                // Give map time to render before positioning
+                                await Task.Delay(100);
+                                
+                                // Force map refresh to ensure pins are displayed
+                                System.Diagnostics.Debug.WriteLine("[INFO] Forcing map refresh");
+                                ViewModel.ForceMapRefresh();
+                                
+                                // Update map position after initialization
+                                System.Diagnostics.Debug.WriteLine("[INFO] Updating map position");
+                                UpdateMapPosition();
+                                System.Diagnostics.Debug.WriteLine("[INFO] Map position update completed");
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[ERROR] Background initialization failed: {ex.Message}");
+                            
+                            // Show error on main thread
+                            await Application.Current.Dispatcher.DispatchAsync(async () =>
+                            {
+                                // Simple error handling without complex UI operations
+                                System.Diagnostics.Debug.WriteLine($"[ERROR] MapPage background task failed: {ex.Message}");
+                            });
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
