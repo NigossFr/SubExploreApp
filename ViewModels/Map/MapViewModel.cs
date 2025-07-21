@@ -520,20 +520,33 @@ namespace SubExplore.ViewModels.Map
         }
 
         [RelayCommand]
-        private void FilterSpotsByType(SpotType spotType)
+        private async Task FilterSpotsByType(SpotType spotType)
         {
             try
             {
-                SelectedSpotType = spotType;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtering spots by type: {spotType?.Name ?? "All"}");
-                
-                // Apply filter and update pins based on current spots in memory
-                ApplySpotTypeFilter();
+                // Ensure we're on the UI thread
+                if (Application.Current?.Dispatcher?.IsDispatchRequired == true)
+                {
+                    await Application.Current.Dispatcher.DispatchAsync(() => FilterSpotsByTypeCore(spotType));
+                }
+                else
+                {
+                    FilterSpotsByTypeCore(spotType);
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] FilterSpotsByType failed: {ex.Message}");
             }
+        }
+
+        private void FilterSpotsByTypeCore(SpotType spotType)
+        {
+            SelectedSpotType = spotType;
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtering spots by type: {spotType?.Name ?? "All"}");
+            
+            // Apply filter and update pins based on current spots in memory
+            ApplySpotTypeFilterCore();
         }
 
 
@@ -655,7 +668,7 @@ namespace SubExplore.ViewModels.Map
         }
 
         [RelayCommand]
-        private void ClearFilters()
+        private async Task ClearFilters()
         {
             try
             {
@@ -666,7 +679,7 @@ namespace SubExplore.ViewModels.Map
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Clearing all filters");
 
                 // Apply filter (null means show all) instead of reloading from database
-                ApplySpotTypeFilter();
+                await ApplySpotTypeFilter();
             }
             catch (Exception ex)
             {
@@ -1186,34 +1199,19 @@ namespace SubExplore.ViewModels.Map
             });
         }
 
-        private void ApplySpotTypeFilter()
+        private async Task ApplySpotTypeFilter()
         {
             try
             {
-                Application.Current?.Dispatcher.Dispatch(() => {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplySpotTypeFilter: SelectedSpotType = {SelectedSpotType?.Name ?? "null"}");
-                    
-                    IEnumerable<Models.Domain.Spot> filteredSpots;
-                    
-                    if (SelectedSpotType == null)
-                    {
-                        // Show all spots
-                        filteredSpots = Spots;
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Showing all {Spots?.Count ?? 0} spots");
-                    }
-                    else
-                    {
-                        // Filter by selected type
-                        filteredSpots = Spots?.Where(s => s.TypeId == SelectedSpotType.Id) ?? new List<Models.Domain.Spot>();
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtered to {filteredSpots.Count()} spots of type {SelectedSpotType.Name}");
-                    }
-                    
-                    // Update pins based on filtered spots
-                    UpdatePinsFromFilteredSpots(filteredSpots);
-                    
-                    // Update empty state
-                    UpdateEmptyState();
-                });
+                // Ensure we're on the UI thread
+                if (Application.Current?.Dispatcher?.IsDispatchRequired == true)
+                {
+                    await Application.Current.Dispatcher.DispatchAsync(() => ApplySpotTypeFilterCore());
+                }
+                else
+                {
+                    ApplySpotTypeFilterCore();
+                }
             }
             catch (Exception ex)
             {
@@ -1221,35 +1219,74 @@ namespace SubExplore.ViewModels.Map
             }
         }
 
+        private void ApplySpotTypeFilterCore()
+        {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplySpotTypeFilter: SelectedSpotType = {SelectedSpotType?.Name ?? "null"}");
+            
+            IEnumerable<Models.Domain.Spot> filteredSpots;
+            
+            if (SelectedSpotType == null)
+            {
+                // Show all spots
+                filteredSpots = Spots;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Showing all {Spots?.Count ?? 0} spots");
+            }
+            else
+            {
+                // Filter by selected type
+                filteredSpots = Spots?.Where(s => s.TypeId == SelectedSpotType.Id) ?? new List<Models.Domain.Spot>();
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtered to {filteredSpots.Count()} spots of type {SelectedSpotType.Name}");
+            }
+            
+            // Update pins based on filtered spots
+            UpdatePinsFromFilteredSpots(filteredSpots);
+            
+            // Update empty state
+            UpdateEmptyState();
+        }
+
         private void UpdatePinsFromFilteredSpots(IEnumerable<Models.Domain.Spot> filteredSpots)
         {
             try
             {
-                var validPins = new List<Pin>();
-                
-                foreach (var spot in filteredSpots)
+                // Ensure we're on UI thread when manipulating collections
+                if (Application.Current?.Dispatcher?.IsDispatchRequired == true)
                 {
-                    var pin = CreatePinFromSpot(spot);
-                    if (pin != null)
-                    {
-                        validPins.Add(pin);
-                    }
+                    Application.Current.Dispatcher.Dispatch(() => UpdatePinsFromFilteredSpotsCore(filteredSpots));
                 }
-                
-                // Clear and update pins collection
-                Pins.Clear();
-                foreach (var pin in validPins)
+                else
                 {
-                    Pins.Add(pin);
+                    UpdatePinsFromFilteredSpotsCore(filteredSpots);
                 }
-                
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Updated pins: {Pins.Count} pins from {filteredSpots.Count()} filtered spots");
-                OnPropertyChanged(nameof(Pins));
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] UpdatePinsFromFilteredSpots failed: {ex.Message}");
             }
+        }
+
+        private void UpdatePinsFromFilteredSpotsCore(IEnumerable<Models.Domain.Spot> filteredSpots)
+        {
+            var validPins = new List<Pin>();
+            
+            foreach (var spot in filteredSpots)
+            {
+                var pin = CreatePinFromSpot(spot);
+                if (pin != null)
+                {
+                    validPins.Add(pin);
+                }
+            }
+            
+            // Clear and update pins collection
+            Pins.Clear();
+            foreach (var pin in validPins)
+            {
+                Pins.Add(pin);
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Updated pins: {Pins.Count} pins from {filteredSpots.Count()} filtered spots");
+            OnPropertyChanged(nameof(Pins));
         }
         
         private void UpdateEmptyState()
