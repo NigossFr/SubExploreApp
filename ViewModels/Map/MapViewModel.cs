@@ -93,6 +93,10 @@ namespace SubExplore.ViewModels.Map
         [ObservableProperty]
         private System.Threading.CancellationTokenSource _searchCancellationToken;
 
+        // Initialization flag to prevent multiple initializations
+        private bool _isInitialized = false;
+        private bool _isInitializing = false;
+
         // Menu-related properties
         [ObservableProperty]
         private bool _isMenuOpen;
@@ -168,6 +172,20 @@ namespace SubExplore.ViewModels.Map
         {
             try
             {
+                // Prevent multiple simultaneous initializations
+                if (_isInitialized)
+                {
+                    System.Diagnostics.Debug.WriteLine("[INFO] MapViewModel already initialized, skipping");
+                    return;
+                }
+
+                if (_isInitializing)
+                {
+                    System.Diagnostics.Debug.WriteLine("[INFO] MapViewModel initialization in progress, skipping duplicate call");
+                    return;
+                }
+
+                _isInitializing = true;
                 System.Diagnostics.Debug.WriteLine("[DEBUG] MapViewModel InitializeAsync started");
                 
                 // Initialize platform-specific map configuration
@@ -187,29 +205,8 @@ namespace SubExplore.ViewModels.Map
                     System.Diagnostics.Debug.WriteLine("[WARNING] Map configuration validation failed");
                 }
                 
-                // Initialize database and seed data
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Initializing database");
-                var databaseCreated = await _databaseService.EnsureDatabaseCreatedAsync();
-                if (databaseCreated)
-                {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Database created successfully");
-                    
-                    // Seed database with initial data
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Seeding database");
-                    var dataSeeded = await _databaseService.SeedDatabaseAsync();
-                    if (dataSeeded)
-                    {
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] Database seeded successfully");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("[WARNING] Database seeding failed or was not needed");
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("[ERROR] Database initialization failed");
-                }
+                // Database should be initialized via migrations in startup
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Database initialization handled by migrations");
                 
                 // Récupération des types de spots pour les filtres
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types");
@@ -229,11 +226,16 @@ namespace SubExplore.ViewModels.Map
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots");
                 await LoadSpotsCommand.ExecuteAsync(null);
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
+                
+                // Mark initialization as complete
+                _isInitialized = true;
+                _isInitializing = false;
             }
             catch (Exception ex)
             {
+                _isInitializing = false; // Reset flag on error
                 System.Diagnostics.Debug.WriteLine($"[ERROR] InitializeAsync failed: {ex.Message}");
-                await DialogService.ShowAlertAsync("Erreur", $"Une erreur est survenue lors de l'initialisation : {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Une erreur is survenue lors de l'initialisation : {ex.Message}", "OK");
             }
         }
 
@@ -244,10 +246,9 @@ namespace SubExplore.ViewModels.Map
             {
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Testing database status...");
                 
-                // Vérifier si la base de données est initialisée
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Creating and seeding database...");
-                await _databaseService.EnsureDatabaseCreatedAsync();
-                await _databaseService.SeedDatabaseAsync();
+                // Database initialization handled by migrations
+                System.Diagnostics.Debug.WriteLine("[DEBUG] Testing database connectivity...");
+                await _databaseService.TestConnectionAsync();
                 
                 // Maintenant test via le repository
                 var repoSpots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
@@ -255,13 +256,24 @@ namespace SubExplore.ViewModels.Map
                 
                 if (repoSpots != null && repoSpots.Any())
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] TestDatabaseDirectly found {repoSpots.Count()} spots");
+                    foreach (var spot in repoSpots.Take(3))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG]   Test spot: {spot.Name} at {spot.Latitude}, {spot.Longitude}");
+                    }
+                    
                     RefreshSpotsList(repoSpots);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] After RefreshSpotsList: {Spots?.Count ?? 0} spots in collection");
+                    
                     UpdatePins();
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] After UpdatePins: {Pins?.Count ?? 0} pins in collection");
+                    
                     UpdateEmptyState();
-                    await DialogService.ShowToastAsync($"Test réussi: {repoSpots.Count()} spots chargés");
+                    await DialogService.ShowToastAsync($"Test réussi: {repoSpots.Count()} spots chargés, {Pins?.Count ?? 0} pins créés");
                 }
                 else
                 {
+                    System.Diagnostics.Debug.WriteLine("[ERROR] TestDatabaseDirectly: No spots found in repository");
                     await DialogService.ShowAlertAsync("Test", "Aucun spot trouvé même après seed", "OK");
                 }
             }
@@ -286,24 +298,43 @@ namespace SubExplore.ViewModels.Map
 
                 // TEMPORAIRE : Force le chargement de tous les spots approuvés pour diagnostic
                 System.Diagnostics.Debug.WriteLine("[DEBUG] FORCE: Loading all approved spots for debugging");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Repository instance: {_spotRepository?.GetType().Name ?? "null"}");
+                
                 spots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
                 
                 // Log de diagnostic supplémentaire
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Query completed. Raw result count: {spots?.Count() ?? 0}");
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] IsLocationAvailable: {IsLocationAvailable}");
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] UserLatitude: {UserLatitude}, UserLongitude: {UserLongitude}");
                 
                 // Si on obtient des spots, vérifions leur contenu
                 if (spots != null && spots.Any())
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Found {spots.Count()} spots from repository");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Found {spots.Count()} spots from repository");
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] First 5 spots details:");
                     foreach (var spot in spots.Take(5))
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Spot: {spot.Name} - Status: {spot.ValidationStatus} - TypeId: {spot.TypeId} - Position: {spot.Latitude}, {spot.Longitude}");
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG]   - {spot.Name} (ID:{spot.Id})");
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG]     Status: {spot.ValidationStatus}, TypeId: {spot.TypeId}");
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG]     Position: {spot.Latitude}, {spot.Longitude}");
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG]     Type: {spot.Type?.Name ?? "null"}, Creator: {spot.Creator?.Id.ToString() ?? "null"}");
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] No spots returned from repository - checking database connection");
+                    System.Diagnostics.Debug.WriteLine("[WARNING] ✗ No spots returned from repository");
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Checking database connection and data...");
+                    
+                    try
+                    {
+                        // Test database connectivity
+                        await _databaseService.TestConnectionAsync();
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] ✓ Database connection test passed");
+                    }
+                    catch (Exception dbEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERROR] ✗ Database connection failed: {dbEx.Message}");
+                    }
                 }
 
                 var spotsCount = spots?.Count() ?? 0;
@@ -322,8 +353,20 @@ namespace SubExplore.ViewModels.Map
                     }
                 }
 
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] About to refresh spots list with {spotsCount} spots");
                 RefreshSpotsList(spots);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Spots list refreshed, now contains {Spots?.Count ?? 0} spots");
+                
+                // Allow UI to update between operations
+                await Task.Delay(50);
+                
+                System.Diagnostics.Debug.WriteLine("[DEBUG] About to update pins");
                 UpdatePins();
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Pins updated, now contains {Pins?.Count ?? 0} pins");
+                
+                // Allow UI to refresh after pins are updated
+                await Task.Delay(50);
+                
                 UpdateEmptyState();
             }
             catch (Exception ex)
@@ -943,13 +986,20 @@ namespace SubExplore.ViewModels.Map
 
         public void ForceMapRefresh()
         {
+            // Force reset loading state to ensure UI updates properly
+            IsBusy = false;
+            IsFiltering = false;
+            IsSearching = false;
+            
             // Force UI to refresh map position
             OnPropertyChanged(nameof(MapLatitude));
             OnPropertyChanged(nameof(MapLongitude));
             OnPropertyChanged(nameof(MapZoomLevel));
             OnPropertyChanged(nameof(Pins));
+            OnPropertyChanged(nameof(IsBusy));
             
             System.Diagnostics.Debug.WriteLine($"[INFO] ForceMapRefresh called: {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}, pins: {Pins?.Count}");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Forced IsBusy to false: {IsBusy}");
             System.Diagnostics.Debug.WriteLine($"[DEBUG] Map coordinates valid: Lat={MapLatitude >= -90 && MapLatitude <= 90}, Lng={MapLongitude >= -180 && MapLongitude <= 180}");
             
             // Additional map debugging
@@ -990,21 +1040,45 @@ namespace SubExplore.ViewModels.Map
                         return;
                     }
 
-                    var validPins = Spots
-                        .Select(CreatePinFromSpot)
-                        .Where(pin => pin != null)
-                        .ToList();
+                    // Debug first few spots for troubleshooting
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Processing spots for pin creation:");
+                    foreach (var spot in Spots.Take(3))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Spot: {spot.Name} at {spot.Latitude}, {spot.Longitude} - Status: {spot.ValidationStatus}");
+                    }
 
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Created {validPins.Count} valid pins from {Spots.Count} spots");
+                    var validPins = new List<Pin>();
+                    int invalidCoordCount = 0;
+                    int nullPinCount = 0;
+
+                    foreach (var spot in Spots)
+                    {
+                        var pin = CreatePinFromSpot(spot);
+                        if (pin != null)
+                        {
+                            validPins.Add(pin);
+                            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Created pin for {spot.Name}");
+                        }
+                        else
+                        {
+                            nullPinCount++;
+                            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✗ Failed to create pin for {spot.Name} - likely invalid coordinates");
+                        }
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Pin creation summary: {validPins.Count} valid, {nullPinCount} failed, {invalidCoordCount} invalid coordinates");
 
                     // Efficient batch update
                     Pins.Clear();
                     foreach (var pin in validPins)
                     {
-                        Pins.Add(pin!);
+                        Pins.Add(pin);
                     }
                     
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePins completed. Total pins: {Pins.Count}");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePins completed. Total pins in collection: {Pins.Count}");
+                    
+                    // Force property change notification
+                    OnPropertyChanged(nameof(Pins));
                 }
                 catch (Exception ex)
                 {
@@ -1018,18 +1092,40 @@ namespace SubExplore.ViewModels.Map
         {
             try
             {
+                if (spot == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ERROR] Cannot create pin from null spot");
+                    return null;
+                }
+
                 double lat = Convert.ToDouble(spot.Latitude);
                 double lon = Convert.ToDouble(spot.Longitude);
 
-                // Add this debug line
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Creating pin for {spot.Name} at {lat}, {lon}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Creating pin for {spot.Name} at {lat}, {lon} (decimal: {spot.Latitude}, {spot.Longitude})");
 
-                // Validate coordinates
-                if (double.IsNaN(lat) || double.IsInfinity(lat) || lat < -90 || lat > 90 ||
-                    double.IsNaN(lon) || double.IsInfinity(lon) || lon < -180 || lon > 180)
+                // Validate coordinates with detailed error reporting
+                if (double.IsNaN(lat) || double.IsInfinity(lat))
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERROR] Invalid coordinates for spot {spot.Name}: Lat={spot.Latitude}, Lng={spot.Longitude}");
-                    return null; // Return null for invalid coordinates
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Invalid latitude for spot {spot.Name}: {lat} (NaN or Infinity)");
+                    return null;
+                }
+                
+                if (lat < -90 || lat > 90)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Latitude out of range for spot {spot.Name}: {lat} (must be -90 to 90)");
+                    return null;
+                }
+
+                if (double.IsNaN(lon) || double.IsInfinity(lon))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Invalid longitude for spot {spot.Name}: {lon} (NaN or Infinity)");
+                    return null;
+                }
+                
+                if (lon < -180 || lon > 180)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Longitude out of range for spot {spot.Name}: {lon} (must be -180 to 180)");
+                    return null;
                 }
 
                 var pin = new Pin
@@ -1041,12 +1137,13 @@ namespace SubExplore.ViewModels.Map
                     BindingContext = spot
                 };
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Successfully created pin for {spot.Name}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Successfully created pin for {spot.Name} with valid coordinates");
                 return pin;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to create pin for spot {spot.Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Exception creating pin for spot {spot?.Name ?? "unknown"}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                 return null;
             }
         }
@@ -1093,21 +1190,27 @@ namespace SubExplore.ViewModels.Map
                 try
                 {
                     var spotsList = spots.ToList();
-                    Spots.Clear();
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Processing {spotsList.Count} spots");
                     
-                    // Efficient batch processing
-                    for (int i = 0; i < spotsList.Count; i += SPOTS_BATCH_SIZE)
+                    Spots.Clear();
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Spots collection cleared, current count: {Spots.Count}");
+                    
+                    // Add spots directly without batching to identify the issue
+                    foreach (var spot in spotsList)
                     {
-                        var batch = spotsList.Skip(i).Take(SPOTS_BATCH_SIZE);
-                        foreach (var spot in batch)
-                        {
-                            Spots.Add(spot);
-                        }
+                        Spots.Add(spot);
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Added spot {spot.Name}, collection count now: {Spots.Count}");
                     }
+                    
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Final collection count: {Spots.Count}");
+                    
+                    // Force property change notification
+                    OnPropertyChanged(nameof(Spots));
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERROR] RefreshSpotsList failed: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                 }
             });
         }
@@ -1174,7 +1277,7 @@ namespace SubExplore.ViewModels.Map
             });
         }
         
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (disposing)
             {

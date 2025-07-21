@@ -98,12 +98,12 @@ namespace SubExplore.Repositories.Implementations
             // via SaveChangesAsync()
         }
 
-        public override async Task<User> GetByIdAsync(int id)
+        public override async Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _context.Users
                 .Include(u => u.Preferences)
                 .Include(u => u.CreatedSpots)
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
         }
     }
 }

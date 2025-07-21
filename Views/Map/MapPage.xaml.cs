@@ -88,6 +88,10 @@ namespace SubExplore.Views.Map
                     // Give map time to render before positioning
                     await Task.Delay(500);
                     
+                    // Force map refresh to ensure pins are displayed
+                    System.Diagnostics.Debug.WriteLine("[INFO] Forcing map refresh");
+                    ViewModel.ForceMapRefresh();
+                    
                     // Update map position after initialization on main thread
                     System.Diagnostics.Debug.WriteLine("[INFO] Updating map position");
                     await Application.Current.Dispatcher.DispatchAsync(UpdateMapPosition);

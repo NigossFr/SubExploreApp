@@ -103,7 +103,6 @@
 	<ItemGroup>
 	  <Folder Include="Helpers\Extensions\" />
 	  <Folder Include="Models\DTOs\" />
-	  <Folder Include="Constants\" />
 	  <Folder Include="Configuration\" />
 	  <Folder Include="ViewModels\Auth\" />
 	  <Folder Include="Views\Auth\" />

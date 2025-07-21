@@ -10,7 +10,7 @@ using SubExplore.Services.Interfaces;
 
 namespace SubExplore.ViewModels.Base
 {
-    public abstract partial class ViewModelBase : ObservableObject
+    public abstract partial class ViewModelBase : ObservableObject, IDisposable
     {
         protected readonly IDialogService DialogService;
         protected readonly INavigationService NavigationService;
@@ -97,6 +97,23 @@ namespace SubExplore.ViewModels.Base
             {
                 await NavigationService.GoBackAsync();
             }
+        }
+
+        /// <summary>
+        /// Dispose pattern implementation for ViewModels
+        /// </summary>
+        protected virtual void Dispose(bool disposing)
+        {
+            // Override in derived classes for cleanup
+        }
+
+        /// <summary>
+        /// Public dispose method
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

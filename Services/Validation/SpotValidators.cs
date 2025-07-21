@@ -1,4 +1,5 @@
 using SubExplore.Models.Validation;
+using SubExplore.Constants;
 
 namespace SubExplore.Services.Validation
 {
@@ -30,9 +31,9 @@ namespace SubExplore.Services.Validation
             }
 
             // Validate access description (optional - only validate if provided)
-            if (!string.IsNullOrWhiteSpace(data.AccessDescription) && data.AccessDescription.Length < 10)
+            if (!string.IsNullOrWhiteSpace(data.AccessDescription) && data.AccessDescription.Length < AppConstants.Validation.MIN_ACCESS_DESCRIPTION_LENGTH)
             {
-                errors.Add("La description de l'accès doit contenir au moins 10 caractères.");
+                errors.Add($"La description de l'accès doit contenir au moins {AppConstants.Validation.MIN_ACCESS_DESCRIPTION_LENGTH} caractères.");
             }
 
             return errors.Count == 0 
@@ -57,9 +58,9 @@ namespace SubExplore.Services.Validation
             {
                 errors.Add("Le nom du spot est requis.");
             }
-            else if (data.SpotName.Length < 3)
+            else if (data.SpotName.Length < AppConstants.Validation.MIN_SPOT_NAME_LENGTH)
             {
-                errors.Add("Le nom du spot doit contenir au moins 3 caractères.");
+                errors.Add($"Le nom du spot doit contenir au moins {AppConstants.Validation.MIN_SPOT_NAME_LENGTH} caractères.");
             }
 
             // Validate spot type - at least one must be selected
@@ -73,9 +74,9 @@ namespace SubExplore.Services.Validation
             {
                 errors.Add("La profondeur maximale ne peut pas être négative.");
             }
-            else if (data.MaxDepth > 200)
+            else if (data.MaxDepth > AppConstants.Validation.MAX_DEPTH_METERS)
             {
-                errors.Add("La profondeur maximale ne peut pas dépasser 200 mètres.");
+                errors.Add($"La profondeur maximale ne peut pas dépasser {AppConstants.Validation.MAX_DEPTH_METERS} mètres.");
             }
 
             // Required equipment is now optional

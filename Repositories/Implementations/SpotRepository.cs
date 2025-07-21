@@ -17,13 +17,13 @@ namespace SubExplore.Repositories.Implementations
         {
         }
 
-        public override async Task<Spot?> GetByIdAsync(int id)
+        public override async Task<Spot?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _context.Spots
                 .Include(s => s.Type)
                 .Include(s => s.Creator)
                 .Include(s => s.Media)
-                .FirstOrDefaultAsync(s => s.Id == id);
+                .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
         }
 
         public async Task<IEnumerable<Spot>> GetNearbySpots(decimal latitude, decimal longitude, double radiusInKm, int limit = 50)

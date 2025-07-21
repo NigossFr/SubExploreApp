@@ -25,29 +25,11 @@ namespace SubExplore.Services.Implementations
             {
                 _logger.LogInformation("Starting database initialization");
 
-                // Ensure database exists
-                await _context.Database.EnsureCreatedAsync();
+                // Apply migrations (this will create the database if it doesn't exist)
+                await _context.Database.MigrateAsync();
+                _logger.LogInformation("Database migrations applied successfully");
 
-                // Apply any pending migrations
-                var pendingMigrations = await _context.Database.GetPendingMigrationsAsync();
-                if (pendingMigrations.Any())
-                {
-                    _logger.LogInformation("Applying {Count} pending migrations: {Migrations}", 
-                        pendingMigrations.Count(), string.Join(", ", pendingMigrations));
-                    
-                    await _context.Database.MigrateAsync();
-                    _logger.LogInformation("Migrations applied successfully");
-                }
-                else
-                {
-                    _logger.LogInformation("No pending migrations found");
-                }
-
-                // Ensure RevokedTokens table exists (fallback)
-                await EnsureRevokedTokensTableAsync();
-
-                // Create default admin user if none exists
-                await CreateDefaultAdminUserAsync();
+                // Migration includes all seed data including admin user and tables
 
                 _logger.LogInformation("Database initialization completed successfully");
             }
