@@ -204,6 +204,21 @@
                 AutomationId="MainMap"
                 SemanticProperties.Description="Carte interactive des spots de plongée"
                 SemanticProperties.Hint="Explorez les spots de plongée sur la carte, appuyez sur un marqueur pour voir les détails">
+                
+                <maps:Map.ItemTemplate>
+                    <DataTemplate>
+                        <maps:Pin 
+                            Address="{Binding Address}"
+                            Label="{Binding Label}"
+                            Location="{Binding Location}"
+                            Type="Place"
+                            AutomationId="SpotPin"
+                            SemanticProperties.Description="{Binding Label, StringFormat='Pin pour le spot {0}'}"
+                            SemanticProperties.Hint="Appuyez pour voir les détails de ce spot">
+                        </maps:Pin>
+                    </DataTemplate>
+                </maps:Map.ItemTemplate>
+                
             <maps:Map.MapElements>
                 <!--  Vous pouvez ajouter des éléments de carte personnalisés ici  -->
             </maps:Map.MapElements>

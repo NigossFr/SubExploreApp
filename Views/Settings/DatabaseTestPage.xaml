@@ -136,7 +136,7 @@
                 HeightRequest="200">
                 <ScrollView>
                     <Label
-                        FontFamily="Courier New"
+                        FontFamily="{OnPlatform Default='monospace', Android='monospace', iOS='Courier', WinUI='Consolas'}"
                         FontSize="12"
                         Text="{Binding LogMessages}" />
                 </ScrollView>
