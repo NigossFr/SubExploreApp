@@ -190,62 +190,75 @@ namespace SubExplore.ViewModels.Map
                 }
 
                 _isInitializing = true;
-                System.Diagnostics.Debug.WriteLine("[DEBUG] MapViewModel InitializeAsync started with performance optimization");
+                IsBusy = true;
+                System.Diagnostics.Debug.WriteLine("[DEBUG] MapViewModel InitializeAsync started with enhanced error handling");
                 
-                // Démarrer l'initialisation en arrière-plan pour éviter de bloquer l'UI
-                _ = Task.Run(async () =>
+                try
                 {
-                    try
+                    // Step 1: Initialize platform-specific map configuration
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Initializing platform map service");
+                    var mapInitialized = await _platformMapService.InitializePlatformMapAsync();
+                    if (!mapInitialized)
                     {
-                        // Initialize platform-specific map configuration asynchronously
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] Initializing platform map service in background");
-                        var mapInitialized = await _platformMapService.InitializePlatformMapAsync();
-                        if (!mapInitialized)
-                        {
-                            System.Diagnostics.Debug.WriteLine("[ERROR] Platform map initialization failed");
-                            await MainThread.InvokeOnMainThreadAsync(async () =>
-                            {
-                                await DialogService.ShowAlertAsync("Erreur", "Impossible d'initialiser les cartes pour cette plateforme", "OK");
-                            });
-                            return;
-                        }
-                        
-                        // Validate map configuration (non-blocking)
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] Validating map configuration in background");
-                        _ = _platformMapService.ValidateMapConfigurationAsync(); // Fire and forget
-                        
-                        // Load data asynchronously with UI thread yield points to prevent blocking
-                        await LoadDataWithUIYields();
-                        
-                        // Load spots après que les autres données soient prêtes
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots in background");
-                        await LoadSpotsOptimized();
-                        
-                        // Mark initialization as complete
-                        await MainThread.InvokeOnMainThreadAsync(() =>
-                        {
-                            _isInitialized = true;
-                            _isInitializing = false;
-                            IsBusy = false;
-                        });
-                        
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Background InitializeAsync completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
+                        System.Diagnostics.Debug.WriteLine("[ERROR] Platform map initialization failed");
+                        await DialogService.ShowAlertAsync("Erreur", "Impossible d'initialiser les cartes pour cette plateforme", "OK");
+                        return;
                     }
-                    catch (Exception ex)
+
+                    // Step 2: Load spot types FIRST (required for filters to work)
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types (required for filters)");
+                    await LoadSpotTypesOptimized();
+                    
+                    if (SpotTypes?.Count == 0)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[ERROR] Background InitializeAsync failed: {ex.Message}");
-                        await MainThread.InvokeOnMainThreadAsync(async () =>
-                        {
-                            _isInitializing = false;
-                            IsBusy = false;
-                            await DialogService.ShowAlertAsync("Erreur", $"Une erreur s'est produite lors de l'initialisation : {ex.Message}", "OK");
-                        });
+                        System.Diagnostics.Debug.WriteLine("[WARNING] No spot types loaded - filters will not work");
                     }
-                });
-                
-                // Retourner immédiatement pour ne pas bloquer l'UI
-                await Task.Delay(10); // Micro-delay pour permettre le démarrage de la tâche
-                
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SUCCESS] Loaded {SpotTypes.Count} spot types for filtering");
+                    }
+
+                    // Step 3: Load spots data
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots data");
+                    await LoadSpotsOptimized();
+                    
+                    if (Spots?.Count == 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[WARNING] No spots loaded - map will be empty");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SUCCESS] Loaded {Spots.Count} spots");
+                    }
+
+                    // Step 4: Update pins on UI thread
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] Updating pins on UI thread");
+                        UpdatePins();
+                        System.Diagnostics.Debug.WriteLine($"[SUCCESS] Created {Pins?.Count ?? 0} pins for map");
+                        
+                        _isInitialized = true;
+                        _isInitializing = false;
+                        IsBusy = false;
+                        
+                        // Initialize menu and other UI elements  
+                        InitializeMapPosition();
+                        
+                        System.Diagnostics.Debug.WriteLine("[SUCCESS] MapViewModel initialization completed successfully");
+                    });
+                }
+                catch (Exception innerEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] MapViewModel initialization failed: {innerEx.Message}");
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        _isInitialized = false;
+                        _isInitializing = false;
+                        IsBusy = false;
+                        await DialogService.ShowAlertAsync("Erreur", $"Erreur d'initialisation: {innerEx.Message}", "OK");
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -1028,7 +1041,7 @@ namespace SubExplore.ViewModels.Map
         /// <summary>
         /// Thread-safe pins update with atomic collection replacement
         /// </summary>
-        private void UpdatePins()
+        public void UpdatePins()
         {
             Application.Current?.Dispatcher.Dispatch(() => {
                 try

@@ -148,10 +148,7 @@
 
                         <CollectionView
                             ItemsSource="{Binding SpotTypes}"
-                            SelectedItem="{Binding SelectedSpotType}"
-                            SelectionChangedCommand="{Binding FilterSpotsByTypeCommand}"
-                            SelectionChangedCommandParameter="{Binding SelectedSpotType}"
-                            SelectionMode="Single"
+                            SelectionMode="None"
                             AutomationId="SpotTypesFilter"
                             SemanticProperties.Description="Filtrer les spots par type d'activité - Balayez pour voir plus d'options">
                             <CollectionView.ItemsLayout>
