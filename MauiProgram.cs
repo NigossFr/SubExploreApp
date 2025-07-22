@@ -90,8 +90,11 @@ public static class MauiProgram
         // Rendre IConfiguration disponible via DI
         builder.Services.AddSingleton(configuration);
 
+        // Register the performance interceptor factory
+        builder.Services.AddSingleton<DataAccess.PerformanceInterceptor>();
+
         // Configuration de la base de données
-        builder.Services.AddDbContext<SubExploreDbContext>(options =>
+        builder.Services.AddDbContext<SubExploreDbContext>((serviceProvider, options) =>
         {
             string? connectionString = null;
             string connectionStringKey = "DefaultConnection"; // Clé par défaut
@@ -149,6 +152,10 @@ public static class MauiProgram
             {
                 // Test de la connexion avant de continuer
                 options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                
+                // Add performance monitoring interceptor
+                var performanceInterceptor = serviceProvider.GetRequiredService<DataAccess.PerformanceInterceptor>();
+                options.AddInterceptors(performanceInterceptor);
             }
             catch (Exception ex)
             {
@@ -180,6 +187,11 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMenuService, MenuService>();
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
         builder.Services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
+        
+        // Performance monitoring services
+        builder.Services.AddSingleton<IPerformanceProfilingService, PerformanceProfilingService>();
+        builder.Services.AddSingleton<IApplicationPerformanceService, ApplicationPerformanceService>();
+        builder.Services.AddScoped<IPerformanceValidationService, PerformanceValidationService>();
         
         // Authentication services
         builder.Services.AddSingleton<ISecureSettingsService>(provider =>

@@ -9,6 +9,7 @@ using SubExplore.Models.Domain;
 using SubExplore.Models.Enums;
 using SubExplore.Repositories.Interfaces;
 using SubExplore.Services.Interfaces;
+using SubExplore.Services.Implementations;
 using SubExplore.ViewModels.Base;
 using SubExplore.ViewModels.Profile;
 using SubExplore.Models.Menu;
@@ -23,6 +24,7 @@ namespace SubExplore.ViewModels.Map
         private readonly ISpotTypeRepository _spotTypeRepository;
         private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
         private readonly IPlatformMapService _platformMapService;
+        private readonly IApplicationPerformanceService _performanceService;
 
         // Map Configuration Constants
         private const double DEFAULT_SEARCH_RADIUS_KM = 10.0;
@@ -129,7 +131,8 @@ namespace SubExplore.ViewModels.Map
             IDialogService dialogService,
             INavigationService navigationService,
             ISettingsService settingsService,
-            IAuthenticationService authenticationService)
+            IAuthenticationService authenticationService,
+            IApplicationPerformanceService performanceService)
             : base(dialogService, navigationService)
         {
             _spotRepository = spotRepository;
@@ -139,6 +142,7 @@ namespace SubExplore.ViewModels.Map
             _userRepository = userRepository;
             _settingsService = settingsService;
             _authenticationService = authenticationService;
+            _performanceService = performanceService;
             _configuration = configuration;
             _platformMapService = platformMapService;
 

@@ -28,11 +28,17 @@ namespace SubExplore.DataAccess
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configuration des relations
+            // Configuration des relations avec indexes de performance optimisés
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasIndex(e => e.Email).IsUnique();
-                entity.HasIndex(e => e.Username).IsUnique();
+                // Indexes uniques essentiels pour l'authentification
+                entity.HasIndex(e => e.Email).IsUnique().HasDatabaseName("IX_Users_Email_Unique");
+                entity.HasIndex(e => e.Username).IsUnique().HasDatabaseName("IX_Users_Username_Unique");
+                
+                // Indexes composites pour les requêtes fréquentes
+                entity.HasIndex(e => new { e.AccountType, e.SubscriptionStatus }).HasDatabaseName("IX_Users_AccountType_Subscription");
+                entity.HasIndex(e => new { e.CreatedAt, e.AccountType }).HasDatabaseName("IX_Users_CreatedAt_AccountType");
+                entity.HasIndex(e => e.ExpertiseLevel).HasDatabaseName("IX_Users_ExpertiseLevel");
 
                 entity.HasOne(e => e.Preferences)
                       .WithOne(e => e.User)
@@ -45,13 +51,58 @@ namespace SubExplore.DataAccess
 
             modelBuilder.Entity<Spot>(entity =>
             {
-                entity.HasIndex(e => new { e.Latitude, e.Longitude });
-                entity.HasIndex(e => e.TypeId);
-                entity.HasIndex(e => e.ValidationStatus);
+                // Index géospatial optimisé pour les recherches de proximité
+                entity.HasIndex(e => new { e.Latitude, e.Longitude }).HasDatabaseName("IX_Spots_Location_Geospatial");
+                
+                // Indexes pour les filtres de recherche les plus fréquents
+                entity.HasIndex(e => e.TypeId).HasDatabaseName("IX_Spots_TypeId");
+                entity.HasIndex(e => e.ValidationStatus).HasDatabaseName("IX_Spots_ValidationStatus");
+                entity.HasIndex(e => e.CreatorId).HasDatabaseName("IX_Spots_CreatorId");
+                entity.HasIndex(e => e.CreatedAt).HasDatabaseName("IX_Spots_CreatedAt");
+                entity.HasIndex(e => e.DifficultyLevel).HasDatabaseName("IX_Spots_DifficultyLevel");
+                
+                // Index composite pour recherche géographique avec filtres
+                entity.HasIndex(e => new { e.ValidationStatus, e.TypeId, e.Latitude, e.Longitude })
+                      .HasDatabaseName("IX_Spots_ValidatedByType_Location");
+                
+                // Index composite pour recherche par créateur et statut
+                entity.HasIndex(e => new { e.CreatorId, e.ValidationStatus, e.CreatedAt })
+                      .HasDatabaseName("IX_Spots_Creator_Status_Date");
+                
+                // Index pour recherche textuelle (nom et description)
+                entity.HasIndex(e => e.Name).HasDatabaseName("IX_Spots_Name_Search");
+                
+                // Index pour requêtes de performance (profondeur et difficulté)
+                entity.HasIndex(e => new { e.MaxDepth, e.DifficultyLevel }).HasDatabaseName("IX_Spots_Depth_Difficulty");
 
                 entity.HasMany(e => e.Media)
                       .WithOne(e => e.Spot)
                       .HasForeignKey(e => e.SpotId);
+            });
+            
+            modelBuilder.Entity<SpotMedia>(entity =>
+            {
+                // Index pour requêtes de médias par spot
+                entity.HasIndex(e => e.SpotId).HasDatabaseName("IX_SpotMedia_SpotId");
+                entity.HasIndex(e => new { e.SpotId, e.MediaType }).HasDatabaseName("IX_SpotMedia_Spot_Type");
+                entity.HasIndex(e => e.CreatedAt).HasDatabaseName("IX_SpotMedia_CreatedAt");
+            });
+            
+            modelBuilder.Entity<SpotType>(entity =>
+            {
+                // Index pour requêtes actives et par catégorie
+                entity.HasIndex(e => e.IsActive).HasDatabaseName("IX_SpotTypes_IsActive");
+                entity.HasIndex(e => e.Category).HasDatabaseName("IX_SpotTypes_Category");
+                entity.HasIndex(e => new { e.IsActive, e.Category }).HasDatabaseName("IX_SpotTypes_Active_Category");
+                entity.HasIndex(e => e.RequiresExpertValidation).HasDatabaseName("IX_SpotTypes_RequiresValidation");
+            });
+            
+            modelBuilder.Entity<UserPreferences>(entity =>
+            {
+                // Index pour requêtes de préférences utilisateur
+                entity.HasIndex(e => e.UserId).IsUnique().HasDatabaseName("IX_UserPreferences_UserId_Unique");
+                entity.HasIndex(e => e.Language).HasDatabaseName("IX_UserPreferences_Language");
+                entity.HasIndex(e => e.Theme).HasDatabaseName("IX_UserPreferences_Theme");
             });
 
             modelBuilder.Entity<RevokedToken>(entity =>
