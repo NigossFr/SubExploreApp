@@ -193,6 +193,10 @@ public static class MauiProgram
         builder.Services.AddSingleton<IApplicationPerformanceService, ApplicationPerformanceService>();
         builder.Services.AddScoped<IPerformanceValidationService, PerformanceValidationService>();
         
+        // Pin management optimization services
+        builder.Services.AddSingleton<PinManagementConfig>();
+        builder.Services.AddScoped<IPinManagementService, PinManagementService>();
+        
         // Authentication services
         builder.Services.AddSingleton<ISecureSettingsService>(provider =>
         {
@@ -218,6 +222,7 @@ public static class MauiProgram
         // si le ViewModel est lié à la durée de vie d'une page et que vous utilisez la navigation avec DI.
         builder.Services.AddTransient<DatabaseTestViewModel>();
         builder.Services.AddTransient<MapViewModel>();
+        builder.Services.AddTransient<OptimizedMapViewModel>();
         builder.Services.AddTransient<SpotManagementViewModel>();
         builder.Services.AddTransient<AddSpotViewModel>();
         builder.Services.AddTransient<SpotDetailsViewModel>();
