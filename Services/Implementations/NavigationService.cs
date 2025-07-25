@@ -21,40 +21,87 @@ namespace SubExplore.Services.Implementations
 
         public async Task NavigateToAsync<TViewModel>(object parameter = null)
         {
-            // Use Shell navigation if available
-            if (Application.Current.MainPage is Shell)
+            try
             {
-                var route = GetRouteForViewModel<TViewModel>();
-                if (!string.IsNullOrEmpty(route))
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Starting navigation to {typeof(TViewModel).Name}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Parameter: {parameter}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Application.Current: {Application.Current != null}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: MainPage type: {Application.Current?.MainPage?.GetType().Name}");
+                
+                // Use Shell navigation if available (with fallback on failure)
+                if (Application.Current?.MainPage is Shell)
                 {
-                    // Pass parameters through query parameters for Shell navigation
-                    if (parameter != null)
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Using Shell navigation");
+                    var route = GetRouteForViewModel<TViewModel>();
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Route found: {route}");
+                    
+                    if (!string.IsNullOrEmpty(route))
                     {
-                        var queryParams = BuildQueryParameters(parameter);
-                        var fullRoute = string.IsNullOrEmpty(queryParams) ? route : $"{route}?{queryParams}";
-                        
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Navigating to {fullRoute}");
-                        await Shell.Current.GoToAsync(fullRoute);
+                        try
+                        {
+                            // Pass parameters through query parameters for Shell navigation
+                            if (parameter != null)
+                            {
+                                var queryParams = BuildQueryParameters(parameter);
+                                var fullRoute = string.IsNullOrEmpty(queryParams) ? route : $"{route}?{queryParams}";
+                                
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Navigating to {fullRoute}");
+                                await Shell.Current.GoToAsync(fullRoute);
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Shell navigation completed successfully");
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Navigating to {route} (no parameters)");
+                                await Shell.Current.GoToAsync(route);
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Shell navigation completed successfully");
+                            }
+                            return;
+                        }
+                        catch (Exception shellEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[ERROR] Shell navigation failed: {shellEx.Message}");
+                            System.Diagnostics.Debug.WriteLine($"[WARNING] Falling back to traditional navigation");
+                            // Continue to fallback navigation below
+                        }
                     }
                     else
                     {
-                        await Shell.Current.GoToAsync(route);
+                        System.Diagnostics.Debug.WriteLine($"[WARNING] NavigateToAsync: No route found for {typeof(TViewModel).Name}, falling back to traditional navigation");
                     }
-                    return;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Not using Shell navigation (MainPage is not Shell)");
+                }
+                
+                // Fallback to traditional navigation
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Using traditional navigation fallback");
+                var page = await CreateAndInitializePage<TViewModel>(parameter);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Page created successfully");
+
+                if (Application.Current?.MainPage is NavigationPage navigationPage)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Pushing to existing NavigationPage");
+                    await navigationPage.PushAsync(page);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Traditional navigation completed successfully");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Creating new NavigationPage");
+                    // Create new navigation page
+                    Application.Current.MainPage = new NavigationPage(page);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: New NavigationPage set as MainPage");
                 }
             }
-            
-            // Fallback to traditional navigation
-            var page = await CreateAndInitializePage<TViewModel>(parameter);
-
-            if (Application.Current.MainPage is NavigationPage navigationPage)
+            catch (Exception ex)
             {
-                await navigationPage.PushAsync(page);
-            }
-            else
-            {
-                // Create new navigation page
-                Application.Current.MainPage = new NavigationPage(page);
+                System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToAsync failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                }
+                throw;
             }
         }
 
@@ -89,45 +136,81 @@ namespace SubExplore.Services.Implementations
 
         private async Task<Page> CreateAndInitializePage<TViewModel>(object parameter = null)
         {
-            var viewModel = _serviceProvider.GetService<TViewModel>();
-            if (viewModel == null)
-                throw new InvalidOperationException($"Impossible de résoudre le ViewModel {typeof(TViewModel).Name}");
-
-            // Recherche de la page correspondante avec mapping de namespace
-            var viewModelTypeName = typeof(TViewModel).Name;
-            var viewTypeName = viewModelTypeName.Replace("ViewModel", "Page");
-            var viewTypeFullName = GetViewTypeFullName(viewTypeName);
-
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Looking for view type: {viewTypeFullName}");
-            
-            var viewType = Assembly.GetExecutingAssembly().GetType(viewTypeFullName);
-            if (viewType == null)
-                throw new InvalidOperationException($"Type de vue non trouvé: {viewTypeFullName}");
-
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Found view type, creating instance via DI");
-            var page = _serviceProvider.GetService(viewType) as Page;
-            if (page == null)
-                throw new InvalidOperationException($"Impossible de créer une instance de {viewTypeFullName}");
-
-            page.BindingContext = viewModel;
-
-            // Check if ViewModel has InitializeAsync method
-            var initMethod = viewModel.GetType().GetMethod("InitializeAsync", new[] { typeof(object) });
-            if (initMethod != null)
+            try
             {
-                await (Task)initMethod.Invoke(viewModel, new[] { parameter });
-            }
-            else
-            {
-                // Try method without parameters
-                var initMethodNoParam = viewModel.GetType().GetMethod("InitializeAsync", Type.EmptyTypes);
-                if (initMethodNoParam != null)
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Starting for {typeof(TViewModel).Name}");
+                
+                if (_serviceProvider == null)
                 {
-                    await (Task)initMethodNoParam.Invoke(viewModel, null);
+                    System.Diagnostics.Debug.WriteLine("[ERROR] CreateAndInitializePage: _serviceProvider is null");
+                    throw new InvalidOperationException("ServiceProvider is null");
                 }
-            }
 
-            return page;
+                var viewModel = _serviceProvider.GetService<TViewModel>();
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: ViewModel resolved: {viewModel != null}");
+                
+                if (viewModel == null)
+                    throw new InvalidOperationException($"Impossible de résoudre le ViewModel {typeof(TViewModel).Name}");
+
+                // Recherche de la page correspondante avec mapping de namespace
+                var viewModelTypeName = typeof(TViewModel).Name;
+                var viewTypeName = viewModelTypeName.Replace("ViewModel", "Page");
+                var viewTypeFullName = GetViewTypeFullName(viewTypeName);
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Looking for view type: {viewTypeFullName}");
+                
+                var viewType = Assembly.GetExecutingAssembly().GetType(viewTypeFullName);
+                if (viewType == null)
+                    throw new InvalidOperationException($"Type de vue non trouvé: {viewTypeFullName}");
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Found view type, creating instance via DI");
+                var page = _serviceProvider.GetService(viewType) as Page;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Page created: {page != null}");
+                
+                if (page == null)
+                    throw new InvalidOperationException($"Impossible de créer une instance de {viewTypeFullName}");
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Setting BindingContext");
+                page.BindingContext = viewModel;
+
+                // Check if ViewModel has InitializeAsync method
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Looking for InitializeAsync method");
+                var initMethod = viewModel.GetType().GetMethod("InitializeAsync", new[] { typeof(object) });
+                if (initMethod != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Calling InitializeAsync with parameter");
+                    await (Task)initMethod.Invoke(viewModel, new[] { parameter });
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: InitializeAsync completed");
+                }
+                else
+                {
+                    // Try method without parameters
+                    var initMethodNoParam = viewModel.GetType().GetMethod("InitializeAsync", Type.EmptyTypes);
+                    if (initMethodNoParam != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Calling InitializeAsync without parameter");
+                        await (Task)initMethodNoParam.Invoke(viewModel, null);
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: InitializeAsync completed");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: No InitializeAsync method found");
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Returning page successfully");
+                return page;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] CreateAndInitializePage failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                }
+                throw;
+            }
         }
 
         private string GetRouteForViewModel<TViewModel>()
@@ -184,18 +267,30 @@ namespace SubExplore.Services.Implementations
                 var queryParams = new List<string>();
                 var parameterType = parameter.GetType();
 
-                // Handle anonymous objects and regular objects
-                foreach (var property in parameterType.GetProperties())
+                // Handle simple value types (int, string, etc.) by treating them as "id" parameter
+                if (parameterType.IsPrimitive || parameterType == typeof(string) || parameterType == typeof(decimal))
                 {
-                    var value = property.GetValue(parameter);
-                    if (value != null)
+                    var encodedValue = System.Web.HttpUtility.UrlEncode(parameter.ToString());
+                    queryParams.Add($"id={encodedValue}");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BuildQueryParameters: Simple type {parameterType.Name} -> id={encodedValue}");
+                }
+                else
+                {
+                    // Handle anonymous objects and regular objects
+                    foreach (var property in parameterType.GetProperties())
                     {
-                        var encodedValue = System.Web.HttpUtility.UrlEncode(value.ToString());
-                        queryParams.Add($"{property.Name.ToLower()}={encodedValue}");
+                        var value = property.GetValue(parameter);
+                        if (value != null)
+                        {
+                            var encodedValue = System.Web.HttpUtility.UrlEncode(value.ToString());
+                            queryParams.Add($"{property.Name.ToLower()}={encodedValue}");
+                        }
                     }
                 }
 
-                return string.Join("&", queryParams);
+                var result = string.Join("&", queryParams);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] BuildQueryParameters result: {result}");
+                return result;
             }
             catch (Exception ex)
             {

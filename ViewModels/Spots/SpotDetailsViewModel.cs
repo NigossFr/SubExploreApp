@@ -17,11 +17,13 @@ using Microsoft.Maui.Maps;
 
 namespace SubExplore.ViewModels.Spots
 {
+    [QueryProperty(nameof(SpotIdString), "id")]
     public partial class SpotDetailsViewModel : ViewModelBase
     {
         private readonly ISpotRepository _spotRepository;
         private readonly ISpotMediaRepository _spotMediaRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ISpotService _spotService;
 
         [ObservableProperty]
         private Models.Domain.Spot _spot;
@@ -38,12 +40,48 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private bool _isLoading;
 
+        [ObservableProperty]
+        private SpotStatistics _spotStatistics;
+
+        [ObservableProperty] 
+        private SpotSafetyReport _safetyReport;
+
+        [ObservableProperty]
+        private double _averageRating;
+
+        [ObservableProperty]
+        private int _reviewCount;
+
+        [ObservableProperty]
+        private bool _isFavorite;
+
+        [ObservableProperty]
+        private IEnumerable<Models.Domain.Spot> _similarSpots;
+
         private int _spotId;
 
         public int SpotId
         {
             get => _spotId;
             set => SetProperty(ref _spotId, value);
+        }
+
+        // Query property for Shell navigation
+        public string SpotIdString
+        {
+            get => SpotId.ToString();
+            set 
+            {
+                if (int.TryParse(value, out int spotId))
+                {
+                    SpotId = spotId;
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotIdString set to {value}, parsed SpotId: {SpotId}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] SpotDetailsViewModel: Invalid SpotIdString value: {value}");
+                }
+            }
         }
 
         // Propriétés lisibles pour la vue mais pas liées directement à MapPosition
@@ -54,6 +92,7 @@ namespace SubExplore.ViewModels.Spots
             ISpotRepository spotRepository,
             ISpotMediaRepository spotMediaRepository,
             IUserRepository userRepository,
+            ISpotService spotService,
             IDialogService dialogService,
             INavigationService navigationService)
             : base(dialogService, navigationService)
@@ -61,8 +100,10 @@ namespace SubExplore.ViewModels.Spots
             _spotRepository = spotRepository;
             _spotMediaRepository = spotMediaRepository;
             _userRepository = userRepository;
+            _spotService = spotService;
 
             SpotMedias = new ObservableCollection<SpotMedia>();
+            SimilarSpots = new List<Models.Domain.Spot>();
             Title = "Détails du spot";
         }
 
@@ -81,32 +122,47 @@ namespace SubExplore.ViewModels.Spots
             if (SpotId <= 0)
                 return;
 
+            // Add null safety guards
+            if (_spotService == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[ERROR] LoadSpotAsync: _spotService is null");
+                return;
+            }
+
             IsLoading = true;
 
             try
             {
-                // Charger le spot
-                Spot = await _spotRepository.GetByIdAsync(SpotId);
+                // Load spot with enhanced service
+                Spot = await _spotService.GetSpotWithFullDetailsAsync(SpotId);
 
                 if (Spot == null)
                 {
-                    await DialogService.ShowAlertAsync("Erreur", "Le spot demandé n'existe pas.", "OK");
-                    await NavigationService.GoBackAsync();
+                    if (DialogService != null)
+                    {
+                        await DialogService.ShowAlertAsync("Erreur", "Le spot demandé n'existe pas.", "OK");
+                    }
+                    if (NavigationService != null)
+                    {
+                        await NavigationService.GoBackAsync();
+                    }
                     return;
                 }
 
                 Title = Spot.Name;
 
-                // Charger les médias du spot
-                var medias = await _spotMediaRepository.GetBySpotIdAsync(SpotId);
+                // Load media (now included in full details)
                 SpotMedias.Clear();
-                foreach (var media in medias)
+                if (Spot.Media != null)
                 {
-                    SpotMedias.Add(media);
+                    foreach (var media in Spot.Media)
+                    {
+                        SpotMedias.Add(media);
+                    }
                 }
 
-                // Charger le nom du créateur
-                if (Spot.CreatorId > 0)
+                // Load creator name
+                if (Spot.CreatorId > 0 && _userRepository != null)
                 {
                     var creator = await _userRepository.GetByIdAsync(Spot.CreatorId);
                     CreatorName = creator?.Username ?? "Utilisateur inconnu";
@@ -115,14 +171,56 @@ namespace SubExplore.ViewModels.Spots
                 {
                     CreatorName = "Utilisateur inconnu";
                 }
+
+                // Load enhanced spot data
+                await LoadEnhancedSpotDataAsync();
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", $"Une erreur est survenue lors du chargement du spot : {ex.Message}", "OK");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotAsync failed: {ex.Message}");
+                if (DialogService != null)
+                {
+                    await DialogService.ShowAlertAsync("Erreur", $"Une erreur est survenue lors du chargement du spot : {ex.Message}", "OK");
+                }
             }
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        private async Task LoadEnhancedSpotDataAsync()
+        {
+            try
+            {
+                // Add null safety guard for enhanced data loading
+                if (_spotService == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[WARNING] LoadEnhancedSpotDataAsync: _spotService is null, skipping enhanced data");
+                    return;
+                }
+
+                // Load statistics
+                SpotStatistics = await _spotService.GetSpotStatisticsAsync(SpotId);
+
+                // Load safety report
+                SafetyReport = await _spotService.GenerateSafetyReportAsync(SpotId);
+
+                // Load rating data
+                AverageRating = await _spotService.GetSpotAverageRatingAsync(SpotId);
+                ReviewCount = await _spotService.GetSpotReviewCountAsync(SpotId);
+
+                // Load similar spots
+                SimilarSpots = await _spotService.GetSimilarSpotsAsync(SpotId);
+
+                // Check if spot is favorite (if user is logged in)
+                // TODO: Get current user ID from authentication service
+                // IsFavorite = await _spotService.IsSpotFavoriteAsync(SpotId, currentUserId);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the main loading
+                System.Diagnostics.Debug.WriteLine($"Error loading enhanced spot data: {ex.Message}");
             }
         }
 
@@ -264,6 +362,101 @@ namespace SubExplore.ViewModels.Spots
         private async Task Back()
         {
             await NavigationService.GoBackAsync();
+        }
+
+        [RelayCommand]
+        private async Task ToggleFavorite()
+        {
+            try
+            {
+                if (Spot == null) return;
+
+                // TODO: Get current user ID from authentication service
+                // var currentUserId = await _authenticationService.GetCurrentUserIdAsync();
+                // if (currentUserId.HasValue)
+                // {
+                //     IsFavorite = await _spotService.ToggleFavoriteSpotAsync(SpotId, currentUserId.Value);
+                // }
+
+                await DialogService.ShowAlertAsync("Info", "Fonctionnalité en cours de développement", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible de modifier les favoris: {ex.Message}", "OK");
+            }
+        }
+
+        [RelayCommand]
+        private async Task ViewSimilarSpots()
+        {
+            try
+            {
+                if (SimilarSpots?.Any() == true)
+                {
+                    // TODO: Navigate to similar spots view
+                    await DialogService.ShowAlertAsync("Info", $"Spots similaires trouvés: {SimilarSpots.Count()}", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                await DialogService.ShowAlertAsync("Erreur", $"Erreur lors de la navigation: {ex.Message}", "OK");
+            }
+        }
+
+        [RelayCommand]
+        private async Task RecordVisit()
+        {
+            try
+            {
+                if (Spot == null) return;
+
+                // TODO: Get current user ID from authentication service
+                // var currentUserId = await _authenticationService.GetCurrentUserIdAsync();
+                // if (currentUserId.HasValue)
+                // {
+                //     await _spotService.RecordSpotVisitAsync(SpotId, currentUserId.Value);
+                //     await DialogService.ShowToastAsync("Visite enregistrée!");
+                //     
+                //     // Refresh statistics
+                //     SpotStatistics = await _spotService.GetSpotStatisticsAsync(SpotId);
+                // }
+
+                await DialogService.ShowAlertAsync("Info", "Visite enregistrée (fonctionnalité en développement)", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'enregistrer la visite: {ex.Message}", "OK");
+            }
+        }
+
+        [RelayCommand]
+        private async Task ViewSafetyReport()
+        {
+            try
+            {
+                if (SafetyReport == null) return;
+
+                var message = $"Score de sécurité: {SafetyReport.SafetyScore}/100\n\n";
+                
+                if (SafetyReport.SafetyWarnings.Any())
+                {
+                    message += "⚠️ Avertissements:\n";
+                    message += string.Join("\n", SafetyReport.SafetyWarnings.Select(w => $"• {w}"));
+                    message += "\n\n";
+                }
+
+                if (SafetyReport.RequiredEquipment.Any())
+                {
+                    message += "🎯 Équipement requis:\n";
+                    message += string.Join("\n", SafetyReport.RequiredEquipment.Select(e => $"• {e}"));
+                }
+
+                await DialogService.ShowAlertAsync("Rapport de sécurité", message, "OK");
+            }
+            catch (Exception ex)
+            {
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'afficher le rapport: {ex.Message}", "OK");
+            }
         }
 
         // Back command for header navigation is auto-generated as BackCommand

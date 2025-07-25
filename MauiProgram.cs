@@ -186,6 +186,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPlatformMapService, PlatformMapService>();
         builder.Services.AddSingleton<IMenuService, MenuService>();
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+        builder.Services.AddScoped<ISpotService, SpotService>();
         builder.Services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
         
         // Performance monitoring services

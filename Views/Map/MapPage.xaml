@@ -194,13 +194,13 @@
                 <maps:Map.ItemTemplate>
                     <DataTemplate x:DataType="maps:Pin">
                         <maps:Pin 
-                            Address="{Binding Address}"
-                            Label="{Binding Label}"
+                            Address=""
+                            Label=""
                             Location="{Binding Location}"
                             Type="Place"
                             AutomationId="SpotPin"
-                            SemanticProperties.Description="{Binding Label, StringFormat='Pin pour le spot {0}'}"
-                            SemanticProperties.Hint="Appuyez pour voir les détails de ce spot">
+                            SemanticProperties.Description="Pin de spot de plongée"
+                            SemanticProperties.Hint="Appuyez près du pin pour voir les détails de ce spot">
                         </maps:Pin>
                     </DataTemplate>
                 </maps:Map.ItemTemplate>
@@ -209,6 +209,7 @@
                 <!--  Vous pouvez ajouter des éléments de carte personnalisés ici  -->
             </maps:Map.MapElements>
             </maps:Map>
+            
             
             <!--  État vide  -->
             <StackLayout
@@ -508,5 +509,101 @@
                 </ScrollView>
             </Frame>
         </Grid>
+        
+        <!-- Spot Detail Mini Window - At root level for proper Z-order -->
+        <Frame x:Name="SpotMiniWindow"
+               IsVisible="{Binding IsSpotMiniWindowVisible}"
+               BackgroundColor="{StaticResource Surface}"
+               BorderColor="{StaticResource Primary}"
+               CornerRadius="15"
+               Padding="15"
+               HasShadow="True"
+               VerticalOptions="End"
+               HorizontalOptions="Center"
+               Margin="20,0,20,80"
+               WidthRequest="300"
+               HeightRequest="200"
+               InputTransparent="False"
+               AutomationId="SpotMiniWindow"
+               SemanticProperties.Description="Aperçu du spot sélectionné">
+            
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+                <!-- Close Button -->
+                <Button Grid.Row="0"
+                        Text="✕"
+                        FontSize="16"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource TextSecondary}"
+                        Command="{Binding CloseSpotMiniWindowCommand}"
+                        HorizontalOptions="End"
+                        VerticalOptions="Start"
+                        WidthRequest="30"
+                        HeightRequest="30"
+                        CornerRadius="15"
+                        Padding="0"
+                        AutomationId="CloseMiniWindowButton"
+                        SemanticProperties.Description="Fermer l'aperçu du spot" />
+                
+                <!-- Spot Name -->
+                <Label Grid.Row="1"
+                       Text="{Binding SelectedSpot.Name}"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource TextPrimary}"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       LineBreakMode="TailTruncation"
+                       MaxLines="2"
+                       AutomationId="SpotNameLabel"
+                       SemanticProperties.Description="Nom du spot" />
+                
+                <!-- Activity Type and Level -->
+                <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Frame Grid.Column="0"
+                           BackgroundColor="{Binding SelectedSpot.Type.ColorCode, FallbackValue={StaticResource Primary}}"
+                           CornerRadius="8"
+                           Padding="8,4"
+                           HasShadow="False">
+                        <Label Text="{Binding SelectedSpot.Type.Name, FallbackValue='Spot'}"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               LineBreakMode="TailTruncation"
+                               AutomationId="SpotTypeLabel"
+                               SemanticProperties.Description="Type d'activité" />
+                    </Frame>
+                    
+                    <Frame Grid.Column="1"
+                           BackgroundColor="{StaticResource Secondary}"
+                           CornerRadius="8"
+                           Padding="8,4"
+                           HasShadow="False">
+                        <Label Text="{Binding SelectedSpot.DifficultyLevel, StringFormat='Niveau {0}'}"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               AutomationId="SpotLevelLabel"
+                               SemanticProperties.Description="Niveau de difficulté" />
+                    </Frame>
+                </Grid>
+                
+                <!-- View Details Button -->
+                <Button Grid.Row="3"
+                        Text="Voir les détails"
+                        Command="{Binding ViewSpotDetailsCommand}"
+                        Style="{StaticResource ButtonPrimaryStyle}"
+                        FontSize="14"
+                        CornerRadius="8"
+                        Padding="20,8"
+                        Margin="0,5,0,0"
+                        AutomationId="ViewDetailsButton"
+                        SemanticProperties.Description="Voir tous les détails du spot"
+                        SemanticProperties.Hint="Appuyez pour ouvrir la page de détails complète du spot" />
+            </Grid>
+        </Frame>
     </Grid>
 </ContentPage>

@@ -115,6 +115,13 @@ namespace SubExplore.ViewModels.Map
         [ObservableProperty]
         private string _userAvatarUrl;
 
+        // Spot mini window properties
+        [ObservableProperty]
+        private bool _isSpotMiniWindowVisible;
+
+        [ObservableProperty]
+        private Models.Domain.Spot _selectedSpot;
+
         private readonly IDatabaseService _databaseService;
         private readonly IUserRepository _userRepository;
         private readonly ISettingsService _settingsService;
@@ -595,8 +602,152 @@ namespace SubExplore.ViewModels.Map
         {
             if (spot == null) return;
 
-            // Pour naviguer vers les détails du spot
-            await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spot.Id); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
+            // Show mini window instead of direct navigation
+            ShowSpotMiniWindow(spot);
+        }
+
+        [RelayCommand]
+        private void ShowSpotMiniWindow(Models.Domain.Spot spot)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] ShowSpotMiniWindow CALLED with spot: {spot?.Name ?? "null"}");
+            
+            if (spot == null) 
+            {
+                System.Diagnostics.Debug.WriteLine("[ERROR] ShowSpotMiniWindow called with null spot");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Before setting properties - IsSpotMiniWindowVisible: {IsSpotMiniWindowVisible}");
+            
+            SelectedSpot = spot;
+            IsSpotMiniWindowVisible = true;
+            
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Properties set - IsSpotMiniWindowVisible: {IsSpotMiniWindowVisible}");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ SelectedSpot: {SelectedSpot?.Name ?? "null"}");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ SelectedSpot.Type: {SelectedSpot?.Type?.Name ?? "null"}");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ SelectedSpot.DifficultyLevel: {SelectedSpot?.DifficultyLevel}");
+            
+            // Force property change notifications
+            OnPropertyChanged(nameof(IsSpotMiniWindowVisible));
+            OnPropertyChanged(nameof(SelectedSpot));
+            
+            System.Diagnostics.Debug.WriteLine("[DEBUG] ✓ Property change notifications sent");
+        }
+
+        [RelayCommand]
+        private void CloseSpotMiniWindow()
+        {
+            IsSpotMiniWindowVisible = false;
+            SelectedSpot = null;
+            
+            System.Diagnostics.Debug.WriteLine("[DEBUG] Closed spot mini window");
+        }
+
+        [RelayCommand]
+        private async Task ViewSpotDetails()
+        {
+            if (SelectedSpot == null) 
+            {
+                System.Diagnostics.Debug.WriteLine("[ERROR] ViewSpotDetails: SelectedSpot is null");
+                return;
+            }
+
+            try
+            {
+                // Capture spot data BEFORE closing mini window (which sets SelectedSpot to null)
+                var spotId = SelectedSpot.Id;
+                var spotName = SelectedSpot.Name;
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Starting navigation to details for spot {spotName} (ID: {spotId})");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Current MainPage type: {Application.Current?.MainPage?.GetType().Name}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: NavigationService null check: {NavigationService == null}");
+                
+                // Close mini window after capturing data
+                CloseSpotMiniWindow();
+                System.Diagnostics.Debug.WriteLine("[DEBUG] ViewSpotDetails: Mini window closed");
+                
+                // Check if NavigationService is available
+                if (NavigationService == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ERROR] NavigationService is null - cannot navigate");
+                    await DialogService.ShowAlertAsync("Erreur", "Service de navigation non disponible", "OK");
+                    return;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: About to call NavigateToAsync with SpotId: {spotId}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Spot name: {spotName}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Using captured data (SelectedSpot is now null after mini window closure)");
+                
+                // Final safety check before navigation
+                if (NavigationService == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ERROR] ViewSpotDetails: NavigationService became null before navigation call");
+                    await DialogService.ShowAlertAsync("Erreur", "Service de navigation non disponible", "OK");
+                    return;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Final pre-navigation check - SpotId: {spotId}, NavigationService: {NavigationService.GetType().Name}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: About to navigate to {typeof(ViewModels.Spots.SpotDetailsViewModel).FullName}");
+                
+                // Navigate to full details with isolated try-catch
+                try
+                {
+                    await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spotId);
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] ViewSpotDetails: Navigation call completed successfully");
+                }
+                catch (Exception navEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] ViewSpotDetails: Navigation failed with exception: {navEx.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Navigation stack trace: {navEx.StackTrace}");
+                    if (navEx.InnerException != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERROR] Navigation inner exception: {navEx.InnerException.Message}");
+                    }
+                    
+                    // Re-throw to be caught by outer catch block
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ViewSpotDetails failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                }
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'ouvrir les détails du spot: {ex.Message}", "OK");
+            }
+        }
+
+        [RelayCommand]
+        private void TestMiniWindow()
+        {
+            System.Diagnostics.Debug.WriteLine("[DEBUG] TestMiniWindow command executed");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Current binding context exists: {this != null}");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Current IsSpotMiniWindowVisible before: {IsSpotMiniWindowVisible}");
+            
+            // Create a test spot to verify mini window functionality
+            var testSpot = new Models.Domain.Spot
+            {
+                Id = 999,
+                Name = "DEBUG TEST SPOT",
+                DifficultyLevel = DifficultyLevel.Beginner,
+                Latitude = 43.2965m,
+                Longitude = 5.3698m,
+                Type = new SpotType
+                {
+                    Id = 1,
+                    Name = "Test Plongée",
+                    ColorCode = "#FF0000"
+                }
+            };
+            
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] About to call ShowSpotMiniWindow with test spot: {testSpot.Name}");
+            ShowSpotMiniWindow(testSpot);
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] After ShowSpotMiniWindow - IsSpotMiniWindowVisible: {IsSpotMiniWindowVisible}");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] After ShowSpotMiniWindow - SelectedSpot: {SelectedSpot?.Name}");
+            System.Diagnostics.Debug.WriteLine("[DEBUG] TestMiniWindow: Test spot mini window should now be visible with RED background");
         }
 
 
@@ -738,7 +889,7 @@ namespace SubExplore.ViewModels.Map
         {
             if (pin?.BindingContext is Models.Domain.Spot spot)
             {
-                SpotSelected(spot);
+                ShowSpotMiniWindow(spot);
             }
         }
 
@@ -1143,8 +1294,8 @@ namespace SubExplore.ViewModels.Map
 
                 var pin = new Pin
                 {
-                    Label = spot.Name,
-                    Address = $"{spot.Type?.Name ?? "Spot"} - {spot.DifficultyLevel}",
+                    Label = "", // Empty label to prevent callout
+                    Address = "", // Empty address to prevent callout
                     Location = new Location(lat, lon),
                     Type = PinType.Place,
                     BindingContext = spot
@@ -1479,15 +1630,16 @@ namespace SubExplore.ViewModels.Map
                     
                     foreach (var spot in spotsList)
                     {
-                        // Create pins off UI thread
+                        // Create pins off UI thread - IMPORTANT: Empty Label/Address to prevent callouts
                         if (IsValidSpotCoordinates(spot))
                         {
                             var pin = new Pin
                             {
-                                Label = spot.Name ?? "Spot sans nom",
-                                Address = spot.Description ?? "Aucune description",
+                                Label = "", // Empty label to prevent callout
+                                Address = "", // Empty address to prevent callout
                                 Type = PinType.Place,
-                                Location = new Location((double)spot.Latitude, (double)spot.Longitude)
+                                Location = new Location((double)spot.Latitude, (double)spot.Longitude),
+                                BindingContext = spot // Store spot data for click detection
                             };
                             pins.Add(pin);
                         }
