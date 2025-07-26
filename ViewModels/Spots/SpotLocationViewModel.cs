@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SubExplore.Services.Interfaces;
+using SubExplore.Services.Validation;
 using SubExplore.ViewModels.Base;
 
 namespace SubExplore.ViewModels.Spots
@@ -13,6 +14,7 @@ namespace SubExplore.ViewModels.Spots
     public partial class SpotLocationViewModel : ViewModelBase
     {
         private readonly ILocationService _locationService;
+        private readonly IValidationService _validationService;
 
         [ObservableProperty]
         private decimal _latitude;
@@ -29,12 +31,47 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private bool _hasUserLocation;
 
+        [ObservableProperty]
+        private bool _isLoadingLocation;
+
+        [ObservableProperty]
+        private string _locationButtonText = "Utiliser ma position actuelle";
+
+        [ObservableProperty]
+        private bool _isLocationButtonEnabled = true;
+
+        [ObservableProperty]
+        private bool _hasValidationMessage;
+
+        [ObservableProperty]
+        private string _validationMessage = string.Empty;
+
+        [ObservableProperty]
+        private string _validationMessageBackgroundColor = "Transparent";
+
+        [ObservableProperty]
+        private string _validationMessageBorderColor = "Transparent";
+
+        [ObservableProperty]
+        private string _validationMessageTextColor = "Black";
+
+        [ObservableProperty]
+        private bool _hasLatitudeError;
+
+        [ObservableProperty]
+        private bool _hasLongitudeError;
+
+        [ObservableProperty]
+        private bool _isLocationValid;
+
         public SpotLocationViewModel(
             ILocationService locationService,
+            IValidationService validationService,
             IDialogService dialogService)
             : base(dialogService)
         {
             _locationService = locationService;
+            _validationService = validationService;
             Title = "Localisation du spot";
         }
 
@@ -65,11 +102,15 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
+                IsLoadingLocation = true;
+                IsLocationButtonEnabled = false;
+                LocationButtonText = "Localisation en cours...";
+                
                 var hasPermission = await _locationService.RequestLocationPermissionAsync();
                 if (!hasPermission)
                 {
                     HasUserLocation = false;
-                    await DialogService.ShowAlertAsync("Permission", "L'accès à la localisation est nécessaire pour cette fonctionnalité.", "OK");
+                    ShowValidationMessage("Permission de localisation requise", isError: true);
                     return;
                 }
 
@@ -79,18 +120,51 @@ namespace SubExplore.ViewModels.Spots
                     Latitude = location.Latitude;
                     Longitude = location.Longitude;
                     HasUserLocation = true;
+                    IsLocationValid = true;
+                    ShowValidationMessage("Position obtenue avec succès", isError: false);
                 }
                 else
                 {
                     HasUserLocation = false;
-                    await DialogService.ShowAlertAsync("Localisation", "Impossible d'obtenir votre position. Vous pouvez placer le marqueur manuellement sur la carte.", "OK");
+                    ShowValidationMessage("Impossible d'obtenir la position. Placez le marqueur manuellement.", isError: true);
                 }
             }
             catch (Exception ex)
             {
                 HasUserLocation = false;
-                await DialogService.ShowAlertAsync("Erreur", "Une erreur est survenue lors de la récupération de votre position.", "OK");
+                ShowValidationMessage("Erreur lors de la récupération de la position", isError: true);
             }
+            finally
+            {
+                IsLoadingLocation = false;
+                IsLocationButtonEnabled = true;
+                LocationButtonText = "Utiliser ma position actuelle";
+            }
+        }
+        
+        private void ShowValidationMessage(string message, bool isError)
+        {
+            ValidationMessage = message;
+            HasValidationMessage = true;
+            
+            if (isError)
+            {
+                ValidationMessageBackgroundColor = "#FFEBEE";
+                ValidationMessageBorderColor = "#F44336";
+                ValidationMessageTextColor = "#D32F2F";
+            }
+            else
+            {
+                ValidationMessageBackgroundColor = "#E8F5E8";
+                ValidationMessageBorderColor = "#4CAF50";
+                ValidationMessageTextColor = "#2E7D32";
+            }
+            
+            // Auto-hide after 3 seconds
+            Task.Delay(3000).ContinueWith(_ => 
+            {
+                HasValidationMessage = false;
+            }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         [RelayCommand]
@@ -110,10 +184,55 @@ namespace SubExplore.ViewModels.Spots
         }
 
         [RelayCommand]
-        private void ValidateLocation()
+        private async Task ValidateLocation()
         {
-            // Cette méthode serait appelée pour valider cette étape
-            // Le ViewModel parent (AddSpotViewModel) gère la transition d'étapes
+            var validationResult = _validationService.ValidateLocation(Latitude, Longitude, AccessDescription);
+            
+            if (!validationResult.IsValid)
+            {
+                ShowValidationMessage(validationResult.GetErrorsText(), isError: true);
+                IsLocationValid = false;
+                return;
+            }
+            
+            if (validationResult.HasWarnings)
+            {
+                var shouldContinue = await DialogService.ShowConfirmationAsync(
+                    "Attention", 
+                    $"Des avertissements ont été détectés:\n{validationResult.GetWarningsText()}\n\nVoulez-vous continuer ?", 
+                    "Continuer", 
+                    "Corriger");
+                    
+                if (!shouldContinue)
+                {
+                    IsLocationValid = false;
+                    return;
+                }
+            }
+            
+            IsLocationValid = true;
+            ShowValidationMessage("Localisation validée avec succès", isError: false);
+        }
+        
+        // Auto-validate when coordinates change
+        partial void OnLatitudeChanged(decimal value)
+        {
+            ValidateCoordinatesRealTime();
+        }
+        
+        partial void OnLongitudeChanged(decimal value)
+        {
+            ValidateCoordinatesRealTime();
+        }
+        
+        private void ValidateCoordinatesRealTime()
+        {
+            // Quick validation for immediate feedback
+            HasLatitudeError = Latitude < -90 || Latitude > 90;
+            HasLongitudeError = Longitude < -180 || Longitude > 180;
+            
+            // Update validity status
+            IsLocationValid = !HasLatitudeError && !HasLongitudeError;
         }
     }
 }

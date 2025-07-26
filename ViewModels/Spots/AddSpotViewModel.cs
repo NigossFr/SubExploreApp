@@ -13,6 +13,7 @@ using SubExplore.Models.Enums;
 using SubExplore.Repositories.Interfaces;
 using SubExplore.Models.Validation;
 using SubExplore.Services.Validation;
+using SubExplore.Models.Navigation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Graphics;
 
@@ -302,9 +303,71 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
-                _logger.LogDebug("Handling location parameter from navigation");
+                _logger.LogDebug("Handling location parameter from navigation: {ParameterType}", parameter?.GetType().Name ?? "null");
                 
-                // Try to extract location from parameter object
+                // Use strongly-typed parameter system
+                if (parameter.IsParameterType<LocationNavigationParameter>())
+                {
+                    var locationParam = parameter.AsParameter<LocationNavigationParameter>();
+                    Latitude = locationParam.Latitude;
+                    Longitude = locationParam.Longitude;
+                    AccessDescription = locationParam.Description;
+                    HasUserLocation = locationParam.IsFromUserLocation;
+                    _logger.LogInformation("Using LocationNavigationParameter: {Latitude}, {Longitude}, UserLocation: {IsFromUserLocation}", 
+                        Latitude, Longitude, HasUserLocation);
+                    return;
+                }
+                
+                // Handle SpotNavigationParameter (for editing scenarios)
+                if (parameter.IsParameterType<SpotNavigationParameter>())
+                {
+                    var spotParam = parameter.AsParameter<SpotNavigationParameter>();
+                    if (spotParam.Latitude.HasValue && spotParam.Longitude.HasValue)
+                    {
+                        Latitude = spotParam.Latitude.Value;
+                        Longitude = spotParam.Longitude.Value;
+                        HasUserLocation = false; // This is from a spot, not user location
+                        _logger.LogInformation("Using SpotNavigationParameter: {Latitude}, {Longitude}", Latitude, Longitude);
+                        return;
+                    }
+                }
+                
+                // Try to extract location using extension method
+                var (extractedLat, extractedLng) = parameter.ExtractLocation();
+                if (extractedLat.HasValue && extractedLng.HasValue)
+                {
+                    Latitude = extractedLat.Value;
+                    Longitude = extractedLng.Value;
+                    HasUserLocation = false;
+                    _logger.LogInformation("Using extracted location: {Latitude}, {Longitude}", Latitude, Longitude);
+                    return;
+                }
+                
+                // Handle legacy anonymous object format (for backward compatibility)
+                if (parameter is object legacyParam && legacyParam.GetType().IsAnonymousType())
+                {
+                    _logger.LogWarning("Received legacy anonymous parameter, consider updating to use strongly-typed parameters");
+                    await HandleLegacyParameter(legacyParam);
+                    return;
+                }
+                
+                // Fallback to getting current location if parameter extraction fails
+                _logger.LogWarning("Failed to extract location from navigation parameter of type {ParameterType}, falling back to current location", 
+                    parameter?.GetType().Name ?? "null");
+                await TryGetCurrentLocation();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling location parameter, falling back to current location");
+                await TryGetCurrentLocation();
+            }
+        }
+        
+        private async Task HandleLegacyParameter(object parameter)
+        {
+            try
+            {
+                // Legacy reflection-based handling for backward compatibility
                 var parameterType = parameter.GetType();
                 var latitudeProperty = parameterType.GetProperty("Latitude");
                 var longitudeProperty = parameterType.GetProperty("Longitude");
@@ -319,18 +382,16 @@ namespace SubExplore.ViewModels.Spots
                         Latitude = Convert.ToDecimal(latValue);
                         Longitude = Convert.ToDecimal(lngValue);
                         HasUserLocation = true;
-                        _logger.LogInformation("Using location from navigation: {Latitude}, {Longitude}", Latitude, Longitude);
+                        _logger.LogInformation("Using legacy parameter format: {Latitude}, {Longitude}", Latitude, Longitude);
                         return;
                     }
                 }
                 
-                // Fallback to getting current location if parameter extraction fails
-                _logger.LogWarning("Failed to extract location from navigation parameter, falling back to current location");
                 await TryGetCurrentLocation();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error handling location parameter, falling back to current location");
+                _logger.LogError(ex, "Error handling legacy parameter format");
                 await TryGetCurrentLocation();
             }
         }

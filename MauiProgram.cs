@@ -7,6 +7,8 @@ using SubExplore.Repositories.Interfaces;
 using SubExplore.Repositories.Implementations;
 using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
+using SubExplore.Services.Validation;
+using SubExplore.Services.Caching;
 using SubExplore.ViewModels.Settings;
 using SubExplore.ViewModels.Map;
 using SubExplore.Constants;
@@ -207,6 +209,13 @@ public static class MauiProgram
         builder.Services.AddSingleton<ISecureConfigurationService, SecureConfigurationService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+        
+        // Validation services
+        builder.Services.AddScoped<IValidationService, ValidationService>();
+        
+        // Caching services
+        builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
+        builder.Services.AddScoped<ISpotCacheService, SpotCacheService>();
         
         // Configure logging
         builder.Services.AddLogging(configure => configure.AddDebug());

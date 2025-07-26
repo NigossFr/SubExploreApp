@@ -11,7 +11,7 @@
     Title="{Binding Title}"
     BackgroundColor="{StaticResource Background}">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,*,Auto">
         <!-- Page Header with Menu -->
         <common:PageHeaderView x:Name="PageHeader" 
                                Grid.Row="0"
@@ -19,7 +19,9 @@
                                ShowBackButton="True"
                                BackCommand="{Binding BackCommand}" />
         
-        <ScrollView Grid.Row="1">
+        <!-- Main content with loading overlay -->
+        <Grid Grid.Row="1">
+            <ScrollView IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}">
             <VerticalStackLayout Padding="15" Spacing="15">
 
                 <!--  Carousel de photos  -->
@@ -27,19 +29,95 @@
                     Padding="0"
                     CornerRadius="10"
                     HeightRequest="250"
-                    IsClippedToBounds="True">
-                    <CarouselView
-                        HeightRequest="250"
-                        IndicatorView="indicatorView"
-                        ItemsSource="{Binding SpotMedias}">
-                        <CarouselView.ItemTemplate>
-                            <DataTemplate x:DataType="domain:SpotMedia">
-                                <Grid>
-                                    <Image Aspect="AspectFill" Source="{Binding MediaUrl}" />
-                                </Grid>
-                            </DataTemplate>
-                        </CarouselView.ItemTemplate>
-                    </CarouselView>
+                    IsClippedToBounds="True"
+                    AutomationId="PhotoCarouselFrame">
+                    <Grid>
+                        <CarouselView
+                            HeightRequest="250"
+                            IndicatorView="indicatorView"
+                            ItemsSource="{Binding SpotMedias}"
+                            IsVisible="{Binding HasPhotos}"
+                            AutomationId="SpotPhotoCarousel"
+                            SemanticProperties.Description="Galerie de photos du spot">
+                            <CarouselView.ItemTemplate>
+                                <DataTemplate x:DataType="domain:SpotMedia">
+                                    <Grid>
+                                        <Image Aspect="AspectFill" 
+                                               Source="{Binding MediaUrl}"
+                                               AutomationId="SpotPhotoImage"
+                                               SemanticProperties.Description="Photo du spot de plongée" />
+                                        <!-- Image loading error indicator -->
+                                        <Grid BackgroundColor="#F0F0F0"
+                                              IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.HasImageLoadError}">
+                                            <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
+                                                <Label Text="🖼️"
+                                                       FontSize="32"
+                                                       HorizontalOptions="Center" />
+                                                <Label Text="Image non disponible"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource TextSecondary}"
+                                                       HorizontalOptions="Center" />
+                                            </StackLayout>
+                                        </Grid>
+                                    </Grid>
+                                </DataTemplate>
+                            </CarouselView.ItemTemplate>
+                        </CarouselView>
+                        
+                                <!-- Media loading indicator -->
+                        <StackLayout VerticalOptions="End" 
+                                    HorizontalOptions="End"
+                                    BackgroundColor="#80000000"
+                                    Padding="10,5"
+                                    IsVisible="{Binding IsLoadingMedia}"
+                                    AutomationId="MediaLoadingIndicator">
+                            <StackLayout Orientation="Horizontal" Spacing="5">
+                                <ActivityIndicator IsRunning="{Binding IsLoadingMedia}"
+                                                   Color="White"
+                                                   HeightRequest="20"
+                                                   WidthRequest="20" />
+                                <Label Text="Chargement photos..."
+                                       TextColor="White"
+                                       FontSize="12" />
+                            </StackLayout>
+                        </StackLayout>
+                        
+                        <!-- Media count indicator -->
+                        <StackLayout VerticalOptions="End" 
+                                    HorizontalOptions="Start"
+                                    BackgroundColor="#80000000"
+                                    Padding="8,4"
+                                    IsVisible="{Binding HasPhotos}"
+                                    AutomationId="MediaCountIndicator">
+                            <Label TextColor="White"
+                                   FontSize="12"
+                                   SemanticProperties.Description="Nombre de photos chargées">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="{}{0}/{1} photos">
+                                        <Binding Path="LoadedMediaCount" />
+                                        <Binding Path="TotalMediaCount" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+                        </StackLayout>
+                        
+                        <!-- No photos placeholder -->
+                        <StackLayout VerticalOptions="Center" 
+                                    HorizontalOptions="Center"
+                                    IsVisible="{Binding HasPhotos, Converter={StaticResource InvertBoolConverter}}"
+                                    AutomationId="NoPhotosPlaceholder">
+                            <Label Text="📷"
+                                   FontSize="48"
+                                   HorizontalOptions="Center"
+                                   SemanticProperties.Description="Icône appareil photo" />
+                            <Label Text="Aucune photo disponible"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   HorizontalOptions="Center"
+                                   Margin="0,10,0,0"
+                                   SemanticProperties.Description="Aucune photo n'est disponible pour ce spot" />
+                        </StackLayout>
+                    </Grid>
                 </Frame>
 
                 <IndicatorView
@@ -190,6 +268,16 @@
                     </VerticalStackLayout>
                 </Frame>
 
+                <!-- Load more photos button -->
+                <Button Text="Charger plus de photos"
+                        Command="{Binding LoadMoreMediaCommand}"
+                        IsVisible="{Binding HasPhotos}"
+                        Style="{StaticResource ButtonOutlinedStyle}"
+                        Margin="0,10,0,0"
+                        AutomationId="LoadMorePhotosButton"
+                        SemanticProperties.Description="Charger plus de photos du spot"
+                        SemanticProperties.Hint="Appuyez pour charger des photos supplémentaires" />
+
                 <!--  Boutons d'action  -->
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                     <Button
@@ -207,5 +295,63 @@
 
             </VerticalStackLayout>
         </ScrollView>
+        
+        <!-- Loading state -->
+        <Grid IsVisible="{Binding IsLoading}"
+              BackgroundColor="{StaticResource Background}">
+            <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20">
+                <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                   Color="{StaticResource Primary}"
+                                   HeightRequest="50"
+                                   WidthRequest="50"
+                                   AutomationId="SpotDetailsLoadingIndicator" />
+                <Label Text="Chargement des détails du spot..."
+                       HorizontalOptions="Center"
+                       FontSize="16"
+                       TextColor="{StaticResource TextSecondary}"
+                       SemanticProperties.Description="Chargement des informations du spot en cours" />
+            </StackLayout>
+        </Grid>
+        
+        <!-- Error state -->
+        <Grid IsVisible="{Binding IsError}"
+              BackgroundColor="{StaticResource Background}">
+            <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20" Padding="40">
+                <Label Text="⚠️"
+                       FontSize="48"
+                       HorizontalOptions="Center"
+                       SemanticProperties.Description="Icône d'erreur" />
+                <Label Text="{Binding ErrorMessage}"
+                       HorizontalOptions="Center"
+                       FontSize="16"
+                       TextColor="{StaticResource Error}"
+                       HorizontalTextAlignment="Center"
+                       AutomationId="ErrorMessageLabel"
+                       SemanticProperties.Description="Message d'erreur" />
+                <Button Text="Réessayer"
+                        Command="{Binding RefreshCommand}"
+                        Style="{StaticResource ButtonPrimaryStyle}"
+                        HorizontalOptions="Center"
+                        AutomationId="RetryButton"
+                        SemanticProperties.Description="Bouton pour réessayer le chargement"
+                        SemanticProperties.Hint="Appuyez pour recharger les informations du spot" />
+            </StackLayout>
+        </Grid>
     </Grid>
+    
+    <!-- Success/Error toast message -->
+    <Frame Grid.Row="2"
+           Padding="15,10"
+           Margin="10,5"
+           BackgroundColor="{Binding ToastBackgroundColor}"
+           BorderColor="{Binding ToastBorderColor}"
+           IsVisible="{Binding ShowToast}"
+           AutomationId="ToastMessage">
+        <Label Text="{Binding ToastMessage}"
+               TextColor="{Binding ToastTextColor}"
+               FontSize="14"
+               HorizontalOptions="Center"
+               SemanticProperties.Description="Message de notification" />
+    </Frame>
+</Grid>
 </ContentPage>

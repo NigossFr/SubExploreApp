@@ -6,9 +6,10 @@
     xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spots"
     x:DataType="viewmodels:SpotLocationViewModel">
-    <ScrollView>
-        <StackLayout Padding="20" Spacing="15">
-            <Label Style="{StaticResource Headline}" Text="Localisation du spot" />
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <StackLayout Padding="20" Spacing="15">
+                <Label Style="{StaticResource Headline}" Text="Localisation du spot" />
 
             <!--  Carte  -->
             <Frame
@@ -20,7 +21,10 @@
                     <maps:Map 
                         x:Name="spotMap"
                         IsShowingUser="{Binding HasUserLocation}" 
-                        MapType="Street">
+                        MapType="Street"
+                        AutomationId="SpotLocationMap"
+                        SemanticProperties.Description="Carte interactive pour sélectionner l'emplacement du spot"
+                        SemanticProperties.Hint="Déplacez la carte pour positionner le marqueur à l'emplacement désiré">
                         <!-- Pins will be added programmatically after coordinates are ready -->
                     </maps:Map>
 
@@ -39,40 +43,68 @@
                 <Label
                     Grid.Row="0"
                     Grid.Column="0"
-                    Text="Latitude" />
+                    Text="Latitude"
+                    AutomationId="LatitudeLabel"
+                    SemanticProperties.Description="Latitude du spot" />
                 <Entry
                     Grid.Row="1"
                     Grid.Column="0"
                     Margin="0,0,5,0"
                     Keyboard="Numeric"
-                    Text="{Binding Latitude}" />
+                    Text="{Binding Latitude}"
+                    AutomationId="LatitudeEntry"
+                    SemanticProperties.Description="Entrez la latitude en degrés décimaux"
+                    SemanticProperties.Hint="Valeur entre -90 et 90 degrés"
+                    Placeholder="Ex: 43.296482" />
 
                 <Label
                     Grid.Row="0"
                     Grid.Column="1"
-                    Text="Longitude" />
+                    Text="Longitude"
+                    AutomationId="LongitudeLabel"
+                    SemanticProperties.Description="Longitude du spot" />
                 <Entry
                     Grid.Row="1"
                     Grid.Column="1"
                     Margin="5,0,0,0"
                     Keyboard="Numeric"
-                    Text="{Binding Longitude}" />
+                    Text="{Binding Longitude}"
+                    AutomationId="LongitudeEntry"
+                    SemanticProperties.Description="Entrez la longitude en degrés décimaux"
+                    SemanticProperties.Hint="Valeur entre -180 et 180 degrés"
+                    Placeholder="Ex: 5.369780" />
             </Grid>
 
             <!--  Bouton pour obtenir la position actuelle  -->
             <Button
                 Command="{Binding GetCurrentLocationCommand}"
                 Style="{StaticResource ButtonSecondaryStyle}"
-                Text="Utiliser ma position actuelle" />
+                Text="{Binding LocationButtonText}"
+                IsEnabled="{Binding IsLocationButtonEnabled}"
+                AutomationId="GetLocationButton"
+                SemanticProperties.Description="Obtenir automatiquement votre position GPS"
+                SemanticProperties.Hint="Appuyez pour utiliser votre localisation actuelle">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding IsLoadingLocation}" Value="True">
+                        <Setter Property="Opacity" Value="0.6" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
 
             <!--  Description de l'accès  -->
-            <Label Margin="0,10,0,0" Text="Description de l'accès *" />
+            <Label Margin="0,10,0,0" 
+                   Text="Description de l'accès *"
+                   AutomationId="AccessDescriptionLabel"
+                   SemanticProperties.Description="Description de l'accès au spot" />
             <Frame Padding="10" BorderColor="{StaticResource Secondary}">
                 <Editor
                     AutoSize="TextChanges"
                     HeightRequest="150"
                     Placeholder="Décrivez comment accéder au spot (parking, sentier, etc.)"
-                    Text="{Binding AccessDescription}" />
+                    Text="{Binding AccessDescription}"
+                    AutomationId="AccessDescriptionEditor"
+                    SemanticProperties.Description="Zone de saisie pour décrire l'accès au spot"
+                    SemanticProperties.Hint="Décrivez les moyens d'accès : parking, sentier, transport public" />
             </Frame>
 
             <!--  Avertissement  -->
@@ -92,6 +124,31 @@
                         TextColor="#E65100" />
                 </StackLayout>
             </Frame>
+            
+            <!-- Loading indicator for location operations -->
+            <ActivityIndicator IsRunning="{Binding IsLoadingLocation}"
+                               IsVisible="{Binding IsLoadingLocation}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               Color="{StaticResource Primary}"
+                               AutomationId="LocationLoadingIndicator"
+                               SemanticProperties.Description="Chargement de la localisation en cours" />
         </StackLayout>
     </ScrollView>
+    
+    <!-- Error/Success message overlay -->
+    <Frame Grid.Row="1"
+           Padding="15,10"
+           Margin="10,5"
+           BackgroundColor="{Binding ValidationMessageBackgroundColor}"
+           BorderColor="{Binding ValidationMessageBorderColor}"
+           IsVisible="{Binding HasValidationMessage}"
+           AutomationId="LocationValidationMessage">
+        <Label Text="{Binding ValidationMessage}"
+               TextColor="{Binding ValidationMessageTextColor}"
+               FontSize="14"
+               HorizontalOptions="Center"
+               SemanticProperties.Description="Message de validation pour la localisation" />
+    </Frame>
+</Grid>
 </ContentView>

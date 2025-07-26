@@ -47,7 +47,10 @@
                             HorizontalOptions="Center"
                             Text="1"
                             TextColor="White"
-                            VerticalOptions="Center" />
+                            VerticalOptions="Center"
+                            AutomationId="Step1Label"
+                            SemanticProperties.Description="Étape 1 de création du spot"
+                            SemanticProperties.Hint="Appuyez pour accéder à l'étape de localisation" />
                     </Frame>
                     <Label
                         FontSize="12"

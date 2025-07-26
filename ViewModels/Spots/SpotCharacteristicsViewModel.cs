@@ -10,6 +10,7 @@ using SubExplore.Models.Domain;
 using SubExplore.Models.Enums;
 using SubExplore.Repositories.Interfaces;
 using SubExplore.Services.Interfaces;
+using SubExplore.Services.Validation;
 using SubExplore.ViewModels.Base;
 
 namespace SubExplore.ViewModels.Spots
@@ -17,6 +18,7 @@ namespace SubExplore.ViewModels.Spots
     public partial class SpotCharacteristicsViewModel : ViewModelBase
     {
         private readonly ISpotTypeRepository _spotTypeRepository;
+        private readonly IValidationService _validationService;
 
         [ObservableProperty]
         private ObservableCollection<SpotType> _spotTypes;
@@ -51,15 +53,26 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private ObservableCollection<DifficultyLevel> _difficultyLevels;
 
+        [ObservableProperty]
+        private string _description;
+
+        [ObservableProperty]
+        private bool _hasValidationErrors;
+
+        [ObservableProperty]
+        private string _validationSummary = string.Empty;
+
         // Alias pour la compatibilité XAML
         public ObservableCollection<SpotType> AvailableSpotTypes => SpotTypes;
 
         public SpotCharacteristicsViewModel(
             ISpotTypeRepository spotTypeRepository,
+            IValidationService validationService,
             IDialogService dialogService)
             : base(dialogService)
         {
             _spotTypeRepository = spotTypeRepository;
+            _validationService = validationService;
 
             SpotTypes = new ObservableCollection<SpotType>();
             CurrentStrengths = new ObservableCollection<CurrentStrength>
@@ -143,10 +156,75 @@ namespace SubExplore.ViewModels.Spots
         }
 
         [RelayCommand]
-        private void ValidateCharacteristics()
+        private async Task ValidateCharacteristics()
         {
-            // Cette méthode serait appelée pour valider cette étape
-            // Le ViewModel parent (AddSpotViewModel) gère la transition d'étapes
+            var validationResult = _validationService.ValidateSpotCharacteristics(
+                SpotName, 
+                Description, 
+                MaxDepth > 0 ? MaxDepth : null, 
+                SelectedDifficultyLevel.ToString(),
+                SelectedSpotType?.Id.ToString());
+            
+            HasValidationErrors = !validationResult.IsValid;
+            
+            if (!validationResult.IsValid)
+            {
+                ValidationSummary = validationResult.GetErrorsText();
+                await DialogService.ShowAlertAsync("Erreurs de validation", ValidationSummary, "OK");
+                return;
+            }
+            
+            if (validationResult.HasWarnings)
+            {
+                var shouldContinue = await DialogService.ShowConfirmationAsync(
+                    "Avertissements", 
+                    $"Des avertissements ont été détectés:\n{validationResult.GetWarningsText()}\n\nVoulez-vous continuer ?", 
+                    "Continuer", 
+                    "Corriger");
+                    
+                if (!shouldContinue)
+                {
+                    ValidationSummary = validationResult.GetWarningsText();
+                    return;
+                }
+            }
+            
+            HasValidationErrors = false;
+            ValidationSummary = string.Empty;
+            await DialogService.ShowToastAsync("Caractéristiques validées avec succès");
+        }
+        
+        // Auto-validate when key properties change
+        partial void OnSpotNameChanged(string value)
+        {
+            ValidateRealTime();
+        }
+        
+        partial void OnDescriptionChanged(string value)
+        {
+            ValidateRealTime();
+        }
+        
+        partial void OnMaxDepthChanged(int value)
+        {
+            ValidateRealTime();
+        }
+        
+        private void ValidateRealTime()
+        {
+            if (string.IsNullOrEmpty(SpotName) || string.IsNullOrEmpty(Description))
+            {
+                HasValidationErrors = true;
+                return;
+            }
+            
+            // Quick validation for immediate feedback
+            var hasBasicErrors = string.IsNullOrWhiteSpace(SpotName) || 
+                               SpotName.Length < 3 || 
+                               string.IsNullOrWhiteSpace(Description) || 
+                               Description.Length < 20;
+            
+            HasValidationErrors = hasBasicErrors;
         }
     }
 }

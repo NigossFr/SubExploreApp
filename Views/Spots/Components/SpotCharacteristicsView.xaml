@@ -11,19 +11,29 @@
             <Label Text="Caractéristiques du spot" Style="{StaticResource Headline}" />
 
             <!-- Nom du spot -->
-            <Label Text="Nom du spot *" />
+            <Label Text="Nom du spot *"
+                   AutomationId="SpotNameLabel"
+                   SemanticProperties.Description="Nom du spot de plongée" />
             <Frame Padding="5" BorderColor="{StaticResource Secondary}">
                 <Entry Text="{Binding SpotName}" 
                       Placeholder="Donnez un nom à ce spot"
-                      MaxLength="100" />
+                      MaxLength="100"
+                      AutomationId="SpotNameEntry"
+                      SemanticProperties.Description="Saisissez le nom du spot"
+                      SemanticProperties.Hint="Nom descriptif du lieu de plongée, maximum 100 caractères" />
             </Frame>
 
             <!-- Type d'activité -->
-            <Label Text="Type d'activité *" Margin="0,10,0,0" />
+            <Label Text="Type d'activité *" Margin="0,10,0,0"
+                   AutomationId="ActivityTypeLabel"
+                   SemanticProperties.Description="Type d'activité sous-marine" />
             <Frame Padding="10" BorderColor="{StaticResource Secondary}">
                 <CollectionView ItemsSource="{Binding AvailableSpotTypes}" 
                               SelectionMode="None"
-                              HeightRequest="200">
+                              HeightRequest="200"
+                              AutomationId="ActivityTypeCollection"
+                              SemanticProperties.Description="Liste des types d'activités disponibles"
+                              SemanticProperties.Hint="Sélectionnez un ou plusieurs types d'activités pratiquées sur ce spot">
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout Orientation="Vertical" 
                                         Span="2"
@@ -46,11 +56,14 @@
                                         <Label Text="{Binding Name}" 
                                               TextColor="White"
                                               FontAttributes="Bold"
-                                              HorizontalOptions="Center" />
+                                              HorizontalOptions="Center"
+                                              AutomationId="{Binding Name, StringFormat='ActivityType_{0}'}"
+                                              SemanticProperties.Description="{Binding Name, StringFormat='Type d\'activité {0}'}" />
                                         <Label Text="{Binding Description}" 
                                               FontSize="12"
                                               TextColor="White"
-                                              HorizontalOptions="Center" />
+                                              HorizontalOptions="Center"
+                                              SemanticProperties.Description="{Binding Description}" />
                                     </StackLayout>
                                 </Frame>
                             </Grid>
@@ -60,32 +73,49 @@
             </Frame>
 
             <!-- Profondeur max -->
-            <Label Text="Profondeur maximale (m)" Margin="0,10,0,0" />
+            <Label Text="Profondeur maximale (m)" Margin="0,10,0,0"
+                   AutomationId="MaxDepthLabel"
+                   SemanticProperties.Description="Profondeur maximale du spot" />
             <Frame Padding="5" BorderColor="{StaticResource Secondary}">
                 <StackLayout Orientation="Horizontal">
                     <Entry Text="{Binding MaxDepth}" 
                           Keyboard="Numeric"
-                          HorizontalOptions="FillAndExpand" />
+                          HorizontalOptions="FillAndExpand"
+                          AutomationId="MaxDepthEntry"
+                          SemanticProperties.Description="Saisissez la profondeur maximale en mètres"
+                          SemanticProperties.Hint="Profondeur en mètres, nombres entiers uniquement"
+                          Placeholder="Ex: 25" />
                     <Label Text="m" 
                           VerticalOptions="Center"
-                          Margin="0,0,10,0" />
+                          Margin="0,0,10,0"
+                          SemanticProperties.Description="Unité : mètres" />
                 </StackLayout>
             </Frame>
 
             <!-- Niveau de difficulté -->
-            <Label Text="Niveau de difficulté" Margin="0,10,0,0" />
+            <Label Text="Niveau de difficulté" Margin="0,10,0,0"
+                   AutomationId="DifficultyLabel"
+                   SemanticProperties.Description="Niveau de difficulté du spot" />
             <Frame Padding="10" BorderColor="{StaticResource Secondary}">
                 <Picker ItemsSource="{Binding DifficultyLevels}"
                        SelectedItem="{Binding SelectedDifficultyLevel}"
-                       HorizontalOptions="Fill" />
+                       HorizontalOptions="Fill"
+                       AutomationId="DifficultyPicker"
+                       SemanticProperties.Description="Sélectionnez le niveau de difficulté"
+                       SemanticProperties.Hint="Choisissez entre Débutant, Intermédiaire, Avancé ou Expert" />
             </Frame>
 
             <!-- Courant -->
-            <Label Text="Force du courant" Margin="0,10,0,0" />
+            <Label Text="Force du courant" Margin="0,10,0,0"
+                   AutomationId="CurrentStrengthLabel"
+                   SemanticProperties.Description="Force du courant marin" />
             <Frame Padding="10" BorderColor="{StaticResource Secondary}">
                 <Picker ItemsSource="{Binding CurrentStrengths}"
                        SelectedItem="{Binding SelectedCurrentStrength}"
-                       HorizontalOptions="Fill" />
+                       HorizontalOptions="Fill"
+                       AutomationId="CurrentStrengthPicker"
+                       SemanticProperties.Description="Sélectionnez la force du courant"
+                       SemanticProperties.Hint="Intensité du courant : Aucun, Léger, Modéré, Fort ou Extrême" />
             </Frame>
 
             <!-- Équipement requis -->

@@ -17,18 +17,25 @@
             </Frame>
 
             <!-- Photo principale -->
-            <Label Text="Photo principale *" Margin="0,10,0,0" />
-            <Frame Padding="0" HeightRequest="200" CornerRadius="10" IsClippedToBounds="True" BorderColor="{StaticResource Secondary}">
+            <Label Text="Photo principale *" Margin="0,10,0,0"
+                   AutomationId="PrimaryPhotoLabel"
+                   SemanticProperties.Description="Photo principale du spot" />
+            <Frame Padding="0" HeightRequest="200" CornerRadius="10" IsClippedToBounds="True" 
+                   BorderColor="{StaticResource Secondary}"
+                   AutomationId="PrimaryPhotoFrame">
                 <Grid>
                     <!-- Photo si disponible, sinon placeholder -->
                     <Image Source="{Binding PrimaryPhotoPath}" 
                            Aspect="AspectFill"
-                           IsVisible="{Binding PrimaryPhotoPath, Converter={StaticResource StringNotEmptyConverter}}" />
+                           IsVisible="{Binding PrimaryPhotoPath, Converter={StaticResource StringNotEmptyConverter}}"
+                           AutomationId="PrimaryPhotoImage"
+                           SemanticProperties.Description="Image principale du spot de plongée" />
 
                     <!-- Placeholder si pas de photo -->
                     <StackLayout VerticalOptions="Center" 
                                 HorizontalOptions="Center"
-                                IsVisible="{Binding PrimaryPhotoPath, Converter={StaticResource StringEmptyConverter}}">
+                                IsVisible="{Binding PrimaryPhotoPath, Converter={StaticResource StringEmptyConverter}}"
+                                AutomationId="PrimaryPhotoPlaceholder">
                         <Frame HeightRequest="50" 
                                WidthRequest="50" 
                                CornerRadius="25" 
@@ -37,13 +44,32 @@
                             <Label Text="📷" 
                                    HorizontalOptions="Center" 
                                    VerticalOptions="Center"
-                                   FontSize="24" />
+                                   FontSize="24"
+                                   SemanticProperties.Description="Icône appareil photo" />
                         </Frame>
                         <Label Text="Vue générale du site conseillée" 
                                Margin="0,10,0,0"
                                TextColor="{StaticResource TextSecondary}"
-                               HorizontalOptions="Center" />
+                               HorizontalOptions="Center"
+                               SemanticProperties.Description="Suggestion pour la photo principale" />
                     </StackLayout>
+                    
+                    <!-- Progress indicator overlay -->
+                    <Grid BackgroundColor="#80000000"
+                          IsVisible="{Binding IsUploadingPrimaryPhoto}"
+                          AutomationId="PrimaryPhotoProgressOverlay">
+                        <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
+                            <ActivityIndicator IsRunning="{Binding IsUploadingPrimaryPhoto}"
+                                               Color="White"
+                                               HeightRequest="40"
+                                               WidthRequest="40" />
+                            <Label Text="Traitement de l'image..."
+                                   TextColor="White"
+                                   FontSize="14"
+                                   Margin="0,10,0,0"
+                                   SemanticProperties.Description="Traitement de l'image en cours" />
+                        </StackLayout>
+                    </Grid>
                 </Grid>
             </Frame>
 
@@ -52,12 +78,41 @@
                 <Button Grid.Column="0" 
                         Text="Prendre une photo" 
                         Command="{Binding TakePhotoCommand}"
-                        Style="{StaticResource ButtonSecondaryStyle}" />
+                        Style="{StaticResource ButtonSecondaryStyle}"
+                        IsEnabled="{Binding CanAddMorePhotos}"
+                        AutomationId="TakePhotoButton"
+                        SemanticProperties.Description="Prendre une photo avec l'appareil"
+                        SemanticProperties.Hint="Ouvre l'appareil photo pour capturer une image">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding CanAddMorePhotos}" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
                 <Button Grid.Column="1" 
                         Text="Choisir une photo" 
                         Command="{Binding PickPhotoCommand}"
-                        Style="{StaticResource ButtonOutlinedStyle}" />
+                        Style="{StaticResource ButtonOutlinedStyle}"
+                        IsEnabled="{Binding CanAddMorePhotos}"
+                        AutomationId="PickPhotoButton"
+                        SemanticProperties.Description="Choisir une photo de la galerie"
+                        SemanticProperties.Hint="Sélectionne une image existante">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding CanAddMorePhotos}" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
             </Grid>
+            
+            <!-- Photo count status -->
+            <Label Text="{Binding PhotoCountStatus}"
+                   HorizontalOptions="Center"
+                   FontSize="12"
+                   TextColor="{Binding PhotoCountStatusColor}"
+                   IsVisible="{Binding ShowPhotoCountStatus}"
+                   AutomationId="PhotoCountStatus"
+                   SemanticProperties.Description="Statut du nombre de photos ajouté" />
 
             <!-- Photos additionnelles -->
             <Label Text="Photos additionnelles" Margin="0,15,0,0" />
@@ -80,29 +135,25 @@
                                        Aspect="AspectFill"
                                        HeightRequest="120" />
 
-                                <!-- Overlay avec boutons d'action -->
-                                <Grid BackgroundColor="#80000000" 
-                                      IsVisible="False">
-                                    <Grid.Triggers>
-                                        <DataTrigger TargetType="Grid"
-                                                    Binding="{Binding Source={RelativeSource Self}, Path=Parent, Mode=OneWay}"
-                                                    Value="{x:Null}">
-                                            <Setter Property="IsVisible" Value="True" />
-                                        </DataTrigger>
-                                    </Grid.Triggers>
-
+                                <!-- Action buttons overlay - Always visible for better UX -->
+                                <Grid BackgroundColor="#60000000"
+                                      VerticalOptions="End"
+                                      HeightRequest="50">
                                     <HorizontalStackLayout HorizontalOptions="Center" 
                                                           VerticalOptions="Center"
-                                                          Spacing="10">
+                                                          Spacing="15">
                                         <Button Text="🗑️" 
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.RemovePhotoCommand}"
                                                 CommandParameter="{Binding .}"
                                                 BackgroundColor="{StaticResource Error}"
                                                 TextColor="White"
                                                 CornerRadius="20"
-                                                HeightRequest="40"
-                                                WidthRequest="40"
-                                                Padding="0" />
+                                                HeightRequest="36"
+                                                WidthRequest="36"
+                                                Padding="0"
+                                                AutomationId="RemovePhotoButton"
+                                                SemanticProperties.Description="Supprimer cette photo"
+                                                SemanticProperties.Hint="Appuyez pour retirer cette image de la liste" />
 
                                         <Button Text="⭐" 
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SetPrimaryPhotoCommand}"
@@ -110,23 +161,28 @@
                                                 BackgroundColor="{StaticResource Primary}"
                                                 TextColor="White"
                                                 CornerRadius="20"
-                                                HeightRequest="40"
-                                                WidthRequest="40"
-                                                Padding="0" />
+                                                HeightRequest="36"
+                                                WidthRequest="36"
+                                                Padding="0"
+                                                AutomationId="SetPrimaryPhotoButton"
+                                                SemanticProperties.Description="Définir comme photo principale"
+                                                SemanticProperties.Hint="Appuyez pour faire de cette image la photo principale" />
                                     </HorizontalStackLayout>
                                 </Grid>
 
                                 <!-- Badge "Principale" si c'est la photo principale -->
                                 <Frame BackgroundColor="{StaticResource Primary}"
-                                      Padding="5"
-                                      CornerRadius="10"
+                                      Padding="8,4"
+                                      CornerRadius="12"
                                       HorizontalOptions="End"
                                       VerticalOptions="Start"
-                                      Margin="5"
+                                      Margin="8"
                                       IsVisible="{Binding ., Converter={StaticResource StringEqualConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.PrimaryPhotoPath}}">
                                     <Label Text="Principale" 
                                            TextColor="White"
-                                           FontSize="10" />
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           SemanticProperties.Description="Photo principale du spot" />
                                 </Frame>
                             </Grid>
                         </Frame>

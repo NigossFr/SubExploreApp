@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using SubExplore.Models.Domain;
 using SubExplore.Repositories.Interfaces;
 using SubExplore.Services.Interfaces;
+using SubExplore.Services.Caching;
 using SubExplore.ViewModels.Base;
 
 // Importations très spécifiques sans ambiguïté
@@ -24,12 +25,27 @@ namespace SubExplore.ViewModels.Spots
         private readonly ISpotMediaRepository _spotMediaRepository;
         private readonly IUserRepository _userRepository;
         private readonly ISpotService _spotService;
+        private readonly ISpotCacheService _spotCacheService;
 
         [ObservableProperty]
         private Models.Domain.Spot _spot;
 
         [ObservableProperty]
         private ObservableCollection<SpotMedia> _spotMedias;
+
+        [ObservableProperty]
+        private bool _isLoadingMedia;
+
+        [ObservableProperty]
+        private int _totalMediaCount;
+
+        [ObservableProperty]
+        private int _loadedMediaCount;
+
+        // Lazy loading properties
+        private const int MediaBatchSize = 5;
+        private readonly Dictionary<int, SpotMedia> _mediaCache = new();
+        private bool _allMediaLoaded = false;
 
         // Pas de stockage de Position/Location dans le ViewModel
         // Ces valeurs seront calculées à la demande
@@ -57,6 +73,28 @@ namespace SubExplore.ViewModels.Spots
 
         [ObservableProperty]
         private IEnumerable<Models.Domain.Spot> _similarSpots;
+
+        [ObservableProperty]
+        private bool _hasPhotos;
+
+        [ObservableProperty]
+        private bool _hasImageLoadError;
+
+
+        [ObservableProperty]
+        private bool _showToast;
+
+        [ObservableProperty]
+        private string _toastMessage = string.Empty;
+
+        [ObservableProperty]
+        private string _toastBackgroundColor = "Transparent";
+
+        [ObservableProperty]
+        private string _toastBorderColor = "Transparent";
+
+        [ObservableProperty]
+        private string _toastTextColor = "Black";
 
         private int _spotId;
 
@@ -93,14 +131,16 @@ namespace SubExplore.ViewModels.Spots
             ISpotMediaRepository spotMediaRepository,
             IUserRepository userRepository,
             ISpotService spotService,
+            ISpotCacheService spotCacheService,
             IDialogService dialogService,
             INavigationService navigationService)
             : base(dialogService, navigationService)
         {
             _spotRepository = spotRepository;
             _spotMediaRepository = spotMediaRepository;
-            _userRepository = userRepository;
+            _userRepository = userRepository;  
             _spotService = spotService;
+            _spotCacheService = spotCacheService;
 
             SpotMedias = new ObservableCollection<SpotMedia>();
             SimilarSpots = new List<Models.Domain.Spot>();
@@ -130,36 +170,37 @@ namespace SubExplore.ViewModels.Spots
             }
 
             IsLoading = true;
+            IsError = false;
+            ErrorMessage = string.Empty;
 
             try
             {
-                // Load spot with enhanced service
-                Spot = await _spotService.GetSpotWithFullDetailsAsync(SpotId);
+                // Try to get spot from cache first
+                Spot = await _spotCacheService.GetSpotAsync(SpotId);
+                
+                if (Spot == null)
+                {
+                    // Load spot from service if not in cache
+                    Spot = await _spotService.GetSpotWithFullDetailsAsync(SpotId);
+                    
+                    if (Spot != null)
+                    {
+                        // Cache the loaded spot
+                        await _spotCacheService.SetSpotAsync(Spot);
+                    }
+                }
 
                 if (Spot == null)
                 {
-                    if (DialogService != null)
-                    {
-                        await DialogService.ShowAlertAsync("Erreur", "Le spot demandé n'existe pas.", "OK");
-                    }
-                    if (NavigationService != null)
-                    {
-                        await NavigationService.GoBackAsync();
-                    }
+                    IsError = true;
+                    ErrorMessage = "Le spot demandé n'existe pas ou a été supprimé.";
                     return;
                 }
 
                 Title = Spot.Name;
 
-                // Load media (now included in full details)
-                SpotMedias.Clear();
-                if (Spot.Media != null)
-                {
-                    foreach (var media in Spot.Media)
-                    {
-                        SpotMedias.Add(media);
-                    }
-                }
+                // Initialize media collections with lazy loading
+                await InitializeMediaCollectionAsync();
 
                 // Load creator name
                 if (Spot.CreatorId > 0 && _userRepository != null)
@@ -178,10 +219,8 @@ namespace SubExplore.ViewModels.Spots
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotAsync failed: {ex.Message}");
-                if (DialogService != null)
-                {
-                    await DialogService.ShowAlertAsync("Erreur", $"Une erreur est survenue lors du chargement du spot : {ex.Message}", "OK");
-                }
+                IsError = true;
+                ErrorMessage = "Une erreur est survenue lors du chargement du spot. Vérifiez votre connexion internet et réessayez.";
             }
             finally
             {
@@ -365,6 +404,37 @@ namespace SubExplore.ViewModels.Spots
         }
 
         [RelayCommand]
+        private async Task Refresh()
+        {
+            await LoadSpotAsync();
+        }
+
+        private void DisplayToast(string message, bool isError = false)
+        {
+            ToastMessage = message;
+            ShowToast = true;
+            
+            if (isError)
+            {
+                ToastBackgroundColor = "#FFEBEE";
+                ToastBorderColor = "#F44336";
+                ToastTextColor = "#D32F2F";
+            }
+            else
+            {
+                ToastBackgroundColor = "#E8F5E8";
+                ToastBorderColor = "#4CAF50";
+                ToastTextColor = "#2E7D32";
+            }
+            
+            // Auto-hide after 3 seconds
+            Task.Delay(3000).ContinueWith(_ => 
+            {
+                ShowToast = false;
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+        }
+
+        [RelayCommand]
         private async Task ToggleFavorite()
         {
             try
@@ -459,6 +529,151 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        // Media lazy loading implementation with caching
+        private async Task InitializeMediaCollectionAsync()
+        {
+            try
+            {
+                SpotMedias.Clear();
+                _mediaCache.Clear();
+                _allMediaLoaded = false;
+                
+                // Try to get media from cache first
+                var cachedMedia = await _spotCacheService.GetSpotMediaAsync(SpotId);
+                var mediaList = cachedMedia?.ToList();
+                
+                if (mediaList == null || !mediaList.Any())
+                {
+                    // Use spot's media or load from repository
+                    if (Spot?.Media != null)
+                    {
+                        mediaList = Spot.Media.ToList();
+                        // Cache the media for future use
+                        await _spotCacheService.SetSpotMediaAsync(SpotId, mediaList);
+                    }
+                    else
+                    {
+                        mediaList = new List<SpotMedia>();
+                    }
+                }
+                
+                TotalMediaCount = mediaList.Count;
+                HasPhotos = TotalMediaCount > 0;
+                
+                if (TotalMediaCount > 0)
+                {
+                    // Load first batch immediately for initial display
+                    await LoadMediaBatchFromList(mediaList, 0, Math.Min(MediaBatchSize, TotalMediaCount));
+                }
+                
+                LoadedMediaCount = SpotMedias.Count;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initializing media collection: {ex.Message}");
+                HasPhotos = false;
+                TotalMediaCount = 0;
+                LoadedMediaCount = 0;
+            }
+        }
+        
+        private async Task LoadMediaBatchFromList(List<SpotMedia> mediaList, int startIndex, int count)
+        {
+            if (mediaList == null || IsLoadingMedia) return;
+            
+            try
+            {
+                IsLoadingMedia = true;
+                
+                var mediaToLoad = mediaList
+                    .Skip(startIndex)
+                    .Take(count)
+                    .Where(m => !_mediaCache.ContainsKey(m.Id))
+                    .ToList();
+                
+                foreach (var media in mediaToLoad)
+                {
+                    // Cache the media item
+                    _mediaCache[media.Id] = media;
+                    
+                    // Add to observable collection
+                    SpotMedias.Add(media);
+                    
+                    // Small delay for smooth loading experience
+                    await Task.Delay(50);
+                }
+                
+                LoadedMediaCount = SpotMedias.Count;
+                _allMediaLoaded = LoadedMediaCount >= TotalMediaCount;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading media batch: {ex.Message}");
+            }
+            finally
+            {
+                IsLoadingMedia = false;
+            }
+        }
+        
+        private async Task LoadMediaBatchAsync(int startIndex, int count)
+        {
+            // Get cached media list
+            var cachedMedia = await _spotCacheService.GetSpotMediaAsync(SpotId);
+            var mediaList = cachedMedia?.ToList() ?? Spot?.Media?.ToList();
+            
+            if (mediaList != null)
+            {
+                await LoadMediaBatchFromList(mediaList, startIndex, count);
+            }
+        }
+        
+        [RelayCommand]
+        private async Task LoadMoreMedia()
+        {
+            if (_allMediaLoaded || IsLoadingMedia) return;
+            
+            var nextBatchStart = LoadedMediaCount;
+            var remainingCount = TotalMediaCount - LoadedMediaCount;
+            var batchSize = Math.Min(MediaBatchSize, remainingCount);
+            
+            await LoadMediaBatchAsync(nextBatchStart, batchSize);
+        }
+        
+        // Optimize memory by disposing unused media from cache
+        private void OptimizeMediaCache()
+        {
+            if (_mediaCache.Count > MediaBatchSize * 2)
+            {
+                var itemsToRemove = _mediaCache.Keys
+                    .Take(_mediaCache.Count - MediaBatchSize)
+                    .ToList();
+                
+                foreach (var key in itemsToRemove)
+                {
+                    _mediaCache.Remove(key);
+                }
+            }
+        }
+
         // Back command for header navigation is auto-generated as BackCommand
+        
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Clear media cache
+                _mediaCache?.Clear();
+                
+                // Clear collections
+                SpotMedias?.Clear();
+                
+                // Clear references
+                Spot = null;
+                SimilarSpots = null;
+            }
+            
+            base.Dispose(disposing);
+        }
     }
 }

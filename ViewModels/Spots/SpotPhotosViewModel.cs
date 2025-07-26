@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SubExplore.Services.Interfaces;
+using SubExplore.Services.Validation;
 using SubExplore.ViewModels.Base;
 
 namespace SubExplore.ViewModels.Spots
@@ -14,6 +15,7 @@ namespace SubExplore.ViewModels.Spots
     public partial class SpotPhotosViewModel : ViewModelBase
     {
         private readonly IMediaService _mediaService;
+        private readonly IValidationService _validationService;
 
         [ObservableProperty]
         private ObservableCollection<string> _photosPaths;
@@ -24,14 +26,65 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private bool _isUploading;
 
+        [ObservableProperty]
+        private bool _isUploadingPrimaryPhoto;
+
+        [ObservableProperty]
+        private bool _canAddMorePhotos = true;
+
+        [ObservableProperty]
+        private string _photoCountStatus = string.Empty;
+
+        [ObservableProperty]
+        private string _photoCountStatusColor = "Black";
+
+        [ObservableProperty]
+        private bool _showPhotoCountStatus;
+
+        private const int MaxPhotosAllowed = 3;
+
         public SpotPhotosViewModel(
             IMediaService mediaService,
+            IValidationService validationService,
             IDialogService dialogService)
             : base(dialogService)
         {
             _mediaService = mediaService;
+            _validationService = validationService;
             PhotosPaths = new ObservableCollection<string>();
+            PhotosPaths.CollectionChanged += OnPhotosPathsChanged;
             Title = "Photos du spot";
+            UpdatePhotoStatus();
+        }
+        
+        private void OnPhotosPathsChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            UpdatePhotoStatus();
+        }
+        
+        private void UpdatePhotoStatus()
+        {
+            var count = PhotosPaths.Count;
+            CanAddMorePhotos = count < MaxPhotosAllowed;
+            
+            if (count == 0)
+            {
+                PhotoCountStatus = "Aucune photo ajoutée";
+                PhotoCountStatusColor = "#757575";
+                ShowPhotoCountStatus = true;
+            }
+            else if (count < MaxPhotosAllowed)
+            {
+                PhotoCountStatus = $"{count}/{MaxPhotosAllowed} photos - Vous pouvez en ajouter {MaxPhotosAllowed - count} de plus";
+                PhotoCountStatusColor = "#4CAF50";
+                ShowPhotoCountStatus = true;
+            }
+            else
+            {
+                PhotoCountStatus = $"{count}/{MaxPhotosAllowed} photos - Limite atteinte";
+                PhotoCountStatusColor = "#FF9800";
+                ShowPhotoCountStatus = true;
+            }
         }
 
         public override Task InitializeAsync(object parameter = null)
@@ -58,13 +111,19 @@ namespace SubExplore.ViewModels.Spots
         [RelayCommand]
         private async Task TakePhoto()
         {
-            if (PhotosPaths.Count >= 3)
+            if (PhotosPaths.Count >= MaxPhotosAllowed)
             {
-                await DialogService.ShowAlertAsync("Limite atteinte", "Vous ne pouvez pas ajouter plus de 3 photos.", "OK");
+                await DialogService.ShowAlertAsync("Limite atteinte", $"Vous ne pouvez pas ajouter plus de {MaxPhotosAllowed} photos.", "OK");
                 return;
             }
 
             IsUploading = true;
+            var isFirstPhoto = PhotosPaths.Count == 0;
+            if (isFirstPhoto)
+            {
+                IsUploadingPrimaryPhoto = true;
+            }
+            
             try
             {
                 var photoPath = await _mediaService.TakePhotoAsync();
@@ -86,19 +145,26 @@ namespace SubExplore.ViewModels.Spots
             finally
             {
                 IsUploading = false;
+                IsUploadingPrimaryPhoto = false;
             }
         }
 
         [RelayCommand]
         private async Task PickPhoto()
         {
-            if (PhotosPaths.Count >= 3)
+            if (PhotosPaths.Count >= MaxPhotosAllowed)
             {
-                await DialogService.ShowAlertAsync("Limite atteinte", "Vous ne pouvez pas ajouter plus de 3 photos.", "OK");
+                await DialogService.ShowAlertAsync("Limite atteinte", $"Vous ne pouvez pas ajouter plus de {MaxPhotosAllowed} photos.", "OK");
                 return;
             }
 
             IsUploading = true;
+            var isFirstPhoto = PhotosPaths.Count == 0;
+            if (isFirstPhoto)
+            {
+                IsUploadingPrimaryPhoto = true;
+            }
+            
             try
             {
                 var photoPath = await _mediaService.PickPhotoAsync();
@@ -120,6 +186,7 @@ namespace SubExplore.ViewModels.Spots
             finally
             {
                 IsUploading = false;
+                IsUploadingPrimaryPhoto = false;
             }
         }
 
@@ -148,10 +215,31 @@ namespace SubExplore.ViewModels.Spots
         }
 
         [RelayCommand]
-        private void ValidatePhotos()
+        private async Task ValidatePhotos()
         {
-            // Cette méthode serait appelée pour valider cette étape
-            // Le ViewModel parent (AddSpotViewModel) gère la transition d'étapes
+            var validationResult = _validationService.ValidatePhotos(PhotosPaths, PrimaryPhotoPath);
+            
+            if (!validationResult.IsValid)
+            {
+                await DialogService.ShowAlertAsync("Erreurs de validation", validationResult.GetErrorsText(), "OK");
+                return;
+            }
+            
+            if (validationResult.HasWarnings)
+            {
+                var shouldContinue = await DialogService.ShowConfirmationAsync(
+                    "Avertissements", 
+                    $"Des avertissements ont été détectés:\n{validationResult.GetWarningsText()}\n\nVoulez-vous continuer ?", 
+                    "Continuer", 
+                    "Corriger");
+                    
+                if (!shouldContinue)
+                {
+                    return;
+                }
+            }
+            
+            await DialogService.ShowToastAsync("Photos validées avec succès");
         }
     }
 }
