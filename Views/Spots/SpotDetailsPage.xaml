@@ -129,11 +129,87 @@
                 <!--  En-tête avec infos principales  -->
                 <Frame Padding="15" BorderColor="{StaticResource Secondary}">
                     <VerticalStackLayout Spacing="10">
-                        <Label
-                            FontAttributes="Bold"
-                            FontSize="24"
-                            Text="{Binding Spot.Name}"
-                            TextColor="{StaticResource Primary}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label
+                                Grid.Column="0"
+                                FontAttributes="Bold"
+                                FontSize="24"
+                                Text="{Binding Spot.Name}"
+                                TextColor="{StaticResource Primary}"
+                                VerticalOptions="Center" />
+
+                            <!-- Favorite button with count -->
+                            <StackLayout Grid.Column="1" 
+                                       Orientation="Horizontal" 
+                                       VerticalOptions="Center"
+                                       Spacing="8">
+                                <StackLayout Orientation="Vertical" 
+                                             HorizontalOptions="Center"
+                                             VerticalOptions="Center"
+                                             Spacing="0">
+                                    
+                                    <Grid WidthRequest="40" HeightRequest="40"
+                                          HorizontalOptions="Center"
+                                          VerticalOptions="Center">
+                                        
+                                        <!-- Subtle background circle -->
+                                        <Ellipse Fill="#20FFFFFF"
+                                                 Stroke="#40FFFFFF"
+                                                 StrokeThickness="1"
+                                                 WidthRequest="40"
+                                                 HeightRequest="40"
+                                                 HorizontalOptions="Center"
+                                                 VerticalOptions="Center" />
+                                        
+                                        <!-- Loading indicator -->
+                                        <ActivityIndicator IsRunning="{Binding IsLoadingFavorite}"
+                                                           IsVisible="{Binding IsLoadingFavorite}"
+                                                           Color="{StaticResource Primary}"
+                                                           WidthRequest="20"
+                                                           HeightRequest="20"
+                                                           HorizontalOptions="Center"
+                                                           VerticalOptions="Center" />
+                                        
+                                        <!-- Favorite button -->
+                                        <Button Command="{Binding ToggleFavoriteCommand}"
+                                                BackgroundColor="Transparent"
+                                                BorderWidth="0"
+                                                Padding="0"
+                                                Margin="0"
+                                                WidthRequest="40"
+                                                HeightRequest="40"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="Center"
+                                                IsEnabled="{Binding IsLoadingFavorite, Converter={StaticResource InvertBoolConverter}}"
+                                                IsVisible="{Binding IsLoadingFavorite, Converter={StaticResource InvertBoolConverter}}"
+                                                AutomationId="FavoriteToggleButton"
+                                                SemanticProperties.Description="Ajouter ou retirer ce spot des favoris"
+                                                SemanticProperties.Hint="Appuyez pour basculer l'état favori" />
+                                        
+                                        <!-- Heart icon overlay -->
+                                        <Label Text="{Binding IsFavorite, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='❤️|♡'}"
+                                               FontSize="24"
+                                               TextColor="{Binding IsFavorite, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#E91E63|{StaticResource TextSecondary}'}"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True"
+                                               IsVisible="{Binding IsLoadingFavorite, Converter={StaticResource InvertBoolConverter}}" />
+                                        
+                                    </Grid>
+                                </StackLayout>
+                                
+                                <Label Text="{Binding FavoritesCount}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding FavoritesCount, Converter={StaticResource IntGreaterThanOrEqualConverter}, ConverterParameter='1'}" />
+                            </StackLayout>
+                        </Grid>
 
                         <FlexLayout AlignItems="Center" JustifyContent="SpaceBetween">
                             <Label

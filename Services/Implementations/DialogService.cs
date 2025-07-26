@@ -51,6 +51,12 @@ namespace SubExplore.Services.Implementations
             return new LoadingDisposable(loadingPage);
         }
 
+        public Task<string> ShowActionSheetAsync(string title, string cancel, string destruction, params string[] buttons)
+        {
+            return Application.Current.Dispatcher.DispatchAsync(() =>
+                Application.Current.MainPage.DisplayActionSheet(title, cancel, destruction, buttons));
+        }
+
         private class LoadingDisposable : IDisposable
         {
             private Page _loadingPage;

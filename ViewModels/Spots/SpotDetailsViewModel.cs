@@ -27,6 +27,8 @@ namespace SubExplore.ViewModels.Spots
         private readonly ISpotService _spotService;
         private readonly ISpotCacheService _spotCacheService;
         private readonly IErrorHandlingService _errorHandlingService;
+        private readonly IFavoriteSpotService _favoriteSpotService;
+        private readonly IAuthenticationService _authenticationService;
 
         [ObservableProperty]
         private Models.Domain.Spot _spot;
@@ -97,6 +99,12 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private string _toastTextColor = "Black";
 
+        [ObservableProperty]
+        private int _favoritesCount;
+
+        [ObservableProperty]
+        private bool _isLoadingFavorite;
+
         private int _spotId;
 
         public int SpotId
@@ -134,6 +142,8 @@ namespace SubExplore.ViewModels.Spots
             ISpotService spotService,
             ISpotCacheService spotCacheService,
             IErrorHandlingService errorHandlingService,
+            IFavoriteSpotService favoriteSpotService,
+            IAuthenticationService authenticationService,
             IDialogService dialogService,
             INavigationService navigationService)
             : base(dialogService, navigationService)
@@ -144,10 +154,17 @@ namespace SubExplore.ViewModels.Spots
             _spotService = spotService ?? throw new ArgumentNullException(nameof(spotService));
             _spotCacheService = spotCacheService ?? throw new ArgumentNullException(nameof(spotCacheService));
             _errorHandlingService = errorHandlingService ?? throw new ArgumentNullException(nameof(errorHandlingService));
+            _favoriteSpotService = favoriteSpotService ?? throw new ArgumentNullException(nameof(favoriteSpotService));
+            _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
 
             SpotMedias = new ObservableCollection<SpotMedia>();
             SimilarSpots = new List<Models.Domain.Spot>();
             Title = "Détails du spot";
+            
+            // Initialize favorite-related properties with default values
+            IsFavorite = false;
+            IsLoadingFavorite = false;
+            FavoritesCount = 0;
         }
 
         public override async Task InitializeAsync(object parameter = null)
@@ -214,6 +231,9 @@ namespace SubExplore.ViewModels.Spots
 
                 // Load enhanced spot data
                 await LoadEnhancedSpotDataAsync().ConfigureAwait(false);
+
+                // Load favorite information
+                await LoadFavoriteInfoAsync().ConfigureAwait(false);
             }
             catch (TimeoutException ex)
             {
@@ -559,25 +579,108 @@ namespace SubExplore.ViewModels.Spots
             }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
+        /// <summary>
+        /// Toggle favorite status for the current spot
+        /// </summary>
         [RelayCommand]
         private async Task ToggleFavorite()
         {
+            if (Spot == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] ToggleFavorite: Spot is null");
+                return;
+            }
+
             try
             {
-                if (Spot == null) return;
+                IsLoadingFavorite = true;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Starting toggle for SpotId={SpotId}, CurrentState={IsFavorite}");
 
-                // TODO: Get current user ID from authentication service
-                // var currentUserId = await _authenticationService.GetCurrentUserIdAsync();
-                // if (currentUserId.HasValue)
-                // {
-                //     IsFavorite = await _spotService.ToggleFavoriteSpotAsync(SpotId, currentUserId.Value);
-                // }
+                // Temporary simple toggle for testing UI
+                var newFavoriteStatus = !IsFavorite;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Simulated toggle to status={newFavoriteStatus}");
 
-                await DialogService.ShowAlertAsync("Info", "Fonctionnalité en cours de développement", "OK");
+                IsFavorite = newFavoriteStatus;
+
+                // Simulate favorites count update
+                if (newFavoriteStatus)
+                {
+                    FavoritesCount++;
+                }
+                else
+                {
+                    FavoritesCount = Math.Max(0, FavoritesCount - 1);
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Updated FavoritesCount={FavoritesCount}");
+
+                var message = newFavoriteStatus 
+                    ? "Ajouté aux favoris" 
+                    : "Retiré des favoris";
+                    
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Showing toast message: {message}");
+                await DialogService.ShowToastAsync(message).ConfigureAwait(false);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Toast message shown successfully");
+
+                // TODO: Uncomment this when database is properly set up
+                /*
+                // Get current user ID from authentication service
+                var currentUserId = 1; // Using admin user for testing
+                
+                var newFavoriteStatus = await _favoriteSpotService.ToggleFavoriteAsync(
+                    currentUserId, 
+                    SpotId).ConfigureAwait(false);
+
+                IsFavorite = newFavoriteStatus;
+
+                // Update favorites count
+                FavoritesCount = await _favoriteSpotService.GetSpotFavoritesCountAsync(SpotId).ConfigureAwait(false);
+                */
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", $"Impossible de modifier les favoris: {ex.Message}", "OK");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ToggleFavorite: Exception occurred: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ToggleFavorite: Stack trace: {ex.StackTrace}");
+                await DialogService.ShowAlertAsync("Erreur", 
+                    "Impossible de modifier les favoris. Veuillez réessayer.", "OK");
+            }
+            finally
+            {
+                IsLoadingFavorite = false;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Finished. Final state IsFavorite={IsFavorite}");
+            }
+        }
+
+        /// <summary>
+        /// Load favorite information for the current spot
+        /// </summary>
+        private async Task LoadFavoriteInfoAsync()
+        {
+            try
+            {
+                // Temporary: Set default values for testing
+                IsFavorite = false;
+                FavoritesCount = new Random().Next(0, 15); // Random count for testing
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: Set IsFavorite={IsFavorite}, FavoritesCount={FavoritesCount}");
+
+                // TODO: Uncomment this when database is properly set up
+                /*
+                // Get current user ID from authentication service
+                var currentUserId = 1; // Using admin user for testing
+
+                IsFavorite = await _favoriteSpotService.IsSpotFavoritedAsync(
+                    currentUserId, 
+                    SpotId).ConfigureAwait(false);
+
+                FavoritesCount = await _favoriteSpotService.GetSpotFavoritesCountAsync(SpotId).ConfigureAwait(false);
+                */
+            }
+            catch (Exception ex)
+            {
+                await _errorHandlingService.LogExceptionAsync(ex, nameof(LoadFavoriteInfoAsync));
+                IsFavorite = false;
+                FavoritesCount = 0;
             }
         }
 

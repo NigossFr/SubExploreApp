@@ -61,5 +61,6 @@ namespace SubExplore.Models.Domain
         // Relations
         public virtual UserPreferences? Preferences { get; set; }
         public virtual ICollection<Spot> CreatedSpots { get; set; } = new List<Spot>();
+        public virtual ICollection<UserFavoriteSpot> FavoriteSpots { get; set; } = new List<UserFavoriteSpot>();
     }
 }

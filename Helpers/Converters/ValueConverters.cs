@@ -226,4 +226,85 @@ namespace SubExplore.Helpers.Converters
         }
     }
 
+    /// <summary>
+    /// Converter for checking if a value is not null
+    /// </summary>
+    public class IsNotNullConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value != null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter for checking if a string is not null or empty
+    /// </summary>
+    public class IsNotNullOrEmptyConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return !string.IsNullOrEmpty(value as string);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter for boolean to object selection with parameter
+    /// </summary>
+    public class BoolToObjectConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue && parameter is string parameterString)
+            {
+                var options = parameterString.Split('|');
+                if (options.Length == 2)
+                {
+                    return boolValue ? options[0] : options[1];
+                }
+            }
+            return value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter for priority to visual style
+    /// </summary>
+    public class PriorityToStyleConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int priority)
+            {
+                return priority switch
+                {
+                    <= 3 => "HighPriorityIndicator",
+                    <= 6 => "MediumPriorityIndicator",
+                    _ => "LowPriorityIndicator"
+                };
+            }
+            return "LowPriorityIndicator";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
 }

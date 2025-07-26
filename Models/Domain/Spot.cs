@@ -79,5 +79,6 @@ namespace SubExplore.Models.Domain
         public virtual SpotType? Type { get; set; }
 
         public virtual ICollection<SpotMedia> Media { get; set; } = new List<SpotMedia>();
+        public virtual ICollection<UserFavoriteSpot> UserFavorites { get; set; } = new List<UserFavoriteSpot>();
     }
 }

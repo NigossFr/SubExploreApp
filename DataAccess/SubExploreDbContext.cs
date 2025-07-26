@@ -23,6 +23,7 @@ namespace SubExplore.DataAccess
         public DbSet<SpotMedia> SpotMedia { get; set; }
         public DbSet<SpotType> SpotTypes { get; set; }
         public DbSet<RevokedToken> RevokedTokens { get; set; }
+        public DbSet<UserFavoriteSpot> UserFavoriteSpots { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,6 +48,10 @@ namespace SubExplore.DataAccess
                 entity.HasMany(e => e.CreatedSpots)
                       .WithOne(e => e.Creator)
                       .HasForeignKey(e => e.CreatorId);
+
+                entity.HasMany(e => e.FavoriteSpots)
+                      .WithOne(e => e.User)
+                      .HasForeignKey(e => e.UserId);
             });
 
             modelBuilder.Entity<Spot>(entity =>
@@ -78,6 +83,10 @@ namespace SubExplore.DataAccess
                 entity.HasMany(e => e.Media)
                       .WithOne(e => e.Spot)
                       .HasForeignKey(e => e.SpotId);
+
+                entity.HasMany(e => e.UserFavorites)
+                      .WithOne(e => e.Spot)
+                      .HasForeignKey(e => e.SpotId);
             });
             
             modelBuilder.Entity<SpotMedia>(entity =>
@@ -103,6 +112,27 @@ namespace SubExplore.DataAccess
                 entity.HasIndex(e => e.UserId).IsUnique().HasDatabaseName("IX_UserPreferences_UserId_Unique");
                 entity.HasIndex(e => e.Language).HasDatabaseName("IX_UserPreferences_Language");
                 entity.HasIndex(e => e.Theme).HasDatabaseName("IX_UserPreferences_Theme");
+            });
+
+            modelBuilder.Entity<UserFavoriteSpot>(entity =>
+            {
+                // Unique constraint to prevent duplicate favorites
+                entity.HasIndex(e => new { e.UserId, e.SpotId }).IsUnique().HasDatabaseName("IX_UserFavoriteSpots_User_Spot_Unique");
+                
+                // Index for retrieving user's favorites efficiently
+                entity.HasIndex(e => e.UserId).HasDatabaseName("IX_UserFavoriteSpots_UserId");
+                
+                // Index for finding who favorited a spot
+                entity.HasIndex(e => e.SpotId).HasDatabaseName("IX_UserFavoriteSpots_SpotId");
+                
+                // Index for ordering favorites by creation date
+                entity.HasIndex(e => new { e.UserId, e.CreatedAt }).HasDatabaseName("IX_UserFavoriteSpots_User_Date");
+                
+                // Index for priority-based ordering
+                entity.HasIndex(e => new { e.UserId, e.Priority, e.CreatedAt }).HasDatabaseName("IX_UserFavoriteSpots_User_Priority_Date");
+                
+                // Index for notification-enabled favorites
+                entity.HasIndex(e => new { e.UserId, e.NotificationEnabled }).HasDatabaseName("IX_UserFavoriteSpots_User_Notifications");
             });
 
             modelBuilder.Entity<RevokedToken>(entity =>

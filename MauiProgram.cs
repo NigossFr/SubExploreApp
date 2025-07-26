@@ -173,6 +173,7 @@ public static class MauiProgram
         builder.Services.AddScoped<ISpotMediaRepository, SpotMediaRepository>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IRevokedTokenRepository, RevokedTokenRepository>();
+        builder.Services.AddScoped<IUserFavoriteSpotRepository, UserFavoriteSpotRepository>();
 
         // Enregistrement des services
         builder.Services.AddScoped<IDatabaseService, DatabaseServiceSimple>();
@@ -189,6 +190,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMenuService, MenuService>();
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
         builder.Services.AddScoped<ISpotService, SpotService>();
+        builder.Services.AddScoped<IFavoriteSpotService, FavoriteSpotService>();
+        builder.Services.AddSingleton<IFavoriteSpotCacheService, FavoriteSpotCacheService>();
         builder.Services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
         
         // Performance monitoring services
@@ -244,6 +247,9 @@ public static class MauiProgram
         builder.Services.AddTransient<UserStatsViewModel>();
         builder.Services.AddTransient<MenuViewModel>();
         
+        // Favorites ViewModels
+        builder.Services.AddTransient<SubExplore.ViewModels.Favorites.FavoriteSpotsViewModel>();
+        
         // Authentication ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.LoginViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.RegistrationViewModel>();
@@ -260,6 +266,9 @@ public static class MauiProgram
         builder.Services.AddTransient<UserProfilePage>();
         builder.Services.AddTransient<UserPreferencesPage>();
         builder.Services.AddTransient<UserStatsPage>();
+        
+        // Favorites Pages
+        builder.Services.AddTransient<SubExplore.Views.Favorites.FavoriteSpotsPage>();
         
         // Authentication Pages
         builder.Services.AddTransient<SubExplore.Views.Auth.LoginPage>();

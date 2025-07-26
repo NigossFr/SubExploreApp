@@ -40,7 +40,12 @@
             <converters:SelectedItemToBgConverter x:Key="SelectedItemToBgConverter" />
             <converters:SelectedItemToTextColorConverter x:Key="SelectedItemToTextColorConverter" />
             <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
+            <converters:InvertBoolConverter x:Key="InvertedBoolConverter" />
             <converters:CollectionCountToHeightConverter x:Key="CollectionCountToHeightConverter" />
+            <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+            <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
+            <converters:BoolToObjectConverter x:Key="BoolToObjectConverter" />
+            <converters:PriorityToStyleConverter x:Key="PriorityToStyleConverter" />
             
             <!-- Responsive Converters -->
             <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />

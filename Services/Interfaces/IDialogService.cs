@@ -35,5 +35,15 @@ namespace SubExplore.Services.Interfaces
         /// </summary>
         /// <returns>Un IDisposable qui cache l'indicateur lors du Dispose</returns>
         Task<IDisposable> ShowLoadingAsync(string message = "Chargement...");
+
+        /// <summary>
+        /// Affiche une feuille d'action avec plusieurs options.
+        /// </summary>
+        /// <param name="title">Titre de la feuille d'action</param>
+        /// <param name="cancel">Texte du bouton d'annulation</param>
+        /// <param name="destruction">Texte du bouton de destruction (optionnel)</param>
+        /// <param name="buttons">Liste des options à afficher</param>
+        /// <returns>Le texte de l'option sélectionnée ou null si annulé</returns>
+        Task<string> ShowActionSheetAsync(string title, string cancel, string destruction, params string[] buttons);
     }
 }
