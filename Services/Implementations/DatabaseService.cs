@@ -35,7 +35,7 @@ namespace SubExplore.Services.Implementations
 
                 // Utilisation de EnsureCreated pour créer la base de données à partir des modèles
                 // Cette approche est préférée pour les applications MAUI où les migrations ne sont pas bien supportées
-                bool result = await _context.Database.EnsureCreatedAsync();
+                bool result = await _context.Database.EnsureCreatedAsync().ConfigureAwait(false);
 
                 if (result)
                 {
@@ -62,6 +62,10 @@ namespace SubExplore.Services.Implementations
             }
         }
 
+        /// <summary>
+        /// Migrates the database schema (deprecated for MAUI applications)
+        /// </summary>
+        /// <returns>True if migration was successful, false otherwise</returns>
         public async Task<bool> MigrateDatabaseAsync()
         {
             try
@@ -79,6 +83,10 @@ namespace SubExplore.Services.Implementations
             }
         }
 
+        /// <summary>
+        /// Seeds the database with initial data including spot types, admin user, test user, and sample spots
+        /// </summary>
+        /// <returns>True if seeding was successful, false otherwise</returns>
         public async Task<bool> SeedDatabaseAsync()
         {
             try
@@ -91,8 +99,8 @@ namespace SubExplore.Services.Implementations
 
                 try
                 {
-                    hasSpotTypes = await _context.SpotTypes.AnyAsync();
-                    hasSpots = await _context.Spots.AnyAsync();
+                    hasSpotTypes = await _context.SpotTypes.AnyAsync().ConfigureAwait(false);
+                    hasSpots = await _context.Spots.AnyAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -196,7 +204,7 @@ namespace SubExplore.Services.Implementations
                 }
 
                 // Création d'un compte administrateur seulement s'il n'existe pas
-                var existingAdmin = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com");
+                var existingAdmin = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com").ConfigureAwait(false);
                 if (existingAdmin == null)
                 {
                 var adminUser = new User
@@ -234,7 +242,7 @@ namespace SubExplore.Services.Implementations
                 }
 
                 // Création d'un utilisateur de test seulement s'il n'existe pas
-                var existingTestUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "test@subexplore.com");
+                var existingTestUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "test@subexplore.com").ConfigureAwait(false);
                 if (existingTestUser == null)
                 {
                 var testUser = new User
@@ -271,17 +279,17 @@ namespace SubExplore.Services.Implementations
                     _logger.LogInformation("Utilisateur de test déjà présent, ignoré");
                 }
 
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync().ConfigureAwait(false);
                 _logger.LogInformation("Users et SpotTypes initialisés avec succès");
 
                 // Ajouter des spots d'exemple seulement s'ils n'existent pas
                 if (!hasSpots)
                 {
                     // Récupérer les IDs des données créées pour les spots
-                    var divingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Plongée récréative");
-                    var freedivingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Apnée");
-                    var snorkelingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Randonnée sous marine");
-                    var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com");
+                    var divingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Plongée récréative").ConfigureAwait(false);
+                    var freedivingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Apnée").ConfigureAwait(false);
+                    var snorkelingType = await _context.SpotTypes.FirstOrDefaultAsync(st => st.Name == "Randonnée sous marine").ConfigureAwait(false);
+                    var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com").ConfigureAwait(false);
                     var adminUserId = adminUser?.Id ?? 1;
 
                     // Ajouter des spots d'exemple
@@ -377,7 +385,7 @@ namespace SubExplore.Services.Implementations
                     _context.Spots.AddRange(sampleSpots);
                     _logger.LogInformation("Spots d'exemple ajoutés: {Count}", sampleSpots.Count);
 
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync().ConfigureAwait(false);
                 }
                 else
                 {
@@ -399,6 +407,10 @@ namespace SubExplore.Services.Implementations
             }
         }
 
+        /// <summary>
+        /// Tests the database connection and retrieves server information
+        /// </summary>
+        /// <returns>True if connection is successful, false otherwise</returns>
         public async Task<bool> TestConnectionAsync()
         {
             try
@@ -406,7 +418,7 @@ namespace SubExplore.Services.Implementations
                 _logger.LogInformation("Test de la connexion à la base de données...");
 
                 // Simple test de connexion
-                bool canConnect = await _context.Database.CanConnectAsync();
+                bool canConnect = await _context.Database.CanConnectAsync().ConfigureAwait(false);
 
                 if (canConnect)
                 {
@@ -418,13 +430,13 @@ namespace SubExplore.Services.Implementations
                         var connection = _context.Database.GetDbConnection();
                         if (connection.State == System.Data.ConnectionState.Closed)
                         {
-                            await connection.OpenAsync();
+                            await connection.OpenAsync().ConfigureAwait(false);
                         }
 
                         using (var command = connection.CreateCommand())
                         {
                             command.CommandText = "SELECT version()";
-                            var version = await command.ExecuteScalarAsync();
+                            var version = await command.ExecuteScalarAsync().ConfigureAwait(false);
                             _logger.LogInformation("Version MySQL: {Version}", version);
                         }
                     }
@@ -454,6 +466,11 @@ namespace SubExplore.Services.Implementations
         }
 
         // Nouvelle méthode pour tester directement la connexion MySQL
+        /// <summary>
+        /// Tests a direct MySQL connection using the provided or default connection string
+        /// </summary>
+        /// <param name="connectionString">Optional connection string to test; uses default if null</param>
+        /// <returns>True if direct connection is successful, false otherwise</returns>
         public async Task<bool> TestDirectConnectionAsync(string? connectionString = null)
         {
             try
@@ -471,13 +488,13 @@ namespace SubExplore.Services.Implementations
 
                 using (var connection = new MySqlConnector.MySqlConnection(connString))
                 {
-                    await connection.OpenAsync();
+                    await connection.OpenAsync().ConfigureAwait(false);
                     _logger.LogInformation("Connexion directe établie avec succès");
 
                     using (var command = connection.CreateCommand())
                     {
                         command.CommandText = "SELECT version()";
-                        var version = await command.ExecuteScalarAsync();
+                        var version = await command.ExecuteScalarAsync().ConfigureAwait(false);
                         _logger.LogInformation("Version MySQL (connexion directe): {Version}", version);
                     }
 
@@ -497,6 +514,10 @@ namespace SubExplore.Services.Implementations
             }
         }
 
+        /// <summary>
+        /// Cleans up obsolete spot types that don't conform to the required 5 types
+        /// </summary>
+        /// <returns>True if cleanup was successful, false otherwise</returns>
         public async Task<bool> CleanupSpotTypesAsync()
         {
             try
@@ -514,6 +535,10 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Nettoie les anciens types de spots non conformes aux 5 types requis
         /// </summary>
+        /// <summary>
+        /// Internal method to clean up obsolete spot types and associated spots
+        /// </summary>
+        /// <returns>Task representing the cleanup operation</returns>
         private async Task CleanupObsoleteSpotTypesAsync()
         {
             try
@@ -531,7 +556,7 @@ namespace SubExplore.Services.Implementations
                 };
 
                 // Récupérer tous les types de spots existants
-                var existingSpotTypes = await _context.SpotTypes.ToListAsync();
+                var existingSpotTypes = await _context.SpotTypes.ToListAsync().ConfigureAwait(false);
                 
                 // Identifier les types à supprimer
                 var typesToRemove = existingSpotTypes
@@ -547,7 +572,7 @@ namespace SubExplore.Services.Implementations
                     // Supprimer les spots associés aux types obsolètes
                     var spotsToRemove = await _context.Spots
                         .Where(s => typesToRemove.Select(t => t.Id).Contains(s.TypeId))
-                        .ToListAsync();
+                        .ToListAsync().ConfigureAwait(false);
 
                     if (spotsToRemove.Any())
                     {
@@ -558,7 +583,7 @@ namespace SubExplore.Services.Implementations
                     // Supprimer les types obsolètes
                     _context.SpotTypes.RemoveRange(typesToRemove);
                     
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync().ConfigureAwait(false);
                     _logger.LogInformation("Nettoyage terminé avec succès");
                 }
                 else
@@ -567,7 +592,7 @@ namespace SubExplore.Services.Implementations
                 }
 
                 // Vérifier si les 5 types requis existent et les ajouter si nécessaire
-                await EnsureRequiredSpotTypesExistAsync();
+                await EnsureRequiredSpotTypesExistAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -579,6 +604,10 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// S'assure que les 5 types de spots requis existent dans la base de données
         /// </summary>
+        /// <summary>
+        /// Ensures all 5 required spot types exist in the database, adding missing ones
+        /// </summary>
+        /// <returns>Task representing the verification and creation operation</returns>
         private async Task EnsureRequiredSpotTypesExistAsync()
         {
             try
@@ -595,7 +624,7 @@ namespace SubExplore.Services.Implementations
                 foreach (var requiredType in requiredSpotTypes)
                 {
                     var existingType = await _context.SpotTypes
-                        .FirstOrDefaultAsync(st => st.Name == requiredType.Name);
+                        .FirstOrDefaultAsync(st => st.Name == requiredType.Name).ConfigureAwait(false);
 
                     if (existingType == null)
                     {
@@ -618,7 +647,7 @@ namespace SubExplore.Services.Implementations
                     }
                 }
 
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -627,6 +656,11 @@ namespace SubExplore.Services.Implementations
             }
         }
 
+        /// <summary>
+        /// Imports real spot data from a JSON file (embedded resource or file path)
+        /// </summary>
+        /// <param name="jsonFilePath">Optional path to JSON file; uses embedded resource if null</param>
+        /// <returns>True if import was successful with spots imported, false otherwise</returns>
         public async Task<bool> ImportRealSpotsAsync(string jsonFilePath = null)
         {
             try
@@ -639,7 +673,7 @@ namespace SubExplore.Services.Implementations
                 if (!string.IsNullOrEmpty(jsonFilePath) && File.Exists(jsonFilePath))
                 {
                     _logger.LogInformation("Lecture du fichier JSON depuis : {FilePath}", jsonFilePath);
-                    jsonContent = await File.ReadAllTextAsync(jsonFilePath);
+                    jsonContent = await File.ReadAllTextAsync(jsonFilePath).ConfigureAwait(false);
                 }
                 else
                 {
@@ -658,7 +692,7 @@ namespace SubExplore.Services.Implementations
                     }
 
                     using var reader = new StreamReader(stream);
-                    jsonContent = await reader.ReadToEndAsync();
+                    jsonContent = await reader.ReadToEndAsync().ConfigureAwait(false);
                     _logger.LogInformation("Fichier JSON lu depuis les ressources embarquées avec succès");
                 }
                 var importData = JsonSerializer.Deserialize<Models.Import.SpotsImportFile>(jsonContent, new JsonSerializerOptions
@@ -673,7 +707,7 @@ namespace SubExplore.Services.Implementations
                 }
 
                 // Récupérer l'utilisateur admin pour créer les spots
-                var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com");
+                var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@subexplore.com").ConfigureAwait(false);
                 if (adminUser == null)
                 {
                     _logger.LogError("Utilisateur admin introuvable pour l'import des spots");
@@ -691,7 +725,7 @@ namespace SubExplore.Services.Implementations
                         var existingSpot = await _context.Spots
                             .FirstOrDefaultAsync(s => s.Name == spotData.Name && 
                                                      s.Latitude == spotData.Latitude && 
-                                                     s.Longitude == spotData.Longitude);
+                                                     s.Longitude == spotData.Longitude).ConfigureAwait(false);
 
                         if (existingSpot != null)
                         {
@@ -702,7 +736,7 @@ namespace SubExplore.Services.Implementations
 
                         // Trouver le type de spot correspondant
                         var spotType = await _context.SpotTypes
-                            .FirstOrDefaultAsync(st => st.Name == spotData.SpotType && st.IsActive);
+                            .FirstOrDefaultAsync(st => st.Name == spotData.SpotType && st.IsActive).ConfigureAwait(false);
 
                         if (spotType == null)
                         {
@@ -762,7 +796,7 @@ namespace SubExplore.Services.Implementations
                 }
 
                 // Sauvegarder tous les changements
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync().ConfigureAwait(false);
 
                 _logger.LogInformation("Import terminé - Importés: {ImportedCount}, Ignorés: {SkippedCount}", 
                     importedCount, skippedCount);
@@ -779,6 +813,11 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Convertit un niveau de difficulté depuis le français vers l'enum anglais
         /// </summary>
+        /// <summary>
+        /// Converts a French difficulty level string to the corresponding enum value
+        /// </summary>
+        /// <param name="frenchValue">French difficulty level string</param>
+        /// <returns>Corresponding DifficultyLevel enum value or null if invalid</returns>
         private Models.Enums.DifficultyLevel? ConvertDifficultyLevelFromFrench(string frenchValue)
         {
             return frenchValue?.ToLower() switch
@@ -794,6 +833,11 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Convertit une force de courant depuis le français vers l'enum anglais
         /// </summary>
+        /// <summary>
+        /// Converts a French current strength string to the corresponding enum value
+        /// </summary>
+        /// <param name="frenchValue">French current strength string</param>
+        /// <returns>Corresponding CurrentStrength enum value or null if invalid</returns>
         private Models.Enums.CurrentStrength? ConvertCurrentStrengthFromFrench(string frenchValue)
         {
             return frenchValue?.ToLower() switch
@@ -811,6 +855,11 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Convertit un statut de validation depuis le français vers l'enum anglais
         /// </summary>
+        /// <summary>
+        /// Converts a French validation status string to the corresponding enum value
+        /// </summary>
+        /// <param name="frenchValue">French validation status string</param>
+        /// <returns>Corresponding SpotValidationStatus enum value or null if invalid</returns>
         private Models.Enums.SpotValidationStatus? ConvertValidationStatusFromFrench(string frenchValue)
         {
             return frenchValue?.ToLower() switch
@@ -829,6 +878,10 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Méthode de diagnostic pour vérifier le contenu de la base de données
         /// </summary>
+        /// <summary>
+        /// Generates comprehensive database diagnostics including counts and sample data
+        /// </summary>
+        /// <returns>Formatted diagnostics string with database statistics</returns>
         public async Task<string> GetDatabaseDiagnosticsAsync()
         {
             try
@@ -837,10 +890,10 @@ namespace SubExplore.Services.Implementations
                 diagnostics.AppendLine("=== DIAGNOSTICS BASE DE DONNÉES ===");
                 
                 // Compter les spots par statut
-                var totalSpots = await _context.Spots.CountAsync();
-                var approvedSpots = await _context.Spots.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Approved);
-                var pendingSpots = await _context.Spots.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Pending);
-                var draftSpots = await _context.Spots.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Draft);
+                var totalSpots = await _context.Spots.CountAsync().ConfigureAwait(false);
+                var approvedSpots = await _context.Spots.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Approved).ConfigureAwait(false);
+                var pendingSpots = await _context.Spots.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Pending).ConfigureAwait(false);
+                var draftSpots = await _context.Spots.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Draft).ConfigureAwait(false);
                 
                 diagnostics.AppendLine($"📊 SPOTS:");
                 diagnostics.AppendLine($"  Total: {totalSpots}");
@@ -854,7 +907,7 @@ namespace SubExplore.Services.Implementations
                     var sampleSpots = await _context.Spots
                         .Include(s => s.Type)
                         .Take(5)
-                        .ToListAsync();
+                        .ToListAsync().ConfigureAwait(false);
                     
                     diagnostics.AppendLine($"\n📍 EXEMPLES DE SPOTS:");
                     foreach (var spot in sampleSpots)
@@ -866,8 +919,8 @@ namespace SubExplore.Services.Implementations
                 }
                 
                 // Compter les types de spots
-                var totalSpotTypes = await _context.SpotTypes.CountAsync();
-                var activeSpotTypes = await _context.SpotTypes.CountAsync(st => st.IsActive);
+                var totalSpotTypes = await _context.SpotTypes.CountAsync().ConfigureAwait(false);
+                var activeSpotTypes = await _context.SpotTypes.CountAsync(st => st.IsActive).ConfigureAwait(false);
                 
                 diagnostics.AppendLine($"\n🏷️ TYPES DE SPOTS:");
                 diagnostics.AppendLine($"  Total: {totalSpotTypes}");
@@ -878,13 +931,13 @@ namespace SubExplore.Services.Implementations
                     var activeTypes = await _context.SpotTypes
                         .Where(st => st.IsActive)
                         .Select(st => st.Name)
-                        .ToListAsync();
+                        .ToListAsync().ConfigureAwait(false);
                     
                     diagnostics.AppendLine($"  Types actifs: {string.Join(", ", activeTypes)}");
                 }
                 
                 // Compter les utilisateurs
-                var totalUsers = await _context.Users.CountAsync();
+                var totalUsers = await _context.Users.CountAsync().ConfigureAwait(false);
                 diagnostics.AppendLine($"\n👤 UTILISATEURS: {totalUsers}");
                 
                 diagnostics.AppendLine("=== FIN DIAGNOSTICS ===");

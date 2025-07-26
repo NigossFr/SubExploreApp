@@ -38,7 +38,7 @@ namespace SubExplore.Repositories.Implementations
         /// <returns>The entity or null if not found</returns>
         public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.FindAsync(new object[] { id }, cancellationToken);
+            return await _dbSet.FindAsync(new object[] { id }, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace SubExplore.Repositories.Implementations
         /// <returns>All entities</returns>
         public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            return await _dbSet.AsNoTracking().ToListAsync(cancellationToken);
+            return await _dbSet.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace SubExplore.Repositories.Implementations
         /// <returns>Entities matching the predicate</returns>
         public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.AsNoTracking().Where(predicate).ToListAsync(cancellationToken);
+            return await _dbSet.AsNoTracking().Where(predicate).ToListAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace SubExplore.Repositories.Implementations
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             
-            await _dbSet.AddAsync(entity, cancellationToken);
+            await _dbSet.AddAsync(entity, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace SubExplore.Repositories.Implementations
         /// <returns>True if any entity matches the predicate</returns>
         public virtual async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.AsNoTracking().AnyAsync(predicate, cancellationToken);
+            return await _dbSet.AsNoTracking().AnyAsync(predicate, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace SubExplore.Repositories.Implementations
             try
             {
                 _context.Database.SetCommandTimeout(TimeSpan.FromSeconds(AppConstants.Database.COMMAND_TIMEOUT_SECONDS));
-                return await _context.SaveChangesAsync(cancellationToken);
+                return await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -132,12 +132,13 @@ namespace SubExplore.Repositories.Implementations
             }
         }
         /// <summary>
-        /// Get entities with paging support
+        /// Get entities with paging support for efficient data retrieval
         /// </summary>
         /// <param name="pageNumber">Page number (1-based)</param>
         /// <param name="pageSize">Number of items per page</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Paged entities</returns>
+        /// <param name="cancellationToken">Cancellation token for operation cancellation</param>
+        /// <returns>Paged entities without change tracking for read-only scenarios</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when pageNumber or pageSize is less than 1</exception>
         public virtual async Task<IEnumerable<T>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
         {
             if (pageNumber < 1) throw new ArgumentOutOfRangeException(nameof(pageNumber), "Page number must be 1 or greater");
@@ -147,17 +148,19 @@ namespace SubExplore.Repositories.Implementations
                 .AsNoTracking()
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync(cancellationToken);
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Get entities with paging and filtering support
+        /// Get entities with paging and filtering support for complex queries
         /// </summary>
-        /// <param name="predicate">Filter predicate</param>
+        /// <param name="predicate">Filter predicate expression</param>
         /// <param name="pageNumber">Page number (1-based)</param>
         /// <param name="pageSize">Number of items per page</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Filtered and paged entities</returns>
+        /// <param name="cancellationToken">Cancellation token for operation cancellation</param>
+        /// <returns>Filtered and paged entities without change tracking</returns>
+        /// <exception cref="ArgumentNullException">Thrown when predicate is null</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when pageNumber or pageSize is less than 1</exception>
         public virtual async Task<IEnumerable<T>> GetPagedAsync(
             Expression<Func<T, bool>> predicate, 
             int pageNumber, 
@@ -173,39 +176,41 @@ namespace SubExplore.Repositories.Implementations
                 .Where(predicate)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync(cancellationToken);
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Get count of entities matching predicate
+        /// Get count of entities matching predicate for pagination and metrics
         /// </summary>
-        /// <param name="predicate">Filter predicate</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Count of matching entities</returns>
+        /// <param name="predicate">Optional filter predicate; if null, counts all entities</param>
+        /// <param name="cancellationToken">Cancellation token for operation cancellation</param>
+        /// <returns>Count of matching entities using optimized counting query</returns>
         public virtual async Task<int> CountAsync(Expression<Func<T, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             if (predicate == null)
-                return await _dbSet.AsNoTracking().CountAsync(cancellationToken);
+                return await _dbSet.AsNoTracking().CountAsync(cancellationToken).ConfigureAwait(false);
             
-            return await _dbSet.AsNoTracking().CountAsync(predicate, cancellationToken);
+            return await _dbSet.AsNoTracking().CountAsync(predicate, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Add multiple entities in batch
+        /// Add multiple entities in batch for improved performance
         /// </summary>
-        /// <param name="entities">Entities to add</param>
-        /// <param name="cancellationToken">Cancellation token</param>
+        /// <param name="entities">Collection of entities to add</param>
+        /// <param name="cancellationToken">Cancellation token for operation cancellation</param>
+        /// <exception cref="ArgumentNullException">Thrown when entities collection is null</exception>
         public virtual async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
             if (entities == null) throw new ArgumentNullException(nameof(entities));
             
-            await _dbSet.AddRangeAsync(entities, cancellationToken);
+            await _dbSet.AddRangeAsync(entities, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Remove multiple entities in batch
+        /// Remove multiple entities in batch for improved performance
         /// </summary>
-        /// <param name="entities">Entities to remove</param>
+        /// <param name="entities">Collection of entities to remove</param>
+        /// <exception cref="ArgumentNullException">Thrown when entities collection is null</exception>
         public virtual void RemoveRange(IEnumerable<T> entities)
         {
             if (entities == null) throw new ArgumentNullException(nameof(entities));

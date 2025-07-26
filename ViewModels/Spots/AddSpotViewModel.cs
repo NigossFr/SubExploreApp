@@ -225,18 +225,18 @@ namespace SubExplore.ViewModels.Spots
             _logger.LogDebug("AddSpotViewModel.InitializeAsync called with parameter: {Parameter}", parameter?.ToString() ?? "null");
             _logger.LogDebug("Current coordinates before initialization: {Latitude}, {Longitude}", Latitude, Longitude);
             
-            await LoadSpotTypes();
+            await LoadSpotTypes().ConfigureAwait(false);
             
             // Handle location parameter passed from navigation
             if (parameter != null)
             {
                 _logger.LogDebug("Handling location parameter from navigation");
-                await HandleLocationParameter(parameter);
+                await HandleLocationParameter(parameter).ConfigureAwait(false);
             }
             else
             {
                 _logger.LogDebug("No parameter provided, trying to get current location");
-                await TryGetCurrentLocation();
+                await TryGetCurrentLocation().ConfigureAwait(false);
             }
             
             _logger.LogDebug("Final coordinates after initialization: {Latitude}, {Longitude}", Latitude, Longitude);
@@ -246,11 +246,15 @@ namespace SubExplore.ViewModels.Spots
             _logger.LogDebug("Location is now ready for UI binding");
         }
 
+        /// <summary>
+        /// Loads active spot types from repository for user selection
+        /// </summary>
+        /// <returns>Task representing the asynchronous loading operation</returns>
         private async Task LoadSpotTypes()
         {
             try
             {
-                var types = await _spotTypeRepository.GetActiveTypesAsync();
+                var types = await _spotTypeRepository.GetActiveTypesAsync().ConfigureAwait(false);
 
                 AvailableSpotTypes.Clear();
                 foreach (var type in types)
@@ -267,12 +271,16 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        /// <summary>
+        /// Attempts to retrieve the user's current location, falling back to default coordinates
+        /// </summary>
+        /// <returns>Task representing the asynchronous location retrieval operation</returns>
         private async Task TryGetCurrentLocation()
         {
             try
             {
                 _logger.LogDebug("Attempting to get current location");
-                var location = await _locationService.GetCurrentLocationAsync();
+                var location = await _locationService.GetCurrentLocationAsync().ConfigureAwait(false);
                 if (location != null)
                 {
                     Latitude = location.Latitude;
@@ -299,6 +307,11 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        /// <summary>
+        /// Handles location parameters passed from navigation with support for multiple parameter types
+        /// </summary>
+        /// <param name="parameter">Navigation parameter containing location data</param>
+        /// <returns>Task representing the asynchronous parameter handling operation</returns>
         private async Task HandleLocationParameter(object parameter)
         {
             try
@@ -354,15 +367,20 @@ namespace SubExplore.ViewModels.Spots
                 // Fallback to getting current location if parameter extraction fails
                 _logger.LogWarning("Failed to extract location from navigation parameter of type {ParameterType}, falling back to current location", 
                     parameter?.GetType().Name ?? "null");
-                await TryGetCurrentLocation();
+                await TryGetCurrentLocation().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error handling location parameter, falling back to current location");
-                await TryGetCurrentLocation();
+                await TryGetCurrentLocation().ConfigureAwait(false);
             }
         }
         
+        /// <summary>
+        /// Handles legacy anonymous object parameters for backward compatibility
+        /// </summary>
+        /// <param name="parameter">Legacy anonymous object containing location data</param>
+        /// <returns>Task representing the asynchronous legacy parameter handling operation</returns>
         private async Task HandleLegacyParameter(object parameter)
         {
             try
@@ -387,19 +405,23 @@ namespace SubExplore.ViewModels.Spots
                     }
                 }
                 
-                await TryGetCurrentLocation();
+                await TryGetCurrentLocation().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error handling legacy parameter format");
-                await TryGetCurrentLocation();
+                await TryGetCurrentLocation().ConfigureAwait(false);
             }
         }
 
+        /// <summary>
+        /// Command to take a photo using the device camera for the spot
+        /// </summary>
+        /// <returns>Task representing the asynchronous photo capture operation</returns>
         [RelayCommand]
         private async Task TakePhoto()
         {
-            var photoPath = await _mediaService.TakePhotoAsync();
+            var photoPath = await _mediaService.TakePhotoAsync().ConfigureAwait(false);
             if (!string.IsNullOrEmpty(photoPath))
             {
                 if (string.IsNullOrEmpty(PrimaryPhotoPath))
@@ -417,10 +439,14 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        /// <summary>
+        /// Command to pick an existing photo from the device gallery for the spot
+        /// </summary>
+        /// <returns>Task representing the asynchronous photo selection operation</returns>
         [RelayCommand]
         private async Task PickPhoto()
         {
-            var photoPath = await _mediaService.PickPhotoAsync();
+            var photoPath = await _mediaService.PickPhotoAsync().ConfigureAwait(false);
             if (!string.IsNullOrEmpty(photoPath))
             {
                 if (string.IsNullOrEmpty(PrimaryPhotoPath))
@@ -438,6 +464,10 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        /// <summary>
+        /// Command to remove a photo from the spot's photo collection
+        /// </summary>
+        /// <param name="path">File path of the photo to remove</param>
         [RelayCommand]
         private void RemovePhoto(string path)
         {
@@ -453,6 +483,10 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        /// <summary>
+        /// Command to set a specific photo as the primary photo for the spot
+        /// </summary>
+        /// <param name="path">File path of the photo to set as primary</param>
         [RelayCommand]
         private void SetPrimaryPhoto(string path)
         {
@@ -462,10 +496,14 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        /// <summary>
+        /// Command to advance to the next step in the spot creation workflow
+        /// </summary>
+        /// <returns>Task representing the asynchronous step advancement operation</returns>
         [RelayCommand]
         private async Task NextStep()
         {
-            if (!await ValidateCurrentStep())
+            if (!await ValidateCurrentStep().ConfigureAwait(false))
             {
                 return;
             }
@@ -481,10 +519,13 @@ namespace SubExplore.ViewModels.Spots
                 CurrentStep = 4;
 
                 // Si on arrive à l'étape 4, c'est la validation finale
-                await SubmitSpot();
+                await SubmitSpot().ConfigureAwait(false);
             }
         }
 
+        /// <summary>
+        /// Command to go back to the previous step in the spot creation workflow
+        /// </summary>
         [RelayCommand]
         private void PreviousStep()
         {
@@ -496,6 +537,10 @@ namespace SubExplore.ViewModels.Spots
         }
 
 
+        /// <summary>
+        /// Command to manually request the user's current location
+        /// </summary>
+        /// <returns>Task representing the asynchronous location request operation</returns>
         [RelayCommand]
         private async Task GetCurrentLocation()
         {
@@ -504,7 +549,7 @@ namespace SubExplore.ViewModels.Spots
                 IsLoading = true;
                 _logger.LogInformation("Getting current location...");
                 
-                var location = await _locationService.GetCurrentLocationAsync();
+                var location = await _locationService.GetCurrentLocationAsync().ConfigureAwait(false);
                 if (location != null)
                 {
                     Latitude = (decimal)location.Latitude;
@@ -532,6 +577,10 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        /// <summary>
+        /// Command to navigate directly to a specific step in the workflow
+        /// </summary>
+        /// <param name="stepNumber">Target step number (1-based)</param>
         [RelayCommand]
         private void GoToStep(int stepNumber)
         {
@@ -547,6 +596,10 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        /// <summary>
+        /// Command to handle spot type selection with toggle behavior
+        /// </summary>
+        /// <param name="selectedItem">The spot type item that was selected/deselected</param>
         [RelayCommand]
         private void SpotTypeSelected(SpotTypeItem selectedItem)
         {
@@ -580,123 +633,183 @@ namespace SubExplore.ViewModels.Spots
             _logger.LogInformation("Total selected spot types: {Count}", SelectedSpotTypes.Count);
         }
 
+        /// <summary>
+        /// Validates the current step with specific validation logic for each step
+        /// </summary>
         private async Task<bool> ValidateCurrentStep()
         {
-            ValidationResult result;
-            
-            switch (CurrentStep)
+            var result = CurrentStep switch
             {
-                case 1: // Localisation
-                    var locationData = new LocationStepData
-                    {
-                        Latitude = Latitude,
-                        Longitude = Longitude,
-                        AccessDescription = AccessDescription,
-                        HasUserLocation = HasUserLocation
-                    };
-                    result = _locationValidator.Validate(locationData);
-                    break;
+                1 => await ValidateLocationStepAsync(),
+                2 => await ValidateCharacteristicsStepAsync(),
+                3 => await ValidatePhotosStepAsync(),
+                4 => await ValidateSummaryStepAsync(),
+                _ => ValidationResult.Success("Unknown")
+            };
 
-                case 2: // Caractéristiques
-                    var characteristicsData = new CharacteristicsStepData
-                    {
-                        SpotName = SpotName,
-                        SelectedSpotType = SelectedSpotTypes.Count > 0 ? SelectedSpotTypes[0] : null, // Use first selected type for validation
-                        SelectedDifficultyLevel = SelectedDifficultyLevel,
-                        MaxDepth = MaxDepth,
-                        RequiredEquipment = RequiredEquipment,
-                        SafetyNotes = SafetyNotes,
-                        BestConditions = BestConditions,
-                        SelectedCurrentStrength = SelectedCurrentStrength
-                    };
-                    result = _characteristicsValidator.Validate(characteristicsData);
-                    break;
-
-                case 3: // Photos
-                    var photosData = new PhotosStepData
-                    {
-                        PhotosPaths = PhotosPaths.ToList(),
-                        PrimaryPhotoPath = PrimaryPhotoPath,
-                        MaxPhotosAllowed = 3
-                    };
-                    result = _photosValidator.Validate(photosData);
-                    break;
-
-                case 4: // Récapitulatif
-                    var summaryData = new SummaryStepData
-                    {
-                        Location = new LocationStepData
-                        {
-                            Latitude = Latitude,
-                            Longitude = Longitude,
-                            AccessDescription = AccessDescription,
-                            HasUserLocation = HasUserLocation
-                        },
-                        Characteristics = new CharacteristicsStepData
-                        {
-                            SpotName = SpotName,
-                            SelectedSpotType = SelectedSpotType,
-                            SelectedDifficultyLevel = SelectedDifficultyLevel,
-                            MaxDepth = MaxDepth,
-                            RequiredEquipment = RequiredEquipment,
-                            SafetyNotes = SafetyNotes,
-                            BestConditions = BestConditions,
-                            SelectedCurrentStrength = SelectedCurrentStrength
-                        },
-                        Photos = new PhotosStepData
-                        {
-                            PhotosPaths = PhotosPaths.ToList(),
-                            PrimaryPhotoPath = PrimaryPhotoPath,
-                            MaxPhotosAllowed = 3
-                        }
-                    };
-                    result = _summaryValidator.Validate(summaryData);
-                    break;
-
-                default:
-                    return true;
-            }
-            
             if (!result.IsValid)
             {
-                var errorMessage = string.Join("\n", result.Errors);
-                await DialogService.ShowAlertAsync("Validation", errorMessage, "OK");
-                _logger.LogWarning("Step validation failed for {StepName}: {Errors}", result.StepName, string.Join(", ", result.Errors));
+                await HandleValidationFailureAsync(result);
                 return false;
             }
-            
+
             return true;
         }
 
+        /// <summary>
+        /// Validates location step (step 1)
+        /// </summary>
+        private async Task<ValidationResult> ValidateLocationStepAsync()
+        {
+            var locationData = CreateLocationStepData();
+            return _locationValidator.Validate(locationData);
+        }
+
+        /// <summary>
+        /// Validates characteristics step (step 2)
+        /// </summary>
+        private async Task<ValidationResult> ValidateCharacteristicsStepAsync()
+        {
+            var characteristicsData = CreateCharacteristicsStepData();
+            return _characteristicsValidator.Validate(characteristicsData);
+        }
+
+        /// <summary>
+        /// Validates photos step (step 3)
+        /// </summary>
+        private async Task<ValidationResult> ValidatePhotosStepAsync()
+        {
+            var photosData = CreatePhotosStepData();
+            return _photosValidator.Validate(photosData);
+        }
+
+        /// <summary>
+        /// Validates summary step (step 4)
+        /// </summary>
+        private async Task<ValidationResult> ValidateSummaryStepAsync()
+        {
+            var summaryData = CreateSummaryStepData();
+            return _summaryValidator.Validate(summaryData);
+        }
+
+        /// <summary>
+        /// Creates location step data object
+        /// </summary>
+        private LocationStepData CreateLocationStepData()
+        {
+            return new LocationStepData
+            {
+                Latitude = Latitude,
+                Longitude = Longitude,
+                AccessDescription = AccessDescription,
+                HasUserLocation = HasUserLocation
+            };
+        }
+
+        /// <summary>
+        /// Creates characteristics step data object
+        /// </summary>
+        private CharacteristicsStepData CreateCharacteristicsStepData()
+        {
+            return new CharacteristicsStepData
+            {
+                SpotName = SpotName,
+                SelectedSpotType = SelectedSpotTypes.Count > 0 ? SelectedSpotTypes[0] : null,
+                SelectedDifficultyLevel = SelectedDifficultyLevel,
+                MaxDepth = MaxDepth,
+                RequiredEquipment = RequiredEquipment,
+                SafetyNotes = SafetyNotes,
+                BestConditions = BestConditions,
+                SelectedCurrentStrength = SelectedCurrentStrength
+            };
+        }
+
+        /// <summary>
+        /// Creates photos step data object
+        /// </summary>
+        private PhotosStepData CreatePhotosStepData()
+        {
+            return new PhotosStepData
+            {
+                PhotosPaths = PhotosPaths.ToList(),
+                PrimaryPhotoPath = PrimaryPhotoPath,
+                MaxPhotosAllowed = 3
+            };
+        }
+
+        /// <summary>
+        /// Creates summary step data object
+        /// </summary>
+        private SummaryStepData CreateSummaryStepData()
+        {
+            return new SummaryStepData
+            {
+                Location = CreateLocationStepData(),
+                Characteristics = CreateCharacteristicsStepData(),
+                Photos = CreatePhotosStepData()
+            };
+        }
+
+        /// <summary>
+        /// Handles validation failure with user feedback and logging
+        /// </summary>
+        private async Task HandleValidationFailureAsync(ValidationResult result)
+        {
+            var errorMessage = string.Join("\n", result.Errors);
+            await DialogService.ShowAlertAsync("Validation", errorMessage, "OK");
+            _logger.LogWarning("Step validation failed for {StepName}: {Errors}", 
+                result.StepName, string.Join(", ", result.Errors));
+        }
+
+        /// <summary>
+        /// Saves current step data to the NewSpot object
+        /// </summary>
         private void SaveCurrentStepData()
         {
             switch (CurrentStep)
             {
-                case 1: // Localisation
-                    NewSpot.Latitude = Latitude;
-                    NewSpot.Longitude = Longitude;
-                    NewSpot.Description = AccessDescription;
+                case 1:
+                    SaveLocationData();
                     break;
-
-                case 2: // Caractéristiques
-                    NewSpot.Name = SpotName;
-                    NewSpot.TypeId = SelectedSpotTypes.Count > 0 ? SelectedSpotTypes[0].Id : 1; // Use first selected type
-                    NewSpot.DifficultyLevel = SelectedDifficultyLevel;
-                    NewSpot.MaxDepth = MaxDepth;
-                    NewSpot.RequiredEquipment = RequiredEquipment ?? string.Empty;
-                    NewSpot.SafetyNotes = SafetyNotes ?? string.Empty;
-                    NewSpot.BestConditions = BestConditions ?? string.Empty;
-                    NewSpot.CurrentStrength = SelectedCurrentStrength;
+                case 2:
+                    SaveCharacteristicsData();
                     break;
-
-                case 3: // Photos - juste passer à l'étape suivante
-                    break;
-
-                case 4: // Récapitulatif
+                case 3:
+                case 4:
+                    // No additional data to save for photos and summary steps
                     break;
             }
         }
 
+        /// <summary>
+        /// Saves location data from step 1
+        /// </summary>
+        private void SaveLocationData()
+        {
+            NewSpot.Latitude = Latitude;
+            NewSpot.Longitude = Longitude;
+            NewSpot.Description = AccessDescription;
+        }
+
+        /// <summary>
+        /// Saves characteristics data from step 2
+        /// </summary>
+        private void SaveCharacteristicsData()
+        {
+            NewSpot.Name = SpotName;
+            NewSpot.TypeId = SelectedSpotTypes.Count > 0 ? SelectedSpotTypes[0].Id : 1;
+            NewSpot.DifficultyLevel = SelectedDifficultyLevel;
+            NewSpot.MaxDepth = MaxDepth;
+            NewSpot.RequiredEquipment = RequiredEquipment ?? string.Empty;
+            NewSpot.SafetyNotes = SafetyNotes ?? string.Empty;
+            NewSpot.BestConditions = BestConditions ?? string.Empty;
+            NewSpot.CurrentStrength = SelectedCurrentStrength;
+        }
+
+        /// <summary>
+        /// Command to submit the completed spot for validation and storage
+        /// </summary>
+        /// <returns>Task representing the asynchronous spot submission operation</returns>
         [RelayCommand]
         private async Task SubmitSpot()
         {
@@ -714,8 +827,8 @@ namespace SubExplore.ViewModels.Spots
                 NewSpot.ValidationStatus = SpotValidationStatus.Pending;
 
                 // Enregistrer le spot
-                await _spotRepository.AddAsync(NewSpot);
-                await _spotRepository.SaveChangesAsync();
+                await _spotRepository.AddAsync(NewSpot).ConfigureAwait(false);
+                await _spotRepository.SaveChangesAsync().ConfigureAwait(false);
 
                 // Une fois le spot sauvegardé, ajouter les photos
                 if (PhotosPaths.Count > 0)
@@ -725,11 +838,11 @@ namespace SubExplore.ViewModels.Spots
                     foreach (var photoPath in PhotosPaths)
                     {
                         var isPrimary = photoPath == PrimaryPhotoPath;
-                        var media = await _mediaService.CreateSpotMediaAsync(NewSpot.Id, photoPath, isPrimary);
+                        var media = await _mediaService.CreateSpotMediaAsync(NewSpot.Id, photoPath, isPrimary).ConfigureAwait(false);
 
                         if (media != null)
                         {
-                            await _spotMediaRepository.AddAsync(media);
+                            await _spotMediaRepository.AddAsync(media).ConfigureAwait(false);
                             _logger.LogDebug("Added media {MediaId} for spot {SpotId}, IsPrimary: {IsPrimary}", media.Id, NewSpot.Id, isPrimary);
                         }
                         else
@@ -738,7 +851,7 @@ namespace SubExplore.ViewModels.Spots
                         }
                     }
 
-                    await _spotMediaRepository.SaveChangesAsync();
+                    await _spotMediaRepository.SaveChangesAsync().ConfigureAwait(false);
                     _logger.LogInformation("Successfully saved {PhotoCount} photos for spot {SpotId}", PhotosPaths.Count, NewSpot.Id);
                 }
 
@@ -746,7 +859,7 @@ namespace SubExplore.ViewModels.Spots
                 await DialogService.ShowAlertAsync("Succès", "Votre spot a été soumis avec succès et sera vérifié par un modérateur.", "OK");
 
                 // Retourner à la carte
-                await NavigationService.NavigateToAsync<ViewModels.Map.MapViewModel>();
+                await NavigationService.NavigateToAsync<ViewModels.Map.MapViewModel>().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -758,6 +871,10 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
+        /// <summary>
+        /// Command to cancel the spot creation process with confirmation
+        /// </summary>
+        /// <returns>Task representing the asynchronous cancellation operation</returns>
         [RelayCommand]
         private async Task Cancel()
         {
@@ -765,11 +882,11 @@ namespace SubExplore.ViewModels.Spots
                 "Confirmation",
                 "Êtes-vous sûr de vouloir annuler ? Les données non enregistrées seront perdues.",
                 "Oui",
-                "Non");
+                "Non").ConfigureAwait(false);
 
             if (confirm)
             {
-                await NavigationService.GoBackAsync();
+                await NavigationService.GoBackAsync().ConfigureAwait(false);
             }
         }
 

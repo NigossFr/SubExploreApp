@@ -26,6 +26,7 @@ namespace SubExplore.ViewModels.Spots
         private readonly IUserRepository _userRepository;
         private readonly ISpotService _spotService;
         private readonly ISpotCacheService _spotCacheService;
+        private readonly IErrorHandlingService _errorHandlingService;
 
         [ObservableProperty]
         private Models.Domain.Spot _spot;
@@ -132,15 +133,17 @@ namespace SubExplore.ViewModels.Spots
             IUserRepository userRepository,
             ISpotService spotService,
             ISpotCacheService spotCacheService,
+            IErrorHandlingService errorHandlingService,
             IDialogService dialogService,
             INavigationService navigationService)
             : base(dialogService, navigationService)
         {
-            _spotRepository = spotRepository;
-            _spotMediaRepository = spotMediaRepository;
-            _userRepository = userRepository;  
-            _spotService = spotService;
-            _spotCacheService = spotCacheService;
+            _spotRepository = spotRepository ?? throw new ArgumentNullException(nameof(spotRepository));
+            _spotMediaRepository = spotMediaRepository ?? throw new ArgumentNullException(nameof(spotMediaRepository));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));  
+            _spotService = spotService ?? throw new ArgumentNullException(nameof(spotService));
+            _spotCacheService = spotCacheService ?? throw new ArgumentNullException(nameof(spotCacheService));
+            _errorHandlingService = errorHandlingService ?? throw new ArgumentNullException(nameof(errorHandlingService));
 
             SpotMedias = new ObservableCollection<SpotMedia>();
             SimilarSpots = new List<Models.Domain.Spot>();
@@ -154,18 +157,19 @@ namespace SubExplore.ViewModels.Spots
                 SpotId = spotId;
             }
 
-            await LoadSpotAsync();
+            await LoadSpotAsync().ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Loads spot data with comprehensive error handling and caching
+        /// </summary>
         private async Task LoadSpotAsync()
         {
             if (SpotId <= 0)
-                return;
-
-            // Add null safety guards
-            if (_spotService == null)
             {
-                System.Diagnostics.Debug.WriteLine("[ERROR] LoadSpotAsync: _spotService is null");
+                await _errorHandlingService.HandleValidationErrorAsync(
+                    "ID de spot invalide", 
+                    nameof(LoadSpotAsync));
                 return;
             }
 
@@ -176,17 +180,17 @@ namespace SubExplore.ViewModels.Spots
             try
             {
                 // Try to get spot from cache first
-                Spot = await _spotCacheService.GetSpotAsync(SpotId);
+                Spot = await _spotCacheService.GetSpotAsync(SpotId).ConfigureAwait(false);
                 
                 if (Spot == null)
                 {
                     // Load spot from service if not in cache
-                    Spot = await _spotService.GetSpotWithFullDetailsAsync(SpotId);
+                    Spot = await _spotService.GetSpotWithFullDetailsAsync(SpotId).ConfigureAwait(false);
                     
                     if (Spot != null)
                     {
                         // Cache the loaded spot
-                        await _spotCacheService.SetSpotAsync(Spot);
+                        await _spotCacheService.SetSpotAsync(Spot).ConfigureAwait(false);
                     }
                 }
 
@@ -194,33 +198,41 @@ namespace SubExplore.ViewModels.Spots
                 {
                     IsError = true;
                     ErrorMessage = "Le spot demandé n'existe pas ou a été supprimé.";
+                    await _errorHandlingService.LogExceptionAsync(
+                        new InvalidOperationException($"Spot with ID {SpotId} not found"), 
+                        nameof(LoadSpotAsync));
                     return;
                 }
 
                 Title = Spot.Name;
 
                 // Initialize media collections with lazy loading
-                await InitializeMediaCollectionAsync();
+                await InitializeMediaCollectionAsync().ConfigureAwait(false);
 
-                // Load creator name
-                if (Spot.CreatorId > 0 && _userRepository != null)
-                {
-                    var creator = await _userRepository.GetByIdAsync(Spot.CreatorId);
-                    CreatorName = creator?.Username ?? "Utilisateur inconnu";
-                }
-                else
-                {
-                    CreatorName = "Utilisateur inconnu";
-                }
+                // Load creator information safely
+                await LoadCreatorInformationAsync().ConfigureAwait(false);
 
                 // Load enhanced spot data
-                await LoadEnhancedSpotDataAsync();
+                await LoadEnhancedSpotDataAsync().ConfigureAwait(false);
+            }
+            catch (TimeoutException ex)
+            {
+                await HandleLoadingErrorAsync(ex, "L'opération a pris trop de temps. Veuillez réessayer.");
+            }
+            catch (HttpRequestException ex)
+            {
+                await _errorHandlingService.HandleNetworkErrorAsync(ex, "LoadSpot");
+                await HandleLoadingErrorAsync(ex, "Problème de connexion réseau. Vérifiez votre connexion et réessayez.");
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("database") || ex.Message.Contains("connection"))
+            {
+                await _errorHandlingService.HandleDatabaseErrorAsync(ex, "LoadSpot");
+                await HandleLoadingErrorAsync(ex, "Erreur de base de données. Veuillez réessayer plus tard.");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotAsync failed: {ex.Message}");
-                IsError = true;
-                ErrorMessage = "Une erreur est survenue lors du chargement du spot. Vérifiez votre connexion internet et réessayez.";
+                await _errorHandlingService.HandleExceptionAsync(ex, nameof(LoadSpotAsync), showToUser: false);
+                await HandleLoadingErrorAsync(ex, "Une erreur inattendue s'est produite. Veuillez réessayer.");
             }
             finally
             {
@@ -228,38 +240,121 @@ namespace SubExplore.ViewModels.Spots
             }
         }
 
-        private async Task LoadEnhancedSpotDataAsync()
+        /// <summary>
+        /// Loads creator information with error handling
+        /// </summary>
+        private async Task LoadCreatorInformationAsync()
         {
             try
             {
-                // Add null safety guard for enhanced data loading
-                if (_spotService == null)
+                if (Spot.CreatorId > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("[WARNING] LoadEnhancedSpotDataAsync: _spotService is null, skipping enhanced data");
-                    return;
+                    var creator = await _userRepository.GetByIdAsync(Spot.CreatorId).ConfigureAwait(false);
+                    CreatorName = creator?.Username ?? "Utilisateur inconnu";
                 }
-
-                // Load statistics
-                SpotStatistics = await _spotService.GetSpotStatisticsAsync(SpotId);
-
-                // Load safety report
-                SafetyReport = await _spotService.GenerateSafetyReportAsync(SpotId);
-
-                // Load rating data
-                AverageRating = await _spotService.GetSpotAverageRatingAsync(SpotId);
-                ReviewCount = await _spotService.GetSpotReviewCountAsync(SpotId);
-
-                // Load similar spots
-                SimilarSpots = await _spotService.GetSimilarSpotsAsync(SpotId);
-
-                // Check if spot is favorite (if user is logged in)
-                // TODO: Get current user ID from authentication service
-                // IsFavorite = await _spotService.IsSpotFavoriteAsync(SpotId, currentUserId);
+                else
+                {
+                    CreatorName = "Utilisateur inconnu";
+                }
             }
             catch (Exception ex)
             {
                 // Log error but don't fail the main loading
-                System.Diagnostics.Debug.WriteLine($"Error loading enhanced spot data: {ex.Message}");
+                await _errorHandlingService.LogExceptionAsync(ex, nameof(LoadCreatorInformationAsync));
+                CreatorName = "Utilisateur inconnu";
+            }
+        }
+
+        /// <summary>
+        /// Handles loading errors with consistent error state management
+        /// </summary>
+        private async Task HandleLoadingErrorAsync(Exception ex, string userMessage)
+        {
+            IsError = true;
+            ErrorMessage = userMessage;
+            
+            // Clear any partially loaded data
+            Spot = null;
+            SpotMedias?.Clear();
+            
+            await Task.CompletedTask; // For consistency with async pattern
+        }
+
+        /// <summary>
+        /// Loads enhanced spot data (statistics, safety report, similar spots) with individual error handling
+        /// </summary>
+        private async Task LoadEnhancedSpotDataAsync()
+        {
+            // Load each enhanced data component individually to prevent total failure
+            await LoadSpotStatisticsAsync().ConfigureAwait(false);
+            await LoadSafetyReportAsync().ConfigureAwait(false);
+            await LoadRatingDataAsync().ConfigureAwait(false);
+            await LoadSimilarSpotsAsync().ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Loads spot statistics with individual error handling
+        /// </summary>
+        private async Task LoadSpotStatisticsAsync()
+        {
+            try
+            {
+                SpotStatistics = await _spotService.GetSpotStatisticsAsync(SpotId).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                await _errorHandlingService.LogExceptionAsync(ex, nameof(LoadSpotStatisticsAsync));
+                SpotStatistics = null; // Set to null to indicate unavailable data
+            }
+        }
+
+        /// <summary>
+        /// Loads safety report with individual error handling
+        /// </summary>
+        private async Task LoadSafetyReportAsync()
+        {
+            try
+            {
+                SafetyReport = await _spotService.GenerateSafetyReportAsync(SpotId).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                await _errorHandlingService.LogExceptionAsync(ex, nameof(LoadSafetyReportAsync));
+                SafetyReport = null; // Set to null to indicate unavailable data
+            }
+        }
+
+        /// <summary>
+        /// Loads rating data with individual error handling
+        /// </summary>
+        private async Task LoadRatingDataAsync()
+        {
+            try
+            {
+                AverageRating = await _spotService.GetSpotAverageRatingAsync(SpotId).ConfigureAwait(false);
+                ReviewCount = await _spotService.GetSpotReviewCountAsync(SpotId).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                await _errorHandlingService.LogExceptionAsync(ex, nameof(LoadRatingDataAsync));
+                AverageRating = 0; // Set default values
+                ReviewCount = 0;
+            }
+        }
+
+        /// <summary>
+        /// Loads similar spots with individual error handling
+        /// </summary>
+        private async Task LoadSimilarSpotsAsync()
+        {
+            try
+            {
+                SimilarSpots = await _spotService.GetSimilarSpotsAsync(SpotId).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                await _errorHandlingService.LogExceptionAsync(ex, nameof(LoadSimilarSpotsAsync));
+                SimilarSpots = new List<Models.Domain.Spot>(); // Set empty list
             }
         }
 
@@ -334,6 +429,14 @@ namespace SubExplore.ViewModels.Spots
         [RelayCommand]
         private async Task ShareSpot()
         {
+            if (Spot == null)
+            {
+                await _errorHandlingService.HandleValidationErrorAsync(
+                    "Aucun spot à partager", 
+                    nameof(ShareSpot));
+                return;
+            }
+
             try
             {
                 string message = $"Découvre ce spot de {Spot.Type?.Name ?? "plongée"} : {Spot.Name}\n";
@@ -345,29 +448,51 @@ namespace SubExplore.ViewModels.Spots
                 {
                     Title = $"Partager le spot {Spot.Name}",
                     Text = message
-                });
+                }).ConfigureAwait(false);
+            }
+            catch (NotSupportedException ex)
+            {
+                await _errorHandlingService.HandleExceptionAsync(ex, nameof(ShareSpot), 
+                    userMessage: "Le partage n'est pas supporté sur cet appareil.");
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", $"Impossible de partager le spot : {ex.Message}", "OK");
+                await _errorHandlingService.HandleExceptionAsync(ex, nameof(ShareSpot), 
+                    userMessage: "Impossible de partager le spot. Veuillez réessayer.");
             }
         }
 
         [RelayCommand]
         private async Task ReportSpot()
         {
-            bool confirm = await DialogService.ShowConfirmationAsync(
-                "Signalement",
-                "Souhaitez-vous signaler ce spot pour un problème ?",
-                "Oui",
-                "Non");
-
-            if (confirm)
+            if (Spot == null)
             {
-                await DialogService.ShowAlertAsync(
+                await _errorHandlingService.HandleValidationErrorAsync(
+                    "Aucun spot à signaler", 
+                    nameof(ReportSpot));
+                return;
+            }
+
+            try
+            {
+                bool confirm = await DialogService.ShowConfirmationAsync(
                     "Signalement",
-                    "Merci pour votre signalement. Un modérateur va examiner ce spot.",
-                    "OK");
+                    "Souhaitez-vous signaler ce spot pour un problème ?",
+                    "Oui",
+                    "Non").ConfigureAwait(false);
+
+                if (confirm)
+                {
+                    await DialogService.ShowAlertAsync(
+                        "Signalement",
+                        "Merci pour votre signalement. Un modérateur va examiner ce spot.",
+                        "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                await _errorHandlingService.HandleExceptionAsync(ex, nameof(ReportSpot),
+                    userMessage: "Impossible de signaler le spot. Veuillez réessayer.");
             }
         }
 
@@ -388,7 +513,7 @@ namespace SubExplore.ViewModels.Spots
                     NavigationMode = NavigationMode.None // NavigationMode est dans Microsoft.Maui.ApplicationModel
                 };
                 // Map.OpenAsync est dans Microsoft.Maui.Maps
-                await Microsoft.Maui.ApplicationModel.Map.OpenAsync(location, options);
+                await Microsoft.Maui.ApplicationModel.Map.OpenAsync(location, options).ConfigureAwait(false);
 
             }
             catch (Exception ex)
@@ -400,13 +525,13 @@ namespace SubExplore.ViewModels.Spots
         [RelayCommand]
         private async Task Back()
         {
-            await NavigationService.GoBackAsync();
+            await NavigationService.GoBackAsync().ConfigureAwait(false);
         }
 
         [RelayCommand]
         private async Task Refresh()
         {
-            await LoadSpotAsync();
+            await LoadSpotAsync().ConfigureAwait(false);
         }
 
         private void DisplayToast(string message, bool isError = false)
@@ -539,7 +664,7 @@ namespace SubExplore.ViewModels.Spots
                 _allMediaLoaded = false;
                 
                 // Try to get media from cache first
-                var cachedMedia = await _spotCacheService.GetSpotMediaAsync(SpotId);
+                var cachedMedia = await _spotCacheService.GetSpotMediaAsync(SpotId).ConfigureAwait(false);
                 var mediaList = cachedMedia?.ToList();
                 
                 if (mediaList == null || !mediaList.Any())
@@ -549,7 +674,7 @@ namespace SubExplore.ViewModels.Spots
                     {
                         mediaList = Spot.Media.ToList();
                         // Cache the media for future use
-                        await _spotCacheService.SetSpotMediaAsync(SpotId, mediaList);
+                        await _spotCacheService.SetSpotMediaAsync(SpotId, mediaList).ConfigureAwait(false);
                     }
                     else
                     {
@@ -563,7 +688,7 @@ namespace SubExplore.ViewModels.Spots
                 if (TotalMediaCount > 0)
                 {
                     // Load first batch immediately for initial display
-                    await LoadMediaBatchFromList(mediaList, 0, Math.Min(MediaBatchSize, TotalMediaCount));
+                    await LoadMediaBatchFromList(mediaList, 0, Math.Min(MediaBatchSize, TotalMediaCount)).ConfigureAwait(false);
                 }
                 
                 LoadedMediaCount = SpotMedias.Count;
@@ -600,7 +725,7 @@ namespace SubExplore.ViewModels.Spots
                     SpotMedias.Add(media);
                     
                     // Small delay for smooth loading experience
-                    await Task.Delay(50);
+                    await Task.Delay(50).ConfigureAwait(false);
                 }
                 
                 LoadedMediaCount = SpotMedias.Count;
@@ -619,12 +744,12 @@ namespace SubExplore.ViewModels.Spots
         private async Task LoadMediaBatchAsync(int startIndex, int count)
         {
             // Get cached media list
-            var cachedMedia = await _spotCacheService.GetSpotMediaAsync(SpotId);
+            var cachedMedia = await _spotCacheService.GetSpotMediaAsync(SpotId).ConfigureAwait(false);
             var mediaList = cachedMedia?.ToList() ?? Spot?.Media?.ToList();
             
             if (mediaList != null)
             {
-                await LoadMediaBatchFromList(mediaList, startIndex, count);
+                await LoadMediaBatchFromList(mediaList, startIndex, count).ConfigureAwait(false);
             }
         }
         
@@ -637,7 +762,7 @@ namespace SubExplore.ViewModels.Spots
             var remainingCount = TotalMediaCount - LoadedMediaCount;
             var batchSize = Math.Min(MediaBatchSize, remainingCount);
             
-            await LoadMediaBatchAsync(nextBatchStart, batchSize);
+            await LoadMediaBatchAsync(nextBatchStart, batchSize).ConfigureAwait(false);
         }
         
         // Optimize memory by disposing unused media from cache
