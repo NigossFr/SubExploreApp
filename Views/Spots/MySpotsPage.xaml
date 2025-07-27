@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Spots.MySpotsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spots"
+    xmlns:common="clr-namespace:SubExplore.Views.Common"
+    xmlns:domain="clr-namespace:SubExplore.Models.Domain"
+    x:DataType="viewmodels:MySpotsViewModel"
+    Title="{Binding Title}"
+    BackgroundColor="{StaticResource Background}">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        
+        <!-- Page Header -->
+        <common:PageHeaderView x:Name="PageHeader" 
+                               Grid.Row="0"
+                               Title="{Binding Title}"
+                               ShowBackButton="True"
+                               BackCommand="{Binding GoBackCommand}" />
+
+        <!-- Search and Filter Section -->
+        <Frame Grid.Row="1" 
+               Padding="15"
+               BackgroundColor="{StaticResource Background}"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15">
+                
+                <!-- Statistics Cards -->
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+                    
+                    <!-- Total Spots -->
+                    <Frame Grid.Column="0"
+                           Padding="10"
+                           BackgroundColor="{StaticResource Primary}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding TotalSpotsCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Total"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Validated Spots -->
+                    <Frame Grid.Column="1"
+                           Padding="10"
+                           BackgroundColor="{StaticResource Success}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding ValidatedSpotsCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Validés"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Rejected Spots -->
+                    <Frame Grid.Column="2"
+                           Padding="10"
+                           BackgroundColor="{StaticResource Error}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding RejectedSpotsCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Rejetés"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Pending Spots -->
+                    <Frame Grid.Column="3"
+                           Padding="10"
+                           BackgroundColor="{StaticResource Accent}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding PendingSpotsCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="En attente"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                </Grid>
+
+                <!-- Search and Filter Controls -->
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                    
+                    <!-- Search Entry -->
+                    <Frame Grid.Column="0"
+                           BackgroundColor="{StaticResource Surface}"
+                           BorderColor="{StaticResource BorderColor}"
+                           CornerRadius="8"
+                           Padding="0"
+                           HasShadow="False">
+                        <Entry Text="{Binding SearchText}"
+                               Placeholder="Rechercher vos spots..."
+                               BackgroundColor="Transparent"
+                               TextColor="{StaticResource TextPrimary}"
+                               PlaceholderColor="{StaticResource TextSecondary}"
+                               FontSize="16"
+                               AutomationId="SearchEntry"
+                               SemanticProperties.Description="Rechercher parmi vos spots"
+                               SemanticProperties.Hint="Tapez pour rechercher par nom, description ou type" />
+                    </Frame>
+                    
+                    <!-- Filter Picker -->
+                    <Frame Grid.Column="1"
+                           BackgroundColor="{StaticResource Surface}"
+                           BorderColor="{StaticResource BorderColor}"
+                           CornerRadius="8"
+                           Padding="0"
+                           HasShadow="False"
+                           WidthRequest="120">
+                        <Picker ItemsSource="{Binding FilterTypes}"
+                                SelectedItem="{Binding SelectedFilterType}"
+                                BackgroundColor="Transparent"
+                                TextColor="{StaticResource TextPrimary}"
+                                FontSize="14"
+                                AutomationId="FilterPicker"
+                                SemanticProperties.Description="Filtrer les spots par type" />
+                    </Frame>
+                    
+                    <!-- Clear Filters Button -->
+                    <Button Grid.Column="2"
+                            Text="🔄"
+                            FontSize="18"
+                            WidthRequest="50"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            BackgroundColor="{StaticResource Secondary}"
+                            TextColor="White"
+                            Command="{Binding ClearFiltersCommand}"
+                            AutomationId="ClearFiltersButton"
+                            SemanticProperties.Description="Effacer les filtres"
+                            SemanticProperties.Hint="Appuyez pour effacer la recherche et les filtres" />
+                </Grid>
+            </StackLayout>
+        </Frame>
+
+        <!-- Content Area -->
+        <Grid Grid.Row="2">
+            
+            <!-- Loading State -->
+            <StackLayout IsVisible="{Binding IsLoading}"
+                         VerticalOptions="Center"
+                         HorizontalOptions="Center"
+                         Spacing="20">
+                <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                   Color="{StaticResource Primary}"
+                                   HeightRequest="50"
+                                   WidthRequest="50"
+                                   AutomationId="LoadingIndicator" />
+                <Label Text="Chargement de vos spots..."
+                       FontSize="16"
+                       TextColor="{StaticResource TextSecondary}"
+                       HorizontalOptions="Center"
+                       SemanticProperties.Description="Chargement des spots en cours" />
+            </StackLayout>
+
+            <!-- Empty State -->
+            <StackLayout IsVisible="{Binding ShowEmptyState}"
+                         VerticalOptions="Center"
+                         HorizontalOptions="Center"
+                         Spacing="20"
+                         Padding="40">
+                <Label Text="📍"
+                       FontSize="64"
+                       HorizontalOptions="Center"
+                       SemanticProperties.Description="Icône spot vide" />
+                <Label Text="Aucun spot trouvé"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource TextPrimary}"
+                       HorizontalOptions="Center" />
+                <Label Text="Vous n'avez pas encore créé de spots ou aucun spot ne correspond à vos critères de recherche."
+                       FontSize="14"
+                       TextColor="{StaticResource TextSecondary}"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center" />
+                <Button Text="Ajouter mon premier spot"
+                        Command="{Binding AddNewSpotCommand}"
+                        Style="{StaticResource ButtonPrimaryStyle}"
+                        Margin="0,20,0,0"
+                        AutomationId="AddFirstSpotButton"
+                        SemanticProperties.Description="Ajouter votre premier spot de plongée" />
+            </StackLayout>
+
+            <!-- Spots List -->
+            <RefreshView IsVisible="{Binding HasSpots}"
+                         IsRefreshing="{Binding IsLoading}"
+                         Command="{Binding RefreshSpotsCommand}"
+                         RefreshColor="{StaticResource Primary}">
+                
+                <CollectionView ItemsSource="{Binding FilteredSpots}"
+                                SelectionMode="None"
+                                BackgroundColor="Transparent"
+                                AutomationId="SpotsCollection">
+                    
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="domain:Spot">
+                            <Frame Padding="15"
+                                   Margin="15,8"
+                                   BackgroundColor="{StaticResource Surface}"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="12"
+                                   HasShadow="True">
+                                
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                                    
+                                    <!-- Header with name and status -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Name}"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource Primary}"
+                                               VerticalOptions="Center"
+                                               LineBreakMode="TailTruncation" />
+                                        
+                                        <!-- Status Indicator -->
+                                        <Frame Grid.Column="1"
+                                               BackgroundColor="{Binding ValidationStatus, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='{StaticResource Success}|{StaticResource Warning}'}"
+                                               CornerRadius="10"
+                                               Padding="8,4"
+                                               HasShadow="False"
+                                               Margin="5,0">
+                                            <Label Text="{Binding ValidationStatus}"
+                                                   TextColor="White"
+                                                   FontSize="10"
+                                                   FontAttributes="Bold" />
+                                        </Frame>
+                                        
+                                        <!-- Edit Button -->
+                                        <Button Grid.Column="2"
+                                                Text="✏️"
+                                                FontSize="16"
+                                                BackgroundColor="Transparent"
+                                                TextColor="{StaticResource Secondary}"
+                                                WidthRequest="40"
+                                                HeightRequest="40"
+                                                CornerRadius="20"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MySpotsViewModel}}, Path=EditSpotCommand}"
+                                                CommandParameter="{Binding .}"
+                                                AutomationId="EditSpotButton"
+                                                SemanticProperties.Description="Modifier le spot" />
+                                    </Grid>
+                                    
+                                    <!-- Type and Difficulty -->
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Type.Name}"
+                                               FontSize="14"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource Secondary}"
+                                               VerticalOptions="Center" />
+                                        <Label Grid.Column="1"
+                                               Text="{Binding DifficultyLevel, StringFormat='Difficulté: {0}'}"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                    
+                                    <!-- Description -->
+                                    <Label Grid.Row="2"
+                                           Text="{Binding Description}"
+                                           FontSize="14"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="2" />
+                                    
+                                    <!-- Footer with stats -->
+                                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding CreatedAt, StringFormat='Créé le {0:dd/MM/yyyy}'}"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               VerticalOptions="Center" />
+                                        
+                                        <StackLayout Grid.Column="1"
+                                                   Orientation="Horizontal"
+                                                   Spacing="5"
+                                                   VerticalOptions="Center">
+                                            <Label Text="⭐"
+                                                   FontSize="12" />
+                                            <Label Text="{Binding ValidationStatus}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource TextSecondary}" />
+                                        </StackLayout>
+                                        
+                                        <Button Grid.Column="2"
+                                                Text="🗑️"
+                                                FontSize="12"
+                                                Padding="8,6"
+                                                BackgroundColor="{StaticResource Error}"
+                                                TextColor="White"
+                                                CornerRadius="15"
+                                                Margin="0,0,5,0"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MySpotsViewModel}}, Path=DeleteSpotCommand}"
+                                                CommandParameter="{Binding .}"
+                                                AutomationId="DeleteSpotButton"
+                                                SemanticProperties.Description="Supprimer le spot" />
+                                        
+                                        <Button Grid.Column="3"
+                                                Text="Voir"
+                                                FontSize="12"
+                                                Padding="12,6"
+                                                BackgroundColor="{StaticResource Primary}"
+                                                TextColor="White"
+                                                CornerRadius="15"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MySpotsViewModel}}, Path=ViewSpotDetailsCommand}"
+                                                CommandParameter="{Binding .}"
+                                                AutomationId="ViewSpotButton"
+                                                SemanticProperties.Description="Voir les détails du spot" />
+                                    </Grid>
+                                </Grid>
+                                
+                                <!-- Tap Gesture for the entire card -->
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MySpotsViewModel}}, Path=ViewSpotDetailsCommand}"
+                                                          CommandParameter="{Binding .}" />
+                                </Frame.GestureRecognizers>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </RefreshView>
+        </Grid>
+
+        <!-- Floating Action Button -->
+        <Button Grid.Row="2"
+                Text="+"
+                FontSize="24"
+                WidthRequest="60"
+                HeightRequest="60"
+                CornerRadius="30"
+                BackgroundColor="{StaticResource Primary}"
+                TextColor="White"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="20"
+                Command="{Binding AddNewSpotCommand}"
+                AutomationId="AddSpotFAB"
+                SemanticProperties.Description="Ajouter un nouveau spot"
+                SemanticProperties.Hint="Appuyez pour créer un nouveau spot de plongée" />
+    </Grid>
+</ContentPage>

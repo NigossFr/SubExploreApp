@@ -259,8 +259,7 @@ namespace SubExplore.ViewModels.Menu
         [RelayCommand]
         private async Task NavigateToMySpots()
         {
-            // TODO: Implement MySpots page
-            await ShowToastAsync("Fonction à venir");
+            await NavigateToAsync<MySpotsViewModel>();
             IsMenuOpen = false;
         }
 

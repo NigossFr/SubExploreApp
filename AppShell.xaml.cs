@@ -17,6 +17,7 @@ namespace SubExplore
             Routing.RegisterRoute("map", typeof(MapPage));
             Routing.RegisterRoute("addspot", typeof(AddSpotPage));
             Routing.RegisterRoute("spotdetails", typeof(SpotDetailsPage));
+            Routing.RegisterRoute("myspots", typeof(MySpotsPage));
             
             // Register nested routes for complex navigation
             Routing.RegisterRoute("map/addspot", typeof(AddSpotPage));

@@ -244,6 +244,7 @@ public static class MauiProgram
         builder.Services.AddTransient<SpotManagementViewModel>();
         builder.Services.AddTransient<AddSpotViewModel>();
         builder.Services.AddTransient<SpotDetailsViewModel>();
+        builder.Services.AddTransient<MySpotsViewModel>();
         builder.Services.AddTransient<SpotLocationViewModel>();
         builder.Services.AddTransient<SpotCharacteristicsViewModel>();
         builder.Services.AddTransient<SpotPhotosViewModel>();
@@ -265,6 +266,7 @@ public static class MauiProgram
         builder.Services.AddTransient<MapPage>();
         builder.Services.AddTransient<AddSpotPage>();
         builder.Services.AddTransient<SpotDetailsPage>();
+        builder.Services.AddTransient<MySpotsPage>();
         builder.Services.AddTransient<SpotLocationView>(); // Si c'est une ContentView, c'est bien
         builder.Services.AddTransient<SpotCharacteristicsView>(); // Idem
         builder.Services.AddTransient<SpotPhotosView>(); // Idem

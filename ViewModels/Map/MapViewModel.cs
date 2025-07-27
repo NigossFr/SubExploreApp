@@ -12,6 +12,7 @@ using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
 using SubExplore.ViewModels.Base;
 using SubExplore.ViewModels.Profile;
+using SubExplore.ViewModels.Spots;
 using SubExplore.Models.Menu;
 using MenuItemModel = SubExplore.Models.Menu.MenuItem;
 
@@ -949,8 +950,7 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private async Task NavigateToMySpots()
         {
-            // TODO: Implement MySpots page
-            await DialogService.ShowToastAsync("Fonction à venir");
+            await NavigationService.NavigateToAsync<MySpotsViewModel>();
             IsMenuOpen = false;
         }
 
