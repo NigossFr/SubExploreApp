@@ -194,6 +194,11 @@ public static class MauiProgram
         builder.Services.AddSingleton<IFavoriteSpotCacheService, FavoriteSpotCacheService>();
         builder.Services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
         
+        // Weather services
+        builder.Services.AddSingleton<IWeatherCacheService, WeatherCacheService>();
+        builder.Services.AddScoped<IWeatherService, WeatherService>();
+        builder.Services.AddHttpClient<IWeatherService, WeatherService>();
+        
         // Performance monitoring services
         builder.Services.AddSingleton<IPerformanceProfilingService, PerformanceProfilingService>();
         builder.Services.AddSingleton<IApplicationPerformanceService, ApplicationPerformanceService>();

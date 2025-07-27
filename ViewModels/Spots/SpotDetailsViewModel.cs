@@ -8,6 +8,7 @@ using SubExplore.Repositories.Interfaces;
 using SubExplore.Services.Interfaces;
 using SubExplore.Services.Caching;
 using SubExplore.ViewModels.Base;
+using Microsoft.Extensions.Logging;
 
 // Importations très spécifiques sans ambiguïté
 using Microsoft.Maui.ApplicationModel;
@@ -29,6 +30,8 @@ namespace SubExplore.ViewModels.Spots
         private readonly IErrorHandlingService _errorHandlingService;
         private readonly IFavoriteSpotService _favoriteSpotService;
         private readonly IAuthenticationService _authenticationService;
+        private readonly IWeatherService _weatherService;
+        private readonly ILogger<SpotDetailsViewModel> _logger;
 
         [ObservableProperty]
         private Models.Domain.Spot _spot;
@@ -105,6 +108,25 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private bool _isLoadingFavorite;
 
+        // Weather-related properties
+        [ObservableProperty]
+        private WeatherInfo? _currentWeather;
+
+        [ObservableProperty]
+        private DivingWeatherConditions? _divingConditions;
+
+        [ObservableProperty]
+        private bool _isLoadingWeather;
+
+        [ObservableProperty]
+        private bool _hasWeatherData;
+
+        [ObservableProperty]
+        private string _weatherErrorMessage = string.Empty;
+
+        [ObservableProperty]
+        private bool _showWeatherError;
+
         private int _spotId;
 
         public int SpotId
@@ -144,6 +166,8 @@ namespace SubExplore.ViewModels.Spots
             IErrorHandlingService errorHandlingService,
             IFavoriteSpotService favoriteSpotService,
             IAuthenticationService authenticationService,
+            IWeatherService weatherService,
+            ILogger<SpotDetailsViewModel> logger,
             IDialogService dialogService,
             INavigationService navigationService)
             : base(dialogService, navigationService)
@@ -156,6 +180,8 @@ namespace SubExplore.ViewModels.Spots
             _errorHandlingService = errorHandlingService ?? throw new ArgumentNullException(nameof(errorHandlingService));
             _favoriteSpotService = favoriteSpotService ?? throw new ArgumentNullException(nameof(favoriteSpotService));
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
+            _weatherService = weatherService ?? throw new ArgumentNullException(nameof(weatherService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             SpotMedias = new ObservableCollection<SpotMedia>();
             SimilarSpots = new List<Models.Domain.Spot>();
@@ -234,6 +260,9 @@ namespace SubExplore.ViewModels.Spots
 
                 // Load favorite information
                 await LoadFavoriteInfoAsync().ConfigureAwait(false);
+
+                // Load weather information
+                await LoadWeatherInfoAsync().ConfigureAwait(false);
             }
             catch (TimeoutException ex)
             {
@@ -881,6 +910,131 @@ namespace SubExplore.ViewModels.Spots
                 {
                     _mediaCache.Remove(key);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Load weather information for the current spot
+        /// </summary>
+        private async Task LoadWeatherInfoAsync()
+        {
+            if (Spot == null)
+            {
+                HasWeatherData = false;
+                return;
+            }
+
+            try
+            {
+                IsLoadingWeather = true;
+                ShowWeatherError = false;
+                WeatherErrorMessage = string.Empty;
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadWeatherInfoAsync: Loading weather for spot at {Spot.Latitude}, {Spot.Longitude}");
+
+                // Check if weather service is available
+                var isServiceAvailable = await _weatherService.IsServiceAvailableAsync().ConfigureAwait(false);
+                if (!isServiceAvailable)
+                {
+                    _logger.LogWarning("Weather service is not available");
+                    HasWeatherData = false;
+                    return;
+                }
+
+                // Load current weather and diving conditions in parallel
+                var weatherTask = _weatherService.GetCurrentWeatherAsync(Spot.Latitude, Spot.Longitude);
+                var divingConditionsTask = _weatherService.GetDivingConditionsAsync(Spot.Latitude, Spot.Longitude);
+
+                await Task.WhenAll(weatherTask, divingConditionsTask).ConfigureAwait(false);
+
+                CurrentWeather = await weatherTask;
+                DivingConditions = await divingConditionsTask;
+
+                HasWeatherData = CurrentWeather != null;
+
+                if (HasWeatherData)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadWeatherInfoAsync: Successfully loaded weather - Temp: {CurrentWeather?.Temperature}°C, Conditions: {CurrentWeather?.Condition}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] LoadWeatherInfoAsync: No weather data received");
+                    WeatherErrorMessage = "Données météo temporairement indisponibles";
+                    ShowWeatherError = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadWeatherInfoAsync: {ex.Message}");
+                await _errorHandlingService.LogExceptionAsync(ex, nameof(LoadWeatherInfoAsync));
+                
+                HasWeatherData = false;
+                WeatherErrorMessage = "Erreur lors du chargement des données météo";
+                ShowWeatherError = true;
+            }
+            finally
+            {
+                IsLoadingWeather = false;
+            }
+        }
+
+        /// <summary>
+        /// Refresh weather information
+        /// </summary>
+        [RelayCommand]
+        private async Task RefreshWeather()
+        {
+            await LoadWeatherInfoAsync().ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Show detailed weather information
+        /// </summary>
+        [RelayCommand]
+        private async Task ShowWeatherDetails()
+        {
+            if (CurrentWeather == null)
+            {
+                await DialogService.ShowAlertAsync("Info", "Aucune donnée météo disponible", "OK");
+                return;
+            }
+
+            try
+            {
+                var message = $"🌡️ Température: {CurrentWeather.Temperature:F1}°C (ressenti {CurrentWeather.FeelsLike:F1}°C)\n";
+                message += $"💨 Vent: {CurrentWeather.WindSpeed:F1} km/h {CurrentWeather.GetWindDirectionText()}\n";
+                message += $"💧 Humidité: {CurrentWeather.Humidity}%\n";
+                message += $"👁️ Visibilité: {CurrentWeather.Visibility:F1} km\n";
+                message += $"☁️ Couverture nuageuse: {CurrentWeather.CloudCover}%\n";
+
+                if (CurrentWeather.ChanceOfRain > 0)
+                {
+                    message += $"🌧️ Probabilité de pluie: {CurrentWeather.ChanceOfRain}%\n";
+                }
+
+                if (DivingConditions != null)
+                {
+                    message += $"\n🤿 Conditions de plongée: {DivingConditions.OverallCondition}\n";
+                    message += $"⚡ Score de sécurité: {DivingConditions.SafetyScore}/100\n";
+                    
+                    if (DivingConditions.Warnings.Any())
+                    {
+                        message += $"\n⚠️ Avertissements:\n{string.Join("\n", DivingConditions.Warnings.Select(w => $"• {w}"))}";
+                    }
+
+                    if (DivingConditions.Recommendations.Any())
+                    {
+                        message += $"\n💡 Recommandations:\n{string.Join("\n", DivingConditions.Recommendations.Select(r => $"• {r}"))}";
+                    }
+                }
+
+                message += $"\n\n📅 Dernière mise à jour: {CurrentWeather.LastUpdated:HH:mm}";
+
+                await DialogService.ShowAlertAsync("Conditions météo détaillées", message, "OK");
+            }
+            catch (Exception ex)
+            {
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'afficher les détails météo: {ex.Message}", "OK");
             }
         }
 

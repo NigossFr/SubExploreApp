@@ -307,4 +307,176 @@ namespace SubExplore.Helpers.Converters
         }
     }
 
+    /// <summary>
+    /// Converter for weather conditions and icon codes to weather icons
+    /// Maps both OpenWeatherMap icon codes and condition text to appropriate emoji icons
+    /// Supports both single value conversion and multi-binding with fallback
+    /// </summary>
+    public class WeatherIconConverter : IValueConverter, IMultiValueConverter
+    {
+        private static readonly Dictionary<string, string> IconCodeToEmoji = new()
+        {
+            // Clear sky
+            { "01d", "☀️" }, // clear sky day
+            { "01n", "🌙" }, // clear sky night
+            
+            // Few clouds
+            { "02d", "🌤️" }, // few clouds day
+            { "02n", "☁️" }, // few clouds night
+            
+            // Scattered/broken clouds
+            { "03d", "⛅" }, // scattered clouds day
+            { "03n", "☁️" }, // scattered clouds night
+            { "04d", "☁️" }, // broken clouds day
+            { "04n", "☁️" }, // broken clouds night
+            
+            // Shower rain
+            { "09d", "🌦️" }, // shower rain day
+            { "09n", "🌧️" }, // shower rain night
+            
+            // Rain
+            { "10d", "🌦️" }, // rain day
+            { "10n", "🌧️" }, // rain night
+            
+            // Thunderstorm
+            { "11d", "⛈️" }, // thunderstorm day
+            { "11n", "⛈️" }, // thunderstorm night
+            
+            // Snow
+            { "13d", "🌨️" }, // snow day
+            { "13n", "❄️" }, // snow night
+            
+            // Mist/Atmosphere
+            { "50d", "🌫️" }, // mist day
+            { "50n", "🌫️" }, // mist night
+        };
+
+        private static readonly Dictionary<string, string> ConditionToEmoji = new()
+        {
+            // Clear conditions
+            { "clear", "☀️" },
+            { "sunny", "☀️" },
+            
+            // Cloudy conditions
+            { "clouds", "☁️" },
+            { "cloudy", "☁️" },
+            { "overcast", "☁️" },
+            { "partly cloudy", "⛅" },
+            { "few clouds", "🌤️" },
+            { "scattered clouds", "⛅" },
+            { "broken clouds", "☁️" },
+            
+            // Rain conditions
+            { "rain", "🌧️" },
+            { "rainy", "🌧️" },
+            { "drizzle", "🌦️" },
+            { "shower", "🌦️" },
+            { "light rain", "🌦️" },
+            { "moderate rain", "🌧️" },
+            { "heavy rain", "🌧️" },
+            
+            // Thunderstorm
+            { "thunderstorm", "⛈️" },
+            { "storm", "⛈️" },
+            { "thunder", "⛈️" },
+            
+            // Snow
+            { "snow", "🌨️" },
+            { "snowy", "❄️" },
+            { "blizzard", "🌨️" },
+            { "sleet", "🌨️" },
+            
+            // Atmosphere
+            { "mist", "🌫️" },
+            { "fog", "🌫️" },
+            { "haze", "🌫️" },
+            { "dust", "🌪️" },
+            { "sand", "🌪️" },
+            { "ash", "🌋" },
+            { "squall", "🌪️" },
+            { "tornado", "🌪️" },
+        };
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return ConvertToWeatherIcon(value?.ToString());
+        }
+
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            // Multi-binding: try icon code first, then condition as fallback
+            if (values != null && values.Length > 0)
+            {
+                // Try icon code first (usually first binding)
+                for (int i = 0; i < values.Length; i++)
+                {
+                    var result = ConvertToWeatherIcon(values[i]?.ToString());
+                    if (result != "❓") // If we found a valid icon, use it
+                    {
+                        return result;
+                    }
+                }
+            }
+            
+            return "❓"; // Unknown weather condition
+        }
+
+        private static string ConvertToWeatherIcon(string? input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return "❓"; // Unknown weather icon
+
+            string normalizedInput = input.ToLowerInvariant();
+
+            // First try to match by OpenWeatherMap icon code (exact match)
+            if (IconCodeToEmoji.ContainsKey(normalizedInput))
+            {
+                return IconCodeToEmoji[normalizedInput];
+            }
+
+            // Then try to match by condition name (exact match)
+            if (ConditionToEmoji.ContainsKey(normalizedInput))
+            {
+                return ConditionToEmoji[normalizedInput];
+            }
+
+            // Finally try partial matching for conditions
+            foreach (var condition in ConditionToEmoji.Keys)
+            {
+                if (normalizedInput.Contains(condition))
+                {
+                    return ConditionToEmoji[condition];
+                }
+            }
+
+            // Default fallback for common patterns not covered above
+            if (normalizedInput.Contains("sun"))
+                return "☀️";
+            if (normalizedInput.Contains("cloud"))
+                return "☁️";
+            if (normalizedInput.Contains("rain") || normalizedInput.Contains("precipitation"))
+                return "🌧️";
+            if (normalizedInput.Contains("storm"))
+                return "⛈️";
+            if (normalizedInput.Contains("snow") || normalizedInput.Contains("ice"))
+                return "❄️";
+            if (normalizedInput.Contains("fog") || normalizedInput.Contains("mist"))
+                return "🌫️";
+            if (normalizedInput.Contains("wind"))
+                return "💨";
+
+            return "❓"; // Unknown weather condition
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
 }

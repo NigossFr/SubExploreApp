@@ -434,7 +434,7 @@ namespace SubExplore.Services.Implementations
         
         #region Data Enrichment
         
-        public async Task<WeatherInfo?> GetSpotCurrentWeatherAsync(int spotId)
+        public async Task<Models.Domain.WeatherInfo?> GetSpotCurrentWeatherAsync(int spotId)
         {
             // TODO: Integrate with weather API
             return null;

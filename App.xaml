@@ -46,6 +46,7 @@
             <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
             <converters:BoolToObjectConverter x:Key="BoolToObjectConverter" />
             <converters:PriorityToStyleConverter x:Key="PriorityToStyleConverter" />
+            <converters:WeatherIconConverter x:Key="WeatherIconConverter" />
             
             <!-- Responsive Converters -->
             <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />

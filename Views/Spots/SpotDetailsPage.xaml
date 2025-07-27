@@ -278,6 +278,181 @@
                     </VerticalStackLayout>
                 </Frame>
 
+                <!--  Conditions météo  -->
+                <Frame Padding="15" BorderColor="{StaticResource Secondary}"
+                       IsVisible="{Binding HasWeatherData}">
+                    <VerticalStackLayout Spacing="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label
+                                Grid.Column="0"
+                                FontAttributes="Bold"
+                                Text="Conditions météo"
+                                TextColor="{StaticResource Primary}"
+                                VerticalOptions="Center" />
+
+                            <!-- Refresh button -->
+                            <Button Grid.Column="1"
+                                    Text="🔄"
+                                    FontSize="16"
+                                    WidthRequest="40"
+                                    HeightRequest="40"
+                                    CornerRadius="20"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource Primary}"
+                                    Command="{Binding RefreshWeatherCommand}"
+                                    IsEnabled="{Binding IsLoadingWeather, Converter={StaticResource InvertBoolConverter}}"
+                                    Margin="5,0"
+                                    AutomationId="RefreshWeatherButton"
+                                    SemanticProperties.Description="Actualiser les données météo"
+                                    SemanticProperties.Hint="Appuyez pour actualiser la météo" />
+
+                            <!-- Details button -->
+                            <Button Grid.Column="2"
+                                    Text="📋"
+                                    FontSize="16"
+                                    WidthRequest="40"
+                                    HeightRequest="40"
+                                    CornerRadius="20"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource Primary}"
+                                    Command="{Binding ShowWeatherDetailsCommand}"
+                                    IsEnabled="{Binding HasWeatherData}"
+                                    AutomationId="WeatherDetailsButton"
+                                    SemanticProperties.Description="Afficher les détails météo"
+                                    SemanticProperties.Hint="Appuyez pour voir les détails météo complets" />
+                        </Grid>
+
+                        <!-- Loading indicator -->
+                        <StackLayout Orientation="Horizontal" 
+                                   HorizontalOptions="Center"
+                                   IsVisible="{Binding IsLoadingWeather}"
+                                   Spacing="10">
+                            <ActivityIndicator IsRunning="{Binding IsLoadingWeather}"
+                                             Color="{StaticResource Primary}"
+                                             WidthRequest="20"
+                                             HeightRequest="20" />
+                            <Label Text="Chargement des données météo..."
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
+
+                        <!-- Weather content -->
+                        <StackLayout IsVisible="{Binding IsLoadingWeather, Converter={StaticResource InvertBoolConverter}}">
+                            
+                            <!-- Current weather summary -->
+                            <Grid ColumnDefinitions="Auto,*,120" ColumnSpacing="15" Margin="0,5">
+                                <Label Grid.Column="0"
+                                       Text="{Binding CurrentWeather.IconCode, Converter={StaticResource WeatherIconConverter}, FallbackValue='❓'}"
+                                       FontSize="48"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="Center"
+                                       WidthRequest="60"
+                                       HeightRequest="60"
+                                       AutomationId="WeatherIcon"
+                                       SemanticProperties.Description="Icône météo actuelle" />
+                                
+                                <StackLayout Grid.Column="1" VerticalOptions="Center">
+                                    <Label Text="{Binding CurrentWeather.Temperature, StringFormat='{0:F1}°C'}"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource Primary}" />
+                                    <Label Text="{Binding CurrentWeather.Description}"
+                                           FontSize="14"
+                                           TextColor="{StaticResource TextSecondary}" />
+                                </StackLayout>
+                                
+                                <StackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="4">
+                                    <Label Text="{Binding CurrentWeather.WindSpeed, StringFormat='💨 {0:F0} km/h'}"
+                                           FontSize="14"
+                                           TextColor="{StaticResource TextSecondary}"
+                                           HorizontalOptions="End"
+                                           AutomationId="WindSpeedLabel"
+                                           SemanticProperties.Description="Vitesse du vent" />
+                                    <Label Text="{Binding CurrentWeather.Humidity, StringFormat='💧 {0}%'}"
+                                           FontSize="14"
+                                           TextColor="{StaticResource TextSecondary}"
+                                           HorizontalOptions="End"
+                                           AutomationId="HumidityLabel"
+                                           SemanticProperties.Description="Taux d'humidité" />
+                                </StackLayout>
+                            </Grid>
+
+                            <!-- Diving conditions -->
+                            <Frame Padding="10" 
+                                   Margin="0,10,0,0"
+                                   BackgroundColor="{Binding DivingConditions.SafetyScore, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#E8F5E8|#FFF3E0'}"
+                                   BorderColor="{Binding DivingConditions.SafetyScore, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#4CAF50|#FFC107'}"
+                                   IsVisible="{Binding DivingConditions, Converter={StaticResource IsNotNullConverter}}">
+                                <StackLayout Spacing="5">
+                                    <Label Text="🤿 Conditions de plongée"
+                                           FontAttributes="Bold"
+                                           FontSize="14"
+                                           TextColor="{StaticResource Primary}" />
+                                    
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding DivingConditions.OverallCondition}"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               VerticalOptions="Center" />
+                                        
+                                        <Label Grid.Column="1"
+                                               Text="{Binding DivingConditions.SafetyScore, StringFormat='⚡ {0}/100'}"
+                                               FontSize="14"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                    
+                                    <Label Text="{Binding DivingConditions.Assessment}"
+                                           FontSize="12"
+                                           TextColor="{StaticResource TextSecondary}"
+                                           IsVisible="{Binding DivingConditions.Assessment, Converter={StaticResource StringNotEmptyConverter}}" />
+                                </StackLayout>
+                            </Frame>
+
+                            <!-- Last update -->
+                            <Label Text="{Binding CurrentWeather.LastUpdated, StringFormat='Dernière mise à jour: {0:HH:mm}'}"
+                                   FontSize="10"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   HorizontalOptions="End"
+                                   Margin="0,5,0,0" />
+                        </StackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Weather error message -->
+                <Frame Padding="15" 
+                       BackgroundColor="#FFEBEE"
+                       BorderColor="#F44336"
+                       IsVisible="{Binding ShowWeatherError}">
+                    <StackLayout Orientation="Horizontal" Spacing="10">
+                        <Label Text="⚠️"
+                               FontSize="20"
+                               VerticalOptions="Center" />
+                        <Label Text="{Binding WeatherErrorMessage}"
+                               FontSize="14"
+                               TextColor="#D32F2F"
+                               VerticalOptions="Center"
+                               HorizontalOptions="FillAndExpand" />
+                        <Button Text="Réessayer"
+                                FontSize="12"
+                                Padding="8,4"
+                                BackgroundColor="Transparent"
+                                TextColor="#D32F2F"
+                                BorderColor="#D32F2F"
+                                BorderWidth="1"
+                                Command="{Binding RefreshWeatherCommand}"
+                                VerticalOptions="Center" />
+                    </StackLayout>
+                </Frame>
+
                 <!--  Informations complémentaires  -->
                 <Frame Padding="15" BorderColor="{StaticResource Secondary}">
                     <VerticalStackLayout Spacing="10">

@@ -43,7 +43,7 @@ namespace SubExplore.Services.Interfaces
         Task<IEnumerable<Spot>> GetUserFavoriteSpotsAsync(int userId);
         
         // Data Enrichment
-        Task<WeatherInfo?> GetSpotCurrentWeatherAsync(int spotId);
+        Task<Models.Domain.WeatherInfo?> GetSpotCurrentWeatherAsync(int spotId);
         Task<TideInfo?> GetSpotTideInfoAsync(int spotId);
         Task<IEnumerable<Spot>> GetSpotsWithGoodConditionsAsync();
         
@@ -107,20 +107,6 @@ namespace SubExplore.Services.Interfaces
         public DateTime CalculatedAt { get; set; }
     }
     
-    /// <summary>
-    /// Weather information for a spot
-    /// </summary>
-    public class WeatherInfo
-    {
-        public double Temperature { get; set; }
-        public double WaterTemperature { get; set; }
-        public string Conditions { get; set; } = string.Empty;
-        public double WindSpeed { get; set; }
-        public string WindDirection { get; set; } = string.Empty;
-        public double Visibility { get; set; }
-        public double WaveHeight { get; set; }
-        public DateTime UpdatedAt { get; set; }
-    }
     
     /// <summary>
     /// Tide information for coastal spots
