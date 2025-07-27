@@ -21,6 +21,10 @@ namespace SubExplore.ViewModels.Spots
         private readonly IErrorHandlingService _errorHandlingService;
         private readonly ILogger<MySpotsViewModel> _logger;
 
+        // Concurrency control
+        private readonly SemaphoreSlim _loadingSemaphore = new(1, 1);
+        private bool _isInitialized = false;
+
         [ObservableProperty]
         private ObservableCollection<Spot> _mySpots;
 
@@ -85,14 +89,33 @@ namespace SubExplore.ViewModels.Spots
 
         public override async Task InitializeAsync(object parameter = null)
         {
+            // Prevent duplicate initialization
+            if (_isInitialized)
+            {
+                _logger.LogInformation("MySpotsViewModel already initialized, skipping");
+                return;
+            }
+
             try
             {
+                _logger.LogInformation("MySpotsViewModel.InitializeAsync starting");
                 await LoadMySpots();
+                _isInitialized = true;
+                _logger.LogInformation("MySpotsViewModel.InitializeAsync completed successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error initializing MySpotsViewModel");
-                await HandleErrorAsync("Erreur lors du chargement", "Une erreur est survenue lors du chargement de vos spots.");
+                // Don't show error here if LoadMySpots already handled it
+                // Only show error if it's a different exception
+                if (MySpots.Count == 0)
+                {
+                    await HandleErrorAsync("Erreur lors du chargement", "Une erreur est survenue lors du chargement de vos spots.");
+                }
+                else
+                {
+                    _logger.LogWarning("Exception in InitializeAsync but {Count} spots were loaded", MySpots.Count);
+                }
             }
         }
 
@@ -102,19 +125,49 @@ namespace SubExplore.ViewModels.Spots
         [RelayCommand]
         private async Task LoadMySpots()
         {
-            if (!_authenticationService.IsAuthenticated)
+            // Prevent concurrent database operations
+            if (!await _loadingSemaphore.WaitAsync(100))
             {
-                await ShowAlertAsync("Authentification requise", "Vous devez être connecté pour voir vos spots.", "OK");
+                _logger.LogWarning("LoadMySpots already in progress, skipping duplicate call");
                 return;
             }
 
             try
             {
                 IsLoading = true;
-                _logger.LogInformation("Loading spots for user {UserId}", _authenticationService.CurrentUser?.Id);
-
+                _logger.LogInformation("Starting LoadMySpots, IsAuthenticated: {IsAuthenticated}", _authenticationService.IsAuthenticated);
+                
+                // Enhanced authentication check with retry
+                if (!_authenticationService.IsAuthenticated || _authenticationService.CurrentUser == null)
+                {
+                    _logger.LogWarning("User not authenticated when loading spots. Attempting to initialize authentication...");
+                    
+                    // Try to initialize authentication if not already done
+                    try
+                    {
+                        await _authenticationService.InitializeAsync();
+                        _logger.LogInformation("Authentication re-initialized. IsAuthenticated: {IsAuthenticated}", _authenticationService.IsAuthenticated);
+                    }
+                    catch (Exception authEx)
+                    {
+                        _logger.LogWarning(authEx, "Failed to re-initialize authentication");
+                    }
+                    
+                    // Check again after initialization attempt
+                    if (!_authenticationService.IsAuthenticated || _authenticationService.CurrentUser == null)
+                    {
+                        await ShowAlertAsync("Authentification requise", 
+                            "Vous devez être connecté pour voir vos spots. Veuillez vous connecter d'abord.", "OK");
+                        return;
+                    }
+                }
+                
                 var userId = _authenticationService.CurrentUser.Id;
+                _logger.LogInformation("Loading spots for user {UserId} (Username: {Username})", 
+                    userId, _authenticationService.CurrentUser.Username);
+
                 var userSpots = await _spotRepository.GetSpotsByUserAsync(userId);
+                _logger.LogInformation("Repository returned {Count} spots for user {UserId}", userSpots?.Count() ?? 0, userId);
 
                 MySpots.Clear();
                 foreach (var spot in userSpots.OrderByDescending(s => s.CreatedAt))
@@ -125,17 +178,31 @@ namespace SubExplore.ViewModels.Spots
                 UpdateStatistics();
                 ApplyFilters();
 
-                _logger.LogInformation("Loaded {Count} spots for user", MySpots.Count);
+                _logger.LogInformation("Successfully loaded {Count} spots for user {Username}", 
+                    MySpots.Count, _authenticationService.CurrentUser.Username);
+                    
+                // If we have no spots, this might be a new user
+                if (MySpots.Count == 0)
+                {
+                    _logger.LogInformation("No spots found for user {UserId}. This might be a new user.", userId);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading user spots");
+                _logger.LogError(ex, "Error loading user spots for user {UserId}", 
+                    _authenticationService.CurrentUser?.Id);
+                
+                // Log exception details for debugging
                 await _errorHandlingService.LogExceptionAsync(ex, nameof(LoadMySpots));
-                await HandleErrorAsync("Erreur de chargement", "Impossible de charger vos spots. Veuillez réessayer.");
+                
+                // Show error dialog - this is likely a real error
+                await HandleErrorAsync("Erreur de chargement", 
+                    $"Impossible de charger vos spots. Détails: {ex.Message}");
             }
             finally
             {
                 IsLoading = false;
+                _loadingSemaphore.Release();
             }
         }
 
@@ -206,10 +273,14 @@ namespace SubExplore.ViewModels.Spots
         private async Task ViewSpotDetails(Spot spot)
         {
             if (spot == null)
+            {
+                _logger.LogWarning("ViewSpotDetails called with null spot");
                 return;
+            }
 
             try
             {
+                _logger.LogInformation("Navigating to spot details for spot ID: {SpotId}", spot.Id);
                 await NavigateToAsync<SpotDetailsViewModel>(spot.Id.ToString());
             }
             catch (Exception ex)
@@ -359,6 +430,7 @@ namespace SubExplore.ViewModels.Spots
             {
                 MySpots?.Clear();
                 FilteredSpots?.Clear();
+                _loadingSemaphore?.Dispose();
             }
             base.Dispose(disposing);
         }

@@ -141,14 +141,15 @@ namespace SubExplore.ViewModels.Spots
             get => SpotId.ToString();
             set 
             {
-                if (int.TryParse(value, out int spotId))
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotIdString setter called with value: '{value}'");
+                if (!string.IsNullOrEmpty(value) && int.TryParse(value, out int spotId))
                 {
                     SpotId = spotId;
                     System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotIdString set to {value}, parsed SpotId: {SpotId}");
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERROR] SpotDetailsViewModel: Invalid SpotIdString value: {value}");
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] SpotDetailsViewModel: Invalid SpotIdString value: '{value}'");
                 }
             }
         }
@@ -195,9 +196,26 @@ namespace SubExplore.ViewModels.Spots
 
         public override async Task InitializeAsync(object parameter = null)
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel.InitializeAsync called with parameter: {parameter} (type: {parameter?.GetType()}), Current SpotId: {SpotId}");
+            
+            // Priority: parameter > QueryProperty
             if (parameter is int spotId)
             {
                 SpotId = spotId;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotId set to {SpotId} from int parameter");
+            }
+            else if (parameter is string spotIdString && int.TryParse(spotIdString, out int parsedSpotId))
+            {
+                SpotId = parsedSpotId;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotId set to {SpotId} from string parameter '{spotIdString}'");
+            }
+            else if (SpotId <= 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: No valid parameter, SpotId not set via QueryProperty either. SpotId: {SpotId}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Using SpotId from QueryProperty: {SpotId}");
             }
 
             await LoadSpotAsync().ConfigureAwait(false);
@@ -208,8 +226,11 @@ namespace SubExplore.ViewModels.Spots
         /// </summary>
         private async Task LoadSpotAsync()
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotAsync called with SpotId: {SpotId}");
+            
             if (SpotId <= 0)
             {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotAsync: Invalid SpotId {SpotId}");
                 await _errorHandlingService.HandleValidationErrorAsync(
                     "ID de spot invalide", 
                     nameof(LoadSpotAsync));

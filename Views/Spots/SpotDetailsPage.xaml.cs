@@ -34,18 +34,24 @@ namespace SubExplore.Views.Spots
         }
 
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
 
-            // Mettre � jour la carte si les donn�es sont d�j� charg�es
-            // (peut arriver si on revient sur la page)
-            if (_viewModel != null && !_viewModel.IsLoading && _viewModel.Spot != null)
+            try
             {
-                UpdateMap();
+                // The ViewModel will handle the query parameter via its QueryProperty
+                await _viewModel.InitializeAsync(null);
             }
-            // Si le ViewModel est toujours en cours de chargement, l'�v�nement PropertyChanged
-            // s'en chargera via ViewModel_PropertyChanged.
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] SpotDetailsPage OnAppearing failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                }
+            }
         }
 
         // M�thode pour mettre � jour la carte apr�s le chargement des donn�es
