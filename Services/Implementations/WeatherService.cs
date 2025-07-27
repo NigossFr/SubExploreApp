@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SubExplore.Models.Domain;
 using SubExplore.Services.Interfaces;
+using SubExplore.Helpers;
 
 namespace SubExplore.Services.Implementations
 {
@@ -81,32 +82,42 @@ namespace SubExplore.Services.Implementations
 
                 _logger.LogInformation("Fetching current weather for coordinates {Lat}, {Lon}", latitude, longitude);
 
-                var url = $"{_baseUrl}weather?lat={latitude.ToString(CultureInfo.InvariantCulture)}&lon={longitude.ToString(CultureInfo.InvariantCulture)}&appid={_apiKey}&units=metric&lang=fr";
-                
-                var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
-                
-                if (!response.IsSuccessStatusCode)
+                // Use intelligent retry for weather API calls
+                var weatherInfo = await RetryHelper.ExecuteWeatherApiCallAsync(async ct =>
                 {
-                    _logger.LogError("Weather API returned {StatusCode}: {ReasonPhrase}", response.StatusCode, response.ReasonPhrase);
-                    return cachedWeather; // Return stale cache if available
+                    var url = $"{_baseUrl}weather?lat={latitude.ToString(CultureInfo.InvariantCulture)}&lon={longitude.ToString(CultureInfo.InvariantCulture)}&appid={_apiKey}&units=metric&lang=fr";
+                    
+                    var response = await _httpClient.GetAsync(url, ct).ConfigureAwait(false);
+                    
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new HttpRequestException($"Weather API returned {response.StatusCode}: {response.ReasonPhrase}");
+                    }
+
+                    var jsonContent = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                    var weatherData = JsonSerializer.Deserialize<OpenWeatherMapCurrentResponse>(jsonContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (weatherData == null)
+                    {
+                        throw new InvalidOperationException("Failed to deserialize weather response");
+                    }
+
+                    return MapCurrentWeatherResponse(weatherData, latitude, longitude);
+                    
+                }, _logger, cancellationToken).ConfigureAwait(false);
+
+                if (weatherInfo != null)
+                {
+                    // Cache the result
+                    await _cacheService.SetCurrentWeatherCacheAsync(weatherInfo, cancellationToken).ConfigureAwait(false);
+                    _logger.LogInformation("Successfully retrieved and cached weather data for {Lat}, {Lon}", latitude, longitude);
+                    return weatherInfo;
                 }
-
-                var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                var weatherData = JsonSerializer.Deserialize<OpenWeatherMapCurrentResponse>(jsonContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                if (weatherData == null)
+                else
                 {
-                    _logger.LogError("Failed to deserialize weather response");
+                    _logger.LogWarning("Weather API call failed after retries, returning cached data");
                     return cachedWeather;
                 }
-
-                var weatherInfo = MapCurrentWeatherResponse(weatherData, latitude, longitude);
-                
-                // Cache the result
-                await _cacheService.SetCurrentWeatherCacheAsync(weatherInfo, cancellationToken).ConfigureAwait(false);
-                
-                _logger.LogInformation("Successfully retrieved and cached weather data for {Lat}, {Lon}", latitude, longitude);
-                return weatherInfo;
             }
             catch (HttpRequestException ex)
             {
@@ -226,6 +237,7 @@ namespace SubExplore.Services.Implementations
 
         /// <summary>
         /// Check if weather service is available and configured
+        /// Enhanced with better error handling and fallback logic
         /// </summary>
         public async Task<bool> IsServiceAvailableAsync()
         {
@@ -233,22 +245,39 @@ namespace SubExplore.Services.Implementations
             {
                 if (string.IsNullOrEmpty(_apiKey) || _apiKey == "demo_api_key")
                 {
+                    _logger.LogDebug("Weather service unavailable: Invalid or demo API key");
                     return false;
                 }
 
                 if (!_connectivityService.IsConnected)
                 {
+                    _logger.LogDebug("Weather service unavailable: No internet connectivity");
                     return false;
                 }
 
-                // Test API with a simple call
-                var testUrl = $"{_baseUrl}weather?lat=43.2965&lon=5.3698&appid={_apiKey}";
-                var response = await _httpClient.GetAsync(testUrl).ConfigureAwait(false);
+                // Quick connectivity test with shorter timeout
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var testUrl = $"{_baseUrl}weather?lat=43.2965&lon=5.3698&appid={_apiKey}&units=metric";
                 
-                return response.IsSuccessStatusCode;
+                try
+                {
+                    var response = await _httpClient.GetAsync(testUrl, cts.Token).ConfigureAwait(false);
+                    var isAvailable = response.IsSuccessStatusCode;
+                    
+                    _logger.LogDebug("Weather service availability test: {IsAvailable} (Status: {StatusCode})", 
+                        isAvailable, response.StatusCode);
+                    
+                    return isAvailable;
+                }
+                catch (TaskCanceledException)
+                {
+                    _logger.LogWarning("Weather service availability test timed out after 5 seconds");
+                    return false;
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Weather service availability check failed");
                 return false;
             }
         }

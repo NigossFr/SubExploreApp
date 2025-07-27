@@ -31,6 +31,7 @@ namespace SubExplore.ViewModels.Spots
         private readonly IFavoriteSpotService _favoriteSpotService;
         private readonly IAuthenticationService _authenticationService;
         private readonly IWeatherService _weatherService;
+        private readonly IConnectivityService _connectivityService;
         private readonly ILogger<SpotDetailsViewModel> _logger;
 
         [ObservableProperty]
@@ -127,6 +128,22 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private bool _showWeatherError;
 
+        // Enhanced loading indicators for better UX
+        [ObservableProperty]
+        private bool _isLoadingCreator;
+
+        [ObservableProperty]
+        private bool _isLoadingStatistics;
+
+        [ObservableProperty]
+        private bool _isLoadingSimilarSpots;
+
+        [ObservableProperty]
+        private string _loadingProgress = string.Empty;
+
+        [ObservableProperty]
+        private int _loadingPercentage;
+
         private int _spotId;
 
         public int SpotId
@@ -168,6 +185,7 @@ namespace SubExplore.ViewModels.Spots
             IFavoriteSpotService favoriteSpotService,
             IAuthenticationService authenticationService,
             IWeatherService weatherService,
+            IConnectivityService connectivityService,
             ILogger<SpotDetailsViewModel> logger,
             IDialogService dialogService,
             INavigationService navigationService)
@@ -182,6 +200,7 @@ namespace SubExplore.ViewModels.Spots
             _favoriteSpotService = favoriteSpotService ?? throw new ArgumentNullException(nameof(favoriteSpotService));
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
             _weatherService = weatherService ?? throw new ArgumentNullException(nameof(weatherService));
+            _connectivityService = connectivityService ?? throw new ArgumentNullException(nameof(connectivityService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             SpotMedias = new ObservableCollection<SpotMedia>();
@@ -223,6 +242,7 @@ namespace SubExplore.ViewModels.Spots
 
         /// <summary>
         /// Loads spot data with comprehensive error handling and caching
+        /// Optimized with parallel loading for better performance
         /// </summary>
         private async Task LoadSpotAsync()
         {
@@ -270,20 +290,40 @@ namespace SubExplore.ViewModels.Spots
 
                 Title = Spot.Name;
 
-                // Initialize media collections with lazy loading
-                await InitializeMediaCollectionAsync().ConfigureAwait(false);
+                // Initialize progress tracking
+                LoadingProgress = "Chargement des données...";
+                LoadingPercentage = 20; // Spot loaded (20%)
 
-                // Load creator information safely
-                await LoadCreatorInformationAsync().ConfigureAwait(false);
+                // Load all secondary data in parallel with progress tracking
+                var loadingTasks = new List<Task>
+                {
+                    TrackProgress(InitializeMediaCollectionAsync(), "médias", 30),
+                    TrackProgress(LoadCreatorInformationAsync(), "créateur", 50),
+                    TrackProgress(LoadEnhancedSpotDataAsync(), "statistiques", 70),
+                    TrackProgress(LoadFavoriteInfoAsync(), "favoris", 85)
+                };
 
-                // Load enhanced spot data
-                await LoadEnhancedSpotDataAsync().ConfigureAwait(false);
+                // Only load weather if connectivity allows
+                if (_connectivityService.IsConnected)
+                {
+                    loadingTasks.Add(TrackProgress(LoadWeatherInfoAsync(), "météo", 95));
+                }
+                else
+                {
+                    // Set weather unavailable immediately
+                    HasWeatherData = false;
+                    WeatherErrorMessage = "Connectivité limitée - données météo indisponibles";
+                    ShowWeatherError = true;
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotAsync: Skipping weather due to no connectivity");
+                    LoadingPercentage = 95;
+                }
 
-                // Load favorite information
-                await LoadFavoriteInfoAsync().ConfigureAwait(false);
-
-                // Load weather information
-                await LoadWeatherInfoAsync().ConfigureAwait(false);
+                // Execute all tasks in parallel
+                await Task.WhenAll(loadingTasks).ConfigureAwait(false);
+                
+                // Complete loading
+                LoadingProgress = "Chargement terminé";
+                LoadingPercentage = 100;
             }
             catch (TimeoutException ex)
             {
@@ -307,6 +347,26 @@ namespace SubExplore.ViewModels.Spots
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// Tracks progress of a task with visual feedback
+        /// </summary>
+        private async Task TrackProgress(Task task, string taskName, int progressPercentage)
+        {
+            try
+            {
+                LoadingProgress = $"Chargement {taskName}...";
+                await task.ConfigureAwait(false);
+                LoadingPercentage = Math.Max(LoadingPercentage, progressPercentage);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] TrackProgress: Completed {taskName} ({progressPercentage}%)");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] TrackProgress: {taskName} failed - {ex.Message}");
+                // Continue with other tasks even if one fails
+                LoadingPercentage = Math.Max(LoadingPercentage, progressPercentage);
             }
         }
 
@@ -883,6 +943,9 @@ namespace SubExplore.ViewModels.Spots
                 
                 LoadedMediaCount = SpotMedias.Count;
                 _allMediaLoaded = LoadedMediaCount >= TotalMediaCount;
+                
+                // Optimize memory usage if too many items loaded
+                await OptimizeMemoryUsageAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -931,11 +994,51 @@ namespace SubExplore.ViewModels.Spots
                 {
                     _mediaCache.Remove(key);
                 }
+                
+                // Force garbage collection after cleanup
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] OptimizeMediaCache: Removed {itemsToRemove.Count} items from cache");
+                GC.Collect(0, GCCollectionMode.Optimized);
+            }
+        }
+
+        /// <summary>
+        /// Enhanced memory management for media loading
+        /// Automatically triggered when loading large amounts of media
+        /// </summary>
+        private async Task OptimizeMemoryUsageAsync()
+        {
+            try
+            {
+                // Check if we have too many items in memory
+                if (SpotMedias.Count > MediaBatchSize * 3)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] OptimizeMemoryUsageAsync: High media count detected, optimizing...");
+                    
+                    // Keep only the most recent items visible
+                    var itemsToKeep = SpotMedias.Take(MediaBatchSize * 2).ToList();
+                    SpotMedias.Clear();
+                    
+                    foreach (var item in itemsToKeep)
+                    {
+                        SpotMedias.Add(item);
+                    }
+                    
+                    // Optimize cache
+                    OptimizeMediaCache();
+                    
+                    // Small delay to let UI update
+                    await Task.Delay(50).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] OptimizeMemoryUsageAsync: {ex.Message}");
             }
         }
 
         /// <summary>
         /// Load weather information for the current spot
+        /// Enhanced with better connectivity handling and fallbacks
         /// </summary>
         private async Task LoadWeatherInfoAsync()
         {
@@ -953,18 +1056,33 @@ namespace SubExplore.ViewModels.Spots
 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadWeatherInfoAsync: Loading weather for spot at {Spot.Latitude}, {Spot.Longitude}");
 
-                // Check if weather service is available
-                var isServiceAvailable = await _weatherService.IsServiceAvailableAsync().ConfigureAwait(false);
-                if (!isServiceAvailable)
+                // Quick connectivity check first
+                if (!_connectivityService.IsConnected)
                 {
-                    _logger.LogWarning("Weather service is not available");
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] LoadWeatherInfoAsync: No internet connectivity");
                     HasWeatherData = false;
+                    WeatherErrorMessage = "Pas de connexion internet - données météo indisponibles";
+                    ShowWeatherError = true;
                     return;
                 }
 
-                // Load current weather and diving conditions in parallel
-                var weatherTask = _weatherService.GetCurrentWeatherAsync(Spot.Latitude, Spot.Longitude);
-                var divingConditionsTask = _weatherService.GetDivingConditionsAsync(Spot.Latitude, Spot.Longitude);
+                // Check if weather service is available with timeout
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                var isServiceAvailable = await _weatherService.IsServiceAvailableAsync().ConfigureAwait(false);
+                
+                if (!isServiceAvailable)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] LoadWeatherInfoAsync: Weather service not available");
+                    _logger.LogWarning("Weather service is not available");
+                    HasWeatherData = false;
+                    WeatherErrorMessage = "Service météo temporairement indisponible";
+                    ShowWeatherError = true;
+                    return;
+                }
+
+                // Load current weather and diving conditions in parallel with timeout
+                var weatherTask = _weatherService.GetCurrentWeatherAsync(Spot.Latitude, Spot.Longitude, cts.Token);
+                var divingConditionsTask = _weatherService.GetDivingConditionsAsync(Spot.Latitude, Spot.Longitude, cts.Token);
 
                 await Task.WhenAll(weatherTask, divingConditionsTask).ConfigureAwait(false);
 
@@ -983,6 +1101,22 @@ namespace SubExplore.ViewModels.Spots
                     WeatherErrorMessage = "Données météo temporairement indisponibles";
                     ShowWeatherError = true;
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] LoadWeatherInfoAsync: Operation timed out");
+                HasWeatherData = false;
+                WeatherErrorMessage = "Délai d'attente dépassé - données météo indisponibles";
+                ShowWeatherError = true;
+            }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadWeatherInfoAsync: Network error - {ex.Message}");
+                await _errorHandlingService.LogExceptionAsync(ex, nameof(LoadWeatherInfoAsync));
+                
+                HasWeatherData = false;
+                WeatherErrorMessage = "Problème de réseau - données météo indisponibles";
+                ShowWeatherError = true;
             }
             catch (Exception ex)
             {
