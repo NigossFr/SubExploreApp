@@ -145,6 +145,12 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private ObservableCollection<CurrentStrength> _currentStrengths;
 
+        [ObservableProperty]
+        private bool _isEditMode;
+
+        [ObservableProperty]
+        private int _editingSpotId;
+
         public AddSpotViewModel(
             ILocationService locationService,
             ISpotRepository spotRepository,
@@ -176,6 +182,7 @@ namespace SubExplore.ViewModels.Spots
             PhotosPaths = new ObservableCollection<string>();
             CurrentStep = 1;
             Title = "Nouveau spot";
+            IsEditMode = false;
 
             // Initialize collections with enum values
             DifficultyLevels = new ObservableCollection<DifficultyLevel>
@@ -226,6 +233,18 @@ namespace SubExplore.ViewModels.Spots
             _logger.LogDebug("Current coordinates before initialization: {Latitude}, {Longitude}", Latitude, Longitude);
             
             await LoadSpotTypes().ConfigureAwait(false);
+            
+            // Check if this is editing an existing spot
+            if (parameter != null && parameter.IsParameterType<SpotNavigationParameter>())
+            {
+                var spotParam = parameter.AsParameter<SpotNavigationParameter>();
+                if (spotParam.SpotId > 0)
+                {
+                    _logger.LogInformation("Initializing for edit mode with SpotId: {SpotId}", spotParam.SpotId);
+                    await LoadSpotForEditing(spotParam.SpotId).ConfigureAwait(false);
+                    return; // Skip location handling as we'll use the spot's location
+                }
+            }
             
             // Handle location parameter passed from navigation
             if (parameter != null)
@@ -304,6 +323,85 @@ namespace SubExplore.ViewModels.Spots
                 Latitude = 43.2965m;
                 Longitude = 5.3698m;
                 _logger.LogError(ex, "Error getting current location, using default location: Marseille");
+            }
+        }
+
+        /// <summary>
+        /// Loads an existing spot for editing
+        /// </summary>
+        /// <param name="spotId">The ID of the spot to edit</param>
+        /// <returns>Task representing the asynchronous loading operation</returns>
+        private async Task LoadSpotForEditing(int spotId)
+        {
+            try
+            {
+                _logger.LogInformation("Loading spot {SpotId} for editing", spotId);
+                
+                var existingSpot = await _spotRepository.GetByIdAsync(spotId).ConfigureAwait(false);
+                if (existingSpot == null)
+                {
+                    _logger.LogWarning("Spot {SpotId} not found for editing", spotId);
+                    await DialogService.ShowAlertAsync("Erreur", "Le spot à modifier n'a pas été trouvé.", "OK");
+                    return;
+                }
+
+                // Set edit mode
+                IsEditMode = true;
+                EditingSpotId = spotId;
+                Title = "Modifier le spot";
+
+                // Load spot data into the form
+                NewSpot = existingSpot;
+                SpotName = existingSpot.Name;
+                
+                // Location
+                Latitude = existingSpot.Latitude;
+                Longitude = existingSpot.Longitude;
+                HasUserLocation = false; // This is from a spot, not user location
+                IsLocationReady = true;
+
+                // Characteristics
+                MaxDepth = existingSpot.MaxDepth ?? 0;
+                AccessDescription = existingSpot.Description ?? string.Empty;
+                RequiredEquipment = existingSpot.RequiredEquipment ?? string.Empty;
+                SafetyNotes = existingSpot.SafetyNotes ?? string.Empty;
+                BestConditions = existingSpot.BestConditions ?? string.Empty;
+                SelectedDifficultyLevel = existingSpot.DifficultyLevel;
+                SelectedCurrentStrength = existingSpot.CurrentStrength ?? CurrentStrength.Light;
+
+                // Select the spot type
+                if (existingSpot.Type != null)
+                {
+                    SelectedSpotType = existingSpot.Type;
+                    var spotTypeItem = AvailableSpotTypes.FirstOrDefault(st => st.Id == existingSpot.Type.Id);
+                    if (spotTypeItem != null)
+                    {
+                        spotTypeItem.IsSelected = true;
+                        SelectedSpotTypes.Clear();
+                        SelectedSpotTypes.Add(existingSpot.Type);
+                    }
+                }
+
+                // Load existing photos
+                if (existingSpot.Media != null && existingSpot.Media.Any())
+                {
+                    PhotosPaths.Clear();
+                    foreach (var media in existingSpot.Media.Where(m => m.MediaType == MediaType.Photo))
+                    {
+                        PhotosPaths.Add(media.MediaUrl);
+                        if (media.IsPrimary)
+                        {
+                            PrimaryPhotoPath = media.MediaUrl;
+                        }
+                    }
+                }
+
+                _logger.LogInformation("Successfully loaded spot {SpotId} for editing: {SpotName}", spotId, existingSpot.Name);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading spot {SpotId} for editing", spotId);
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger le spot pour modification.", "OK");
             }
         }
 
@@ -823,12 +921,29 @@ namespace SubExplore.ViewModels.Spots
                 // Sauvegarder les données de l'étape actuelle
                 SaveCurrentStepData();
 
-                // Mise à jour du statut
-                NewSpot.ValidationStatus = SpotValidationStatus.Pending;
-
-                // Enregistrer le spot
-                await _spotRepository.AddAsync(NewSpot).ConfigureAwait(false);
-                await _spotRepository.SaveChangesAsync().ConfigureAwait(false);
+                // Handle create vs update
+                if (IsEditMode && EditingSpotId > 0)
+                {
+                    // Update existing spot
+                    _logger.LogInformation("Updating existing spot {SpotId}", EditingSpotId);
+                    
+                    // Keep the original validation status for updates
+                    // (don't reset to Pending unless specifically required)
+                    
+                    await _spotRepository.UpdateAsync(NewSpot).ConfigureAwait(false);
+                    await _spotRepository.SaveChangesAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    // Create new spot
+                    _logger.LogInformation("Creating new spot");
+                    
+                    // Set status to pending for new spots
+                    NewSpot.ValidationStatus = SpotValidationStatus.Pending;
+                    
+                    await _spotRepository.AddAsync(NewSpot).ConfigureAwait(false);
+                    await _spotRepository.SaveChangesAsync().ConfigureAwait(false);
+                }
 
                 // Une fois le spot sauvegardé, ajouter les photos
                 if (PhotosPaths.Count > 0)
@@ -856,10 +971,13 @@ namespace SubExplore.ViewModels.Spots
                 }
 
                 // Afficher un message de succès
-                await DialogService.ShowAlertAsync("Succès", "Votre spot a été soumis avec succès et sera vérifié par un modérateur.", "OK");
+                var successMessage = IsEditMode 
+                    ? "Votre spot a été modifié avec succès." 
+                    : "Votre spot a été soumis avec succès et sera vérifié par un modérateur.";
+                await DialogService.ShowAlertAsync("Succès", successMessage, "OK");
 
-                // Retourner à la carte
-                await NavigationService.NavigateToAsync<ViewModels.Map.MapViewModel>().ConfigureAwait(false);
+                // Retourner à la carte (stay on main thread for UI updates)
+                await NavigationService.NavigateToAsync<ViewModels.Map.MapViewModel>();
             }
             catch (Exception ex)
             {
@@ -882,11 +1000,12 @@ namespace SubExplore.ViewModels.Spots
                 "Confirmation",
                 "Êtes-vous sûr de vouloir annuler ? Les données non enregistrées seront perdues.",
                 "Oui",
-                "Non").ConfigureAwait(false);
+                "Non");
 
             if (confirm)
             {
-                await NavigationService.GoBackAsync().ConfigureAwait(false);
+                // Stay on main thread for navigation to avoid UI threading issues
+                await NavigationService.GoBackAsync();
             }
         }
 

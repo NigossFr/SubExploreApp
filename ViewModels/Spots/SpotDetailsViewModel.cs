@@ -595,7 +595,7 @@ namespace SubExplore.ViewModels.Spots
         [RelayCommand]
         private async Task Back()
         {
-            await NavigationService.GoBackAsync().ConfigureAwait(false);
+            await NavigationService.GoBackAsync();
         }
 
         [RelayCommand]

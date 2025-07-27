@@ -128,18 +128,19 @@ namespace SubExplore.ViewModels.Favorites
         }
 
         /// <summary>
-        /// Efficiently update the favorites collection
+        /// Efficiently update the favorites collection on the main thread
         /// </summary>
         private async Task UpdateFavoritesCollectionAsync(IEnumerable<UserFavoriteSpot> newFavorites)
         {
-            await Task.Run(() =>
+            // ObservableCollection must be updated on the main UI thread
+            await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 FavoriteSpots.Clear();
                 foreach (var favorite in newFavorites)
                 {
                     FavoriteSpots.Add(favorite);
                 }
-            }).ConfigureAwait(false);
+            });
         }
 
         /// <summary>
@@ -386,7 +387,7 @@ namespace SubExplore.ViewModels.Favorites
         {
             try
             {
-                await NavigationService.NavigateToAsync<ViewModels.Map.MapViewModel>().ConfigureAwait(false);
+                await NavigationService.NavigateToAsync<ViewModels.Map.MapViewModel>();
             }
             catch (Exception ex)
             {

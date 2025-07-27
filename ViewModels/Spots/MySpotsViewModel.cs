@@ -169,14 +169,18 @@ namespace SubExplore.ViewModels.Spots
                 var userSpots = await _spotRepository.GetSpotsByUserAsync(userId);
                 _logger.LogInformation("Repository returned {Count} spots for user {UserId}", userSpots?.Count() ?? 0, userId);
 
-                MySpots.Clear();
-                foreach (var spot in userSpots.OrderByDescending(s => s.CreatedAt))
+                // Ensure UI updates happen on the main thread
+                await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    MySpots.Add(spot);
-                }
+                    MySpots.Clear();
+                    foreach (var spot in userSpots.OrderByDescending(s => s.CreatedAt))
+                    {
+                        MySpots.Add(spot);
+                    }
 
-                UpdateStatistics();
-                ApplyFilters();
+                    UpdateStatistics();
+                    ApplyFilters();
+                });
 
                 _logger.LogInformation("Successfully loaded {Count} spots for user {Username}", 
                     MySpots.Count, _authenticationService.CurrentUser.Username);
@@ -301,13 +305,22 @@ namespace SubExplore.ViewModels.Spots
 
             try
             {
-                // TODO: Navigate to edit spot page when implemented
-                await ShowToastAsync($"Édition du spot '{spot.Name}' - Fonction à venir");
+                _logger.LogInformation("Navigating to edit spot {SpotId}: {SpotName}", spot.Id, spot.Name);
+                
+                // Create navigation parameter for editing
+                var editParameter = new SubExplore.Models.Navigation.SpotNavigationParameter(
+                    spot.Id, 
+                    spot.Name, 
+                    spot.Latitude, 
+                    spot.Longitude);
+                
+                // Navigate to AddSpotPage in edit mode
+                await NavigateToAsync<AddSpotViewModel>(editParameter);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error editing spot {SpotId}", spot.Id);
-                await HandleErrorAsync("Erreur", "Impossible d'éditer ce spot.");
+                _logger.LogError(ex, "Error navigating to edit spot {SpotId}", spot.Id);
+                await HandleErrorAsync("Erreur", "Impossible d'ouvrir l'édition du spot.");
             }
         }
 
