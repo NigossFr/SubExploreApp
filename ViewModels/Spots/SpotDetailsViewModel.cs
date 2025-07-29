@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -152,17 +153,41 @@ namespace SubExplore.ViewModels.Spots
             set => SetProperty(ref _spotId, value);
         }
 
+        private bool _isInitialized = false;
+        
         // Query property for Shell navigation
         public string SpotIdString
         {
             get => SpotId.ToString();
             set 
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotIdString setter called with value: '{value}'");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotIdString setter called with value: '{value}' at {DateTime.Now:HH:mm:ss.fff}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Current thread: {Thread.CurrentThread.ManagedThreadId}");
+                
                 if (!string.IsNullOrEmpty(value) && int.TryParse(value, out int spotId))
                 {
+                    var oldSpotId = SpotId;
                     SpotId = spotId;
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotIdString set to {value}, parsed SpotId: {SpotId}");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotIdString set to '{value}', SpotId changed from {oldSpotId} to {SpotId}");
+                    
+                    // If we haven't been initialized yet and we now have a valid SpotId, initialize automatically
+                    if (!_isInitialized && SpotId > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: QueryProperty set before initialization, triggering automatic initialization");
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await Task.Delay(50); // Small delay to ensure UI is ready
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Starting delayed initialization with SpotId {SpotId}");
+                                await InitializeAsync().ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[ERROR] SpotDetailsViewModel: Delayed initialization failed: {ex.Message}");
+                            }
+                        });
+                    }
                 }
                 else
                 {
@@ -215,29 +240,55 @@ namespace SubExplore.ViewModels.Spots
 
         public override async Task InitializeAsync(object parameter = null)
         {
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel.InitializeAsync called with parameter: {parameter} (type: {parameter?.GetType()}), Current SpotId: {SpotId}");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel.InitializeAsync called with parameter: {parameter} (type: {parameter?.GetType()}), Current SpotId: {SpotId}, IsInitialized: {_isInitialized}");
             
-            // Priority: parameter > QueryProperty
-            if (parameter is int spotId)
+            // Prevent double initialization
+            if (_isInitialized)
             {
-                SpotId = spotId;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotId set to {SpotId} from int parameter");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Already initialized, skipping");
+                return;
             }
-            else if (parameter is string spotIdString && int.TryParse(spotIdString, out int parsedSpotId))
+            
+            try
             {
-                SpotId = parsedSpotId;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotId set to {SpotId} from string parameter '{spotIdString}'");
-            }
-            else if (SpotId <= 0)
-            {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: No valid parameter, SpotId not set via QueryProperty either. SpotId: {SpotId}");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Using SpotId from QueryProperty: {SpotId}");
-            }
+                // Priority: parameter > QueryProperty
+                if (parameter is int spotId)
+                {
+                    SpotId = spotId;
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotId set to {SpotId} from int parameter");
+                }
+                else if (parameter is string spotIdString && int.TryParse(spotIdString, out int parsedSpotId))
+                {
+                    SpotId = parsedSpotId;
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: SpotId set to {SpotId} from string parameter '{spotIdString}'");
+                }
+                else if (SpotId <= 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: No valid parameter, SpotId not set via QueryProperty either. SpotId: {SpotId}");
+                    System.Diagnostics.Debug.WriteLine($"[WARNING] SpotDetailsViewModel: Cannot proceed with invalid SpotId. This is likely a QueryProperty timing issue.");
+                    return; // Don't proceed if we don't have a valid SpotId
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Using SpotId from QueryProperty: {SpotId}");
+                }
 
-            await LoadSpotAsync().ConfigureAwait(false);
+                _isInitialized = true; // Mark as initialized before starting to prevent double calls
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Marked as initialized, about to call LoadSpotAsync with SpotId: {SpotId}");
+                await LoadSpotAsync().ConfigureAwait(false);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: LoadSpotAsync completed successfully");
+            }
+            catch (Exception ex)
+            {
+                _isInitialized = false; // Reset on error so initialization can be retried
+                System.Diagnostics.Debug.WriteLine($"[ERROR] SpotDetailsViewModel.InitializeAsync failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                }
+                throw; // Re-throw to ensure the error bubbles up
+            }
         }
 
         /// <summary>
@@ -294,19 +345,17 @@ namespace SubExplore.ViewModels.Spots
                 LoadingProgress = "Chargement des données...";
                 LoadingPercentage = 20; // Spot loaded (20%)
 
-                // Load all secondary data in parallel with progress tracking
-                var loadingTasks = new List<Task>
-                {
-                    TrackProgress(InitializeMediaCollectionAsync(), "médias", 30),
-                    TrackProgress(LoadCreatorInformationAsync(), "créateur", 50),
-                    TrackProgress(LoadEnhancedSpotDataAsync(), "statistiques", 70),
-                    TrackProgress(LoadFavoriteInfoAsync(), "favoris", 85)
-                };
+                // Load all secondary data in SEQUENTIAL order to avoid DbContext concurrency issues
+                // Note: Changed from parallel to sequential to prevent "A second operation was started on this context instance" errors
+                await TrackProgress(InitializeMediaCollectionAsync(), "médias", 30);
+                await TrackProgress(LoadCreatorInformationAsync(), "créateur", 50);
+                await TrackProgress(LoadEnhancedSpotDataAsync(), "statistiques", 70);
+                await TrackProgress(LoadFavoriteInfoAsync(), "favoris", 85);
 
                 // Only load weather if connectivity allows
                 if (_connectivityService.IsConnected)
                 {
-                    loadingTasks.Add(TrackProgress(LoadWeatherInfoAsync(), "météo", 95));
+                    await TrackProgress(LoadWeatherInfoAsync(), "météo", 95);
                 }
                 else
                 {
@@ -317,9 +366,6 @@ namespace SubExplore.ViewModels.Spots
                     System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotAsync: Skipping weather due to no connectivity");
                     LoadingPercentage = 95;
                 }
-
-                // Execute all tasks in parallel
-                await Task.WhenAll(loadingTasks).ConfigureAwait(false);
                 
                 // Complete loading
                 LoadingProgress = "Chargement terminé";
@@ -706,46 +752,63 @@ namespace SubExplore.ViewModels.Spots
                 IsLoadingFavorite = true;
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Starting toggle for SpotId={SpotId}, CurrentState={IsFavorite}");
 
-                // Temporary simple toggle for testing UI
-                var newFavoriteStatus = !IsFavorite;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Simulated toggle to status={newFavoriteStatus}");
-
-                IsFavorite = newFavoriteStatus;
-
-                // Simulate favorites count update
-                if (newFavoriteStatus)
-                {
-                    FavoritesCount++;
-                }
-                else
-                {
-                    FavoritesCount = Math.Max(0, FavoritesCount - 1);
-                }
-                
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Updated FavoritesCount={FavoritesCount}");
-
-                var message = newFavoriteStatus 
-                    ? "Ajouté aux favoris" 
-                    : "Retiré des favoris";
+                var message = IsFavorite 
+                    ? "Retiré des favoris" 
+                    : "Ajouté aux favoris";
                     
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Showing toast message: {message}");
                 await DialogService.ShowToastAsync(message).ConfigureAwait(false);
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Toast message shown successfully");
 
-                // TODO: Uncomment this when database is properly set up
-                /*
                 // Get current user ID from authentication service
-                var currentUserId = 1; // Using admin user for testing
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: AuthenticationService.IsAuthenticated = {_authenticationService.IsAuthenticated}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: AuthenticationService.CurrentUser = {_authenticationService.CurrentUser?.Id.ToString() ?? "NULL"}");
+                
+                var currentUserId = _authenticationService.CurrentUserId;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: AuthenticationService.CurrentUserId = {currentUserId?.ToString() ?? "NULL"}");
+                
+                if (!currentUserId.HasValue)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ERROR] ToggleFavorite: User not authenticated - attempting validation");
+                    
+                    // Try to validate authentication
+                    var isAuthenticated = await _authenticationService.ValidateAuthenticationAsync();
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: ValidateAuthenticationAsync result = {isAuthenticated}");
+                    
+                    if (isAuthenticated && _authenticationService.CurrentUserId.HasValue)
+                    {
+                        currentUserId = _authenticationService.CurrentUserId;
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: After validation, CurrentUserId = {currentUserId}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[ERROR] ToggleFavorite: Still not authenticated after validation");
+                        await DialogService.ShowAlertAsync("Erreur", "Vous devez être connecté pour utiliser les favoris", "OK");
+                        return;
+                    }
+                }
+                
+                // Enhanced error handling and diagnostics
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Calling FavoriteSpotService.ToggleFavoriteAsync(userId={currentUserId}, spotId={SpotId})");
+                
+                if (_favoriteSpotService == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ERROR] ToggleFavorite: FavoriteSpotService is NULL!");
+                    await DialogService.ShowAlertAsync("Erreur", "Service des favoris non disponible", "OK");
+                    return;
+                }
                 
                 var newFavoriteStatus = await _favoriteSpotService.ToggleFavoriteAsync(
-                    currentUserId, 
+                    currentUserId.Value, 
                     SpotId).ConfigureAwait(false);
 
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Service returned newFavoriteStatus={newFavoriteStatus}");
                 IsFavorite = newFavoriteStatus;
 
                 // Update favorites count
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Getting favorites count for spot {SpotId}");
                 FavoritesCount = await _favoriteSpotService.GetSpotFavoritesCountAsync(SpotId).ConfigureAwait(false);
-                */
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ToggleFavorite: Favorites count updated to {FavoritesCount}");
             }
             catch (Exception ex)
             {
@@ -768,23 +831,52 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
-                // Temporary: Set default values for testing
-                IsFavorite = false;
-                FavoritesCount = new Random().Next(0, 15); // Random count for testing
-                
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: Set IsFavorite={IsFavorite}, FavoritesCount={FavoritesCount}");
-
-                // TODO: Uncomment this when database is properly set up
-                /*
                 // Get current user ID from authentication service
-                var currentUserId = 1; // Using admin user for testing
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: AuthenticationService.IsAuthenticated = {_authenticationService.IsAuthenticated}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: AuthenticationService.CurrentUser = {_authenticationService.CurrentUser?.Id.ToString() ?? "NULL"}");
+                
+                var currentUserId = _authenticationService.CurrentUserId;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: AuthenticationService.CurrentUserId = {currentUserId?.ToString() ?? "NULL"}");
+                
+                if (!currentUserId.HasValue)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] LoadFavoriteInfoAsync: User not authenticated - attempting validation");
+                    
+                    // Try to validate authentication
+                    var isAuthenticated = await _authenticationService.ValidateAuthenticationAsync();
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: ValidateAuthenticationAsync result = {isAuthenticated}");
+                    
+                    if (isAuthenticated && _authenticationService.CurrentUserId.HasValue)
+                    {
+                        currentUserId = _authenticationService.CurrentUserId;
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: After validation, CurrentUserId = {currentUserId}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] LoadFavoriteInfoAsync: Still not authenticated after validation, setting defaults");
+                        IsFavorite = false;
+                        FavoritesCount = 0;
+                        return;
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: Loading favorite info for userId={currentUserId}, spotId={SpotId}");
+                
+                if (_favoriteSpotService == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ERROR] LoadFavoriteInfoAsync: FavoriteSpotService is NULL!");
+                    IsFavorite = false;
+                    FavoritesCount = 0;
+                    return;
+                }
 
                 IsFavorite = await _favoriteSpotService.IsSpotFavoritedAsync(
-                    currentUserId, 
+                    currentUserId.Value, 
                     SpotId).ConfigureAwait(false);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: IsFavorite={IsFavorite}");
 
                 FavoritesCount = await _favoriteSpotService.GetSpotFavoritesCountAsync(SpotId).ConfigureAwait(false);
-                */
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadFavoriteInfoAsync: FavoritesCount={FavoritesCount}");
             }
             catch (Exception ex)
             {

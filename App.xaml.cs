@@ -74,12 +74,37 @@ namespace SubExplore
             {
                 Debug.WriteLine("[App.xaml.cs] Initializing database and authentication services");
                 
-                // Initialize database first
+                // Initialize database first with enhanced error handling
                 var dbInitService = services.GetService<IDatabaseInitializationService>();
                 if (dbInitService != null)
                 {
-                    await dbInitService.InitializeDatabaseAsync();
-                    Debug.WriteLine("[App.xaml.cs] Database initialization completed");
+                    try
+                    {
+                        await dbInitService.InitializeDatabaseAsync();
+                        Debug.WriteLine("[App.xaml.cs] Database initialization completed");
+                        
+                        // Verify critical tables exist
+                        var isInitialized = await dbInitService.IsDatabaseInitializedAsync();
+                        Debug.WriteLine($"[App.xaml.cs] Database verification: {(isInitialized ? "✓ READY" : "✗ FAILED")}");
+                        
+                        if (!isInitialized)
+                        {
+                            Debug.WriteLine("[App.xaml.cs] 🚨 CRITICAL: Database not properly initialized - forcing table creation");
+                            await dbInitService.EnsureUserFavoriteSpotsTableAsync();
+                        }
+                        
+                        // Database initialization and verification completed
+                        Debug.WriteLine("[App.xaml.cs] ✅ Database initialization and verification completed successfully");
+                        
+                        // Run ultra-deep database diagnostic
+                        await DatabaseDiagnostic.RunUltraDeepDatabaseTestAsync(services);
+                    }
+                    catch (Exception dbEx)
+                    {
+                        Debug.WriteLine($"[App.xaml.cs] 🚨 DATABASE INITIALIZATION FAILED: {dbEx.Message}");
+                        Debug.WriteLine($"[App.xaml.cs] Database Stack Trace: {dbEx.StackTrace}");
+                        // Continue anyway - some functionality might still work
+                    }
                 }
                 
                 var authService = services.GetService<IAuthenticationService>();
@@ -91,17 +116,9 @@ namespace SubExplore
                     // Determine initial page based on authentication status
                     if (authService.IsAuthenticated)
                     {
-                        Debug.WriteLine("[App.xaml.cs] User is authenticated, showing MapPage");
-                        var mapPageInstance = services.GetService<MapPage>();
-                        if (mapPageInstance != null)
-                        {
-                            MainPage = new NavigationPage(mapPageInstance);
-                        }
-                        else
-                        {
-                            Debug.WriteLine("[App.xaml.cs] ERROR: MapPage not found, falling back to login");
-                            ShowLoginPage(services);
-                        }
+                        Debug.WriteLine("[App.xaml.cs] User is authenticated, setting AppShell as MainPage");
+                        MainPage = new AppShell();
+                        Debug.WriteLine("[App.xaml.cs] ✓ AppShell set as MainPage - Shell navigation enabled");
                     }
                     else
                     {
@@ -159,8 +176,10 @@ namespace SubExplore
                         var minimalLoginPage = new SubExplore.Views.Auth.MinimalLoginPage(loginViewModel);
                         Debug.WriteLine("[App.xaml.cs] MinimalLoginPage created successfully");
                         
+                        // For authentication, use NavigationPage temporarily
+                        // After login success, we'll switch to AppShell
                         MainPage = new NavigationPage(minimalLoginPage);
-                        Debug.WriteLine("[App.xaml.cs] ✓ MinimalLoginPage set as MainPage successfully");
+                        Debug.WriteLine("[App.xaml.cs] ✓ MinimalLoginPage set as MainPage successfully (temp NavigationPage)");
                     }
                     catch (Exception ex)
                     {

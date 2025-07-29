@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using SubExplore.ViewModels.Map;
 using SubExplore.ViewModels.Spots;
 using SubExplore.ViewModels.Profile;
+using SubExplore.ViewModels.Favorites;
 using SubExplore.Repositories.Interfaces;
 using MenuItemModel = SubExplore.Models.Menu.MenuItem;
 
@@ -259,8 +260,19 @@ namespace SubExplore.ViewModels.Menu
         [RelayCommand]
         private async Task NavigateToMySpots()
         {
-            await NavigateToAsync<MySpotsViewModel>();
-            IsMenuOpen = false;
+            _logger.LogInformation("🔍 NavigateToMySpots command triggered");
+            try
+            {
+                _logger.LogInformation("🔍 Attempting to navigate to MySpotsViewModel");
+                await NavigateToAsync<MySpotsViewModel>();
+                _logger.LogInformation("🔍 Navigation to MySpotsViewModel completed successfully");
+                IsMenuOpen = false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "🔍 Error navigating to MySpotsViewModel");
+                throw;
+            }
         }
 
         [RelayCommand]
@@ -280,8 +292,7 @@ namespace SubExplore.ViewModels.Menu
         [RelayCommand]
         private async Task NavigateToFavorites()
         {
-            // TODO: Implement Favorites page
-            await ShowToastAsync("Fonction à venir");
+            await NavigateToAsync<FavoriteSpotsViewModel>();
             IsMenuOpen = false;
         }
 

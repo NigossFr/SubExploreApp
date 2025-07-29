@@ -71,7 +71,12 @@ namespace SubExplore.Repositories.Implementations
             
             try
             {
-                var favorites = await GetFavoritesWithMediaQuery()
+                var favorites = await _dbSet
+                    .AsNoTracking()
+                    .Include(f => f.Spot)
+                    .ThenInclude(s => s!.Type)
+                    .Include(f => f.Spot)
+                    .ThenInclude(s => s!.Media.Where(m => m.IsPrimary))
                     .Where(f => f.UserId == userId)
                     .OrderByDescending(f => f.CreatedAt)
                     .ThenBy(f => f.Priority)

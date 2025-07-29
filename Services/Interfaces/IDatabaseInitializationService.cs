@@ -24,5 +24,10 @@ namespace SubExplore.Services.Interfaces
         /// Create the RevokedTokens table if it doesn't exist
         /// </summary>
         Task EnsureRevokedTokensTableAsync();
+
+        /// <summary>
+        /// Create the UserFavoriteSpots table if it doesn't exist
+        /// </summary>
+        Task EnsureUserFavoriteSpotsTableAsync();
     }
 }

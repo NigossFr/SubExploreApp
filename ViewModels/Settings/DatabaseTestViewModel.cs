@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -231,6 +232,45 @@ namespace SubExplore.ViewModels.Settings
                 _logger.LogError(ex, "Erreur lors de la récupération des diagnostics");
                 LogMessages += $"❌ Erreur: {ex.Message}\n";
                 ShowError($"Erreur: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task RunUltraDeepDiagnosticAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🚨 Démarrage du diagnostic ultra-profond de la base de données...\n";
+
+                // Get the service provider from DI
+                var services = Application.Current?.Handler?.MauiContext?.Services;
+                if (services == null)
+                {
+                    LogMessages += "❌ Cannot access service provider\n";
+                    return;
+                }
+                
+                // Run the ultra-deep diagnostic
+                await DatabaseDiagnostic.RunUltraDeepDatabaseTestAsync(services);
+                
+                LogMessages += "✅ Diagnostic ultra-profond terminé - voir les logs Debug pour les détails\n";
+                LogMessages += "💡 Conseil: Vérifiez la fenêtre Debug/Output de Visual Studio pour les résultats détaillés\n";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors du diagnostic ultra-profond");
+                LogMessages += $"❌ Erreur diagnostic ultra-profond: {ex.Message}\n";
+                if (ex.InnerException != null)
+                {
+                    LogMessages += $"Inner Exception: {ex.InnerException.Message}\n";
+                }
+                ShowError($"Erreur diagnostic: {ex.Message}");
             }
             finally
             {

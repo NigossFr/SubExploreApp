@@ -48,6 +48,10 @@ namespace SubExplore.Services.Implementations
             {
                 _logger.LogWarning("Using demo API key for weather service. Configure 'WeatherService:ApiKey' for production use.");
             }
+            else
+            {
+                _logger.LogInformation("Weather service initialized with configured API key");
+            }
 
             ConfigureHttpClient();
         }
@@ -243,10 +247,17 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                if (string.IsNullOrEmpty(_apiKey) || _apiKey == "demo_api_key")
+                if (string.IsNullOrEmpty(_apiKey))
                 {
-                    _logger.LogDebug("Weather service unavailable: Invalid or demo API key");
+                    _logger.LogDebug("Weather service unavailable: No API key configured");
                     return false;
+                }
+
+                // Allow demo key for development/testing purposes
+                if (_apiKey == "demo_api_key")
+                {
+                    _logger.LogDebug("Weather service running with demo API key - limited functionality");
+                    return true; // Still allow the service to run for demo purposes
                 }
 
                 if (!_connectivityService.IsConnected)
@@ -255,25 +266,10 @@ namespace SubExplore.Services.Implementations
                     return false;
                 }
 
-                // Quick connectivity test with shorter timeout
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                var testUrl = $"{_baseUrl}weather?lat=43.2965&lon=5.3698&appid={_apiKey}&units=metric";
-                
-                try
-                {
-                    var response = await _httpClient.GetAsync(testUrl, cts.Token).ConfigureAwait(false);
-                    var isAvailable = response.IsSuccessStatusCode;
-                    
-                    _logger.LogDebug("Weather service availability test: {IsAvailable} (Status: {StatusCode})", 
-                        isAvailable, response.StatusCode);
-                    
-                    return isAvailable;
-                }
-                catch (TaskCanceledException)
-                {
-                    _logger.LogWarning("Weather service availability test timed out after 5 seconds");
-                    return false;
-                }
+                // For production API keys, assume service is available if we have connectivity
+                // The actual weather calls will handle API errors appropriately
+                _logger.LogDebug("Weather service appears available - API key configured and connectivity present");
+                return true;
             }
             catch (Exception ex)
             {

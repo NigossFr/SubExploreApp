@@ -95,7 +95,7 @@ public static class MauiProgram
         // Register the performance interceptor factory
         builder.Services.AddSingleton<DataAccess.PerformanceInterceptor>();
 
-        // Configuration de la base de données
+        // Configuration de la base de données with scoped lifetime to prevent connection conflicts
         builder.Services.AddDbContext<SubExploreDbContext>((serviceProvider, options) =>
         {
             string? connectionString = null;
@@ -153,7 +153,20 @@ public static class MauiProgram
             try
             {
                 // Test de la connexion avant de continuer
-                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), 
+                    mySqlOptions =>
+                    {
+                        // Fix MySQL connection concurrency issues
+                        mySqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 3,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorNumbersToAdd: null);
+                    });
+                
+                // Additional EF Core options for better concurrency handling
+                options.EnableSensitiveDataLogging(false);
+                options.EnableServiceProviderCaching(true);
+                options.EnableDetailedErrors(false);
                 
                 // Add performance monitoring interceptor
                 var performanceInterceptor = serviceProvider.GetRequiredService<DataAccess.PerformanceInterceptor>();
@@ -276,6 +289,7 @@ public static class MauiProgram
         
         // Favorites Pages
         builder.Services.AddTransient<SubExplore.Views.Favorites.FavoriteSpotsPage>();
+        builder.Services.AddTransient<SubExplore.Views.Favorites.TestFavoritesPage>();
         
         // Authentication Pages
         builder.Services.AddTransient<SubExplore.Views.Auth.LoginPage>();

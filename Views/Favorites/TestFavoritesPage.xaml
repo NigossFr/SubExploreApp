@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Favorites.TestFavoritesPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="Test Favoris">
+    
+    <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Padding="20">
+        <Label Text="🎉 Test Favoris Page Fonctionne !" 
+               FontSize="24" 
+               FontAttributes="Bold"
+               HorizontalOptions="Center" />
+        
+        <Label Text="Cette page de test confirme que la navigation fonctionne."
+               FontSize="16"
+               HorizontalOptions="Center"
+               Margin="0,20,0,0" />
+        
+        <Button Text="Retour"
+                Clicked="OnBackClicked"
+                BackgroundColor="{StaticResource Primary}"
+                TextColor="White"
+                Margin="0,40,0,0" />
+    </StackLayout>
+    
+</ContentPage>

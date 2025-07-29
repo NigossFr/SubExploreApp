@@ -127,6 +127,17 @@
                 </StackLayout>
             </Frame>
             
+            <Frame
+                Padding="15"
+                BorderColor="#DC3545"
+                CornerRadius="10">
+                <StackLayout Spacing="10">
+                    <Label FontAttributes="Bold" Text="🚨 Diagnostic ultra-profond" />
+                    <Label Text="Test ultra-complet de la connectivité, des tables, des données et des services" FontSize="12" TextColor="Gray" />
+                    <Button Command="{Binding RunUltraDeepDiagnosticCommand}" Text="🚨 Diagnostic ultra-profond" BackgroundColor="#DC3545" TextColor="White" />
+                </StackLayout>
+            </Frame>
+            
             <!-- Section des logs -->
             <Frame
                 Padding="15"

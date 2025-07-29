@@ -100,6 +100,23 @@ namespace SubExplore.Services.Implementations
 
                 _logger.LogInformation("Successful login for user: {UserId}", user.Id);
 
+                // CRITICAL FIX: Force authentication state validation after login
+                // The state was being lost during navigation because InitializeAsync wasn't sufficient
+                // We need to ensure the authentication state persists across all operations
+                _logger.LogInformation("🔧 LoginAsync: Before state restoration - IsAuthenticated = {IsAuthenticated}, CurrentUser = {UserId}", 
+                    IsAuthenticated, _currentUser?.Id.ToString() ?? "NULL");
+
+                // Validate that our current state is properly set
+                if (_currentUser == null || _currentAccessToken == null)
+                {
+                    _logger.LogError("🚨 CRITICAL: Authentication state is NULL after successful login! Forcing restoration...");
+                    _currentUser = user;
+                    _currentAccessToken = accessToken;
+                }
+
+                _logger.LogInformation("🔧 LoginAsync: After state restoration - IsAuthenticated = {IsAuthenticated}, CurrentUser = {UserId}", 
+                    IsAuthenticated, _currentUser?.Id.ToString() ?? "NULL");
+
                 // Notify state change
                 OnStateChanged(true, user, "Login successful");
 
@@ -291,10 +308,15 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
+                _logger.LogInformation("🔧 AuthenticationService.InitializeAsync: Starting initialization");
+                _logger.LogInformation("🔧 AuthenticationService.InitializeAsync: Current IsAuthenticated = {IsAuthenticated}", IsAuthenticated);
+                _logger.LogInformation("🔧 AuthenticationService.InitializeAsync: Current CurrentUser = {CurrentUser}", CurrentUser?.Id.ToString() ?? "NULL");
                 _logger.LogInformation("Initializing authentication service");
 
                 // Try to restore session from stored tokens
                 var accessToken = await _secureSettings.GetAccessTokenAsync();
+                _logger.LogInformation("🔧 AuthenticationService.InitializeAsync: AccessToken from storage = {HasToken}", !string.IsNullOrEmpty(accessToken) ? "FOUND" : "NULL");
+                
                 if (string.IsNullOrEmpty(accessToken))
                 {
                     _logger.LogDebug("No stored access token found");
@@ -337,6 +359,9 @@ namespace SubExplore.Services.Implementations
                 _currentAccessToken = accessToken;
                 _secureSettings.Set("CurrentUserId", user.Id);
 
+                _logger.LogInformation("🔧 AuthenticationService.InitializeAsync: Session restored successfully");
+                _logger.LogInformation("🔧 AuthenticationService.InitializeAsync: Final CurrentUser = {UserId}", user.Id);
+                _logger.LogInformation("🔧 AuthenticationService.InitializeAsync: Final IsAuthenticated = {IsAuthenticated}", IsAuthenticated);
                 _logger.LogInformation("Authentication session restored for user: {UserId}", user.Id);
                 OnStateChanged(true, user, "Session restored");
             }
@@ -351,20 +376,56 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
+                _logger.LogInformation("🔧 ValidateAuthenticationAsync: Starting validation");
+                _logger.LogInformation("🔧 ValidateAuthenticationAsync: IsAuthenticated = {IsAuthenticated}", IsAuthenticated);
+                _logger.LogInformation("🔧 ValidateAuthenticationAsync: CurrentUser = {CurrentUser}", CurrentUser?.Id.ToString() ?? "NULL");
+                
                 if (!IsAuthenticated)
-                    return false;
-
-                var accessToken = await _secureSettings.GetAccessTokenAsync();
-                if (string.IsNullOrEmpty(accessToken))
-                    return false;
-
-                // Check if token is expired
-                if (_tokenService.IsTokenExpired(accessToken))
                 {
-                    // Try to refresh
-                    return await RefreshTokenAsync();
+                    _logger.LogInformation("🔧 ValidateAuthenticationAsync: Not authenticated, attempting session restoration from tokens");
+                    
+                    // Try to restore session from stored tokens if available
+                    var storedAccessToken = await _secureSettings.GetAccessTokenAsync();
+                    if (!string.IsNullOrEmpty(storedAccessToken))
+                    {
+                        _logger.LogInformation("🔧 ValidateAuthenticationAsync: Found stored token, attempting restoration");
+                        await InitializeAsync().ConfigureAwait(false);
+                        
+                        // Check if restoration was successful
+                        if (IsAuthenticated && _currentUser != null)
+                        {
+                            _logger.LogInformation("🔧 ValidateAuthenticationAsync: Session successfully restored for user {UserId}", _currentUser.Id);
+                            return true;
+                        }
+                    }
+                    
+                    _logger.LogInformation("🔧 ValidateAuthenticationAsync: No valid session found, returning false");
+                    return false;
                 }
 
+                var accessToken = await _secureSettings.GetAccessTokenAsync();
+                _logger.LogInformation("🔧 ValidateAuthenticationAsync: AccessToken from storage = {HasToken}", !string.IsNullOrEmpty(accessToken) ? "FOUND" : "NULL");
+                
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    _logger.LogInformation("🔧 ValidateAuthenticationAsync: No access token, returning false");
+                    return false;
+                }
+
+                // Check if token is expired
+                var isExpired = _tokenService.IsTokenExpired(accessToken);
+                _logger.LogInformation("🔧 ValidateAuthenticationAsync: Token expired = {IsExpired}", isExpired);
+                
+                if (isExpired)
+                {
+                    _logger.LogInformation("🔧 ValidateAuthenticationAsync: Token expired, attempting refresh");
+                    // Try to refresh
+                    var refreshResult = await RefreshTokenAsync();
+                    _logger.LogInformation("🔧 ValidateAuthenticationAsync: Refresh result = {RefreshResult}", refreshResult);
+                    return refreshResult;
+                }
+
+                _logger.LogInformation("🔧 ValidateAuthenticationAsync: Validation successful, returning true");
                 return true;
             }
             catch (Exception ex)

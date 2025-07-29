@@ -38,5 +38,10 @@ namespace SubExplore.Services.Interfaces
         /// </summary>
         /// <typeparam name="TViewModel">ViewModel de la page d'accueil</typeparam>
         Task InitializeAsync<TViewModel>();
+
+        /// <summary>
+        /// Switch to Shell navigation (used after successful authentication)
+        /// </summary>
+        void SwitchToShellNavigation();
     }
 }

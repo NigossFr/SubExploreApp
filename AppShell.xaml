@@ -11,10 +11,12 @@
     Shell.FlyoutBehavior="Disabled"
     Title="SubExplore">
 
+    <!-- Main page - Map only, navigation through existing menu -->
     <ShellContent
-        Title="Map"
+        Title="🗺️ Carte"
         ContentTemplate="{DataTemplate map:MapPage}"
         Route="map" />
+
 
     <!-- Add Spot Page Route -->
     <ShellContent
@@ -22,15 +24,30 @@
         ContentTemplate="{DataTemplate spots:AddSpotPage}"
         Route="addspot" />
 
+
     <!-- Spot Details Page Route -->
     <ShellContent
         Title="Spot Details"
         ContentTemplate="{DataTemplate spots:SpotDetailsPage}"
         Route="spotdetails" />
 
+
+
+    <!-- User Preferences Page Route -->
+    <ShellContent
+        Title="User Preferences"
+        ContentTemplate="{DataTemplate profile:UserPreferencesPage}"
+        Route="userpreferences" />
+
+    <!-- My Spots Page Route -->
+    <ShellContent
+        Title="My Spots"
+        ContentTemplate="{DataTemplate spots:MySpotsPage}"
+        Route="myspots" />
+
     <!-- Favorites Page Route -->
     <ShellContent
-        Title="Mes Favoris"
+        Title="Favorites"
         ContentTemplate="{DataTemplate favorites:FavoriteSpotsPage}"
         Route="favorites" />
 
@@ -39,12 +56,6 @@
         Title="User Profile"
         ContentTemplate="{DataTemplate profile:UserProfilePage}"
         Route="userprofile" />
-
-    <!-- User Preferences Page Route -->
-    <ShellContent
-        Title="User Preferences"
-        ContentTemplate="{DataTemplate profile:UserPreferencesPage}"
-        Route="userpreferences" />
 
     <!-- User Stats Page Route -->
     <ShellContent

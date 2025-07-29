@@ -15,17 +15,23 @@ namespace SubExplore.Services.Implementations
         private readonly ISpotRepository _spotRepository;
         private readonly ISpotMediaRepository _spotMediaRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IFavoriteSpotService _favoriteSpotService;
+        private readonly IWeatherService _weatherService;
         private readonly ILogger<SpotService> _logger;
         
         public SpotService(
             ISpotRepository spotRepository,
             ISpotMediaRepository spotMediaRepository,
             IUserRepository userRepository,
+            IFavoriteSpotService favoriteSpotService,
+            IWeatherService weatherService,
             ILogger<SpotService> logger)
         {
             _spotRepository = spotRepository;
             _spotMediaRepository = spotMediaRepository;
             _userRepository = userRepository;
+            _favoriteSpotService = favoriteSpotService;
+            _weatherService = weatherService;
             _logger = logger;
         }
         
@@ -414,20 +420,57 @@ namespace SubExplore.Services.Implementations
         
         public async Task<bool> ToggleFavoriteSpotAsync(int spotId, int userId)
         {
-            // TODO: Implement favorites system
-            return false;
+            try
+            {
+                _logger.LogInformation("Toggling favorite status for spot {SpotId} by user {UserId}", spotId, userId);
+                return await _favoriteSpotService.ToggleFavoriteAsync(userId, spotId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling favorite for spot {SpotId} and user {UserId}", spotId, userId);
+                return false;
+            }
         }
         
         public async Task<bool> IsSpotFavoriteAsync(int spotId, int userId)
         {
-            // TODO: Implement favorites system
-            return false;
+            try
+            {
+                return await _favoriteSpotService.IsSpotFavoritedAsync(userId, spotId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking favorite status for spot {SpotId} and user {UserId}", spotId, userId);
+                return false;
+            }
         }
         
         public async Task<IEnumerable<Spot>> GetUserFavoriteSpotsAsync(int userId)
         {
-            // TODO: Implement favorites system
-            return Array.Empty<Spot>();
+            try
+            {
+                _logger.LogInformation("Retrieving favorite spots for user {UserId}", userId);
+                var favorites = await _favoriteSpotService.GetUserFavoritesAsync(userId);
+                
+                // Convert UserFavoriteSpot to Spot objects
+                var favoriteSpots = new List<Spot>();
+                foreach (var favorite in favorites)
+                {
+                    var spot = await _spotRepository.GetByIdAsync(favorite.SpotId);
+                    if (spot != null)
+                    {
+                        favoriteSpots.Add(spot);
+                    }
+                }
+                
+                _logger.LogInformation("Retrieved {Count} favorite spots for user {UserId}", favoriteSpots.Count, userId);
+                return favoriteSpots;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving favorite spots for user {UserId}", userId);
+                return Array.Empty<Spot>();
+            }
         }
         
         #endregion
@@ -436,21 +479,82 @@ namespace SubExplore.Services.Implementations
         
         public async Task<Models.Domain.WeatherInfo?> GetSpotCurrentWeatherAsync(int spotId)
         {
-            // TODO: Integrate with weather API
-            return null;
+            try
+            {
+                _logger.LogInformation("Retrieving weather data for spot {SpotId}", spotId);
+                
+                var spot = await _spotRepository.GetByIdAsync(spotId);
+                if (spot == null)
+                {
+                    _logger.LogWarning("Spot {SpotId} not found for weather data", spotId);
+                    return null;
+                }
+
+                // Check if weather service is available
+                var isAvailable = await _weatherService.IsServiceAvailableAsync();
+                if (!isAvailable)
+                {
+                    _logger.LogWarning("Weather service is not available");
+                    return null;
+                }
+
+                var weatherInfo = await _weatherService.GetCurrentWeatherAsync(spot.Latitude, spot.Longitude);
+                
+                if (weatherInfo != null)
+                {
+                    _logger.LogInformation("Successfully retrieved weather data for spot {SpotId}", spotId);
+                }
+                else
+                {
+                    _logger.LogWarning("No weather data available for spot {SpotId} at coordinates {Lat}, {Lon}", 
+                        spotId, spot.Latitude, spot.Longitude);
+                }
+
+                return weatherInfo;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving weather data for spot {SpotId}", spotId);
+                return null;
+            }
         }
         
         public async Task<TideInfo?> GetSpotTideInfoAsync(int spotId)
         {
-            // TODO: Integrate with tide API
+            // TODO: Integrate with tide API - requires separate tide service implementation
+            _logger.LogInformation("Tide information requested for spot {SpotId} - not yet implemented", spotId);
             return null;
         }
         
         public async Task<IEnumerable<Spot>> GetSpotsWithGoodConditionsAsync()
         {
-            // TODO: Implement weather/condition filtering
-            var spots = await _spotRepository.GetAllAsync();
-            return spots.Where(s => s.ValidationStatus == SpotValidationStatus.Approved);
+            try
+            {
+                _logger.LogInformation("Retrieving spots with good weather conditions");
+                
+                var spots = await _spotRepository.GetAllAsync();
+                var approvedSpots = spots.Where(s => s.ValidationStatus == SpotValidationStatus.Approved).ToList();
+                
+                // Check if weather service is available
+                var isAvailable = await _weatherService.IsServiceAvailableAsync();
+                if (!isAvailable)
+                {
+                    _logger.LogWarning("Weather service unavailable - returning all approved spots");
+                    return approvedSpots;
+                }
+
+                // TODO: Implement actual weather filtering based on diving conditions
+                // For now, return all approved spots since weather filtering requires
+                // checking each spot's weather conditions which would be expensive
+                _logger.LogInformation("Weather filtering not yet implemented - returning {Count} approved spots", approvedSpots.Count);
+                return approvedSpots;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving spots with good conditions");
+                var fallbackSpots = await _spotRepository.GetAllAsync();
+                return fallbackSpots.Where(s => s.ValidationStatus == SpotValidationStatus.Approved);
+            }
         }
         
         #endregion

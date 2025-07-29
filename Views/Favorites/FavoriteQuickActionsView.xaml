@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView x:Class="SubExplore.Views.Favorites.FavoriteQuickActionsView"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:SubExplore.Models.Domain"
+             x:DataType="models:UserFavoriteSpot">
+
+    <!-- Quick Actions Bar -->
+    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}"
+            StrokeThickness="0"
+            StrokeShape="RoundRectangle 8"
+            Padding="8,4">
+        
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8">
+            
+            <!-- Priority Indicator -->
+            <Label Grid.Column="0"
+                   Text="{Binding Priority, Converter={StaticResource PriorityToIndicatorConverter}}"
+                   FontSize="16"
+                   VerticalOptions="Center" />
+            
+            <!-- Spot Name -->
+            <Label Grid.Column="1"
+                   Text="{Binding Spot.Name}"
+                   FontSize="14"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   LineBreakMode="TailTruncation" />
+            
+            <!-- Weather Button -->
+            <Button Grid.Column="2"
+                    Text="🌤️"
+                    FontSize="14"
+                    BackgroundColor="Transparent"
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewWeatherCommand}"
+                    CommandParameter="{Binding .}"
+                    ToolTipProperties.Text="Voir la météo" />
+            
+            <!-- Navigate Button -->
+            <Button Grid.Column="3"
+                    Text="🧭"
+                    FontSize="14"
+                    BackgroundColor="Transparent"
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NavigateToSpotCommand}"
+                    CommandParameter="{Binding .}"
+                    ToolTipProperties.Text="Navigation GPS" />
+            
+            <!-- Share Button -->
+            <Button Grid.Column="4"
+                    Text="📤"
+                    FontSize="14"
+                    BackgroundColor="Transparent"
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ShareSpotCommand}"
+                    CommandParameter="{Binding .}"
+                    ToolTipProperties.Text="Partager" />
+            
+            <!-- Priority Button -->
+            <Button Grid.Column="5"
+                    Text="⭐"
+                    FontSize="14"
+                    BackgroundColor="Transparent"
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.UpdatePriorityCommand}"
+                    CommandParameter="{Binding .}"
+                    ToolTipProperties.Text="Changer priorité" />
+            
+            <!-- Remove Button -->
+            <Button Grid.Column="6"
+                    Text="❌"
+                    FontSize="14"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource Error}"
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveFromFavoritesCommand}"
+                    CommandParameter="{Binding .}"
+                    ToolTipProperties.Text="Retirer des favoris" />
+        </Grid>
+    </Border>
+</ContentView>

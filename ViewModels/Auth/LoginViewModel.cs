@@ -107,8 +107,9 @@ namespace SubExplore.ViewModels.Auth
                     // Small delay for progress completion animation
                     await Task.Delay(200);
                     
-                    // Navigate to main application
-                    await _navigationService.NavigateToAsync<MapViewModel>();
+                    // Switch to Shell navigation for main application
+                    _navigationService.SwitchToShellNavigation();
+                    _logger.LogInformation("Switched to Shell navigation after successful login");
                 }
                 else
                 {

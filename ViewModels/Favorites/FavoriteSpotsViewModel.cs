@@ -41,6 +41,21 @@ namespace SubExplore.ViewModels.Favorites
         [ObservableProperty]
         private UserFavoriteSpot? _selectedFavorite;
 
+        [ObservableProperty]
+        private string _searchText = string.Empty;
+
+        [ObservableProperty]
+        private bool _hasSearchText;
+
+        [ObservableProperty]
+        private int? _selectedPriorityFilter;
+
+        [ObservableProperty]
+        private string _notificationFilter = "Tous"; // "Tous", "Activées", "Désactivées"
+
+        private ObservableCollection<UserFavoriteSpot> _allFavorites;
+        private System.Timers.Timer? _searchTimer;
+
         /// <summary>
         /// Initializes a new instance of the FavoriteSpotsViewModel
         /// </summary>
@@ -57,9 +72,15 @@ namespace SubExplore.ViewModels.Favorites
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             FavoriteSpots = new ObservableCollection<UserFavoriteSpot>();
-            EmptyStateMessage = "Aucun spot favori pour le moment.\nAjoutez des spots à vos favoris pour les retrouver facilement !";
+            _allFavorites = new ObservableCollection<UserFavoriteSpot>();
+            EmptyStateMessage = "Aucun spot favori pour le moment.\nExplorez la carte pour découvrir et ajouter des spots à vos favoris !";
             Title = "Mes Favoris";
             ShowByPriority = false;
+            
+            // Setup search timer for real-time search
+            _searchTimer = new System.Timers.Timer(300); // 300ms delay
+            _searchTimer.Elapsed += OnSearchTimerElapsed;
+            _searchTimer.AutoReset = false;
         }
 
         /// <summary>
@@ -90,16 +111,13 @@ namespace SubExplore.ViewModels.Favorites
                     return;
                 }
 
-                // Load favorites and stats in parallel for better performance
-                var loadFavoritesTask = ShowByPriority 
-                    ? _favoriteSpotService.GetUserFavoritesByPriorityAsync(currentUserId.Value)
-                    : _favoriteSpotService.GetUserFavoritesAsync(currentUserId.Value);
+                // Load favorites and stats sequentially to prevent DbContext concurrency issues
+                // "A second operation was started on this context instance before a previous operation completed"
+                var favorites = ShowByPriority 
+                    ? await _favoriteSpotService.GetUserFavoritesByPriorityAsync(currentUserId.Value).ConfigureAwait(false)
+                    : await _favoriteSpotService.GetUserFavoritesAsync(currentUserId.Value).ConfigureAwait(false);
                 
-                var loadStatsTask = _favoriteSpotService.GetUserFavoriteStatsAsync(currentUserId.Value);
-
-                await Task.WhenAll(loadFavoritesTask, loadStatsTask).ConfigureAwait(false);
-                var favorites = await loadFavoritesTask.ConfigureAwait(false);
-                var stats = await loadStatsTask.ConfigureAwait(false);
+                var stats = await _favoriteSpotService.GetUserFavoriteStatsAsync(currentUserId.Value).ConfigureAwait(false);
 
                 // Update collections efficiently
                 await UpdateFavoritesCollectionAsync(favorites).ConfigureAwait(false);
@@ -132,15 +150,18 @@ namespace SubExplore.ViewModels.Favorites
         /// </summary>
         private async Task UpdateFavoritesCollectionAsync(IEnumerable<UserFavoriteSpot> newFavorites)
         {
-            // ObservableCollection must be updated on the main UI thread
+            // Store all favorites for filtering
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                FavoriteSpots.Clear();
+                _allFavorites.Clear();
                 foreach (var favorite in newFavorites)
                 {
-                    FavoriteSpots.Add(favorite);
+                    _allFavorites.Add(favorite);
                 }
             });
+            
+            // Apply current filters
+            await ApplyFiltersAsync();
         }
 
         /// <summary>
@@ -169,8 +190,8 @@ namespace SubExplore.ViewModels.Favorites
         private async Task RefreshAsync()
         {
             IsRefreshing = true;
+            // Load favorites (which now includes stats loading) sequentially
             await LoadFavoritesAsync().ConfigureAwait(false);
-            await LoadFavoriteStatsAsync().ConfigureAwait(false);
             IsRefreshing = false;
         }
 
@@ -255,7 +276,7 @@ namespace SubExplore.ViewModels.Favorites
         }
 
         /// <summary>
-        /// Navigate to spot details
+        /// Navigate to spot details with enhanced parameter passing
         /// </summary>
         /// <param name="favorite">Selected favorite spot</param>
         [RelayCommand]
@@ -266,12 +287,25 @@ namespace SubExplore.ViewModels.Favorites
 
             try
             {
+                // Enhanced navigation with source context for better back navigation
+                var navigationParameter = new Dictionary<string, object>
+                {
+                    ["SpotId"] = favorite.SpotId,
+                    ["Source"] = "Favorites",
+                    ["IsFavorite"] = true,
+                    ["FavoriteId"] = favorite.Id
+                };
+
                 await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(
-                    favorite.SpotId).ConfigureAwait(false);
+                    navigationParameter);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error navigating to spot details for spot {SpotId}", favorite.SpotId);
+                await DialogService.ShowAlertAsync(
+                    "Erreur", 
+                    "Impossible d'afficher les détails du spot.", 
+                    "OK");
             }
         }
 
@@ -376,14 +410,14 @@ namespace SubExplore.ViewModels.Favorites
         private async Task ToggleSortingAsync()
         {
             ShowByPriority = !ShowByPriority;
-            await LoadFavoritesAsync().ConfigureAwait(false);
+            await ApplyFiltersAsync();
         }
 
         /// <summary>
-        /// Navigate to add new favorite spot
+        /// Navigate to map to explore and discover new spots
         /// </summary>
         [RelayCommand]
-        private async Task AddFavoriteAsync()
+        private async Task ExploreMapAsync()
         {
             try
             {
@@ -391,7 +425,39 @@ namespace SubExplore.ViewModels.Favorites
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error navigating to map for adding favorites");
+                _logger.LogError(ex, "Error navigating to map for exploring spots");
+            }
+        }
+
+        /// <summary>
+        /// Navigate to user's own spots
+        /// </summary>
+        [RelayCommand]
+        private async Task ViewMySpotsAsync()
+        {
+            try
+            {
+                await NavigationService.NavigateToAsync<ViewModels.Spots.MySpotsViewModel>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error navigating to my spots");
+            }
+        }
+
+        /// <summary>
+        /// Navigate to add new spot
+        /// </summary>
+        [RelayCommand]
+        private async Task AddNewSpotAsync()
+        {
+            try
+            {
+                await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error navigating to add new spot");
             }
         }
 
@@ -402,13 +468,40 @@ namespace SubExplore.ViewModels.Favorites
         {
             try
             {
-                // TODO: Implement authentication service method to get current user ID
-                // This is a placeholder implementation
-                return 1; // Admin user for testing
+                _logger.LogDebug("🔍 GetCurrentUserIdAsync: Starting authentication check");
+                
+                // Use the actual authentication service to get current user ID
+                var currentUser = _authenticationService.CurrentUser;
+                _logger.LogDebug("🔍 GetCurrentUserIdAsync: CurrentUser = {User}", currentUser?.Id.ToString() ?? "NULL");
+                
+                if (currentUser != null)
+                {
+                    _logger.LogDebug("✅ GetCurrentUserIdAsync: Found current user with ID {UserId}", currentUser.Id);
+                    return currentUser.Id;
+                }
+                
+                // Check IsAuthenticated property
+                var isAuthenticatedProperty = _authenticationService.IsAuthenticated;
+                _logger.LogDebug("🔍 GetCurrentUserIdAsync: IsAuthenticated property = {IsAuthenticated}", isAuthenticatedProperty);
+                
+                // Try to validate authentication if user is null
+                _logger.LogDebug("🔍 GetCurrentUserIdAsync: Attempting to validate authentication...");
+                var isAuthenticated = await _authenticationService.ValidateAuthenticationAsync().ConfigureAwait(false);
+                _logger.LogDebug("🔍 GetCurrentUserIdAsync: ValidateAuthenticationAsync result = {IsAuthenticated}", isAuthenticated);
+                
+                if (isAuthenticated)
+                {
+                    var userAfterValidation = _authenticationService.CurrentUser;
+                    _logger.LogDebug("🔍 GetCurrentUserIdAsync: CurrentUser after validation = {User}", userAfterValidation?.Id.ToString() ?? "NULL");
+                    return userAfterValidation?.Id;
+                }
+                
+                _logger.LogWarning("❌ GetCurrentUserIdAsync: Authentication validation failed");
+                return null;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting current user ID");
+                _logger.LogError(ex, "❌ Error getting current user ID");
                 return null;
             }
         }
@@ -461,6 +554,343 @@ namespace SubExplore.ViewModels.Favorites
                 _logger.LogError(ex, "Error showing priority picker");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Apply search and filters to the favorites list
+        /// </summary>
+        private async Task ApplyFiltersAsync()
+        {
+            try
+            {
+                var filteredFavorites = _allFavorites.AsEnumerable();
+
+                // Apply search filter
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    var searchLower = SearchText.ToLowerInvariant();
+                    filteredFavorites = filteredFavorites.Where(f => 
+                        (f.Spot?.Name?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                        (f.Spot?.Description?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                        (f.Notes?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                        (f.Spot?.Type?.Name?.ToLowerInvariant().Contains(searchLower) ?? false));
+                }
+
+                // Apply priority filter
+                if (SelectedPriorityFilter.HasValue)
+                {
+                    filteredFavorites = filteredFavorites.Where(f => f.Priority == SelectedPriorityFilter.Value);
+                }
+
+                // Apply notification filter
+                if (NotificationFilter == "Activées")
+                {
+                    filteredFavorites = filteredFavorites.Where(f => f.NotificationEnabled);
+                }
+                else if (NotificationFilter == "Désactivées")
+                {
+                    filteredFavorites = filteredFavorites.Where(f => !f.NotificationEnabled);
+                }
+
+                // Apply sorting
+                if (ShowByPriority)
+                {
+                    filteredFavorites = filteredFavorites.OrderBy(f => f.Priority).ThenByDescending(f => f.CreatedAt);
+                }
+                else
+                {
+                    filteredFavorites = filteredFavorites.OrderByDescending(f => f.CreatedAt);
+                }
+
+                // Update the displayed collection
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    FavoriteSpots.Clear();
+                    foreach (var favorite in filteredFavorites)
+                    {
+                        FavoriteSpots.Add(favorite);
+                    }
+                    HasFavorites = FavoriteSpots.Any();
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error applying filters to favorites");
+            }
+        }
+
+        /// <summary>
+        /// Handle search text changes with debouncing
+        /// </summary>
+        partial void OnSearchTextChanged(string value)
+        {
+            HasSearchText = !string.IsNullOrWhiteSpace(value);
+            
+            _searchTimer?.Stop();
+            _searchTimer?.Start();
+        }
+
+        /// <summary>
+        /// Search timer elapsed - apply search filter
+        /// </summary>
+        private async void OnSearchTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+        {
+            await ApplyFiltersAsync();
+        }
+
+        /// <summary>
+        /// Clear search text
+        /// </summary>
+        [RelayCommand]
+        private async Task ClearSearchAsync()
+        {
+            SearchText = string.Empty;
+            await ApplyFiltersAsync();
+        }
+
+        /// <summary>
+        /// Show priority filter options
+        /// </summary>
+        [RelayCommand]
+        private async Task ShowPriorityFilterAsync()
+        {
+            try
+            {
+                var options = new[] 
+                { 
+                    "Toutes les priorités",
+                    "1 - Très haute", 
+                    "2 - Haute", 
+                    "3 - Moyenne-haute", 
+                    "4 - Moyenne", 
+                    "5 - Normale",
+                    "6 - Moyenne-basse", 
+                    "7 - Basse", 
+                    "8 - Très basse", 
+                    "9 - Faible", 
+                    "10 - Très faible" 
+                };
+                
+                var selected = await DialogService.ShowActionSheetAsync(
+                    "Filtrer par priorité",
+                    "Annuler",
+                    null,
+                    options);
+
+                if (string.IsNullOrEmpty(selected) || selected == "Annuler")
+                    return;
+
+                if (selected == "Toutes les priorités")
+                {
+                    SelectedPriorityFilter = null;
+                }
+                else
+                {
+                    var priorityChar = selected[0];
+                    if (char.IsDigit(priorityChar))
+                    {
+                        SelectedPriorityFilter = int.Parse(priorityChar.ToString());
+                    }
+                }
+
+                await ApplyFiltersAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error showing priority filter");
+            }
+        }
+
+        /// <summary>
+        /// Toggle notification filter
+        /// </summary>
+        [RelayCommand]
+        private async Task ToggleNotificationFilterAsync()
+        {
+            NotificationFilter = NotificationFilter switch
+            {
+                "Tous" => "Activées",
+                "Activées" => "Désactivées",
+                "Désactivées" => "Tous",
+                _ => "Tous"
+            };
+            
+            await ApplyFiltersAsync();
+        }
+
+        /// <summary>
+        /// View weather for a specific spot
+        /// </summary>
+        /// <param name="favorite">Favorite spot</param>
+        [RelayCommand]
+        private async Task ViewWeatherAsync(UserFavoriteSpot favorite)
+        {
+            if (favorite?.Spot == null)
+                return;
+
+            try
+            {
+                // Navigate to weather details or show weather popup
+                var weatherInfo = $"Météo pour {favorite.Spot.Name}:\nLatitude: {favorite.Spot.Latitude}\nLongitude: {favorite.Spot.Longitude}";
+                await DialogService.ShowAlertAsync(
+                    "Météo du spot",
+                    weatherInfo,
+                    "OK");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error viewing weather for spot {SpotId}", favorite.SpotId);
+            }
+        }
+
+        /// <summary>
+        /// Navigate to spot using GPS
+        /// </summary>
+        /// <param name="favorite">Favorite spot</param>
+        [RelayCommand]
+        private async Task NavigateToSpotAsync(UserFavoriteSpot favorite)
+        {
+            if (favorite?.Spot == null)
+                return;
+
+            try
+            {
+                // Use platform-specific navigation
+                var latitude = (double)favorite.Spot.Latitude;
+                var longitude = (double)favorite.Spot.Longitude;
+                var spotName = Uri.EscapeDataString(favorite.Spot.Name ?? "Spot de plongée");
+                
+                var uri = DeviceInfo.Platform == DevicePlatform.iOS
+                    ? $"maps://?q={latitude},{longitude}&ll={latitude},{longitude}"
+                    : $"geo:{latitude},{longitude}?q={latitude},{longitude}({spotName})";
+
+                if (await Launcher.CanOpenAsync(uri))
+                {
+                    await Launcher.OpenAsync(uri);
+                }
+                else
+                {
+                    await DialogService.ShowAlertAsync(
+                        "Navigation indisponible",
+                        "Impossible d'ouvrir l'application de navigation.",
+                        "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error navigating to spot {SpotId}", favorite.SpotId);
+                await DialogService.ShowAlertAsync(
+                    "Erreur",
+                    "Impossible de lancer la navigation.",
+                    "OK");
+            }
+        }
+
+        /// <summary>
+        /// Share spot information
+        /// </summary>
+        /// <param name="favorite">Favorite spot</param>
+        [RelayCommand]
+        private async Task ShareSpotAsync(UserFavoriteSpot favorite)
+        {
+            if (favorite?.Spot == null)
+                return;
+
+            try
+            {
+                var shareText = $"🌊 {favorite.Spot.Name}\n\n" +
+                               $"📍 {favorite.Spot.Description}\n\n" +
+                               $"🎯 Difficulté: {favorite.Spot.DifficultyLevel}\n" +
+                               $"🌊 Profondeur max: {favorite.Spot.MaxDepth}m\n\n" +
+                               $"📍 Coordonnées: {favorite.Spot.Latitude}, {favorite.Spot.Longitude}\n\n" +
+                               $"Partagé via SubExplore 🤿";
+
+                await Share.RequestAsync(new ShareTextRequest
+                {
+                    Text = shareText,
+                    Title = $"Spot de plongée: {favorite.Spot.Name}"
+                });
+
+                _logger.LogInformation("Shared spot {SpotId} via share sheet", favorite.SpotId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sharing spot {SpotId}", favorite.SpotId);
+                await DialogService.ShowAlertAsync(
+                    "Erreur",
+                    "Impossible de partager le spot.",
+                    "OK");
+            }
+        }
+
+        /// <summary>
+        /// Export favorites to file
+        /// </summary>
+        [RelayCommand]
+        private async Task ExportFavoritesAsync()
+        {
+            try
+            {
+                if (!FavoriteSpots.Any())
+                {
+                    await DialogService.ShowAlertAsync(
+                        "Aucun favori",
+                        "Vous n'avez aucun favori à exporter.",
+                        "OK");
+                    return;
+                }
+
+                var exportData = string.Join("\n", FavoriteSpots.Select(f => 
+                    $"{f.Spot?.Name},{f.Spot?.Latitude},{f.Spot?.Longitude},{f.Priority},{f.Notes}"));
+                
+                var header = "Nom,Latitude,Longitude,Priorité,Notes\n";
+                var csvContent = header + exportData;
+
+                // Save to file or share
+                await Share.RequestAsync(new ShareTextRequest
+                {
+                    Text = csvContent,
+                    Title = "Export des favoris SubExplore"
+                });
+
+                await DialogService.ShowToastAsync("Favoris exportés avec succès!");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting favorites");
+                await DialogService.ShowAlertAsync(
+                    "Erreur",
+                    "Impossible d'exporter les favoris.",
+                    "OK");
+            }
+        }
+
+        /// <summary>
+        /// Import favorites from file
+        /// </summary>
+        [RelayCommand]
+        private async Task ImportFavoritesAsync()
+        {
+            try
+            {
+                await DialogService.ShowAlertAsync(
+                    "Import de favoris",
+                    "Fonctionnalité d'import en cours de développement.\n\nVous pourrez bientôt importer vos favoris depuis un fichier CSV ou depuis d'autres applications de plongée.",
+                    "OK");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error importing favorites");
+            }
+        }
+
+        /// <summary>
+        /// Cleanup resources
+        /// </summary>
+        public void Dispose()
+        {
+            _searchTimer?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

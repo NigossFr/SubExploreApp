@@ -129,15 +129,16 @@ namespace SubExplore.Services.Implementations
         }
 
         /// <summary>
-        /// Verify user and spot existence in parallel for performance
+        /// Verify user and spot existence sequentially to prevent DbContext concurrency issues
         /// </summary>
         private async Task<(bool userExists, bool spotExists)> VerifyUserAndSpotExistenceAsync(int userId, int spotId, CancellationToken cancellationToken)
         {
-            var userExistsTask = _userRepository.ExistsAsync(u => u.Id == userId, cancellationToken);
-            var spotExistsTask = _spotRepository.ExistsAsync(s => s.Id == spotId, cancellationToken);
+            // Execute sequentially to prevent DbContext concurrency errors
+            // "A second operation was started on this context instance before a previous operation completed"
+            var userExists = await _userRepository.ExistsAsync(u => u.Id == userId, cancellationToken).ConfigureAwait(false);
+            var spotExists = await _spotRepository.ExistsAsync(s => s.Id == spotId, cancellationToken).ConfigureAwait(false);
 
-            var results = await Task.WhenAll(userExistsTask, spotExistsTask).ConfigureAwait(false);
-            return (results[0], results[1]);
+            return (userExists, spotExists);
         }
 
         /// <summary>

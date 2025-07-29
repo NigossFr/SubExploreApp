@@ -40,8 +40,18 @@ namespace SubExplore.Views.Spots
 
             try
             {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing: Starting, ViewModel: {_viewModel != null}");
+                
+                if (_viewModel != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing: Current SpotId: {_viewModel.SpotId}");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing: ViewModel Type: {_viewModel.GetType().Name}");
+                }
+                
                 // The ViewModel will handle the query parameter via its QueryProperty
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing: Calling InitializeAsync(null)");
                 await _viewModel.InitializeAsync(null);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing: InitializeAsync completed successfully");
             }
             catch (Exception ex)
             {

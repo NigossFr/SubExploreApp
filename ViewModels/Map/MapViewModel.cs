@@ -13,6 +13,7 @@ using SubExplore.Services.Implementations;
 using SubExplore.ViewModels.Base;
 using SubExplore.ViewModels.Profile;
 using SubExplore.ViewModels.Spots;
+using SubExplore.ViewModels.Favorites;
 using SubExplore.Models.Menu;
 using MenuItemModel = SubExplore.Models.Menu.MenuItem;
 
@@ -964,8 +965,7 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private async Task NavigateToFavorites()
         {
-            // TODO: Implement Favorites page
-            await DialogService.ShowToastAsync("Fonction à venir");
+            await NavigationService.NavigateToAsync<FavoriteSpotsViewModel>();
             IsMenuOpen = false;
         }
 

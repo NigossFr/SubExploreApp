@@ -37,6 +37,13 @@ namespace SubExplore.Services.Implementations
                 await _context.Database.MigrateAsync(cancellationTokenSource.Token);
                 _logger.LogInformation("Database migrations applied successfully");
 
+                // Ensure critical tables exist (fallback for migration issues)
+                await EnsureRevokedTokensTableAsync();
+                await EnsureUserFavoriteSpotsTableAsync();
+
+                // Ensure admin user exists for testing
+                await CreateDefaultAdminUserAsync();
+
                 // Migration includes all seed data including admin user and tables
 
                 _logger.LogInformation("Database initialization completed successfully");
@@ -58,14 +65,26 @@ namespace SubExplore.Services.Implementations
             try
             {
                 // Check if we can connect to the database
-                await _context.Database.CanConnectAsync();
+                if (!await _context.Database.CanConnectAsync())
+                {
+                    _logger.LogWarning("Cannot connect to database");
+                    return false;
+                }
 
-                // Check if RevokedTokens table exists
-                var tableExists = await _context.Database.SqlQueryRaw<int>(
-                    "SELECT COUNT(*) as Value FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'RevokedTokens'"
-                ).FirstOrDefaultAsync();
+                // Check if critical tables exist
+                var checkTablesQuery = @"
+                    SELECT COUNT(*) as Value
+                    FROM information_schema.tables 
+                    WHERE table_schema = DATABASE() 
+                    AND table_name IN ('RevokedTokens', 'UserFavoriteSpots', 'Users', 'Spots')";
 
-                return tableExists > 0;
+                var tablesCount = await _context.Database.SqlQueryRaw<int>(checkTablesQuery).FirstOrDefaultAsync();
+                
+                // We expect at least 4 critical tables
+                var isInitialized = tablesCount >= 4;
+                
+                _logger.LogInformation("Database initialization check: {TablesFound}/4 critical tables found", tablesCount);
+                return isInitialized;
             }
             catch (Exception ex)
             {
@@ -166,6 +185,80 @@ namespace SubExplore.Services.Implementations
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error ensuring RevokedTokens table exists");
+                throw;
+            }
+        }
+
+        public async Task EnsureUserFavoriteSpotsTableAsync()
+        {
+            try
+            {
+                // Check if UserFavoriteSpots table exists
+                var tableExistsQuery = @"
+                    SELECT COUNT(*) as Value
+                    FROM information_schema.tables 
+                    WHERE table_schema = DATABASE() 
+                    AND table_name = 'UserFavoriteSpots'";
+
+                var tableExists = await _context.Database.SqlQueryRaw<int>(tableExistsQuery).FirstOrDefaultAsync();
+
+                if (tableExists == 0)
+                {
+                    _logger.LogInformation("UserFavoriteSpots table not found, creating it");
+
+                    // Create the table manually
+                    var createTableSql = @"
+                        CREATE TABLE `UserFavoriteSpots` (
+                            `Id` int NOT NULL AUTO_INCREMENT,
+                            `UserId` int NOT NULL,
+                            `SpotId` int NOT NULL,
+                            `Priority` int NOT NULL DEFAULT 5,
+                            `Notes` varchar(500) CHARACTER SET utf8mb4 NULL,
+                            `NotificationEnabled` tinyint(1) NOT NULL DEFAULT TRUE,
+                            `CreatedAt` datetime(6) NOT NULL,
+                            `UpdatedAt` datetime(6) NULL,
+                            CONSTRAINT `PK_UserFavoriteSpots` PRIMARY KEY (`Id`),
+                            CONSTRAINT `FK_UserFavoriteSpots_Spots_SpotId` FOREIGN KEY (`SpotId`) REFERENCES `Spots` (`Id`) ON DELETE CASCADE,
+                            CONSTRAINT `FK_UserFavoriteSpots_Users_UserId` FOREIGN KEY (`UserId`) REFERENCES `Users` (`Id`) ON DELETE CASCADE
+                        ) CHARACTER SET=utf8mb4;";
+
+                    await _context.Database.ExecuteSqlRawAsync(createTableSql);
+
+                    // Create indexes
+                    var createIndexesSql = @"
+                        CREATE UNIQUE INDEX `IX_UserFavoriteSpots_User_Spot_Unique` ON `UserFavoriteSpots` (`UserId`, `SpotId`);
+                        CREATE INDEX `IX_UserFavoriteSpots_UserId_CreatedAt` ON `UserFavoriteSpots` (`UserId`, `CreatedAt`);
+                        CREATE INDEX `IX_UserFavoriteSpots_UserId_Priority_CreatedAt` ON `UserFavoriteSpots` (`UserId`, `Priority`, `CreatedAt`);
+                        CREATE INDEX `IX_UserFavoriteSpots_UserId_NotificationEnabled` ON `UserFavoriteSpots` (`UserId`, `NotificationEnabled`);
+                        CREATE INDEX `IX_UserFavoriteSpots_SpotId` ON `UserFavoriteSpots` (`SpotId`);";
+
+                    // Execute each index creation separately to avoid issues
+                    var indexCommands = createIndexesSql.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var indexCommand in indexCommands)
+                    {
+                        if (!string.IsNullOrWhiteSpace(indexCommand))
+                        {
+                            await _context.Database.ExecuteSqlRawAsync(indexCommand.Trim());
+                        }
+                    }
+
+                    // Add migration history record
+                    var migrationHistorySql = @"
+                        INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+                        VALUES ('20250719120000_AddUserFavoriteSpot', '8.0.0');";
+
+                    await _context.Database.ExecuteSqlRawAsync(migrationHistorySql);
+
+                    _logger.LogInformation("UserFavoriteSpots table created successfully");
+                }
+                else
+                {
+                    _logger.LogInformation("UserFavoriteSpots table already exists");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ensuring UserFavoriteSpots table exists");
                 throw;
             }
         }

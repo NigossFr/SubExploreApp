@@ -163,17 +163,70 @@ namespace SubExplore.ViewModels.Spots
                 }
                 
                 var userId = _authenticationService.CurrentUser.Id;
-                _logger.LogInformation("Loading spots for user {UserId} (Username: {Username})", 
+                _logger.LogInformation("🔍 Loading spots for user {UserId} (Username: {Username})", 
                     userId, _authenticationService.CurrentUser.Username);
 
+                // Add detailed debugging for the repository call
+                _logger.LogInformation("🔍 Calling _spotRepository.GetSpotsByUserAsync({UserId})", userId);
+                
                 var userSpots = await _spotRepository.GetSpotsByUserAsync(userId);
-                _logger.LogInformation("Repository returned {Count} spots for user {UserId}", userSpots?.Count() ?? 0, userId);
+                var spotsList = userSpots?.ToList() ?? new List<Spot>();
+                
+                _logger.LogInformation("🔍 Repository returned {Count} spots for user {UserId}", spotsList.Count, userId);
+                
+                // Debug: Log details about each spot found
+                if (spotsList.Any())
+                {
+                    _logger.LogInformation("🔍 Spots found:");
+                    foreach (var spot in spotsList)
+                    {
+                        _logger.LogInformation("🔍   - Spot ID: {SpotId}, Name: {SpotName}, CreatorId: {CreatorId}, CreatedAt: {CreatedAt}", 
+                            spot.Id, spot.Name, spot.CreatorId, spot.CreatedAt);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("🔍 No spots found for user {UserId}. Checking database connectivity and data...", userId);
+                    
+                    // Additional debugging: Check if there are any spots in the database at all
+                    try
+                    {
+                        var allSpots = await _spotRepository.GetAllAsync();
+                        var allSpotsList = allSpots?.ToList() ?? new List<Spot>();
+                        _logger.LogInformation("🔍 Total spots in database: {TotalCount}", allSpotsList.Count);
+                        
+                        if (allSpotsList.Any())
+                        {
+                            _logger.LogInformation("🔍 Sample of spots in database:");
+                            foreach (var spot in allSpotsList.Take(5))
+                            {
+                                _logger.LogInformation("🔍   - Spot ID: {SpotId}, Name: {SpotName}, CreatorId: {CreatorId}", 
+                                    spot.Id, spot.Name, spot.CreatorId);
+                            }
+                            
+                            // Count spots by creator ID
+                            var spotsByCreator = allSpotsList.GroupBy(s => s.CreatorId)
+                                .Select(g => new { CreatorId = g.Key, Count = g.Count() })
+                                .ToList();
+                                
+                            _logger.LogInformation("🔍 Spots by creator ID:");
+                            foreach (var group in spotsByCreator)
+                            {
+                                _logger.LogInformation("🔍   - Creator ID {CreatorId}: {Count} spots", group.CreatorId, group.Count);
+                            }
+                        }
+                    }
+                    catch (Exception debugEx)
+                    {
+                        _logger.LogError(debugEx, "🔍 Error during additional debugging queries");
+                    }
+                }
 
                 // Ensure UI updates happen on the main thread
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
                     MySpots.Clear();
-                    foreach (var spot in userSpots.OrderByDescending(s => s.CreatedAt))
+                    foreach (var spot in spotsList.OrderByDescending(s => s.CreatedAt))
                     {
                         MySpots.Add(spot);
                     }
@@ -301,26 +354,90 @@ namespace SubExplore.ViewModels.Spots
         private async Task EditSpot(Spot spot)
         {
             if (spot == null)
+            {
+                _logger.LogWarning("EditSpot called with null spot");
                 return;
+            }
 
             try
             {
-                _logger.LogInformation("Navigating to edit spot {SpotId}: {SpotName}", spot.Id, spot.Name);
+                _logger.LogInformation("🔧 Starting EditSpot for spot {SpotId}: {SpotName}", spot.Id, spot.Name);
                 
-                // Create navigation parameter for editing
-                var editParameter = new SubExplore.Models.Navigation.SpotNavigationParameter(
-                    spot.Id, 
-                    spot.Name, 
-                    spot.Latitude, 
-                    spot.Longitude);
+                // Validate spot data before creating parameter
+                if (spot.Id <= 0)
+                {
+                    _logger.LogError("🔧 Invalid spot ID: {SpotId}", spot.Id);
+                    await HandleErrorAsync("Erreur", "ID du spot invalide. Impossible d'éditer ce spot.");
+                    return;
+                }
+
+                _logger.LogInformation("🔧 Creating SpotNavigationParameter with ID: {SpotId}, Name: {SpotName}, Lat: {Lat}, Lng: {Lng}", 
+                    spot.Id, spot.Name, spot.Latitude, spot.Longitude);
                 
-                // Navigate to AddSpotPage in edit mode
-                await NavigateToAsync<AddSpotViewModel>(editParameter);
+                // Create navigation parameter for editing with enhanced error checking
+                SubExplore.Models.Navigation.SpotNavigationParameter editParameter;
+                try
+                {
+                    editParameter = new SubExplore.Models.Navigation.SpotNavigationParameter(
+                        spot.Id, 
+                        spot.Name, 
+                        spot.Latitude, 
+                        spot.Longitude);
+                    
+                    _logger.LogInformation("🔧 SpotNavigationParameter created successfully: {Parameter}", editParameter.ToString());
+                }
+                catch (Exception paramEx)
+                {
+                    _logger.LogError(paramEx, "🔧 Error creating SpotNavigationParameter for spot {SpotId}", spot.Id);
+                    await HandleErrorAsync("Erreur", "Erreur lors de la préparation des données d'édition.");
+                    return;
+                }
+                
+                _logger.LogInformation("🔧 Attempting navigation to AddSpotViewModel with parameter");
+                
+                // Navigate to AddSpotPage in edit mode with enhanced error handling
+                try
+                {
+                    await NavigateToAsync<AddSpotViewModel>(editParameter);
+                    _logger.LogInformation("🔧 Navigation to AddSpotViewModel completed successfully");
+                }
+                catch (InvalidOperationException navEx)
+                {
+                    _logger.LogError(navEx, "🔧 Navigation InvalidOperationException for spot {SpotId}", spot.Id);
+                    await HandleErrorAsync("Erreur de navigation", $"Impossible d'ouvrir l'éditeur de spot. Détails: {navEx.Message}");
+                }
+                catch (ArgumentException argEx)
+                {
+                    _logger.LogError(argEx, "🔧 Navigation ArgumentException for spot {SpotId}", spot.Id);
+                    await HandleErrorAsync("Erreur de paramètres", $"Paramètres invalides pour l'édition. Détails: {argEx.Message}");
+                }
+                catch (System.Runtime.InteropServices.COMException comEx)
+                {
+                    _logger.LogError(comEx, "🔧 Navigation COMException (possible debugger issue) for spot {SpotId}", spot.Id);
+                    await HandleErrorAsync("Erreur système", "Erreur système lors de l'ouverture de l'éditeur. Veuillez réessayer.");
+                }
+                catch (Exception navEx)
+                {
+                    _logger.LogError(navEx, "🔧 Unexpected navigation error for spot {SpotId}", spot.Id);
+                    await HandleErrorAsync("Erreur de navigation", $"Erreur inattendue lors de l'ouverture de l'éditeur. Type: {navEx.GetType().Name}, Message: {navEx.Message}");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error navigating to edit spot {SpotId}", spot.Id);
-                await HandleErrorAsync("Erreur", "Impossible d'ouvrir l'édition du spot.");
+                _logger.LogError(ex, "🔧 Outer exception in EditSpot for spot {SpotId}. Type: {ExceptionType}, Message: {Message}", 
+                    spot?.Id, ex.GetType().Name, ex.Message);
+                
+                // Log additional details about the exception
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError("🔧 Inner exception: {InnerType}: {InnerMessage}", 
+                        ex.InnerException.GetType().Name, ex.InnerException.Message);
+                }
+                
+                // Log stack trace for debugging
+                _logger.LogDebug("🔧 Full stack trace: {StackTrace}", ex.StackTrace);
+                
+                await HandleErrorAsync("Erreur", $"Impossible d'ouvrir l'édition du spot. Type d'erreur: {ex.GetType().Name}");
             }
         }
 
