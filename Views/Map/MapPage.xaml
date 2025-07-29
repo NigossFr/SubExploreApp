@@ -580,14 +580,19 @@
                            CornerRadius="8"
                            Padding="8,4"
                            HasShadow="False">
-                        <Label Text="{Binding SelectedSpot.DifficultyLevel, StringFormat='Niveau {0}'}"
-                               FontSize="12"
+                        <Label FontSize="12"
                                FontAttributes="Bold"
                                TextColor="White"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
                                AutomationId="SpotLevelLabel"
-                               SemanticProperties.Description="Niveau de difficulté" />
+                               SemanticProperties.Description="Niveau de difficulté">
+                            <Label.Text>
+                                <MultiBinding StringFormat="Niveau {0}">
+                                    <Binding Path="SelectedSpot.DifficultyLevel" Converter="{StaticResource DifficultyLevelToFrenchConverter}" />
+                                </MultiBinding>
+                            </Label.Text>
+                        </Label>
                     </Frame>
                 </Grid>
                 

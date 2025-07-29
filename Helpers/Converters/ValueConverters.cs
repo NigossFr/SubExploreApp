@@ -12,6 +12,7 @@ using Microsoft.Maui.Maps;
 using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Devices.Sensors;
 using Microsoft.Maui.ApplicationModel;
+using SubExplore.Models.Enums;
 
 
 namespace SubExplore.Helpers.Converters
@@ -476,6 +477,78 @@ namespace SubExplore.Helpers.Converters
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter for DifficultyLevel enum to French display text
+    /// </summary>
+    public class DifficultyLevelToFrenchConverter : IValueConverter
+    {
+        private static readonly Dictionary<DifficultyLevel, string> DifficultyTranslations = new()
+        {
+            { DifficultyLevel.Beginner, "Débutant" },
+            { DifficultyLevel.Intermediate, "Intermédiaire" },
+            { DifficultyLevel.Advanced, "Avancé" },
+            { DifficultyLevel.Expert, "Expert" },
+            { DifficultyLevel.TechnicalOnly, "Technique uniquement" }
+        };
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is DifficultyLevel difficulty)
+            {
+                return DifficultyTranslations.TryGetValue(difficulty, out string translation) 
+                    ? translation 
+                    : difficulty.ToString();
+            }
+            return value?.ToString() ?? string.Empty;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string text)
+            {
+                var pair = DifficultyTranslations.FirstOrDefault(kvp => kvp.Value == text);
+                return pair.Key != default ? pair.Key : DifficultyLevel.Beginner;
+            }
+            return DifficultyLevel.Beginner;
+        }
+    }
+
+    /// <summary>
+    /// Converter for CurrentStrength enum to French display text
+    /// </summary>
+    public class CurrentStrengthToFrenchConverter : IValueConverter
+    {
+        private static readonly Dictionary<CurrentStrength, string> CurrentStrengthTranslations = new()
+        {
+            { CurrentStrength.None, "Aucun" },
+            { CurrentStrength.Light, "Léger" },
+            { CurrentStrength.Moderate, "Modéré" },
+            { CurrentStrength.Strong, "Fort" },
+            { CurrentStrength.Extreme, "Extrême" }
+        };
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is CurrentStrength currentStrength)
+            {
+                return CurrentStrengthTranslations.TryGetValue(currentStrength, out string translation) 
+                    ? translation 
+                    : currentStrength.ToString();
+            }
+            return value?.ToString() ?? string.Empty;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string text)
+            {
+                var pair = CurrentStrengthTranslations.FirstOrDefault(kvp => kvp.Value == text);
+                return pair.Key != default ? pair.Key : CurrentStrength.Light;
+            }
+            return CurrentStrength.Light;
         }
     }
 

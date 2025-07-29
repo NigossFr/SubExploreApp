@@ -99,6 +99,7 @@
             <Frame Padding="10" BorderColor="{StaticResource Secondary}">
                 <Picker ItemsSource="{Binding DifficultyLevels}"
                        SelectedItem="{Binding SelectedDifficultyLevel}"
+                       ItemDisplayBinding="{Binding ., Converter={StaticResource DifficultyLevelToFrenchConverter}}"
                        HorizontalOptions="Fill"
                        AutomationId="DifficultyPicker"
                        SemanticProperties.Description="Sélectionnez le niveau de difficulté"
@@ -112,6 +113,7 @@
             <Frame Padding="10" BorderColor="{StaticResource Secondary}">
                 <Picker ItemsSource="{Binding CurrentStrengths}"
                        SelectedItem="{Binding SelectedCurrentStrength}"
+                       ItemDisplayBinding="{Binding ., Converter={StaticResource CurrentStrengthToFrenchConverter}}"
                        HorizontalOptions="Fill"
                        AutomationId="CurrentStrengthPicker"
                        SemanticProperties.Description="Sélectionnez la force du courant"

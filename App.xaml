@@ -47,6 +47,8 @@
             <converters:BoolToObjectConverter x:Key="BoolToObjectConverter" />
             <converters:PriorityToStyleConverter x:Key="PriorityToStyleConverter" />
             <converters:WeatherIconConverter x:Key="WeatherIconConverter" />
+            <converters:DifficultyLevelToFrenchConverter x:Key="DifficultyLevelToFrenchConverter" />
+            <converters:CurrentStrengthToFrenchConverter x:Key="CurrentStrengthToFrenchConverter" />
             
             <!-- Responsive Converters -->
             <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />
