@@ -319,8 +319,8 @@ namespace SubExplore.ViewModels.Spots
                 
                 if (Spot == null)
                 {
-                    // Load spot from service if not in cache
-                    Spot = await _spotService.GetSpotWithFullDetailsAsync(SpotId).ConfigureAwait(false);
+                    // Use optimized repository method with AsNoTracking for better performance
+                    Spot = await _spotRepository.GetByIdAsync(SpotId).ConfigureAwait(false);
                     
                     if (Spot != null)
                     {
@@ -624,7 +624,7 @@ namespace SubExplore.ViewModels.Spots
                 {
                     Title = $"Partager le spot {Spot.Name}",
                     Text = message
-                }).ConfigureAwait(false);
+                });
             }
             catch (NotSupportedException ex)
             {
@@ -1284,6 +1284,7 @@ namespace SubExplore.ViewModels.Spots
                 await DialogService.ShowAlertAsync("Erreur", $"Impossible d'afficher les détails météo: {ex.Message}", "OK");
             }
         }
+
 
         // Back command for header navigation is auto-generated as BackCommand
         

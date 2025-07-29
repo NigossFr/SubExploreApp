@@ -83,6 +83,7 @@ namespace SubExplore.Views.Spots
             if (spotPin != null)
             {
                 spotMap.Pins.Add(spotPin);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Pin ajouté: {spotPin.Label} à {spotPin.Location.Latitude}, {spotPin.Location.Longitude}");
             }
             else
             {
@@ -91,12 +92,14 @@ namespace SubExplore.Views.Spots
             }
 
             // Appelez la m�thode GetMapSpan() du ViewModel pour obtenir la r�gion
-            MapSpan? mapRegion = _viewModel.GetMapSpan(); // Utilise MapSpan? pour le nullable
+            MapSpan? mapRegion = _viewModel.GetMapSpan(2.0);
 
             // Si une r�gion valide a �t� cr��e, d�placez la carte
             if (mapRegion != null)
             {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Centrage carte vers {mapRegion.Center.Latitude}, {mapRegion.Center.Longitude} avec rayon {mapRegion.Radius.Kilometers}km");
                 spotMap.MoveToRegion(mapRegion);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] MoveToRegion appelé avec succès");
             }
             else
             {
@@ -116,7 +119,18 @@ namespace SubExplore.Views.Spots
             {
                 // Les donn�es sont charg�es, mettez � jour l'interface utilisateur (la carte)
                 // Assurez-vous que cela s'ex�cute sur le thread UI si n�cessaire
-                MainThread.BeginInvokeOnMainThread(() => UpdateMap());
+                MainThread.BeginInvokeOnMainThread(async () => 
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] PropertyChanged: Exécution UpdateMap sur thread UI");
+                    
+                    // Petit délai pour s'assurer que la carte est complètement chargée
+                    await Task.Delay(500);
+                    UpdateMap();
+                    
+                    // Si le premier essai ne fonctionne pas, réessayons après un délai plus long
+                    await Task.Delay(1000);
+                    UpdateMap();
+                });
             }
             // Vous pourriez aussi �couter les changements sur _viewModel.Spot directement
             // if (e.PropertyName == nameof(SpotDetailsViewModel.Spot) && _viewModel?.Spot != null) ...

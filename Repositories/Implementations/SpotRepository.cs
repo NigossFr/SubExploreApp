@@ -20,10 +20,13 @@ namespace SubExplore.Repositories.Implementations
         public override async Task<Spot?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _context.Spots
+                .AsNoTracking() // Performance: Disable change tracking for read-only queries
+                .AsSplitQuery() // Performance: Use split queries for multiple includes
                 .Include(s => s.Type)
                 .Include(s => s.Creator)
-                .Include(s => s.Media)
-                .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+                .Include(s => s.Media.OrderByDescending(m => m.CreatedAt).Take(10)) // Limit media to first 10 items
+                .FirstOrDefaultAsync(s => s.Id == id, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<Spot>> GetNearbySpots(decimal latitude, decimal longitude, double radiusInKm, int limit = 50)
@@ -40,6 +43,7 @@ namespace SubExplore.Repositories.Implementations
 
             return await _context.Spots
                 .AsNoTracking() // Performance: Disable change tracking for read-only queries
+                .AsSplitQuery() // Performance: Use split queries for better performance
                 .Include(s => s.Type)
                 .Include(s => s.Media.Where(m => m.IsPrimary))
                 .Where(s => s.Latitude >= minLat &&
@@ -52,6 +56,39 @@ namespace SubExplore.Repositories.Implementations
                              Math.Pow((double)(s.Longitude - longitude), 2)))
                 .Take(limit)
                 .ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// High-performance method for getting spot list with minimal data loading
+        /// </summary>
+        public async Task<IEnumerable<Spot>> GetSpotsMinimalAsync(int limit = 100, CancellationToken cancellationToken = default)
+        {
+            return await _context.Spots
+                .AsNoTracking() // Performance: No change tracking
+                .Select(s => new Spot
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    Latitude = s.Latitude,
+                    Longitude = s.Longitude,
+                    MaxDepth = s.MaxDepth,
+                    DifficultyLevel = s.DifficultyLevel,
+                    ValidationStatus = s.ValidationStatus,
+                    TypeId = s.TypeId,
+                    CreatedAt = s.CreatedAt,
+                    Type = new SpotType 
+                    { 
+                        Id = s.Type.Id, 
+                        Name = s.Type.Name, 
+                        IconPath = s.Type.IconPath,
+                        ColorCode = s.Type.ColorCode 
+                    }
+                }) // Performance: Project only needed fields
+                .Where(s => s.ValidationStatus == SpotValidationStatus.Approved)
+                .OrderByDescending(s => s.CreatedAt)
+                .Take(limit)
+                .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
         }
 

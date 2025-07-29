@@ -15,5 +15,6 @@ namespace SubExplore.Repositories.Interfaces
         Task<IEnumerable<Spot>> GetSpotsByUserAsync(int userId);
         Task<IEnumerable<Spot>> GetSpotsByValidationStatusAsync(SpotValidationStatus status);
         Task<IEnumerable<Spot>> SearchSpotsAsync(string query);
+        Task<IEnumerable<Spot>> GetSpotsMinimalAsync(int limit = 100, CancellationToken cancellationToken = default);
     }
 }

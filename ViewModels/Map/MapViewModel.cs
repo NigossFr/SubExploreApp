@@ -1590,10 +1590,10 @@ namespace SubExplore.ViewModels.Map
             {
                 System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotsOptimized started");
 
-                // Use Task.Run for database operations to avoid blocking UI
+                // Use optimized method for better performance
                 var spots = await Task.Run(async () =>
                 {
-                    return await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
+                    return await _spotRepository.GetSpotsMinimalAsync(100);
                 });
 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotsOptimized - Retrieved {spots?.Count() ?? 0} spots from repository");
