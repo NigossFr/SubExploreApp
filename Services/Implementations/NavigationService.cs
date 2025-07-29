@@ -313,24 +313,20 @@ namespace SubExplore.Services.Implementations
                     {
                         System.Diagnostics.Debug.WriteLine($"[DEBUG] BuildQueryParameters: SpotNavigationParameter detected with SpotId={spotParam.SpotId}");
                         
-                        // Shell Navigation only preserves Latitude, Longitude, and LocationParameter
-                        // So we encode the SpotId into LocationParameter as a query string
+                        // Shell Navigation has issues with complex parameters, so we use multiple simple parameters
+                        // This ensures all parameters are preserved
                         if (spotParam.SpotId > 0)
                         {
-                            var locationParams = new List<string>();
-                            locationParams.Add($"spotid={spotParam.SpotId}");
-                            locationParams.Add($"mode=edit");
+                            queryParams.Add($"spotid={spotParam.SpotId}");
+                            queryParams.Add($"mode=edit");
                             if (!string.IsNullOrEmpty(spotParam.SpotName))
                             {
-                                locationParams.Add($"spotname={System.Web.HttpUtility.UrlEncode(spotParam.SpotName)}");
+                                queryParams.Add($"spotname={System.Web.HttpUtility.UrlEncode(spotParam.SpotName)}");
                             }
-                            
-                            var locationParameterValue = string.Join("&", locationParams);
-                            queryParams.Add($"LocationParameter={System.Web.HttpUtility.UrlEncode(locationParameterValue)}");
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] Encoded SpotId into LocationParameter: {locationParameterValue}");
+                            System.Diagnostics.Debug.WriteLine($"[DEBUG] Added SpotId parameters: spotid={spotParam.SpotId}, mode=edit");
                         }
                         
-                        // Add latitude and longitude (these are preserved by Shell Navigation)
+                        // Add latitude and longitude
                         if (spotParam.Latitude.HasValue)
                         {
                             queryParams.Add($"latitude={spotParam.Latitude.Value}");

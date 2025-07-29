@@ -229,19 +229,44 @@ namespace SubExplore.ViewModels.Spots
 
         public override async Task InitializeAsync(object parameter = null)
         {
-            _logger.LogDebug("AddSpotViewModel.InitializeAsync called with parameter: {Parameter}", parameter?.ToString() ?? "null");
-            _logger.LogDebug("Current coordinates before initialization: {Latitude}, {Longitude}", Latitude, Longitude);
+            _logger.LogDebug("🔧 AddSpotViewModel.InitializeAsync called with parameter: {Parameter}", parameter?.ToString() ?? "null");
+            if (parameter != null)
+            {
+                _logger.LogDebug("🔧 Parameter type: {ParameterType}", parameter.GetType().Name);
+                _logger.LogDebug("🔧 Parameter is SpotNavigationParameter: {IsSpotParam}", parameter.IsParameterType<SpotNavigationParameter>());
+                
+                // Log properties for anonymous types to debug Shell navigation parameters
+                if (parameter.GetType().IsAnonymousType())
+                {
+                    var properties = parameter.GetType().GetProperties();
+                    _logger.LogDebug("🔧 Anonymous parameter properties: {Properties}", 
+                        string.Join(", ", properties.Select(p => $"{p.Name}={p.GetValue(parameter)}")));
+                }
+            }
+            _logger.LogDebug("🔧 Current coordinates before initialization: {Latitude}, {Longitude}", Latitude, Longitude);
             
             await LoadSpotTypes().ConfigureAwait(false);
             
-            // Check if this is editing an existing spot
+            // First check if this is editing an existing spot with strongly-typed parameter
             if (parameter != null && parameter.IsParameterType<SpotNavigationParameter>())
             {
                 var spotParam = parameter.AsParameter<SpotNavigationParameter>();
                 if (spotParam.SpotId > 0)
                 {
-                    _logger.LogInformation("Initializing for edit mode with SpotId: {SpotId}", spotParam.SpotId);
+                    _logger.LogInformation("🔧 Initializing for edit mode with SpotId: {SpotId}", spotParam.SpotId);
                     await LoadSpotForEditing(spotParam.SpotId).ConfigureAwait(false);
+                    return; // Skip location handling as we'll use the spot's location
+                }
+            }
+            
+            // Check for edit mode in anonymous parameters (from Shell navigation)
+            if (parameter != null)
+            {
+                var spotId = TryExtractSpotIdFromParameter(parameter);
+                if (spotId > 0)
+                {
+                    _logger.LogInformation("🔧 Extracted SpotId {SpotId} from parameter, initializing for edit mode", spotId);
+                    await LoadSpotForEditing(spotId).ConfigureAwait(false);
                     return; // Skip location handling as we'll use the spot's location
                 }
             }
@@ -249,20 +274,121 @@ namespace SubExplore.ViewModels.Spots
             // Handle location parameter passed from navigation
             if (parameter != null)
             {
-                _logger.LogDebug("Handling location parameter from navigation");
+                _logger.LogDebug("🔧 Handling location parameter from navigation");
                 await HandleLocationParameter(parameter).ConfigureAwait(false);
             }
             else
             {
-                _logger.LogDebug("No parameter provided, trying to get current location");
+                _logger.LogDebug("🔧 No parameter provided, trying to get current location");
                 await TryGetCurrentLocation().ConfigureAwait(false);
             }
             
-            _logger.LogDebug("Final coordinates after initialization: {Latitude}, {Longitude}", Latitude, Longitude);
+            _logger.LogDebug("🔧 Final coordinates after initialization: {Latitude}, {Longitude}", Latitude, Longitude);
             
             // Mark location as ready for UI binding
             IsLocationReady = true;
-            _logger.LogDebug("Location is now ready for UI binding");
+            _logger.LogDebug("🔧 Location is now ready for UI binding");
+        }
+
+        /// <summary>
+        /// Try to extract SpotId from any parameter format for edit mode detection
+        /// </summary>
+        /// <param name="parameter">Parameter object to extract SpotId from</param>
+        /// <returns>SpotId if found, 0 otherwise</returns>
+        private int TryExtractSpotIdFromParameter(object parameter)
+        {
+            if (parameter == null) return 0;
+            
+            try
+            {
+                var parameterType = parameter.GetType();
+                _logger.LogInformation("🔧 TryExtractSpotIdFromParameter: Parameter type: {Type}", parameterType.Name);
+                
+                // Log all available properties for debugging
+                var properties = parameterType.GetProperties();
+                _logger.LogInformation("🔧 TryExtractSpotIdFromParameter: All properties: {Properties}", 
+                    string.Join(", ", properties.Select(p => $"{p.Name}={p.GetValue(parameter)}")));
+                
+                // Try direct property access with various naming conventions (primary method for simple parameters)
+                var spotIdProperty = parameterType.GetProperty("spotid") ?? 
+                                   parameterType.GetProperty("SpotId") ?? 
+                                   parameterType.GetProperty("SPOTID") ??
+                                   parameterType.GetProperty("spot_id") ??
+                                   parameterType.GetProperty("id");
+                
+                if (spotIdProperty != null)
+                {
+                    var spotIdValue = spotIdProperty.GetValue(parameter);
+                    _logger.LogInformation("🔧 TryExtractSpotIdFromParameter: Found property {PropertyName} with value: {Value}", 
+                        spotIdProperty.Name, spotIdValue);
+                    
+                    if (spotIdValue != null && int.TryParse(spotIdValue.ToString(), out int spotId) && spotId > 0)
+                    {
+                        _logger.LogInformation("🔧 TryExtractSpotIdFromParameter: Successfully parsed SpotId={SpotId} from property {PropertyName}", 
+                            spotId, spotIdProperty.Name);
+                        return spotId;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("🔧 TryExtractSpotIdFromParameter: Property {PropertyName} found but value is invalid: {Value}", 
+                            spotIdProperty.Name, spotIdValue);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("🔧 TryExtractSpotIdFromParameter: No SpotId property found in parameter");
+                }
+                
+                // Check if we have a mode property indicating edit mode (even without SpotId)
+                var modeProperty = parameterType.GetProperty("mode") ?? parameterType.GetProperty("Mode");
+                if (modeProperty != null)
+                {
+                    var modeValue = modeProperty.GetValue(parameter);
+                    _logger.LogInformation("🔧 TryExtractSpotIdFromParameter: Found mode property with value: {Mode}", modeValue);
+                    if (modeValue?.ToString()?.ToLower() == "edit")
+                    {
+                        _logger.LogWarning("🔧 TryExtractSpotIdFromParameter: Edit mode detected but no valid SpotId found");
+                    }
+                }
+                
+                // Check LocationParameter for encoded query string (fallback method)
+                var locationParamProperty = parameterType.GetProperty("LocationParameter");
+                if (locationParamProperty != null)
+                {
+                    var locationParamValue = locationParamProperty.GetValue(parameter);
+                    _logger.LogInformation("🔧 TryExtractSpotIdFromParameter: LocationParameter value: {LocationParam}", locationParamValue);
+                    
+                    if (locationParamValue != null && !string.IsNullOrEmpty(locationParamValue.ToString()))
+                    {
+                        var locationParamStr = locationParamValue.ToString();
+                        var queryParts = locationParamStr.Split('&');
+                        foreach (var part in queryParts)
+                        {
+                            var keyValue = part.Split('=');
+                            if (keyValue.Length == 2)
+                            {
+                                var key = keyValue[0].ToLower();
+                                if (key == "spotid" || key == "id")
+                                {
+                                    if (int.TryParse(System.Web.HttpUtility.UrlDecode(keyValue[1]), out int spotId) && spotId > 0)
+                                    {
+                                        _logger.LogInformation("🔧 TryExtractSpotIdFromParameter: Found SpotId={SpotId} in LocationParameter with key={Key}", spotId, key);
+                                        return spotId;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                _logger.LogInformation("🔧 TryExtractSpotIdFromParameter: No SpotId found in parameter");
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "🔧 TryExtractSpotIdFromParameter: Error extracting SpotId");
+                return 0;
+            }
         }
 
         /// <summary>
@@ -414,7 +540,7 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
-                _logger.LogDebug("Handling location parameter from navigation: {ParameterType}", parameter?.GetType().Name ?? "null");
+                _logger.LogDebug("🔧 Handling location parameter from navigation: {ParameterType}", parameter?.GetType().Name ?? "null");
                 
                 // Use strongly-typed parameter system
                 if (parameter.IsParameterType<LocationNavigationParameter>())
@@ -424,7 +550,7 @@ namespace SubExplore.ViewModels.Spots
                     Longitude = locationParam.Longitude;
                     AccessDescription = locationParam.Description;
                     HasUserLocation = locationParam.IsFromUserLocation;
-                    _logger.LogInformation("Using LocationNavigationParameter: {Latitude}, {Longitude}, UserLocation: {IsFromUserLocation}", 
+                    _logger.LogInformation("🔧 Using LocationNavigationParameter: {Latitude}, {Longitude}, UserLocation: {IsFromUserLocation}", 
                         Latitude, Longitude, HasUserLocation);
                     return;
                 }
@@ -433,12 +559,13 @@ namespace SubExplore.ViewModels.Spots
                 if (parameter.IsParameterType<SpotNavigationParameter>())
                 {
                     var spotParam = parameter.AsParameter<SpotNavigationParameter>();
+                    _logger.LogInformation("🔧 Found SpotNavigationParameter with SpotId: {SpotId}", spotParam.SpotId);
                     if (spotParam.Latitude.HasValue && spotParam.Longitude.HasValue)
                     {
                         Latitude = spotParam.Latitude.Value;
                         Longitude = spotParam.Longitude.Value;
                         HasUserLocation = false; // This is from a spot, not user location
-                        _logger.LogInformation("Using SpotNavigationParameter: {Latitude}, {Longitude}", Latitude, Longitude);
+                        _logger.LogInformation("🔧 Using SpotNavigationParameter location: {Latitude}, {Longitude}", Latitude, Longitude);
                         return;
                     }
                 }
@@ -450,27 +577,41 @@ namespace SubExplore.ViewModels.Spots
                     Latitude = extractedLat.Value;
                     Longitude = extractedLng.Value;
                     HasUserLocation = false;
-                    _logger.LogInformation("Using extracted location: {Latitude}, {Longitude}", Latitude, Longitude);
+                    _logger.LogInformation("🔧 Using extracted location: {Latitude}, {Longitude}", Latitude, Longitude);
                     return;
                 }
                 
                 // Handle legacy anonymous object format (for backward compatibility)
                 if (parameter is object legacyParam && legacyParam.GetType().IsAnonymousType())
                 {
-                    _logger.LogWarning("Received legacy anonymous parameter, consider updating to use strongly-typed parameters");
+                    _logger.LogWarning("🔧 Received legacy anonymous parameter, consider updating to use strongly-typed parameters");
                     await HandleLegacyParameter(legacyParam);
                     return;
                 }
                 
-                // Fallback to getting current location if parameter extraction fails
-                _logger.LogWarning("Failed to extract location from navigation parameter of type {ParameterType}, falling back to current location", 
+                // Check if this looks like a query parameter object (Shell navigation)
+                if (parameter != null && !parameter.GetType().IsAnonymousType())
+                {
+                    _logger.LogWarning("🔧 Received non-anonymous parameter that isn't strongly typed, treating as legacy parameter");
+                    await HandleLegacyParameter(parameter);
+                    return;
+                }
+                
+                // Fallback to default location if parameter extraction fails
+                _logger.LogWarning("🔧 Failed to extract location from navigation parameter of type {ParameterType}, using default location", 
                     parameter?.GetType().Name ?? "null");
-                await TryGetCurrentLocation().ConfigureAwait(false);
+                Latitude = 43.2965m; // Marseille
+                Longitude = 5.3698m;
+                HasUserLocation = false;
+                _logger.LogInformation("Using default location (Marseille): {Latitude}, {Longitude}", Latitude, Longitude);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error handling location parameter, falling back to current location");
-                await TryGetCurrentLocation().ConfigureAwait(false);
+                _logger.LogError(ex, "🔧 Error handling location parameter, using default location");
+                Latitude = 43.2965m; // Marseille
+                Longitude = 5.3698m;
+                HasUserLocation = false;
+                _logger.LogInformation("Using default location after error (Marseille): {Latitude}, {Longitude}", Latitude, Longitude);
             }
         }
         
@@ -485,13 +626,78 @@ namespace SubExplore.ViewModels.Spots
             {
                 // Legacy reflection-based handling for backward compatibility
                 var parameterType = parameter.GetType();
-                var latitudeProperty = parameterType.GetProperty("Latitude");
-                var longitudeProperty = parameterType.GetProperty("Longitude");
+                _logger.LogInformation("🔧 HandleLegacyParameter: Parameter type: {ParameterType}", parameterType.Name);
+                
+                // Log all properties for debugging
+                var properties = parameterType.GetProperties();
+                _logger.LogInformation("🔧 Available properties: {Properties}", string.Join(", ", properties.Select(p => $"{p.Name}={p.GetValue(parameter)}")));
+                
+                // Check if this is an edit mode parameter (has spotid) - try multiple variations
+                var spotIdProperty = parameterType.GetProperty("spotid") ?? 
+                                   parameterType.GetProperty("SpotId") ?? 
+                                   parameterType.GetProperty("SPOTID") ??
+                                   parameterType.GetProperty("spot_id");
+                
+                if (spotIdProperty != null)
+                {
+                    var spotIdValue = spotIdProperty.GetValue(parameter);
+                    _logger.LogInformation("🔧 Found spotid property: {SpotIdValue}", spotIdValue);
+                    if (spotIdValue != null && int.TryParse(spotIdValue.ToString(), out int spotId) && spotId > 0)
+                    {
+                        _logger.LogInformation("🔧 Detected edit mode via legacy parameter - SpotId: {SpotId}", spotId);
+                        await LoadSpotForEditing(spotId).ConfigureAwait(false);
+                        return;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("🔧 spotid property found but value is invalid: {SpotIdValue}", spotIdValue);
+                    }
+                }
+                
+                // Check if there's a LocationParameter that might contain the spotid
+                var locationParamProperty = parameterType.GetProperty("LocationParameter");
+                if (locationParamProperty != null)
+                {
+                    var locationParamValue = locationParamProperty.GetValue(parameter);
+                    _logger.LogInformation("🔧 Found LocationParameter: {LocationParameter}", locationParamValue);
+                    
+                    // Try to parse LocationParameter as a URL query string
+                    if (locationParamValue != null)
+                    {
+                        var locationParamStr = locationParamValue.ToString();
+                        if (!string.IsNullOrEmpty(locationParamStr))
+                        {
+                            // Parse query string manually to extract spotid
+                            var queryParts = locationParamStr.Split('&');
+                            foreach (var part in queryParts)
+                            {
+                                var keyValue = part.Split('=');
+                                if (keyValue.Length == 2 && keyValue[0].ToLower() == "spotid")
+                                {
+                                    if (int.TryParse(System.Web.HttpUtility.UrlDecode(keyValue[1]), out int spotId) && spotId > 0)
+                                    {
+                                        _logger.LogInformation("🔧 Found spotid in LocationParameter - SpotId: {SpotId}", spotId);
+                                        await LoadSpotForEditing(spotId).ConfigureAwait(false);
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                _logger.LogInformation("🔧 No spotid found in any property, checking for location parameters");
+                
+                // Handle location-only parameters
+                var latitudeProperty = parameterType.GetProperty("Latitude") ?? parameterType.GetProperty("latitude");
+                var longitudeProperty = parameterType.GetProperty("Longitude") ?? parameterType.GetProperty("longitude");
                 
                 if (latitudeProperty != null && longitudeProperty != null)
                 {
                     var latValue = latitudeProperty.GetValue(parameter);
                     var lngValue = longitudeProperty.GetValue(parameter);
+                    
+                    _logger.LogInformation("🔧 Found location properties - Lat: {Lat}, Lng: {Lng}", latValue, lngValue);
                     
                     if (latValue != null && lngValue != null)
                     {
@@ -503,12 +709,21 @@ namespace SubExplore.ViewModels.Spots
                     }
                 }
                 
-                await TryGetCurrentLocation().ConfigureAwait(false);
+                _logger.LogWarning("🔧 No valid parameters found, using default location");
+                // Use default location instead of triggering location permission dialog
+                Latitude = 43.2965m; // Marseille
+                Longitude = 5.3698m;
+                HasUserLocation = false;
+                _logger.LogInformation("Using default location (Marseille): {Latitude}, {Longitude}", Latitude, Longitude);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error handling legacy parameter format");
-                await TryGetCurrentLocation().ConfigureAwait(false);
+                _logger.LogError(ex, "🔧 Error handling legacy parameter format, using default location");
+                // Use default location instead of triggering location permission dialog
+                Latitude = 43.2965m; // Marseille
+                Longitude = 5.3698m;
+                HasUserLocation = false;
+                _logger.LogInformation("Using default location after error (Marseille): {Latitude}, {Longitude}", Latitude, Longitude);
             }
         }
 
