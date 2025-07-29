@@ -93,13 +93,28 @@ namespace SubExplore.Services.Implementations
                     System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: New NavigationPage set as MainPage");
                 }
             }
+            catch (System.Runtime.InteropServices.COMException comEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToAsync COM Exception (possible debugger disconnect): {comEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] COM Exception HRESULT: 0x{comEx.HResult:X8}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] This might be a Mono debugger disconnection issue");
+                throw new InvalidOperationException("Navigation failed due to system error. Please try again.", comEx);
+            }
+            catch (Exception ex) when (ex.GetType().FullName.Contains("VMDisconnectedException"))
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToAsync VM Disconnect Exception: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Mono debugger has been disconnected during navigation");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Exception type: {ex.GetType().FullName}");
+                throw new InvalidOperationException("Navigation failed due to debugger disconnection. Please restart the application.", ex);
+            }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToAsync failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Exception type: {ex.GetType().FullName}");
                 System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                 if (ex.InnerException != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.GetType().FullName}: {ex.InnerException.Message}");
                 }
                 throw;
             }
@@ -201,13 +216,26 @@ namespace SubExplore.Services.Implementations
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Returning page successfully");
                 return page;
             }
+            catch (System.Runtime.InteropServices.COMException comEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] CreateAndInitializePage COM Exception: {comEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] COM Exception HRESULT: 0x{comEx.HResult:X8}");
+                throw new InvalidOperationException("Page creation failed due to system error. Please try again.", comEx);
+            }
+            catch (Exception ex) when (ex.GetType().FullName.Contains("VMDisconnectedException"))
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] CreateAndInitializePage VM Disconnect Exception: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Exception type: {ex.GetType().FullName}");
+                throw new InvalidOperationException("Page creation failed due to debugger disconnection. Please restart the application.", ex);
+            }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] CreateAndInitializePage failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Exception type: {ex.GetType().FullName}");
                 System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                 if (ex.InnerException != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.GetType().FullName}: {ex.InnerException.Message}");
                 }
                 throw;
             }
@@ -221,6 +249,7 @@ namespace SubExplore.Services.Implementations
             return viewModelName switch
             {
                 "MapViewModel" => "map",
+                "FavoriteSpotsViewModel" => "favorites",
                 "AddSpotViewModel" => "addspot",
                 "SpotDetailsViewModel" => "spotdetails",
                 "MySpotsViewModel" => "myspots",
@@ -245,6 +274,7 @@ namespace SubExplore.Services.Implementations
             return viewTypeName switch
             {
                 "MapPage" => "SubExplore.Views.Map.MapPage",
+                "FavoriteSpotsPage" => "SubExplore.Views.Favorites.FavoriteSpotsPage",
                 "AddSpotPage" => "SubExplore.Views.Spots.AddSpotPage",
                 "SpotDetailsPage" => "SubExplore.Views.Spots.SpotDetailsPage",
                 "MySpotsPage" => "SubExplore.Views.Spots.MySpotsPage",
@@ -278,14 +308,49 @@ namespace SubExplore.Services.Implementations
                 }
                 else
                 {
-                    // Handle anonymous objects and regular objects
-                    foreach (var property in parameterType.GetProperties())
+                    // Special handling for SpotNavigationParameter to ensure SpotId is passed correctly
+                    if (parameter is SubExplore.Models.Navigation.SpotNavigationParameter spotParam)
                     {
-                        var value = property.GetValue(parameter);
-                        if (value != null)
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] BuildQueryParameters: SpotNavigationParameter detected with SpotId={spotParam.SpotId}");
+                        
+                        // Shell Navigation only preserves Latitude, Longitude, and LocationParameter
+                        // So we encode the SpotId into LocationParameter as a query string
+                        if (spotParam.SpotId > 0)
                         {
-                            var encodedValue = System.Web.HttpUtility.UrlEncode(value.ToString());
-                            queryParams.Add($"{property.Name.ToLower()}={encodedValue}");
+                            var locationParams = new List<string>();
+                            locationParams.Add($"spotid={spotParam.SpotId}");
+                            locationParams.Add($"mode=edit");
+                            if (!string.IsNullOrEmpty(spotParam.SpotName))
+                            {
+                                locationParams.Add($"spotname={System.Web.HttpUtility.UrlEncode(spotParam.SpotName)}");
+                            }
+                            
+                            var locationParameterValue = string.Join("&", locationParams);
+                            queryParams.Add($"LocationParameter={System.Web.HttpUtility.UrlEncode(locationParameterValue)}");
+                            System.Diagnostics.Debug.WriteLine($"[DEBUG] Encoded SpotId into LocationParameter: {locationParameterValue}");
+                        }
+                        
+                        // Add latitude and longitude (these are preserved by Shell Navigation)
+                        if (spotParam.Latitude.HasValue)
+                        {
+                            queryParams.Add($"latitude={spotParam.Latitude.Value}");
+                        }
+                        if (spotParam.Longitude.HasValue)
+                        {
+                            queryParams.Add($"longitude={spotParam.Longitude.Value}");
+                        }
+                    }
+                    else
+                    {
+                        // Handle anonymous objects and regular objects
+                        foreach (var property in parameterType.GetProperties())
+                        {
+                            var value = property.GetValue(parameter);
+                            if (value != null)
+                            {
+                                var encodedValue = System.Web.HttpUtility.UrlEncode(value.ToString());
+                                queryParams.Add($"{property.Name.ToLower()}={encodedValue}");
+                            }
                         }
                     }
                 }
@@ -298,6 +363,24 @@ namespace SubExplore.Services.Implementations
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] BuildQueryParameters failed: {ex.Message}");
                 return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Switch to Shell navigation (used after successful authentication)
+        /// </summary>
+        public void SwitchToShellNavigation()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] NavigationService: Switching to Shell navigation");
+                Application.Current.MainPage = new AppShell();
+                System.Diagnostics.Debug.WriteLine("[DEBUG] NavigationService: ✓ AppShell set as MainPage successfully");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] NavigationService SwitchToShellNavigation failed: {ex.Message}");
+                throw;
             }
         }
     }
