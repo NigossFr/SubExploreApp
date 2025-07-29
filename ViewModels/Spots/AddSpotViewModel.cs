@@ -220,8 +220,8 @@ namespace SubExplore.ViewModels.Spots
             SelectedDifficultyLevel = DifficultyLevel.Beginner;
             
             // Initialize coordinates with default values to prevent 0,0 issues
-            Latitude = 43.2965m; // Marseille, France
-            Longitude = 5.3698m;
+            Latitude = 48.8566m; // Paris, France
+            Longitude = 2.3522m;
             IsLocationReady = false; // Will be set to true after proper initialization
             
             _logger.LogDebug("AddSpotViewModel initialized with default coordinates: {Latitude}, {Longitude}", Latitude, Longitude);
@@ -436,19 +436,19 @@ namespace SubExplore.ViewModels.Spots
                 else
                 {
                     HasUserLocation = false;
-                    // Utiliser une position par défaut (Marseille)
-                    Latitude = 43.2965m;
-                    Longitude = 5.3698m;
-                    _logger.LogInformation("Location not available, using default location: Marseille");
+                    // Utiliser une position par défaut (Paris)
+                    Latitude = 48.8566m;
+                    Longitude = 2.3522m;
+                    _logger.LogInformation("Location not available, using default location: Paris");
                 }
             }
             catch (Exception ex)
             {
                 HasUserLocation = false;
-                // Utiliser une position par défaut (Marseille)
-                Latitude = 43.2965m;
-                Longitude = 5.3698m;
-                _logger.LogError(ex, "Error getting current location, using default location: Marseille");
+                // Utiliser une position par défaut (Paris)
+                Latitude = 48.8566m;
+                Longitude = 2.3522m;
+                _logger.LogError(ex, "Error getting current location, using default location: Paris");
             }
         }
 
@@ -600,18 +600,18 @@ namespace SubExplore.ViewModels.Spots
                 // Fallback to default location if parameter extraction fails
                 _logger.LogWarning("🔧 Failed to extract location from navigation parameter of type {ParameterType}, using default location", 
                     parameter?.GetType().Name ?? "null");
-                Latitude = 43.2965m; // Marseille
-                Longitude = 5.3698m;
+                Latitude = 48.8566m; // Paris
+                Longitude = 2.3522m;
                 HasUserLocation = false;
-                _logger.LogInformation("Using default location (Marseille): {Latitude}, {Longitude}", Latitude, Longitude);
+                _logger.LogInformation("Using default location (Paris): {Latitude}, {Longitude}", Latitude, Longitude);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "🔧 Error handling location parameter, using default location");
-                Latitude = 43.2965m; // Marseille
-                Longitude = 5.3698m;
+                Latitude = 48.8566m; // Paris
+                Longitude = 2.3522m;
                 HasUserLocation = false;
-                _logger.LogInformation("Using default location after error (Marseille): {Latitude}, {Longitude}", Latitude, Longitude);
+                _logger.LogInformation("Using default location after error (Paris): {Latitude}, {Longitude}", Latitude, Longitude);
             }
         }
         
@@ -711,19 +711,19 @@ namespace SubExplore.ViewModels.Spots
                 
                 _logger.LogWarning("🔧 No valid parameters found, using default location");
                 // Use default location instead of triggering location permission dialog
-                Latitude = 43.2965m; // Marseille
-                Longitude = 5.3698m;
+                Latitude = 48.8566m; // Paris
+                Longitude = 2.3522m;
                 HasUserLocation = false;
-                _logger.LogInformation("Using default location (Marseille): {Latitude}, {Longitude}", Latitude, Longitude);
+                _logger.LogInformation("Using default location (Paris): {Latitude}, {Longitude}", Latitude, Longitude);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "🔧 Error handling legacy parameter format, using default location");
                 // Use default location instead of triggering location permission dialog
-                Latitude = 43.2965m; // Marseille
-                Longitude = 5.3698m;
+                Latitude = 48.8566m; // Paris
+                Longitude = 2.3522m;
                 HasUserLocation = false;
-                _logger.LogInformation("Using default location after error (Marseille): {Latitude}, {Longitude}", Latitude, Longitude);
+                _logger.LogInformation("Using default location after error (Paris): {Latitude}, {Longitude}", Latitude, Longitude);
             }
         }
 

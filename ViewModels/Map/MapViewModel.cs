@@ -160,16 +160,16 @@ namespace SubExplore.ViewModels.Map
             SpotTypes = new ObservableCollection<SpotType>();
             MenuSections = new ObservableCollection<MenuSection>();
 
-            // Valeurs par défaut, seront remplacées par la géolocalisation si disponible
-            double defaultLat = _configuration.GetValue<double>("AppSettings:DefaultLatitude", 43.2965);
-            double defaultLong = _configuration.GetValue<double>("AppSettings:DefaultLongitude", 5.3698);
+            // Valeurs par défaut pour Paris, seront remplacées par la géolocalisation si disponible
+            double defaultLat = _configuration.GetValue<double>("AppSettings:DefaultLatitude", 48.8566);
+            double defaultLong = _configuration.GetValue<double>("AppSettings:DefaultLongitude", 2.3522);
             double defaultZoom = _configuration.GetValue<double>("AppSettings:DefaultZoomLevel", 12);
 
             MapLatitude = defaultLat;
             MapLongitude = defaultLong;
             MapZoomLevel = defaultZoom;
             
-            System.Diagnostics.Debug.WriteLine($"[INFO] MapViewModel initialized with default coordinates: {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}");
+            System.Diagnostics.Debug.WriteLine($"[INFO] MapViewModel initialized with default coordinates (Paris): {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}");
 
             Title = "Carte";
             
@@ -256,6 +256,60 @@ namespace SubExplore.ViewModels.Map
                         
                         System.Diagnostics.Debug.WriteLine("[SUCCESS] MapViewModel initialization completed successfully");
                     });
+
+                    // Step 5: Try to get user's location after map is initialized
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Attempting to get user location on startup");
+                    try
+                    {
+                        // Check if location services are available
+                        var isLocationAvailable = await _locationService.IsLocationServiceEnabledAsync();
+                        if (isLocationAvailable)
+                        {
+                            // Request permission and get location
+                            var hasPermission = await _locationService.RequestLocationPermissionAsync();
+                            if (hasPermission)
+                            {
+                                var location = await _locationService.GetCurrentLocationAsync();
+                                if (location != null)
+                                {
+                                    await MainThread.InvokeOnMainThreadAsync(() =>
+                                    {
+                                        UserLatitude = Convert.ToDouble(location.Latitude);
+                                        UserLongitude = Convert.ToDouble(location.Longitude);
+                                        MapLatitude = UserLatitude;
+                                        MapLongitude = UserLongitude;
+                                        IsLocationAvailable = true;
+                                        
+                                        System.Diagnostics.Debug.WriteLine($"[SUCCESS] User location obtained on startup: {UserLatitude}, {UserLongitude}");
+                                        
+                                        // Force map refresh to center on user location
+                                        ForceMapRefresh();
+                                    });
+                                    
+                                    // Optionally reload spots based on user location
+                                    System.Diagnostics.Debug.WriteLine("[DEBUG] Reloading spots based on user location");
+                                    await LoadSpotsOptimized();
+                                }
+                                else
+                                {
+                                    System.Diagnostics.Debug.WriteLine("[INFO] Location service returned null, using default location (Paris)");
+                                }
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine("[INFO] Location permission denied, using default location (Paris)");
+                            }
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("[INFO] Location services not available, using default location (Paris)");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[WARNING] Could not get user location on startup: {ex.Message}");
+                        // Continue with default location - this is not a critical error
+                    }
                 }
                 catch (Exception innerEx)
                 {
@@ -1174,16 +1228,16 @@ namespace SubExplore.ViewModels.Map
             // Ensure we have valid coordinates
             if (MapLatitude == 0 && MapLongitude == 0)
             {
-                // Use default coordinates from configuration
-                double defaultLat = _configuration.GetValue<double>("AppSettings:DefaultLatitude", 43.2965);
-                double defaultLong = _configuration.GetValue<double>("AppSettings:DefaultLongitude", 5.3698);
+                // Use default coordinates from configuration (Paris)
+                double defaultLat = _configuration.GetValue<double>("AppSettings:DefaultLatitude", 48.8566);
+                double defaultLong = _configuration.GetValue<double>("AppSettings:DefaultLongitude", 2.3522);
                 double defaultZoom = _configuration.GetValue<double>("AppSettings:DefaultZoomLevel", 12);
                 
                 MapLatitude = defaultLat;
                 MapLongitude = defaultLong;
                 MapZoomLevel = defaultZoom;
                 
-                System.Diagnostics.Debug.WriteLine($"[INFO] Map initialized with default coordinates: {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}");
+                System.Diagnostics.Debug.WriteLine($"[INFO] Map initialized with default coordinates (Paris): {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}");
             }
             
             ForceMapRefresh();
