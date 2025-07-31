@@ -1,108 +1,71 @@
 using SubExplore.Models.Domain;
 using SubExplore.Models.Enums;
+using SubExplore.Models.Validation;
 
 namespace SubExplore.Services.Interfaces
 {
     /// <summary>
     /// Service for managing spot validation workflow
     /// Implements requirements from section 3.1.5 - Moderation system
+    /// Uses Command and Strategy patterns for extensible validation logic
     /// </summary>
     public interface ISpotValidationService
     {
         /// <summary>
-        /// Get all spots pending validation
+        /// Get all spots pending validation with optional filtering
         /// </summary>
-        Task<List<Spot>> GetPendingValidationSpotsAsync();
+        Task<ValidationResult<List<Spot>>> GetPendingValidationSpotsAsync(ValidationFilter? filter = null);
 
         /// <summary>
-        /// Get spots under review by current user
+        /// Get spots under review by specific moderator
         /// </summary>
-        Task<List<Spot>> GetSpotsUnderReviewAsync(int moderatorId);
+        Task<ValidationResult<List<Spot>>> GetSpotsUnderReviewAsync(int moderatorId, ValidationFilter? filter = null);
 
         /// <summary>
-        /// Get validation history for a spot
+        /// Get validation history for a spot with pagination
         /// </summary>
-        Task<List<SpotValidationHistory>> GetSpotValidationHistoryAsync(int spotId);
+        Task<ValidationResult<List<SpotValidationHistory>>> GetSpotValidationHistoryAsync(int spotId, int page = 1, int pageSize = 20);
 
         /// <summary>
-        /// Validate a spot (approve or reject)
+        /// Execute validation command with proper error handling and events
         /// </summary>
-        Task<bool> ValidateSpotAsync(int spotId, int validatorId, SpotValidationStatus status, string validationNotes);
+        Task<ValidationResult> ExecuteValidationCommandAsync(IValidationCommand command);
 
         /// <summary>
-        /// Assign spot for review to a moderator
+        /// Assign spot for review using assignment strategy
         /// </summary>
-        Task<bool> AssignSpotForReviewAsync(int spotId, int moderatorId);
+        Task<ValidationResult> AssignSpotForReviewAsync(int spotId, int moderatorId);
 
         /// <summary>
-        /// Flag a spot for safety review
+        /// Flag a spot for safety review with structured safety flags
         /// </summary>
-        Task<bool> FlagSpotForSafetyReviewAsync(int spotId, int reporterId, string safetyNotes);
+        Task<ValidationResult> FlagSpotForSafetyReviewAsync(int spotId, int reporterId, SafetyFlag safetyFlag);
 
         /// <summary>
-        /// Get spots flagged for safety review
+        /// Get spots flagged for safety review with filtering
         /// </summary>
-        Task<List<Spot>> GetSpotsFlaggedForSafetyAsync();
+        Task<ValidationResult<List<Spot>>> GetSpotsFlaggedForSafetyAsync(ValidationFilter? filter = null);
 
         /// <summary>
-        /// Complete safety review
+        /// Complete safety review with detailed result tracking
         /// </summary>
-        Task<bool> CompleteSafetyReviewAsync(int spotId, int reviewerId, bool isSafe, string reviewNotes);
+        Task<ValidationResult> CompleteSafetyReviewAsync(int spotId, int reviewerId, SafetyReviewResult reviewResult);
 
         /// <summary>
-        /// Get validation statistics for dashboard
+        /// Get comprehensive validation statistics for dashboard
         /// </summary>
-        Task<SpotValidationStats> GetValidationStatsAsync();
+        Task<ValidationResult<SpotValidationStats>> GetValidationStatsAsync(DateTime? fromDate = null, DateTime? toDate = null);
 
         /// <summary>
-        /// Check if user can moderate spots based on specialization
+        /// Check if user can moderate spots using strategy pattern
         /// </summary>
-        bool CanModerateSpotType(ModeratorSpecialization moderatorSpecialization, SpotType spotType);
+        Task<bool> CanModerateSpotTypeAsync(ModeratorSpecialization moderatorSpecialization, SpotType spotType);
+
+        /// <summary>
+        /// Get available validation actions for a spot and user
+        /// </summary>
+        Task<ValidationResult<List<ValidationAction>>> GetAvailableActionsAsync(int spotId, int userId);
     }
 
-    /// <summary>
-    /// Spot validation history record
-    /// </summary>
-    public class SpotValidationHistory
-    {
-        public int Id { get; set; }
-        public int SpotId { get; set; }
-        public int ValidatorId { get; set; }
-        public string ValidatorName { get; set; } = string.Empty;
-        public SpotValidationStatus Status { get; set; }
-        public string ValidationNotes { get; set; } = string.Empty;
-        public DateTime ValidatedAt { get; set; }
-        public ModeratorSpecialization ValidatorSpecialization { get; set; }
-    }
-
-    /// <summary>
-    /// Validation statistics for admin dashboard
-    /// </summary>
-    public class SpotValidationStats
-    {
-        public int PendingCount { get; set; }
-        public int UnderReviewCount { get; set; }
-        public int ApprovedCount { get; set; }
-        public int RejectedCount { get; set; }
-        public int SafetyFlaggedCount { get; set; }
-        public int TotalSpots { get; set; }
-        public double ApprovalRate { get; set; }
-        public TimeSpan AverageReviewTime { get; set; }
-        public List<ModeratorPerformance> ModeratorStats { get; set; } = new();
-    }
-
-    /// <summary>
-    /// Moderator performance statistics
-    /// </summary>
-    public class ModeratorPerformance
-    {
-        public int ModeratorId { get; set; }
-        public string ModeratorName { get; set; } = string.Empty;
-        public ModeratorSpecialization Specialization { get; set; }
-        public int SpotsReviewed { get; set; }
-        public int SpotsApproved { get; set; }
-        public int SpotsRejected { get; set; }
-        public TimeSpan AverageReviewTime { get; set; }
-        public double ApprovalRate { get; set; }
-    }
+    // Note: Classes moved to Models.Validation namespace for better organization
 }

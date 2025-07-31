@@ -10,7 +10,7 @@ namespace SubExplore.Services.Validation
     {
         public string StepName => "Location";
 
-        public ValidationResult Validate(LocationStepData data)
+        public StepValidationResult Validate(LocationStepData data)
         {
             var errors = new List<string>();
 
@@ -37,8 +37,8 @@ namespace SubExplore.Services.Validation
             }
 
             return errors.Count == 0 
-                ? ValidationResult.Success(StepName)
-                : ValidationResult.Failure(StepName, errors.ToArray());
+                ? StepValidationResult.Success(StepName)
+                : StepValidationResult.Failure(StepName, errors.ToArray());
         }
     }
 
@@ -49,7 +49,7 @@ namespace SubExplore.Services.Validation
     {
         public string StepName => "Characteristics";
 
-        public ValidationResult Validate(CharacteristicsStepData data)
+        public StepValidationResult Validate(CharacteristicsStepData data)
         {
             var errors = new List<string>();
 
@@ -84,8 +84,8 @@ namespace SubExplore.Services.Validation
             // Best conditions are now optional
 
             return errors.Count == 0 
-                ? ValidationResult.Success(StepName)
-                : ValidationResult.Failure(StepName, errors.ToArray());
+                ? StepValidationResult.Success(StepName)
+                : StepValidationResult.Failure(StepName, errors.ToArray());
         }
     }
 
@@ -96,7 +96,7 @@ namespace SubExplore.Services.Validation
     {
         public string StepName => "Photos";
 
-        public ValidationResult Validate(PhotosStepData data)
+        public StepValidationResult Validate(PhotosStepData data)
         {
             var errors = new List<string>();
 
@@ -127,8 +127,8 @@ namespace SubExplore.Services.Validation
             }
 
             return errors.Count == 0 
-                ? ValidationResult.Success(StepName)
-                : ValidationResult.Failure(StepName, errors.ToArray());
+                ? StepValidationResult.Success(StepName)
+                : StepValidationResult.Failure(StepName, errors.ToArray());
         }
     }
 
@@ -150,7 +150,7 @@ namespace SubExplore.Services.Validation
             _photosValidator = new PhotosStepValidator();
         }
 
-        public ValidationResult Validate(SummaryStepData data)
+        public StepValidationResult Validate(SummaryStepData data)
         {
             var allErrors = new List<string>();
 
@@ -174,8 +174,8 @@ namespace SubExplore.Services.Validation
             }
 
             return allErrors.Count == 0 
-                ? ValidationResult.Success(StepName)
-                : ValidationResult.Failure(StepName, allErrors.ToArray());
+                ? StepValidationResult.Success(StepName)
+                : StepValidationResult.Failure(StepName, allErrors.ToArray());
         }
     }
 }

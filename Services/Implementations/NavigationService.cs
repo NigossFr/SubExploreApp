@@ -193,13 +193,48 @@ namespace SubExplore.Services.Implementations
 
         public async Task GoBackAsync()
         {
-            if (Application.Current.MainPage is NavigationPage navigationPage)
+            try
             {
-                await navigationPage.PopAsync();
+                System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Starting navigation back");
+                
+                if (Application.Current.MainPage is Shell)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Using Shell navigation back");
+                    await Shell.Current.GoToAsync("..");
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Shell navigation back completed");
+                }
+                else if (Application.Current.MainPage is NavigationPage navigationPage)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Using NavigationPage pop");
+                    if (navigationPage.Navigation.NavigationStack.Count > 1)
+                    {
+                        await navigationPage.PopAsync();
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: NavigationPage pop completed");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Cannot go back - already at root page");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Unknown navigation type, attempting to go to home");
+                    await GoToHomeAsync();
+                }
             }
-            else if (Application.Current.MainPage is Shell)
+            catch (Exception ex)
             {
-                await Shell.Current.GoToAsync("..");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] GoBackAsync failed: {ex.Message}");
+                // Fallback: try to go to home page
+                try
+                {
+                    await GoToHomeAsync();
+                }
+                catch (Exception homeEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] GoToHomeAsync fallback also failed: {homeEx.Message}");
+                    throw;
+                }
             }
         }
 
@@ -310,19 +345,19 @@ namespace SubExplore.Services.Implementations
         {
             var viewModelName = typeof(TViewModel).Name;
             
-            // Map ViewModels to their corresponding routes
+            // Map ViewModels to their corresponding routes with Shell prefix
             return viewModelName switch
             {
-                "MapViewModel" => "map",
-                "FavoriteSpotsViewModel" => "favorites",
-                "AddSpotViewModel" => "addspot",
-                "SpotDetailsViewModel" => "spotdetails",
-                "MySpotsViewModel" => "myspots",
-                "UserProfileViewModel" => "userprofile",
-                "UserPreferencesViewModel" => "userpreferences",
-                "UserStatsViewModel" => "userstats",
-                "SpotValidationViewModel" => "spotvalidation",
-                _ => ConvertViewModelNameToRoute(viewModelName)
+                "MapViewModel" => "///map",
+                "FavoriteSpotsViewModel" => "///favorites",
+                "AddSpotViewModel" => "///addspot",
+                "SpotDetailsViewModel" => "///spotdetails",
+                "MySpotsViewModel" => "///myspots",
+                "UserProfileViewModel" => "///userprofile",
+                "UserPreferencesViewModel" => "///userpreferences",
+                "UserStatsViewModel" => "///userstats",
+                "SpotValidationViewModel" => "///spotvalidation",
+                _ => "///" + ConvertViewModelNameToRoute(viewModelName)
             };
         }
         
@@ -426,6 +461,34 @@ namespace SubExplore.Services.Implementations
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] BuildQueryParameters failed: {ex.Message}");
                 return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Navigate to home page (map page)
+        /// </summary>
+        public async Task GoToHomeAsync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Navigating to home page");
+                
+                if (Application.Current.MainPage is Shell)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Using Shell navigation to map");
+                    await Shell.Current.GoToAsync("///map");
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Shell navigation to map completed");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Using ViewModel navigation to MapViewModel");
+                    await NavigateToAsync<ViewModels.Map.MapViewModel>();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] GoToHomeAsync failed: {ex.Message}");
+                throw;
             }
         }
 

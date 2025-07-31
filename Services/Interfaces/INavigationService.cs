@@ -43,5 +43,10 @@ namespace SubExplore.Services.Interfaces
         /// Switch to Shell navigation (used after successful authentication)
         /// </summary>
         void SwitchToShellNavigation();
+
+        /// <summary>
+        /// Navigate to home page (map page)
+        /// </summary>
+        Task GoToHomeAsync();
     }
 }

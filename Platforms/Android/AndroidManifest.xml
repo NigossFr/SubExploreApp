@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.companyname.subexplore">
-	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:supportsRtl="true" android:label="SubExplore">
+	<application android:allowBackup="true" android:icon="@mipmap/icone_subexplore" android:supportsRtl="true" android:label="SubExplore">
 		<!-- Optionnel : ajoutez un label pour l'app si vous ne l'avez pas ailleurs -->
 		<!-- Clé API Google Maps pour Android -->
 		<meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyDAKkZk5ceq0-hFQDO00D26tWfjSp2RCaM" />

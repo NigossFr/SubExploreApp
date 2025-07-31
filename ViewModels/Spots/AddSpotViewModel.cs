@@ -960,7 +960,7 @@ namespace SubExplore.ViewModels.Spots
                 2 => await ValidateCharacteristicsStepAsync(),
                 3 => await ValidatePhotosStepAsync(),
                 4 => await ValidateSummaryStepAsync(),
-                _ => ValidationResult.Success("Unknown")
+                _ => StepValidationResult.Success("Unknown")
             };
 
             if (!result.IsValid)
@@ -975,7 +975,7 @@ namespace SubExplore.ViewModels.Spots
         /// <summary>
         /// Validates location step (step 1)
         /// </summary>
-        private async Task<ValidationResult> ValidateLocationStepAsync()
+        private async Task<StepValidationResult> ValidateLocationStepAsync()
         {
             var locationData = CreateLocationStepData();
             return _locationValidator.Validate(locationData);
@@ -984,7 +984,7 @@ namespace SubExplore.ViewModels.Spots
         /// <summary>
         /// Validates characteristics step (step 2)
         /// </summary>
-        private async Task<ValidationResult> ValidateCharacteristicsStepAsync()
+        private async Task<StepValidationResult> ValidateCharacteristicsStepAsync()
         {
             var characteristicsData = CreateCharacteristicsStepData();
             return _characteristicsValidator.Validate(characteristicsData);
@@ -993,7 +993,7 @@ namespace SubExplore.ViewModels.Spots
         /// <summary>
         /// Validates photos step (step 3)
         /// </summary>
-        private async Task<ValidationResult> ValidatePhotosStepAsync()
+        private async Task<StepValidationResult> ValidatePhotosStepAsync()
         {
             var photosData = CreatePhotosStepData();
             return _photosValidator.Validate(photosData);
@@ -1002,7 +1002,7 @@ namespace SubExplore.ViewModels.Spots
         /// <summary>
         /// Validates summary step (step 4)
         /// </summary>
-        private async Task<ValidationResult> ValidateSummaryStepAsync()
+        private async Task<StepValidationResult> ValidateSummaryStepAsync()
         {
             var summaryData = CreateSummaryStepData();
             return _summaryValidator.Validate(summaryData);
@@ -1069,7 +1069,7 @@ namespace SubExplore.ViewModels.Spots
         /// <summary>
         /// Handles validation failure with user feedback and logging
         /// </summary>
-        private async Task HandleValidationFailureAsync(ValidationResult result)
+        private async Task HandleValidationFailureAsync(StepValidationResult result)
         {
             var errorMessage = string.Join("\n", result.Errors);
             await DialogService.ShowAlertAsync("Validation", errorMessage, "OK");

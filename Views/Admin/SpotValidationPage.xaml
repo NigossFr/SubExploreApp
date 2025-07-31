@@ -10,418 +10,453 @@
 
     <Shell.TitleView>
         <Grid>
-            <Label Text="{Binding Title}" 
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            
+            <!-- Back Button -->
+            <Button Grid.Column="0"
+                    Text="◀"
+                    FontSize="20"
+                    TextColor="White"
+                    BackgroundColor="Transparent"
+                    BorderColor="Transparent"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    Margin="5,0"
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=GoBackCommand}" />
+            
+            <!-- Title -->
+            <Label Grid.Column="1"
+                   Text="Validation des Spots" 
                    FontSize="18" 
                    FontAttributes="Bold" 
                    TextColor="White" 
-                   VerticalOptions="Center" />
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center" />
+            
+            <!-- Home Button -->
+            <Button Grid.Column="2"
+                    Text="🏠"
+                    FontSize="18"
+                    TextColor="White"
+                    BackgroundColor="Transparent"
+                    BorderColor="Transparent"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    Margin="5,0"
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=GoToHomeCommand}" />
         </Grid>
     </Shell.TitleView>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <!-- Stats Header -->
-        <Frame Grid.Row="0" 
-               BackgroundColor="{StaticResource Primary}" 
-               Padding="15,10"
-               CornerRadius="0">
-            <Grid IsVisible="{Binding ValidationStats, Converter={StaticResource IsNotNullConverter}}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <StackLayout Grid.Column="0" HorizontalOptions="Center">
-                    <Label Text="{Binding ValidationStats.PendingCount}" 
-                           FontSize="24" 
-                           FontAttributes="Bold" 
-                           TextColor="White" 
-                           HorizontalOptions="Center" />
-                    <Label Text="En attente" 
-                           FontSize="12" 
-                           TextColor="White" 
-                           HorizontalOptions="Center" />
-                </StackLayout>
-
-                <StackLayout Grid.Column="1" HorizontalOptions="Center">
-                    <Label Text="{Binding ValidationStats.UnderReviewCount}" 
-                           FontSize="24" 
-                           FontAttributes="Bold" 
-                           TextColor="White" 
-                           HorizontalOptions="Center" />
-                    <Label Text="En révision" 
-                           FontSize="12" 
-                           TextColor="White" 
-                           HorizontalOptions="Center" />
-                </StackLayout>
-
-                <StackLayout Grid.Column="2" HorizontalOptions="Center">
-                    <Label Text="{Binding ValidationStats.SafetyFlaggedCount}" 
-                           FontSize="24" 
-                           FontAttributes="Bold" 
-                           TextColor="White" 
-                           HorizontalOptions="Center" />
-                    <Label Text="Sécurité" 
-                           FontSize="12" 
-                           TextColor="White" 
-                           HorizontalOptions="Center" />
-                </StackLayout>
-
-                <StackLayout Grid.Column="3" HorizontalOptions="Center">
-                    <Label Text="{Binding ValidationStats.ApprovalRate, StringFormat='{0:F1}%'}" 
-                           FontSize="24" 
-                           FontAttributes="Bold" 
-                           TextColor="White" 
-                           HorizontalOptions="Center" />
-                    <Label Text="Taux d'approbation" 
-                           FontSize="12" 
-                           TextColor="White" 
-                           HorizontalOptions="Center" />
-                </StackLayout>
-            </Grid>
-        </Frame>
-
-        <!-- Main Content -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="300" />
-            </Grid.ColumnDefinitions>
-
-            <!-- Spots List -->
-            <Frame Grid.Column="0" 
-                   BackgroundColor="White" 
-                   Padding="0"
-                   CornerRadius="10"
-                   Margin="10">
-                
-                <!-- Tabs -->
+    <ScrollView>
+        <StackLayout Spacing="0">
+            <!-- Stats Header -->
+            <Frame BackgroundColor="{StaticResource Primary}" 
+                   Padding="20,15"
+                   CornerRadius="0"
+                   IsVisible="{Binding ValidationStats, Converter={StaticResource IsNotNullConverter}}">
                 <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                    <!-- Tab Headers -->
-                    <Grid Grid.Row="0" BackgroundColor="{StaticResource Gray100}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+                    <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                        <Label Text="{Binding ValidationStats.PendingCount}" 
+                               FontSize="28" 
+                               FontAttributes="Bold" 
+                               TextColor="White" 
+                               HorizontalOptions="Center" />
+                        <Label Text="En attente" 
+                               FontSize="13" 
+                               TextColor="White" 
+                               HorizontalOptions="Center" />
+                    </StackLayout>
 
-                        <Button Grid.Column="0"
-                                Text="En attente"
-                                BackgroundColor="{Binding SelectedTabIndex, Converter={StaticResource TabBackgroundConverter}, ConverterParameter=0}"
-                                TextColor="{Binding SelectedTabIndex, Converter={StaticResource TabTextColorConverter}, ConverterParameter=0}"
-                                Command="{Binding ChangeTabCommand}"
-                                CommandParameter="0" />
+                    <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                        <Label Text="{Binding ValidationStats.UnderReviewCount}" 
+                               FontSize="28" 
+                               FontAttributes="Bold" 
+                               TextColor="White" 
+                               HorizontalOptions="Center" />
+                        <Label Text="En révision" 
+                               FontSize="13" 
+                               TextColor="White" 
+                               HorizontalOptions="Center" />
+                    </StackLayout>
 
-                        <Button Grid.Column="1"
-                                Text="En révision"
-                                BackgroundColor="{Binding SelectedTabIndex, Converter={StaticResource TabBackgroundConverter}, ConverterParameter=1}"
-                                TextColor="{Binding SelectedTabIndex, Converter={StaticResource TabTextColorConverter}, ConverterParameter=1}"
-                                Command="{Binding ChangeTabCommand}"
-                                CommandParameter="1" />
-
-                        <Button Grid.Column="2"
-                                Text="Sécurité"
-                                BackgroundColor="{Binding SelectedTabIndex, Converter={StaticResource TabBackgroundConverter}, ConverterParameter=2}"
-                                TextColor="{Binding SelectedTabIndex, Converter={StaticResource TabTextColorConverter}, ConverterParameter=2}"
-                                Command="{Binding ChangeTabCommand}"
-                                CommandParameter="2" />
-                    </Grid>
-
-                    <!-- Tab Content -->
-                    <ContentView Grid.Row="1">
-                        <!-- Pending Spots -->
-                        <CollectionView ItemsSource="{Binding PendingSpots}"
-                                        IsVisible="{Binding SelectedTabIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}"
-                                        SelectionMode="Single"
-                                        SelectedItem="{Binding SelectedSpot}"
-                                        SelectionChangedCommand="{Binding SelectSpotCommand}"
-                                        SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="models:Spot">
-                                    <Grid Padding="15">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-
-                                        <Label Grid.Row="0" Grid.Column="0"
-                                               Text="{Binding Name}"
-                                               FontSize="16"
-                                               FontAttributes="Bold" />
-
-                                        <Label Grid.Row="1" Grid.Column="0"
-                                               Text="{Binding Description}"
-                                               FontSize="14"
-                                               TextColor="{StaticResource Gray600}"
-                                               MaxLines="2" />
-
-                                        <Label Grid.Row="2" Grid.Column="0"
-                                               Text="{Binding CreatedAt, StringFormat='Créé le {0:dd/MM/yyyy}'}"
-                                               FontSize="12"
-                                               TextColor="{StaticResource Gray500}" />
-
-                                        <Frame Grid.Row="0" Grid.Column="1" Grid.RowSpan="3"
-                                               BackgroundColor="Orange"
-                                               Padding="8,4"
-                                               CornerRadius="12"
-                                               VerticalOptions="Center">
-                                            <Label Text="En attente"
-                                                   TextColor="White"
-                                                   FontSize="12"
-                                                   FontAttributes="Bold" />
-                                        </Frame>
-                                    </Grid>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-
-                        <!-- Under Review Spots -->
-                        <CollectionView ItemsSource="{Binding SpotsUnderReview}"
-                                        IsVisible="{Binding SelectedTabIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}"
-                                        SelectionMode="Single"
-                                        SelectedItem="{Binding SelectedSpot}"
-                                        SelectionChangedCommand="{Binding SelectSpotCommand}"
-                                        SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="models:Spot">
-                                    <Grid Padding="15">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-
-                                        <Label Grid.Row="0" Grid.Column="0"
-                                               Text="{Binding Name}"
-                                               FontSize="16"
-                                               FontAttributes="Bold" />
-
-                                        <Label Grid.Row="1" Grid.Column="0"
-                                               Text="{Binding Description}"
-                                               FontSize="14"
-                                               TextColor="{StaticResource Gray600}"
-                                               MaxLines="2" />
-
-                                        <Label Grid.Row="2" Grid.Column="0"
-                                               Text="{Binding CreatedAt, StringFormat='Créé le {0:dd/MM/yyyy}'}"
-                                               FontSize="12"
-                                               TextColor="{StaticResource Gray500}" />
-
-                                        <Frame Grid.Row="0" Grid.Column="1" Grid.RowSpan="3"
-                                               BackgroundColor="Blue"
-                                               Padding="8,4"
-                                               CornerRadius="12"
-                                               VerticalOptions="Center">
-                                            <Label Text="En révision"
-                                                   TextColor="White"
-                                                   FontSize="12"
-                                                   FontAttributes="Bold" />
-                                        </Frame>
-                                    </Grid>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-
-                        <!-- Safety Flagged Spots -->
-                        <CollectionView ItemsSource="{Binding SafetyFlaggedSpots}"
-                                        IsVisible="{Binding SelectedTabIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}"
-                                        SelectionMode="Single"
-                                        SelectedItem="{Binding SelectedSpot}"
-                                        SelectionChangedCommand="{Binding SelectSpotCommand}"
-                                        SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="models:Spot">
-                                    <Grid Padding="15">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-
-                                        <Label Grid.Row="0" Grid.Column="0"
-                                               Text="{Binding Name}"
-                                               FontSize="16"
-                                               FontAttributes="Bold" />
-
-                                        <Label Grid.Row="1" Grid.Column="0"
-                                               Text="{Binding Description}"
-                                               FontSize="14"
-                                               TextColor="{StaticResource Gray600}"
-                                               MaxLines="2" />
-
-                                        <Label Grid.Row="2" Grid.Column="0"
-                                               Text="{Binding SafetyFlags}"
-                                               FontSize="12"
-                                               TextColor="Red"
-                                               MaxLines="1" />
-
-                                        <Frame Grid.Row="0" Grid.Column="1" Grid.RowSpan="3"
-                                               BackgroundColor="Purple"
-                                               Padding="8,4"
-                                               CornerRadius="12"
-                                               VerticalOptions="Center">
-                                            <Label Text="Sécurité"
-                                                   TextColor="White"
-                                                   FontSize="12"
-                                                   FontAttributes="Bold" />
-                                        </Frame>
-                                    </Grid>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-                    </ContentView>
+                    <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                        <Label Text="{Binding ValidationStats.SafetyFlaggedCount}" 
+                               FontSize="28" 
+                               FontAttributes="Bold" 
+                               TextColor="White" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Sécurité" 
+                               FontSize="13" 
+                               TextColor="White" 
+                               HorizontalOptions="Center" />
+                    </StackLayout>
                 </Grid>
             </Frame>
 
-            <!-- Details Panel -->
-            <Frame Grid.Column="1" 
-                   BackgroundColor="White" 
-                   Padding="15"
-                   CornerRadius="10"
-                   Margin="0,10,10,10"
-                   IsVisible="{Binding SelectedSpot, Converter={StaticResource IsNotNullConverter}}">
-                
-                <ScrollView>
-                    <StackLayout Spacing="15">
-                        <Label Text="Détails du Spot" 
-                               FontSize="18" 
-                               FontAttributes="Bold" 
-                               TextColor="{StaticResource Primary}" />
+            <!-- Section: Spots en attente de validation -->
+            <StackLayout>
+                <Frame BackgroundColor="White" 
+                       Padding="0"
+                       CornerRadius="15"
+                       Margin="15,10">
+                    <StackLayout>
+                        <!-- Header -->
+                        <Grid BackgroundColor="{StaticResource Primary}" 
+                              Padding="20,15">
+                            <Label Text="Spots en attente de validation" 
+                                   FontSize="18" 
+                                   FontAttributes="Bold" 
+                                   TextColor="White" />
+                        </Grid>
 
-                        <StackLayout IsVisible="{Binding SelectedSpot, Converter={StaticResource IsNotNullConverter}}">
-                            <Label Text="{Binding SelectedSpot.Name}" 
-                                   FontSize="16" 
-                                   FontAttributes="Bold" />
-                            
-                            <Label Text="{Binding SelectedSpot.Description}" 
-                                   FontSize="14" 
-                                   TextColor="{StaticResource Gray600}" />
-
-                            <Label Text="{Binding SelectedSpot.CreatedAt, StringFormat='Créé le {0:dd/MM/yyyy HH:mm}'}" 
-                                   FontSize="12" 
-                                   TextColor="{StaticResource Gray500}" />
-
-                            <Label Text="{Binding SelectedSpot.RequiredEquipment, StringFormat='Équipement: {0}'}" 
-                                   FontSize="12" />
-
-                            <Label Text="{Binding SelectedSpot.SafetyNotes, StringFormat='Sécurité: {0}'}" 
-                                   FontSize="12" />
-                        </StackLayout>
-
-                        <BoxView BackgroundColor="{StaticResource Gray200}" HeightRequest="1" />
-
-                        <!-- Validation Notes -->
+                        <!-- Pending Spots List -->
                         <StackLayout>
-                            <Label Text="Notes de validation" 
-                                   FontSize="14" 
-                                   FontAttributes="Bold" />
-                            <Editor Text="{Binding ValidationNotes}" 
-                                    Placeholder="Ajouter des notes..."
-                                    HeightRequest="100" />
-                        </StackLayout>
-
-                        <BoxView BackgroundColor="{StaticResource Gray200}" HeightRequest="1" />
-
-                        <!-- Action Buttons -->
-                        <StackLayout Spacing="10">
-                            <!-- Pending Actions -->
-                            <StackLayout IsVisible="{Binding SelectedSpot.ValidationStatus, Converter={StaticResource EnumToBoolConverter}, ConverterParameter='Pending'}">
-                                <Button Text="Assigner pour révision"
-                                        BackgroundColor="{StaticResource Primary}"
-                                        TextColor="White"
-                                        Command="{Binding AssignForReviewCommand}"
-                                        IsEnabled="{Binding IsValidationInProgress, Converter={StaticResource InverseBoolConverter}}" />
-                                
-                                <Button Text="Approuver directement"
-                                        BackgroundColor="Green"
-                                        TextColor="White"
-                                        Command="{Binding ApproveSpotCommand}"
-                                        IsEnabled="{Binding IsValidationInProgress, Converter={StaticResource InverseBoolConverter}}" />
-                                
-                                <Button Text="Rejeter"
-                                        BackgroundColor="Red"
-                                        TextColor="White"
-                                        Command="{Binding RejectSpotCommand}"
-                                        IsEnabled="{Binding IsValidationInProgress, Converter={StaticResource InverseBoolConverter}}" />
+                            <!-- Empty State -->
+                            <StackLayout IsVisible="{Binding PendingSpots.Count, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}"
+                                         Padding="40,60">
+                                <Label Text="📋" 
+                                       FontSize="48" 
+                                       HorizontalOptions="Center" 
+                                       TextColor="{StaticResource Gray400}" />
+                                <Label Text="Aucun spot en attente de validation" 
+                                       FontSize="16" 
+                                       HorizontalOptions="Center" 
+                                       TextColor="{StaticResource Gray600}" 
+                                       Margin="0,10,0,0" />
+                                <Label Text="Tous les spots ont été traités" 
+                                       FontSize="14" 
+                                       HorizontalOptions="Center" 
+                                       TextColor="{StaticResource Gray500}" />
                             </StackLayout>
 
-                            <!-- Under Review Actions -->
-                            <StackLayout IsVisible="{Binding SelectedSpot.ValidationStatus, Converter={StaticResource EnumToBoolConverter}, ConverterParameter='UnderReview'}">
-                                <Button Text="Approuver"
-                                        BackgroundColor="Green"
-                                        TextColor="White"
-                                        Command="{Binding ApproveSpotCommand}"
-                                        IsEnabled="{Binding IsValidationInProgress, Converter={StaticResource InverseBoolConverter}}" />
-                                
-                                <Button Text="Rejeter"
-                                        BackgroundColor="Red"
-                                        TextColor="White"
-                                        Command="{Binding RejectSpotCommand}"
-                                        IsEnabled="{Binding IsValidationInProgress, Converter={StaticResource InverseBoolConverter}}" />
-                            </StackLayout>
+                            <!-- Spots List -->
+                            <CollectionView ItemsSource="{Binding PendingSpots}"
+                                            IsVisible="{Binding PendingSpots.Count, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}"
+                                            SelectionMode="None">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:Spot">
+                                        <Frame BackgroundColor="White" 
+                                               Padding="0" 
+                                               CornerRadius="12" 
+                                               Margin="15,8" 
+                                               HasShadow="True">
+                                            <StackLayout>
+                                                <Grid Padding="20,15">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
 
-                            <!-- Safety Review Actions -->
-                            <StackLayout IsVisible="{Binding SelectedSpot.ValidationStatus, Converter={StaticResource EnumToBoolConverter}, ConverterParameter='SafetyReview'}">
-                                <Button Text="Marquer comme sûr"
-                                        BackgroundColor="Green"
-                                        TextColor="White"
-                                        Command="{Binding CompleteSafetyReviewCommand}"
-                                        CommandParameter="True"
-                                        IsEnabled="{Binding IsValidationInProgress, Converter={StaticResource InverseBoolConverter}}" />
-                                
-                                <Button Text="Confirmer dangereux"
-                                        BackgroundColor="Red"
-                                        TextColor="White"
-                                        Command="{Binding CompleteSafetyReviewCommand}"
-                                        CommandParameter="False"
-                                        IsEnabled="{Binding IsValidationInProgress, Converter={StaticResource InverseBoolConverter}}" />
-                            </StackLayout>
+                                                    <Label Grid.Row="0" Grid.Column="0"
+                                                           Text="{Binding Name}"
+                                                           FontSize="18"
+                                                           FontAttributes="Bold" 
+                                                           TextColor="{StaticResource Primary}" />
 
-                            <BoxView BackgroundColor="{StaticResource Gray200}" HeightRequest="1" />
+                                                    <Label Grid.Row="1" Grid.Column="0"
+                                                           Text="{Binding Description}"
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource Gray600}"
+                                                           MaxLines="3" 
+                                                           Margin="0,5,0,0" />
 
-                            <Button Text="Voir les détails"
-                                    BackgroundColor="{StaticResource Gray300}"
-                                    TextColor="Black"
-                                    Command="{Binding ViewSpotDetailsCommand}"
-                                    CommandParameter="{Binding SelectedSpot}" />
+                                                    <Label Grid.Row="2" Grid.Column="0"
+                                                           Text="{Binding CreatedAt, StringFormat='Soumis le {0:dd/MM/yyyy à {0:HH:mm}'}"
+                                                           FontSize="12"
+                                                           TextColor="{StaticResource Gray500}" 
+                                                           Margin="0,8,0,0" />
+
+                                                    <Frame Grid.Row="0" Grid.Column="1" Grid.RowSpan="3"
+                                                           BackgroundColor="Orange"
+                                                           Padding="12,6"
+                                                           CornerRadius="15"
+                                                           VerticalOptions="Center">
+                                                        <Label Text="⏳ Nouveau"
+                                                               TextColor="White"
+                                                               FontSize="13"
+                                                               FontAttributes="Bold" />
+                                                    </Frame>
+                                                </Grid>
+
+                                                <!-- Action Buttons -->
+                                                <BoxView BackgroundColor="{StaticResource Gray200}" HeightRequest="1" />
+                                                <Grid Padding="15,10">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Button Grid.Column="0"
+                                                            Text="✅ Approuver"
+                                                            BackgroundColor="Green"
+                                                            TextColor="White"
+                                                            FontSize="13"
+                                                            Padding="8,10"
+                                                            CornerRadius="8"
+                                                            Margin="0,0,5,0"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=ApproveSpotCommand}"
+                                                            CommandParameter="{Binding .}" />
+
+                                                    <Button Grid.Column="1"
+                                                            Text="📋 Réviser"
+                                                            BackgroundColor="{StaticResource Primary}"
+                                                            TextColor="White"
+                                                            FontSize="13"
+                                                            Padding="8,10"
+                                                            CornerRadius="8"
+                                                            Margin="2.5,0"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=AssignForReviewCommand}"
+                                                            CommandParameter="{Binding .}" />
+
+                                                    <Button Grid.Column="2"
+                                                            Text="❌ Rejeter"
+                                                            BackgroundColor="Red"
+                                                            TextColor="White"
+                                                            FontSize="13"
+                                                            Padding="8,10"
+                                                            CornerRadius="8"
+                                                            Margin="5,0,0,0"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=RejectSpotCommand}"
+                                                            CommandParameter="{Binding .}" />
+                                                </Grid>
+                                            </StackLayout>
+                                        </Frame>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
                         </StackLayout>
                     </StackLayout>
-                </ScrollView>
-            </Frame>
-        </Grid>
+                </Frame>
+            </StackLayout>
 
-        <!-- Loading Overlay -->
-        <Grid Grid.RowSpan="2" 
-              BackgroundColor="#80000000" 
-              IsVisible="{Binding IsLoading}">
-            <ActivityIndicator IsRunning="{Binding IsLoading}" 
-                               Color="{StaticResource Primary}" 
-                               VerticalOptions="Center" 
-                               HorizontalOptions="Center" />
-        </Grid>
-    </Grid>
+            <!-- Section: Spots en cours de révision -->
+            <StackLayout IsVisible="{Binding SpotsUnderReview.Count, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}">
+                <Frame BackgroundColor="White" 
+                       Padding="0"
+                       CornerRadius="15"
+                       Margin="15,10">
+                    <StackLayout>
+                        <Grid BackgroundColor="Blue" 
+                              Padding="20,15">
+                            <Label Text="Spots en cours de révision" 
+                                   FontSize="18" 
+                                   FontAttributes="Bold" 
+                                   TextColor="White" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding SpotsUnderReview}"
+                                        SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Spot">
+                                    <Frame BackgroundColor="White" 
+                                           Padding="0" 
+                                           CornerRadius="12" 
+                                           Margin="15,8" 
+                                           HasShadow="True">
+                                        <StackLayout>
+                                            <Grid Padding="20,15">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+
+                                                <Label Grid.Row="0" Grid.Column="0"
+                                                       Text="{Binding Name}"
+                                                       FontSize="18"
+                                                       FontAttributes="Bold" 
+                                                       TextColor="{StaticResource Primary}" />
+
+                                                <Label Grid.Row="1" Grid.Column="0"
+                                                       Text="{Binding Description}"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource Gray600}"
+                                                       MaxLines="3" 
+                                                       Margin="0,5,0,0" />
+
+                                                <Label Grid.Row="2" Grid.Column="0"
+                                                       Text="{Binding CreatedAt, StringFormat='En révision depuis le {0:dd/MM/yyyy}'}"
+                                                       FontSize="12"
+                                                       TextColor="{StaticResource Gray500}" 
+                                                       Margin="0,8,0,0" />
+
+                                                <Frame Grid.Row="0" Grid.Column="1" Grid.RowSpan="3"
+                                                       BackgroundColor="Blue"
+                                                       Padding="12,6"
+                                                       CornerRadius="15"
+                                                       VerticalOptions="Center">
+                                                    <Label Text="🔍 En révision"
+                                                           TextColor="White"
+                                                           FontSize="13"
+                                                           FontAttributes="Bold" />
+                                                </Frame>
+                                            </Grid>
+
+                                            <BoxView BackgroundColor="{StaticResource Gray200}" HeightRequest="1" />
+                                            <Grid Padding="15,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Button Grid.Column="0"
+                                                        Text="✅ Approuver"
+                                                        BackgroundColor="Green"
+                                                        TextColor="White"
+                                                        FontSize="13"
+                                                        Padding="8,10"
+                                                        CornerRadius="8"
+                                                        Margin="0,0,5,0"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=ApproveSpotCommand}"
+                                                        CommandParameter="{Binding .}" />
+
+                                                <Button Grid.Column="1"
+                                                        Text="❌ Rejeter"
+                                                        BackgroundColor="Red"
+                                                        TextColor="White"
+                                                        FontSize="13"
+                                                        Padding="8,10"
+                                                        CornerRadius="8"
+                                                        Margin="5,0,0,0"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=RejectSpotCommand}"
+                                                        CommandParameter="{Binding .}" />
+                                            </Grid>
+                                        </StackLayout>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </StackLayout>
+                </Frame>
+            </StackLayout>
+
+            <!-- Section: Spots nécessitant une révision de sécurité -->
+            <StackLayout IsVisible="{Binding SafetyFlaggedSpots.Count, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}">
+                <Frame BackgroundColor="White" 
+                       Padding="0"
+                       CornerRadius="15"
+                       Margin="15,10">
+                    <StackLayout>
+                        <Grid BackgroundColor="Purple" 
+                              Padding="20,15">
+                            <Label Text="Spots nécessitant une révision de sécurité" 
+                                   FontSize="18" 
+                                   FontAttributes="Bold" 
+                                   TextColor="White" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding SafetyFlaggedSpots}"
+                                        SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Spot">
+                                    <Frame BackgroundColor="White" 
+                                           Padding="0" 
+                                           CornerRadius="12" 
+                                           Margin="15,8" 
+                                           HasShadow="True">
+                                        <StackLayout>
+                                            <Grid Padding="20,15">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+
+                                                <Label Grid.Row="0" Grid.Column="0"
+                                                       Text="{Binding Name}"
+                                                       FontSize="18"
+                                                       FontAttributes="Bold" 
+                                                       TextColor="{StaticResource Primary}" />
+
+                                                <Label Grid.Row="1" Grid.Column="0"
+                                                       Text="{Binding Description}"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource Gray600}"
+                                                       MaxLines="3" 
+                                                       Margin="0,5,0,0" />
+
+                                                <Label Grid.Row="2" Grid.Column="0"
+                                                       Text="{Binding SafetyFlags, StringFormat='⚠️ Alerte sécurité: {0}'}"
+                                                       FontSize="12"
+                                                       TextColor="Red" 
+                                                       Margin="0,8,0,0" 
+                                                       FontAttributes="Bold" />
+
+                                                <Frame Grid.Row="0" Grid.Column="1" Grid.RowSpan="3"
+                                                       BackgroundColor="Purple"
+                                                       Padding="12,6"
+                                                       CornerRadius="15"
+                                                       VerticalOptions="Center">
+                                                    <Label Text="⚠️ Sécurité"
+                                                           TextColor="White"
+                                                           FontSize="13"
+                                                           FontAttributes="Bold" />
+                                                </Frame>
+                                            </Grid>
+
+                                            <BoxView BackgroundColor="{StaticResource Gray200}" HeightRequest="1" />
+                                            <Grid Padding="15,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Button Grid.Column="0"
+                                                        Text="✅ Spot sûr"
+                                                        BackgroundColor="Green"
+                                                        TextColor="White"
+                                                        FontSize="13"
+                                                        Padding="8,10"
+                                                        CornerRadius="8"
+                                                        Margin="0,0,5,0"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=CompleteSafetyReviewCommand}"
+                                                        CommandParameter="True" />
+
+                                                <Button Grid.Column="1"
+                                                        Text="⚠️ Dangereux"
+                                                        BackgroundColor="Red"
+                                                        TextColor="White"
+                                                        FontSize="13"
+                                                        Padding="8,10"
+                                                        CornerRadius="8"
+                                                        Margin="5,0,0,0"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=CompleteSafetyReviewCommand}"
+                                                        CommandParameter="False" />
+                                            </Grid>
+                                        </StackLayout>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </StackLayout>
+                </Frame>
+            </StackLayout>
+
+        </StackLayout>
+    </ScrollView>
+
 </ContentPage>

@@ -13,7 +13,7 @@ namespace SubExplore.Models.Validation
         /// </summary>
         /// <param name="data">The data to validate</param>
         /// <returns>Validation result with success status and error messages</returns>
-        ValidationResult Validate(T data);
+        StepValidationResult Validate(T data);
 
         /// <summary>
         /// Gets the step name for this validator
@@ -22,21 +22,21 @@ namespace SubExplore.Models.Validation
     }
 
     /// <summary>
-    /// Validation result for step validation
+    /// Step validation result for step validation (renamed to avoid conflict)
     /// </summary>
-    public class ValidationResult
+    public class StepValidationResult
     {
         public bool IsValid { get; set; }
         public List<string> Errors { get; set; } = new List<string>();
         public string StepName { get; set; } = string.Empty;
 
-        public static ValidationResult Success(string stepName) => new ValidationResult 
+        public static StepValidationResult Success(string stepName) => new StepValidationResult 
         { 
             IsValid = true, 
             StepName = stepName 
         };
 
-        public static ValidationResult Failure(string stepName, params string[] errors) => new ValidationResult
+        public static StepValidationResult Failure(string stepName, params string[] errors) => new StepValidationResult
         {
             IsValid = false,
             StepName = stepName,

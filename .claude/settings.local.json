@@ -37,7 +37,9 @@
       "Bash(del TestMigration.cs)",
       "Bash(powershell:*)",
       "Bash(telnet:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(move \"IconeSubExplore.svg\" \"icone_subexplore.svg\")",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

@@ -108,6 +108,7 @@ namespace SubExplore.Services.Interfaces
         Reject,
         Archive,
         Moderate,
-        SafetyReview
+        SafetyReview,
+        Report
     }
 }

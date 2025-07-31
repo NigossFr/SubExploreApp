@@ -9,6 +9,7 @@ using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
 using SubExplore.Services.Validation;
 using SubExplore.Services.Caching;
+using SubExplore.Models.Validation;
 using SubExplore.ViewModels.Settings;
 using SubExplore.ViewModels.Map;
 using SubExplore.Constants;
@@ -168,6 +169,13 @@ public static class MauiProgram
                 options.EnableServiceProviderCaching(true);
                 options.EnableDetailedErrors(false);
                 
+                // Configure for better concurrency handling
+                options.ConfigureWarnings(warnings => 
+                {
+                    warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ContextDisposed);
+                    warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored);
+                });
+                
                 // Add performance monitoring interceptor
                 var performanceInterceptor = serviceProvider.GetRequiredService<DataAccess.PerformanceInterceptor>();
                 options.AddInterceptors(performanceInterceptor);
@@ -177,7 +185,7 @@ public static class MauiProgram
                 // Database connection test failed during configuration
                 throw new InvalidOperationException($"Database connection failed: {ex.Message}", ex);
             }
-        });
+        }, ServiceLifetime.Scoped); // Explicit scoped lifetime to prevent concurrency issues
 
         // Enregistrement des repositories
         builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -237,6 +245,18 @@ public static class MauiProgram
         builder.Services.AddScoped<ISpotValidationService, SpotValidationService>();
         builder.Services.AddScoped<TestDataService>();
         builder.Services.AddScoped<SpotMigrationService>();
+        
+        // Validation strategy services
+        builder.Services.AddScoped<IValidationStrategyFactory, ValidationStrategyFactory>();
+        builder.Services.AddScoped<IValidationEventPublisher, ValidationEventPublisher>();
+        
+        // Validation event handlers
+        builder.Services.AddScoped<IValidationEventHandler<SpotApprovedEvent>, NotificationEventHandler>();
+        builder.Services.AddScoped<IValidationEventHandler<SpotRejectedEvent>, NotificationEventHandler>();
+        builder.Services.AddScoped<IValidationEventHandler<SpotFlaggedForSafetyEvent>, NotificationEventHandler>();
+        builder.Services.AddScoped<IValidationEventHandler<SpotApprovedEvent>, AnalyticsEventHandler>();
+        builder.Services.AddScoped<IValidationEventHandler<SpotRejectedEvent>, AnalyticsEventHandler>();
+        builder.Services.AddScoped<IValidationEventHandler<ValidationStatusChangedEvent>, AnalyticsEventHandler>();
         
         // Validation services
         builder.Services.AddScoped<IValidationService, ValidationService>();
