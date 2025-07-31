@@ -15,6 +15,8 @@ namespace SubExplore.Services.Implementations
         private readonly IServiceProvider _serviceProvider;
         private INavigationGuardService? _navigationGuard;
         private IDialogService? _dialogService;
+        private readonly Stack<string> _navigationHistory = new();
+        private string? _currentRoute;
 
         public NavigationService(IServiceProvider serviceProvider)
         {
@@ -32,7 +34,15 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Starting navigation to {typeof(TViewModel).Name}");
+                var targetRoute = typeof(TViewModel).Name;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Starting navigation to {targetRoute}");
+                
+                // Add to navigation history for better back navigation
+                if (!string.IsNullOrEmpty(_currentRoute) && _currentRoute != targetRoute)
+                {
+                    _navigationHistory.Push(_currentRoute);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Added {_currentRoute} to navigation history");
+                }
                 
                 // Check navigation permissions first
                 if (NavigationGuard != null)
@@ -81,15 +91,19 @@ namespace SubExplore.Services.Implementations
                                 var fullRoute = string.IsNullOrEmpty(queryParams) ? route : $"{route}?{queryParams}";
                                 
                                 System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Navigating to {fullRoute}");
-                                await Shell.Current.GoToAsync(fullRoute);
+                                await Shell.Current.GoToAsync(fullRoute, true); // Animate transitions
                                 System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Shell navigation completed successfully");
                             }
                             else
                             {
                                 System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Navigating to {route} (no parameters)");
-                                await Shell.Current.GoToAsync(route);
+                                await Shell.Current.GoToAsync(route, true); // Animate transitions
                                 System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Shell navigation completed successfully");
                             }
+                            
+                            // Update current route for breadcrumb tracking
+                            _currentRoute = targetRoute;
+                            UpdateNavigationBreadcrumb(targetRoute);
                             return;
                         }
                         catch (Exception shellEx)
@@ -200,7 +214,20 @@ namespace SubExplore.Services.Implementations
                 if (Application.Current.MainPage is Shell)
                 {
                     System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Using Shell navigation back");
-                    await Shell.Current.GoToAsync("..");
+                    
+                    // Use navigation history for smarter back navigation
+                    if (_navigationHistory.Count > 0)
+                    {
+                        var previousRoute = _navigationHistory.Pop();
+                        _currentRoute = previousRoute;
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] GoBackAsync: Going back to {previousRoute} from history");
+                        await Shell.Current.GoToAsync($"///{GetShellRouteFromViewModel(previousRoute)}", true);
+                        UpdateNavigationBreadcrumb(previousRoute);
+                    }
+                    else
+                    {
+                        await Shell.Current.GoToAsync("..", true);
+                    }
                     System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Shell navigation back completed");
                 }
                 else if (Application.Current.MainPage is NavigationPage navigationPage)
@@ -465,7 +492,7 @@ namespace SubExplore.Services.Implementations
         }
 
         /// <summary>
-        /// Navigate to home page (map page)
+        /// Navigate to home page (map page) and clear navigation history
         /// </summary>
         public async Task GoToHomeAsync()
         {
@@ -473,10 +500,15 @@ namespace SubExplore.Services.Implementations
             {
                 System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Navigating to home page");
                 
+                // Clear navigation history when going home
+                _navigationHistory.Clear();
+                _currentRoute = "MapViewModel";
+                
                 if (Application.Current.MainPage is Shell)
                 {
                     System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Using Shell navigation to map");
-                    await Shell.Current.GoToAsync("///map");
+                    await Shell.Current.GoToAsync("///map", true);
+                    UpdateNavigationBreadcrumb("MapViewModel");
                     System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Shell navigation to map completed");
                 }
                 else
@@ -508,6 +540,86 @@ namespace SubExplore.Services.Implementations
                 System.Diagnostics.Debug.WriteLine($"[ERROR] NavigationService SwitchToShellNavigation failed: {ex.Message}");
                 throw;
             }
+        }
+        
+        /// <summary>
+        /// Get current navigation path for breadcrumb display
+        /// </summary>
+        public string GetCurrentNavigationPath()
+        {
+            return _currentRoute ?? "Accueil";
+        }
+        
+        /// <summary>
+        /// Get navigation history count for UI indicators
+        /// </summary>
+        public int GetNavigationHistoryCount()
+        {
+            return _navigationHistory.Count;
+        }
+        
+        /// <summary>
+        /// Clear navigation history (useful for logout or app reset)
+        /// </summary>
+        public void ClearNavigationHistory()
+        {
+            _navigationHistory.Clear();
+            _currentRoute = null;
+            System.Diagnostics.Debug.WriteLine("[DEBUG] Navigation history cleared");
+        }
+        
+        private void UpdateNavigationBreadcrumb(string routeName)
+        {
+            try
+            {
+                var breadcrumb = GetFriendlyRouteName(routeName);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Updated navigation breadcrumb to: {breadcrumb}");
+                
+                // Update Shell flyout header if possible
+                if (Application.Current.MainPage is Shell shell)
+                {
+                    // This would require a custom Shell implementation to update breadcrumb
+                    // For now, we log the breadcrumb information
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] UpdateNavigationBreadcrumb failed: {ex.Message}");
+            }
+        }
+        
+        private string GetFriendlyRouteName(string routeName)
+        {
+            return routeName switch
+            {
+                "MapViewModel" => "🗺️ Carte",
+                "FavoriteSpotsViewModel" => "⭐ Favoris",
+                "AddSpotViewModel" => "➕ Ajouter un Spot",
+                "SpotDetailsViewModel" => "📖 Détails du Spot",
+                "MySpotsViewModel" => "📍 Mes Spots",
+                "UserProfileViewModel" => "👤 Profil",
+                "UserPreferencesViewModel" => "⚙️ Préférences",
+                "UserStatsViewModel" => "📊 Statistiques",
+                "SpotValidationViewModel" => "⚖️ Validation",
+                _ => "Accueil"
+            };
+        }
+        
+        private string GetShellRouteFromViewModel(string viewModelName)
+        {
+            return viewModelName switch
+            {
+                "MapViewModel" => "map",
+                "FavoriteSpotsViewModel" => "favorites",
+                "AddSpotViewModel" => "addspot",
+                "SpotDetailsViewModel" => "spotdetails", 
+                "MySpotsViewModel" => "myspots",
+                "UserProfileViewModel" => "userprofile",
+                "UserPreferencesViewModel" => "userpreferences",
+                "UserStatsViewModel" => "userstats",
+                "SpotValidationViewModel" => "spotvalidation",
+                _ => "map"
+            };
         }
     }
 }

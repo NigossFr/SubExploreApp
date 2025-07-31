@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView x:Class="SubExplore.Views.Common.NavigationBarView"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Common"
+             x:DataType="viewmodels:NavigationBarViewModel">
+
+    <!-- Enhanced Navigation Bar with Breadcrumbs and Context -->
+    <Frame BackgroundColor="{StaticResource Primary}"
+           BorderColor="Transparent"
+           CornerRadius="0"
+           Padding="15,10"
+           HasShadow="True">
+        
+        <Grid RowDefinitions="Auto,Auto" RowSpacing="5">
+            
+            <!-- Main Navigation Controls -->
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto">
+                
+                <!-- Back Button with History Indicator -->
+                <Button Grid.Column="0"
+                        Text="◀"
+                        FontSize="20"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        BorderColor="Transparent"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        Margin="0,0,10,0"
+                        Command="{Binding GoBackCommand}"
+                        IsVisible="{Binding CanGoBack}"
+                        AutomationId="BackButton"
+                        SemanticProperties.Description="Revenir à la page précédente"
+                        SemanticProperties.Hint="Appuyez pour revenir à la page précédente">
+                    
+                    <!-- Badge showing history count -->
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding HasNavigationHistory}" Value="True">
+                            <Setter Property="Text" Value="◀ •" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                
+                <!-- Page Title with Context -->
+                <StackLayout Grid.Column="1" 
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center">
+                    <Label Text="{Binding CurrentPageTitle}"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"
+                           AutomationId="PageTitle"
+                           SemanticProperties.Description="Titre de la page actuelle" />
+                           
+                    <!-- Navigation Context/Subtitle -->
+                    <Label Text="{Binding NavigationContext}"
+                           FontSize="12"
+                           TextColor="White"
+                           Opacity="0.8"
+                           HorizontalOptions="Center"
+                           IsVisible="{Binding HasNavigationContext}"
+                           AutomationId="NavigationContext"
+                           SemanticProperties.Description="Contexte de navigation" />
+                </StackLayout>
+                
+                <!-- Home Quick Access -->
+                <Button Grid.Column="2"
+                        Text="🏠"
+                        FontSize="18"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        BorderColor="Transparent"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        Margin="0,0,10,0"
+                        Command="{Binding GoToHomeCommand}"
+                        IsVisible="{Binding ShowHomeButton}"
+                        AutomationId="HomeButton"
+                        SemanticProperties.Description="Retourner à l'accueil"
+                        SemanticProperties.Hint="Appuyez pour retourner à la page d'accueil" />
+                
+                <!-- Menu Toggle -->
+                <Button Grid.Column="3"
+                        Text="☰"
+                        FontSize="18"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        BorderColor="Transparent"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        Command="{Binding ToggleMenuCommand}"
+                        AutomationId="MenuButton"
+                        SemanticProperties.Description="Ouvrir le menu de navigation"
+                        SemanticProperties.Hint="Appuyez pour ouvrir le menu de navigation" />
+            </Grid>
+            
+            <!-- Navigation Breadcrumb Trail -->
+            <ScrollView Grid.Row="1" 
+                       Orientation="Horizontal"
+                       HorizontalScrollBarVisibility="Never"
+                       IsVisible="{Binding HasBreadcrumbs}"
+                       Margin="0,5,0,0">
+                
+                <CollectionView ItemsSource="{Binding BreadcrumbItems}"
+                              ItemsLayout="HorizontalList"
+                              BackgroundColor="Transparent"
+                              SelectionMode="Single"
+                              SelectedItem="{Binding SelectedBreadcrumb}"
+                              SelectionChangedCommand="{Binding NavigateToBreadcrumbCommand}">
+                    
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:BreadcrumbItem">
+                            <StackLayout Orientation="Horizontal" 
+                                       Spacing="5"
+                                       Margin="0,0,10,0">
+                                
+                                <!-- Breadcrumb Item -->
+                                <Label Text="{Binding Title}"
+                                       FontSize="12"
+                                       TextColor="White"
+                                       VerticalOptions="Center"
+                                       AutomationId="BreadcrumbItem"
+                                       SemanticProperties.Description="{Binding Title, StringFormat='Naviguer vers {0}'}">
+                                    
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsActive}" Value="True">
+                                            <Setter Property="FontAttributes" Value="Bold" />
+                                            <Setter Property="Opacity" Value="1.0" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsActive}" Value="False">
+                                            <Setter Property="FontAttributes" Value="None" />
+                                            <Setter Property="Opacity" Value="0.7" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                                
+                                <!-- Separator -->
+                                <Label Text="›"
+                                       FontSize="12"
+                                       TextColor="White"
+                                       Opacity="0.5"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding ShowSeparator}" />
+                            </StackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </ScrollView>
+        </Grid>
+    </Frame>
+</ContentView>

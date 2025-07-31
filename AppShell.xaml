@@ -9,65 +9,411 @@
     xmlns:favorites="clr-namespace:SubExplore.Views.Favorites"
     xmlns:profile="clr-namespace:SubExplore.Views.Profile"
     xmlns:admin="clr-namespace:SubExplore.Views.Admin"
-    Shell.FlyoutBehavior="Disabled"
+    Shell.FlyoutBehavior="Flyout"
+    FlyoutIcon="menu.png"
+    FlyoutBackgroundColor="{StaticResource Primary}"
+    FlyoutHeaderBehavior="CollapseOnScroll"
     Title="SubExplore">
 
-    <!-- Main page - Map only, navigation through existing menu -->
+    <!-- Navigation Header Template - Style du menu de la carte -->
+    <Shell.FlyoutHeaderTemplate>
+        <DataTemplate>
+            <Frame BackgroundColor="{StaticResource Primary}"
+                   Padding="20"
+                   CornerRadius="0"
+                   HasShadow="False"
+                   Margin="0">
+                <Grid ColumnDefinitions="60,*,Auto">
+                    
+                    <!-- User Avatar -->
+                    <Frame Grid.Column="0"
+                           BackgroundColor="White"
+                           CornerRadius="30"
+                           Padding="0"
+                           WidthRequest="60"
+                           HeightRequest="60"
+                           HasShadow="False">
+                        <Label Text="👤" FontSize="40" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Frame>
+                    
+                    <!-- User Info -->
+                    <StackLayout Grid.Column="1"
+                               Margin="15,0,0,0"
+                               VerticalOptions="Center">
+                        <Label Text="Utilisateur SubExplore"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="White" />
+                        <Label Text="Explorez les profondeurs"
+                               FontSize="14"
+                               TextColor="White"
+                               Opacity="0.8" />
+                    </StackLayout>
+                    
+                    <!-- App Logo -->
+                    <Label Grid.Column="2"
+                           Text="🤿"
+                           FontSize="32"
+                           VerticalOptions="Center"
+                           HorizontalOptions="End" />
+                </Grid>
+            </Frame>
+        </DataTemplate>
+    </Shell.FlyoutHeaderTemplate>
+    
+    <!-- Custom Flyout Content Template -->
+    <Shell.FlyoutContentTemplate>
+        <DataTemplate>
+            <ScrollView BackgroundColor="{StaticResource Background}">
+                <StackLayout Spacing="0">
+                    
+                    <!-- Navigation Section -->
+                    <Label Text="Navigation"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}"
+                           Margin="15,15,15,5" />
+                    
+                    <!-- Carte -->
+                    <Frame BackgroundColor="Transparent"
+                           BorderColor="Transparent"
+                           Padding="15,10"
+                           Margin="5,2"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavigateToMap" />
+                        </Frame.GestureRecognizers>
+                        
+                        <Grid ColumnDefinitions="40,*">
+                            <Label Grid.Column="0"
+                                   Text="🗺️"
+                                   FontSize="20"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            
+                            <StackLayout Grid.Column="1"
+                                       Margin="10,0,0,0"
+                                       VerticalOptions="Center">
+                                <Label Text="Carte"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       VerticalOptions="Center" />
+                                <Label Text="Explorer les spots de plongée"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </Frame>
+                    
+                    <!-- Mes Spots Section -->
+                    <Label Text="Mes Spots"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}"
+                           Margin="15,15,15,5" />
+                    
+                    <!-- Mes Spots -->
+                    <Frame BackgroundColor="Transparent"
+                           BorderColor="Transparent"
+                           Padding="15,10"
+                           Margin="5,2"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavigateToMySpots" />
+                        </Frame.GestureRecognizers>
+                        
+                        <Grid ColumnDefinitions="40,*">
+                            <Label Grid.Column="0"
+                                   Text="📍"
+                                   FontSize="20"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            
+                            <StackLayout Grid.Column="1"
+                                       Margin="10,0,0,0"
+                                       VerticalOptions="Center">
+                                <Label Text="Mes Spots"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       VerticalOptions="Center" />
+                                <Label Text="Spots que vous avez créés"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </Frame>
+                    
+                    <!-- Favoris -->
+                    <Frame BackgroundColor="Transparent"
+                           BorderColor="Transparent"
+                           Padding="15,10"
+                           Margin="5,2"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavigateToFavorites" />
+                        </Frame.GestureRecognizers>
+                        
+                        <Grid ColumnDefinitions="40,*">
+                            <Label Grid.Column="0"
+                                   Text="⭐"
+                                   FontSize="20"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            
+                            <StackLayout Grid.Column="1"
+                                       Margin="10,0,0,0"
+                                       VerticalOptions="Center">
+                                <Label Text="Favoris"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       VerticalOptions="Center" />
+                                <Label Text="Vos spots préférés"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </Frame>
+                    
+                    <!-- Profil Section -->
+                    <Label Text="Profil"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}"
+                           Margin="15,15,15,5" />
+                    
+                    <!-- Profil -->
+                    <Frame BackgroundColor="Transparent"
+                           BorderColor="Transparent"
+                           Padding="15,10"
+                           Margin="5,2"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavigateToProfile" />
+                        </Frame.GestureRecognizers>
+                        
+                        <Grid ColumnDefinitions="40,*">
+                            <Label Grid.Column="0"
+                                   Text="👤"
+                                   FontSize="20"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            
+                            <StackLayout Grid.Column="1"
+                                       Margin="10,0,0,0"
+                                       VerticalOptions="Center">
+                                <Label Text="Profil"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       VerticalOptions="Center" />
+                                <Label Text="Votre profil utilisateur"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </Frame>
+                    
+                    <!-- Préférences -->
+                    <Frame BackgroundColor="Transparent"
+                           BorderColor="Transparent"
+                           Padding="15,10"
+                           Margin="5,2"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavigateToPreferences" />
+                        </Frame.GestureRecognizers>
+                        
+                        <Grid ColumnDefinitions="40,*">
+                            <Label Grid.Column="0"
+                                   Text="⚙️"
+                                   FontSize="20"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            
+                            <StackLayout Grid.Column="1"
+                                       Margin="10,0,0,0"
+                                       VerticalOptions="Center">
+                                <Label Text="Préférences"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       VerticalOptions="Center" />
+                                <Label Text="Paramètres de l'application"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </Frame>
+                    
+                    <!-- Statistiques -->
+                    <Frame BackgroundColor="Transparent"
+                           BorderColor="Transparent"
+                           Padding="15,10"
+                           Margin="5,2"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavigateToStats" />
+                        </Frame.GestureRecognizers>
+                        
+                        <Grid ColumnDefinitions="40,*">
+                            <Label Grid.Column="0"
+                                   Text="📊"
+                                   FontSize="20"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            
+                            <StackLayout Grid.Column="1"
+                                       Margin="10,0,0,0"
+                                       VerticalOptions="Center">
+                                <Label Text="Statistiques"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       VerticalOptions="Center" />
+                                <Label Text="Vos statistiques de plongée"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </Frame>
+                    
+                    <!-- Administration Section (si admin) -->
+                    <Label Text="Administration"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}"
+                           Margin="15,15,15,5" />
+                    
+                    <!-- Validation des Spots -->
+                    <Frame BackgroundColor="Transparent"
+                           BorderColor="Transparent"
+                           Padding="15,10"
+                           Margin="5,2"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavigateToValidation" />
+                        </Frame.GestureRecognizers>
+                        
+                        <Grid ColumnDefinitions="40,*">
+                            <Label Grid.Column="0"
+                                   Text="⚖️"
+                                   FontSize="20"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            
+                            <StackLayout Grid.Column="1"
+                                       Margin="10,0,0,0"
+                                       VerticalOptions="Center">
+                                <Label Text="Validation des Spots"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       VerticalOptions="Center" />
+                                <Label Text="Administration des spots"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </Frame>
+                    
+                    <!-- Logout Button -->
+                    <Frame BackgroundColor="{StaticResource Accent}"
+                           BorderColor="{StaticResource Accent}"
+                           Padding="15,10"
+                           Margin="15,20,15,15"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnLogout" />
+                        </Frame.GestureRecognizers>
+                        
+                        <Grid ColumnDefinitions="40,*">
+                            <Label Grid.Column="0"
+                                   Text="🚪"
+                                   FontSize="20"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            
+                            <Label Grid.Column="1"
+                                   Text="Déconnexion"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   Margin="10,0,0,0"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Frame>
+                    
+                </StackLayout>
+            </ScrollView>
+        </DataTemplate>
+    </Shell.FlyoutContentTemplate>
+
+    <!-- Main Navigation Content - Hidden FlyoutItems for routing -->
     <ShellContent
         Title="🗺️ Carte"
         ContentTemplate="{DataTemplate map:MapPage}"
         Route="map" />
+        
+    <!-- Hidden routes for navigation -->
+    <ShellContent
+        Title="📍 Mes Spots"
+        ContentTemplate="{DataTemplate spots:MySpotsPage}"
+        Route="myspots"
+        FlyoutItemIsVisible="False" />
+        
+    <ShellContent
+        Title="⭐ Favoris"
+        ContentTemplate="{DataTemplate favorites:FavoriteSpotsPage}"
+        Route="favorites"
+        FlyoutItemIsVisible="False" />
+        
+    <ShellContent
+        Title="👤 Profil"
+        ContentTemplate="{DataTemplate profile:UserProfilePage}"
+        Route="userprofile"
+        FlyoutItemIsVisible="False" />
+        
+    <ShellContent
+        Title="⚙️ Préférences"
+        ContentTemplate="{DataTemplate profile:UserPreferencesPage}"
+        Route="userpreferences"
+        FlyoutItemIsVisible="False" />
+        
+    <ShellContent
+        Title="📊 Statistiques"
+        ContentTemplate="{DataTemplate profile:UserStatsPage}"
+        Route="userstats"
+        FlyoutItemIsVisible="False" />
 
-
+    <!-- Modal Pages - Outside main navigation -->
     <!-- Add Spot Page Route -->
     <ShellContent
-        Title="Add Spot"
+        Title="➕ Ajouter un Spot"
         ContentTemplate="{DataTemplate spots:AddSpotPage}"
         Route="addspot" />
 
-
     <!-- Spot Details Page Route -->
     <ShellContent
-        Title="Spot Details"
+        Title="📖 Détails du Spot"
         ContentTemplate="{DataTemplate spots:SpotDetailsPage}"
         Route="spotdetails" />
 
-
-
-    <!-- User Preferences Page Route -->
+    <!-- Admin route - Hidden -->
     <ShellContent
-        Title="User Preferences"
-        ContentTemplate="{DataTemplate profile:UserPreferencesPage}"
-        Route="userpreferences" />
-
-    <!-- My Spots Page Route -->
-    <ShellContent
-        Title="My Spots"
-        ContentTemplate="{DataTemplate spots:MySpotsPage}"
-        Route="myspots" />
-
-    <!-- Favorites Page Route -->
-    <ShellContent
-        Title="Favorites"
-        ContentTemplate="{DataTemplate favorites:FavoriteSpotsPage}"
-        Route="favorites" />
-
-    <!-- User Profile Page Route -->
-    <ShellContent
-        Title="User Profile"
-        ContentTemplate="{DataTemplate profile:UserProfilePage}"
-        Route="userprofile" />
-
-    <!-- User Stats Page Route -->
-    <ShellContent
-        Title="User Stats"
-        ContentTemplate="{DataTemplate profile:UserStatsPage}"
-        Route="userstats" />
-
-    <!-- Admin Spot Validation Page Route -->
-    <ShellContent
-        Title="Validation des Spots"
+        Title="⚖️ Validation des Spots"
         ContentTemplate="{DataTemplate admin:SpotValidationPage}"
-        Route="spotvalidation" />
+        Route="spotvalidation"
+        FlyoutItemIsVisible="False" />
 
 </Shell>

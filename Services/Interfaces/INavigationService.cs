@@ -45,8 +45,23 @@ namespace SubExplore.Services.Interfaces
         void SwitchToShellNavigation();
 
         /// <summary>
-        /// Navigate to home page (map page)
+        /// Navigate to home page (map page) and clear navigation history
         /// </summary>
         Task GoToHomeAsync();
+        
+        /// <summary>
+        /// Get current navigation path for breadcrumb display
+        /// </summary>
+        string GetCurrentNavigationPath();
+        
+        /// <summary>
+        /// Get navigation history count for UI indicators
+        /// </summary>
+        int GetNavigationHistoryCount();
+        
+        /// <summary>
+        /// Clear navigation history (useful for logout or app reset)
+        /// </summary>
+        void ClearNavigationHistory();
     }
 }

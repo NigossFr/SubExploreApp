@@ -303,6 +303,9 @@ public static class MauiProgram
         // Admin ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotValidationViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotDiagnosticViewModel>();
+        
+        // Navigation ViewModels
+        builder.Services.AddTransient<SubExplore.ViewModels.Common.NavigationBarViewModel>();
 
         // Enregistrement des vues (Pages et Views)
         // Pour les Pages et Views, AddTransient est généralement correct.
@@ -333,6 +336,9 @@ public static class MauiProgram
         // Admin Pages
         builder.Services.AddTransient<SubExplore.Views.Admin.SpotValidationPage>();
         builder.Services.AddTransient<SubExplore.Views.Admin.SpotDiagnosticPage>();
+        
+        // Common Views
+        builder.Services.AddTransient<SubExplore.Views.Common.NavigationBarView>();
         
         // Test Pages
         builder.Services.AddTransient<SubExplore.Views.TestPage>();

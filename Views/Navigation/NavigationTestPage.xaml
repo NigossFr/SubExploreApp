@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Navigation.NavigationTestPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:common="clr-namespace:SubExplore.Views.Common"
+             xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Navigation"
+             x:DataType="viewmodels:NavigationTestViewModel"
+             Title="Test de Navigation">
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Enhanced Navigation Bar -->
+        <common:NavigationBarView Grid.Row="0" />
+        
+        <!-- Test Content -->
+        <ScrollView Grid.Row="1" Padding="20">
+            <StackLayout Spacing="20">
+                
+                <Frame BackgroundColor="{StaticResource Primary}" 
+                       CornerRadius="10" 
+                       Padding="20"
+                       HasShadow="True">
+                    <StackLayout>
+                        <Label Text="🧪 Test de Navigation Améliorée" 
+                               FontSize="24" 
+                               FontAttributes="Bold" 
+                               TextColor="White" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Testez les nouvelles fonctionnalités de navigation"
+                               FontSize="14"
+                               TextColor="White"
+                               Opacity="0.8"
+                               HorizontalOptions="Center"
+                               Margin="0,5,0,0" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Navigation Tests -->
+                <Frame BackgroundColor="{StaticResource Surface}"
+                       BorderColor="{StaticResource Secondary}"
+                       CornerRadius="10"
+                       Padding="15"
+                       HasShadow="True">
+                    
+                    <StackLayout Spacing="15">
+                        <Label Text="Tests de Navigation" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{StaticResource TextPrimary}" />
+
+                        <!-- Navigation History Test -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackLayout Grid.Column="0">
+                                <Label Text="Historique de Navigation"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}" />
+                                <Label Text="{Binding NavigationHistoryInfo}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}" />
+                            </StackLayout>
+                            <Button Grid.Column="1"
+                                    Text="📋"
+                                    FontSize="16"
+                                    Command="{Binding RefreshHistoryCommand}"
+                                    BackgroundColor="{StaticResource Secondary}"
+                                    TextColor="White"
+                                    WidthRequest="40"
+                                    HeightRequest="40"
+                                    CornerRadius="20" />
+                        </Grid>
+
+                        <!-- Breadcrumb Test -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackLayout Grid.Column="0">
+                                <Label Text="Test des Breadcrumbs"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}" />
+                                <Label Text="Ajouter des éléments au fil d'Ariane"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}" />
+                            </StackLayout>
+                            <Button Grid.Column="1"
+                                    Text="➕"
+                                    FontSize="16"
+                                    Command="{Binding AddBreadcrumbCommand}"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    TextColor="White"
+                                    WidthRequest="40"
+                                    HeightRequest="40"
+                                    CornerRadius="20" />
+                        </Grid>
+
+                        <!-- Transition Test -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackLayout Grid.Column="0">
+                                <Label Text="Test des Transitions"
+                                       FontSize="16"
+                                       TextColor="{StaticResource TextPrimary}" />
+                                <Label Text="Tester différents types de transitions"
+                                       FontSize="12"
+                                       TextColor="{StaticResource TextSecondary}" />
+                            </StackLayout>
+                            <Button Grid.Column="1"
+                                    Text="✨"
+                                    FontSize="16"
+                                    Command="{Binding TestTransitionCommand}"
+                                    BackgroundColor="{StaticResource Accent}"
+                                    TextColor="White"
+                                    WidthRequest="40"
+                                    HeightRequest="40"
+                                    CornerRadius="20" />
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Quick Navigation Tests -->
+                <Frame BackgroundColor="{StaticResource Surface}"
+                       BorderColor="{StaticResource Secondary}"
+                       CornerRadius="10"
+                       Padding="15"
+                       HasShadow="True">
+                    
+                    <StackLayout Spacing="15">
+                        <Label Text="Navigation Rapide" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{StaticResource TextPrimary}" />
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                            
+                            <Button Grid.Row="0" Grid.Column="0"
+                                    Text="🗺️ Carte"
+                                    Command="{Binding NavigateToMapCommand}"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    TextColor="White"
+                                    CornerRadius="8" />
+                                    
+                            <Button Grid.Row="0" Grid.Column="1"
+                                    Text="⭐ Favoris"
+                                    Command="{Binding NavigateToFavoritesCommand}"
+                                    BackgroundColor="{StaticResource Secondary}"
+                                    TextColor="White"
+                                    CornerRadius="8" />
+                                    
+                            <Button Grid.Row="1" Grid.Column="0"
+                                    Text="👤 Profil"
+                                    Command="{Binding NavigateToProfileCommand}"
+                                    BackgroundColor="{StaticResource Accent}"
+                                    TextColor="White"
+                                    CornerRadius="8" />
+                                    
+                            <Button Grid.Row="1" Grid.Column="1"
+                                    Text="🏠 Accueil"
+                                    Command="{Binding NavigateToHomeCommand}"
+                                    BackgroundColor="#4CAF50"
+                                    TextColor="White"
+                                    CornerRadius="8" />
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Navigation Stats -->
+                <Frame BackgroundColor="{StaticResource Surface}"
+                       BorderColor="{StaticResource Secondary}"
+                       CornerRadius="10"
+                       Padding="15"
+                       HasShadow="True">
+                    
+                    <StackLayout>
+                        <Label Text="Statistiques de Navigation" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{StaticResource TextPrimary}"
+                               Margin="0,0,0,10" />
+
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
+                            
+                            <Label Grid.Row="0" Grid.Column="0"
+                                   Text="Page Actuelle:"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}" />
+                            <Label Grid.Row="0" Grid.Column="1"
+                                   Text="{Binding CurrentPage}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource TextPrimary}" />
+                                   
+                            <Label Grid.Row="1" Grid.Column="0"
+                                   Text="Historique:"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}" />
+                            <Label Grid.Row="1" Grid.Column="1"
+                                   Text="{Binding HistoryCount}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource TextPrimary}" />
+                                   
+                            <Label Grid.Row="2" Grid.Column="0"
+                                   Text="Breadcrumbs:"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}" />
+                            <Label Grid.Row="2" Grid.Column="1"
+                                   Text="{Binding BreadcrumbCount}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource TextPrimary}" />
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+            </StackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
