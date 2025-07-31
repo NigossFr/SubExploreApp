@@ -2,6 +2,7 @@
 using SubExplore.Views.Spots;
 using SubExplore.Views.Favorites;
 using SubExplore.Views.Profile;
+using SubExplore.Views.Admin;
 
 namespace SubExplore
 {
@@ -15,19 +16,18 @@ namespace SubExplore
 
         private void RegisterRoutes()
         {
-            // Register page routes for programmatic navigation
-            Routing.RegisterRoute("map", typeof(MapPage));
-            Routing.RegisterRoute("favorites", typeof(FavoriteSpotsPage));
-            Routing.RegisterRoute("myspots", typeof(MySpotsPage));
-            Routing.RegisterRoute("userprofile", typeof(UserProfilePage));
-            Routing.RegisterRoute("addspot", typeof(AddSpotPage));
-            Routing.RegisterRoute("spotdetails", typeof(SpotDetailsPage));
-            Routing.RegisterRoute("userpreferences", typeof(UserPreferencesPage));
-            Routing.RegisterRoute("userstats", typeof(UserStatsPage));
+            // Only register additional routes that aren't already defined in AppShell.xaml
+            // Main routes are handled by ShellContent elements in XAML
             
-            // Register nested routes for complex navigation
+            // Register nested routes for complex navigation workflows only
             Routing.RegisterRoute("map/addspot", typeof(AddSpotPage));
             Routing.RegisterRoute("map/spotdetails", typeof(SpotDetailsPage));
+            
+            // Register routes for spot editing workflow
+            Routing.RegisterRoute("spotdetails/editspot", typeof(AddSpotPage));
+            
+            // NOTE: Removed duplicate nested routes to avoid ambiguity
+            // Direct routes (userprofile, favorites, etc.) are defined in AppShell.xaml
         }
     }
 }

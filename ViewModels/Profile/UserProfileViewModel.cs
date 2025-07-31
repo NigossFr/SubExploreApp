@@ -8,7 +8,7 @@ using SubExplore.ViewModels.Base;
 
 namespace SubExplore.ViewModels.Profile
 {
-    public partial class UserProfileViewModel : ViewModelBase
+    public partial class UserProfileViewModel : AuthorizedViewModelBase
     {
         private readonly IUserProfileService _userProfileService;
         private readonly IDialogService _dialogService;
@@ -55,7 +55,10 @@ namespace SubExplore.ViewModels.Profile
             IUserProfileService userProfileService,
             IDialogService dialogService,
             INavigationService navigationService,
-            IMediaService mediaService)
+            IMediaService mediaService,
+            IAuthorizationService authorizationService,
+            IAuthenticationService authenticationService)
+            : base(authorizationService, authenticationService)
         {
             _userProfileService = userProfileService;
             _dialogService = dialogService;
@@ -68,6 +71,7 @@ namespace SubExplore.ViewModels.Profile
         public override async Task InitializeAsync(object? parameter = null)
         {
             await LoadUserProfileAsync();
+            UpdateUIPermissions();
         }
 
         [RelayCommand]
@@ -296,5 +300,30 @@ namespace SubExplore.ViewModels.Profile
             ExpertiseLevel.Professional => "Professional",
             _ => "Beginner"
         };
+
+        // Role-based computed properties
+        public string AccountTypeDisplay => CurrentUser?.AccountType switch
+        {
+            AccountType.Standard => "Standard User",
+            AccountType.ExpertModerator => "Expert Moderator",
+            AccountType.VerifiedProfessional => "Verified Professional",
+            AccountType.Administrator => "Administrator",
+            _ => "Unknown"
+        };
+
+        public bool ShowModeratorInfo => CurrentUser?.AccountType == AccountType.ExpertModerator;
+        public bool ShowProfessionalInfo => CurrentUser?.AccountType == AccountType.VerifiedProfessional;
+        public bool ShowAdminInfo => CurrentUser?.AccountType == AccountType.Administrator;
+
+        protected override void UpdateUIPermissions()
+        {
+            base.UpdateUIPermissions();
+            
+            // Trigger property change notifications for computed properties
+            OnPropertyChanged(nameof(AccountTypeDisplay));
+            OnPropertyChanged(nameof(ShowModeratorInfo));
+            OnPropertyChanged(nameof(ShowProfessionalInfo));
+            OnPropertyChanged(nameof(ShowAdminInfo));
+        }
     }
 }

@@ -2,6 +2,7 @@
 using SubExplore.Views.Map;
 using SubExplore.Views.Auth;
 using SubExplore.Services.Interfaces;
+using SubExplore.Services.Implementations;
 using System.Diagnostics;
 
 namespace SubExplore
@@ -74,6 +75,58 @@ namespace SubExplore
             {
                 Debug.WriteLine("[App.xaml.cs] Initializing database and authentication services");
                 
+                // Apply username migration first to fix unique constraint issues
+                try
+                {
+                    Debug.WriteLine("[App.xaml.cs] Applying username migration...");
+                    await SubExplore.Helpers.UsernameMigrationHelper.ApplyUsernameMigrationAsync();
+                    Debug.WriteLine("[App.xaml.cs] ✓ Username migration completed");
+                }
+                catch (Exception migrationEx)
+                {
+                    Debug.WriteLine($"[App.xaml.cs] ⚠️ Username migration warning: {migrationEx.Message}");
+                    // Continue anyway - migration might already be applied
+                }
+
+                // Apply role hierarchy migration second
+                try
+                {
+                    Debug.WriteLine("[App.xaml.cs] Applying role hierarchy migration...");
+                    await MigrationHelper.ApplyMigrationsAsync();
+                    Debug.WriteLine("[App.xaml.cs] ✓ Role hierarchy migration completed");
+                }
+                catch (Exception migrationEx)
+                {
+                    Debug.WriteLine($"[App.xaml.cs] ⚠️ Migration warning: {migrationEx.Message}");
+                    // Continue anyway - migration might already be applied
+                }
+
+                // Apply IsEmailConfirmed migration to fix login issue
+                try
+                {
+                    Debug.WriteLine("[App.xaml.cs] Applying IsEmailConfirmed migration...");
+                    await SubExplore.Helpers.IsEmailConfirmedMigrationHelper.ApplyIsEmailConfirmedMigrationAsync();
+                    Debug.WriteLine("[App.xaml.cs] ✓ IsEmailConfirmed migration completed");
+                }
+                catch (Exception migrationEx)
+                {
+                    Debug.WriteLine($"[App.xaml.cs] ⚠️ IsEmailConfirmed migration warning: {migrationEx.Message}");
+                    // Continue anyway - migration might already be applied
+                }
+
+                // Apply admin spot validation migration to fix existing admin spots
+                try
+                {
+                    Debug.WriteLine("[App.xaml.cs] Applying admin spot validation migration using AdminSpotMigrationHelper...");
+                    await SubExplore.Helpers.AdminSpotMigrationHelper.MigrateAdminSpotsToApprovedAsync();
+                    Debug.WriteLine("[App.xaml.cs] ✓ Admin spot validation migration completed successfully");
+                }
+                catch (Exception migrationEx)
+                {
+                    Debug.WriteLine($"[App.xaml.cs] ⚠️ Admin spot migration warning: {migrationEx.Message}");
+                    // Continue anyway - migration might already be applied
+                }
+
                 // Initialize database first with enhanced error handling
                 var dbInitService = services.GetService<IDatabaseInitializationService>();
                 if (dbInitService != null)
@@ -95,6 +148,22 @@ namespace SubExplore
                         
                         // Database initialization and verification completed
                         Debug.WriteLine("[App.xaml.cs] ✅ Database initialization and verification completed successfully");
+                        
+                        // Initialize test data for spot validation workflow
+                        try
+                        {
+                            var testDataService = services.GetService<TestDataService>();
+                            if (testDataService != null)
+                            {
+                                await testDataService.CreateTestSpotsAsync();
+                                Debug.WriteLine("[App.xaml.cs] ✅ Test data initialization completed");
+                            }
+                        }
+                        catch (Exception testDataEx)
+                        {
+                            Debug.WriteLine($"[App.xaml.cs] ⚠️ Test data initialization warning: {testDataEx.Message}");
+                            // Continue anyway - not critical for app functionality
+                        }
                         
                         // Run ultra-deep database diagnostic
                         await DatabaseDiagnostic.RunUltraDeepDatabaseTestAsync(services);

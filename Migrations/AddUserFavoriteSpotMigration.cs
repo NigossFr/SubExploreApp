@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace SubExplore.Migrations
+namespace SubExplore.Data.Migrations
 {
     /// <summary>
     /// Migration to add UserFavoriteSpot table for favorite spot system
     /// </summary>
-    public partial class AddUserFavoriteSpot : Migration
+    public partial class AddUserFavoriteSpot : Microsoft.EntityFrameworkCore.Migrations.Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

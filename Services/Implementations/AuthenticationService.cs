@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SubExplore.Models.Domain;
 using SubExplore.Models.DTOs;
+using SubExplore.Models.Enums;
 using SubExplore.Repositories.Interfaces;
 using SubExplore.Services.Interfaces;
 using System.ComponentModel.DataAnnotations;
@@ -520,6 +521,187 @@ namespace SubExplore.Services.Implementations
             }
 
             return (errors.Count == 0, errors);
+        }
+
+        /// <summary>
+        /// Elevate user to expert moderator status
+        /// </summary>
+        /// <param name="userId">User ID to elevate</param>
+        /// <param name="specialization">Moderator specialization</param>
+        /// <returns>True if elevation successful</returns>
+        public async Task<bool> ElevateToModeratorAsync(int userId, ModeratorSpecialization specialization)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Cannot elevate non-existent user to moderator: {UserId}", userId);
+                    return false;
+                }
+
+                // Validate elevation eligibility
+                if (user.AccountType != Models.Enums.AccountType.Standard)
+                {
+                    _logger.LogWarning("Cannot elevate user who is not Standard type: {UserId}", userId);
+                    return false;
+                }
+
+                // Update user role
+                user.AccountType = Models.Enums.AccountType.ExpertModerator;
+                user.ModeratorSpecialization = specialization;
+                user.ModeratorStatus = ModeratorStatus.Probationary;
+                user.ModeratorSince = DateTime.UtcNow;
+                user.UpdatedAt = DateTime.UtcNow;
+                
+                // Add moderator permissions
+                user.Permissions |= UserPermissions.ValidateSpots | UserPermissions.ModerateContent;
+
+                await _userRepository.UpdateAsync(user);
+                await _userRepository.SaveChangesAsync();
+
+                _logger.LogInformation("User elevated to expert moderator: {UserId}, Specialization: {Specialization}", 
+                    userId, specialization);
+
+                // Update current user if it's the same user
+                if (_currentUser?.Id == userId)
+                {
+                    _currentUser = user;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error elevating user to moderator: {UserId}", userId);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update moderator status (for admin use)
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="status">New moderator status</param>
+        /// <returns>True if update successful</returns>
+        public async Task<bool> UpdateModeratorStatusAsync(int userId, ModeratorStatus status)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null || user.AccountType != Models.Enums.AccountType.ExpertModerator)
+                {
+                    _logger.LogWarning("Cannot update moderator status for non-moderator user: {UserId}", userId);
+                    return false;
+                }
+
+                user.ModeratorStatus = status;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _userRepository.UpdateAsync(user);
+                await _userRepository.SaveChangesAsync();
+
+                _logger.LogInformation("Moderator status updated: {UserId}, Status: {Status}", userId, status);
+
+                // Update current user if it's the same user
+                if (_currentUser?.Id == userId)
+                {
+                    _currentUser = user;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating moderator status: {UserId}", userId);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Verify professional account with organization
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="organizationId">Organization ID (future Organizations table)</param>
+        /// <returns>True if verification successful</returns>
+        public async Task<bool> VerifyProfessionalAccountAsync(int userId, int? organizationId = null)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Cannot verify non-existent professional user: {UserId}", userId);
+                    return false;
+                }
+
+                user.AccountType = Models.Enums.AccountType.VerifiedProfessional;
+                user.OrganizationId = organizationId;
+                user.UpdatedAt = DateTime.UtcNow;
+                
+                // Add professional permissions
+                user.Permissions |= UserPermissions.ProfessionalFeatures | UserPermissions.ManageOrganization;
+
+                await _userRepository.UpdateAsync(user);
+                await _userRepository.SaveChangesAsync();
+
+                _logger.LogInformation("User verified as professional: {UserId}, Organization: {OrganizationId}", 
+                    userId, organizationId);
+
+                // Update current user if it's the same user
+                if (_currentUser?.Id == userId)
+                {
+                    _currentUser = user;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error verifying professional account: {UserId}", userId);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update user permissions (admin only)
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="permissions">New permissions</param>
+        /// <returns>True if update successful</returns>
+        public async Task<bool> UpdateUserPermissionsAsync(int userId, UserPermissions permissions)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Cannot update permissions for non-existent user: {UserId}", userId);
+                    return false;
+                }
+
+                user.Permissions = permissions;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _userRepository.UpdateAsync(user);
+                await _userRepository.SaveChangesAsync();
+
+                _logger.LogInformation("User permissions updated: {UserId}, Permissions: {Permissions}", 
+                    userId, permissions);
+
+                // Update current user if it's the same user
+                if (_currentUser?.Id == userId)
+                {
+                    _currentUser = user;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user permissions: {UserId}", userId);
+                return false;
+            }
         }
 
         private void OnStateChanged(bool isAuthenticated, User? user, string reason)

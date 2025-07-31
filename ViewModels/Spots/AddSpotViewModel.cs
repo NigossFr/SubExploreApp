@@ -71,6 +71,7 @@ namespace SubExplore.ViewModels.Spots
         private readonly ISpotMediaRepository _spotMediaRepository;
         private readonly IMediaService _mediaService;
         private readonly ISettingsService _settingsService;
+        private readonly IAuthenticationService _authenticationService;
         private readonly ILogger<AddSpotViewModel> _logger;
         
         // Step validators
@@ -158,6 +159,7 @@ namespace SubExplore.ViewModels.Spots
             ISpotMediaRepository spotMediaRepository,
             IMediaService mediaService,
             ISettingsService settingsService,
+            IAuthenticationService authenticationService,
             ILogger<AddSpotViewModel> logger,
             IDialogService dialogService,
             INavigationService navigationService)
@@ -169,6 +171,7 @@ namespace SubExplore.ViewModels.Spots
             _spotMediaRepository = spotMediaRepository;
             _mediaService = mediaService;
             _settingsService = settingsService;
+            _authenticationService = authenticationService;
             _logger = logger;
             
             // Initialize validators
@@ -196,7 +199,7 @@ namespace SubExplore.ViewModels.Spots
             CurrentStrengths = new ObservableCollection<CurrentStrength>
             {
                 CurrentStrength.None,
-                CurrentStrength.Light,
+                CurrentStrength.Weak,
                 CurrentStrength.Moderate,
                 CurrentStrength.Strong,
                 CurrentStrength.Extreme
@@ -205,7 +208,7 @@ namespace SubExplore.ViewModels.Spots
             // Initialiser un nouveau spot
             NewSpot = new Models.Domain.Spot
             {
-                CreatorId = 1, // À remplacer par l'ID de l'utilisateur connecté
+                CreatorId = _authenticationService.CurrentUserId ?? 1, // Use authenticated user or fallback
                 CreatedAt = DateTime.UtcNow,
                 ValidationStatus = SpotValidationStatus.Draft,
                 Name = string.Empty,
@@ -216,7 +219,7 @@ namespace SubExplore.ViewModels.Spots
                 TypeId = 1 // Default value, will be updated when user selects
             };
 
-            SelectedCurrentStrength = CurrentStrength.Light;
+            SelectedCurrentStrength = CurrentStrength.Weak;
             SelectedDifficultyLevel = DifficultyLevel.Beginner;
             
             // Initialize coordinates with default values to prevent 0,0 issues
@@ -493,7 +496,7 @@ namespace SubExplore.ViewModels.Spots
                 SafetyNotes = existingSpot.SafetyNotes ?? string.Empty;
                 BestConditions = existingSpot.BestConditions ?? string.Empty;
                 SelectedDifficultyLevel = existingSpot.DifficultyLevel;
-                SelectedCurrentStrength = existingSpot.CurrentStrength ?? CurrentStrength.Light;
+                SelectedCurrentStrength = existingSpot.CurrentStrength ?? CurrentStrength.Weak;
 
                 // Select the spot type
                 if (existingSpot.Type != null)
@@ -1153,8 +1156,15 @@ namespace SubExplore.ViewModels.Spots
                     // Create new spot
                     _logger.LogInformation("Creating new spot");
                     
-                    // Set status to pending for new spots
-                    NewSpot.ValidationStatus = SpotValidationStatus.Pending;
+                    // Ensure CreatorId is set to current authenticated user
+                    NewSpot.CreatorId = _authenticationService.CurrentUserId ?? 1;
+                    
+                    // Determine initial validation status based on user role
+                    var validationStatus = GetInitialValidationStatusForNewSpot();
+                    NewSpot.ValidationStatus = validationStatus;
+                    
+                    _logger.LogInformation("New spot will be created with status: {ValidationStatus} for user {UserId} with role: {AccountType}", 
+                        validationStatus, NewSpot.CreatorId, _authenticationService.CurrentUser?.AccountType);
                     
                     await _spotRepository.AddAsync(NewSpot).ConfigureAwait(false);
                     await _spotRepository.SaveChangesAsync().ConfigureAwait(false);
@@ -1222,6 +1232,35 @@ namespace SubExplore.ViewModels.Spots
                 // Stay on main thread for navigation to avoid UI threading issues
                 await NavigationService.GoBackAsync();
             }
+        }
+
+        /// <summary>
+        /// Determines the initial validation status for a new spot based on the current user's role
+        /// Admin and moderator spots are automatically approved, regular users need validation
+        /// </summary>
+        /// <returns>Initial validation status for the new spot</returns>
+        private SpotValidationStatus GetInitialValidationStatusForNewSpot()
+        {
+            var currentUser = _authenticationService.CurrentUser;
+            if (currentUser == null)
+            {
+                _logger.LogWarning("No authenticated user found, defaulting to Pending status");
+                return SpotValidationStatus.Pending;
+            }
+
+            // Auto-approve spots created by administrators and moderators
+            if (currentUser.AccountType == AccountType.Administrator || 
+                currentUser.AccountType == AccountType.ExpertModerator)
+            {
+                _logger.LogInformation("User {UserId} with role {AccountType} creating spot - auto-approving", 
+                    currentUser.Id, currentUser.AccountType);
+                return SpotValidationStatus.Approved;
+            }
+
+            // Regular users and professionals need validation
+            _logger.LogInformation("User {UserId} with role {AccountType} creating spot - requires validation", 
+                currentUser.Id, currentUser.AccountType);
+            return SpotValidationStatus.Pending;
         }
 
         // Back command for header navigation

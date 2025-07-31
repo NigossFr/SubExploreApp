@@ -15,7 +15,7 @@ using MenuItemModel = SubExplore.Models.Menu.MenuItem;
 
 namespace SubExplore.ViewModels.Menu
 {
-    public partial class MenuViewModel : ViewModelBase
+    public partial class MenuViewModel : ViewModelBase, IDisposable
     {
         private readonly ILogger<MenuViewModel> _logger;
         private readonly IUserRepository _userRepository;
@@ -57,7 +57,11 @@ namespace SubExplore.ViewModels.Menu
             Title = "Menu";
             MenuSections = new ObservableCollection<MenuSection>();
             
-            InitializeMenu();
+            // Subscribe to authentication state changes
+            _authenticationService.StateChanged += OnAuthenticationStateChanged;
+            
+            // Don't initialize menu here - wait for InitializeAsync to load user first
+            _logger.LogInformation("[MenuViewModel] Constructor completed - subscribed to auth state changes");
         }
 
         private void InitializeMenu()
@@ -163,6 +167,49 @@ namespace SubExplore.ViewModels.Menu
                 }
             };
             
+            // Admin Section (only for moderators and administrators)
+            MenuSection? adminSection = null;
+            
+            // Enhanced logging for admin menu visibility
+            _logger.LogInformation("[MenuViewModel] Checking admin permissions - CurrentUser: {CurrentUser}", 
+                CurrentUser != null ? $"{CurrentUser.FirstName} {CurrentUser.LastName} ({CurrentUser.AccountType})" : "NULL");
+            
+            if (CurrentUser?.AccountType == Models.Enums.AccountType.ExpertModerator ||
+                CurrentUser?.AccountType == Models.Enums.AccountType.Administrator)
+            {
+                _logger.LogInformation("[MenuViewModel] ✅ Admin menu will be shown - User has {AccountType} permissions", 
+                    CurrentUser.AccountType);
+                    
+                adminSection = new MenuSection
+                {
+                    Title = "Administration",
+                    Items = new ObservableCollection<MenuItemModel>
+                    {
+                        new MenuItemModel
+                        {
+                            Title = "Validation des Spots",
+                            Icon = "✅",
+                            Description = "Gérer la validation des spots",
+                            Command = NavigateToSpotValidationCommand,
+                            IsEnabled = true
+                        },
+                        new MenuItemModel
+                        {
+                            Title = "Diagnostic des Spots",
+                            Icon = "🔧",
+                            Description = "Diagnostic technique des spots",
+                            Command = NavigateToSpotDiagnosticCommand,
+                            IsEnabled = true
+                        }
+                    }
+                };
+            }
+            else
+            {
+                _logger.LogInformation("[MenuViewModel] ❌ Admin menu will NOT be shown - User type: {AccountType}", 
+                    CurrentUser?.AccountType.ToString() ?? "NULL");
+            }
+            
             // Help Section
             var helpSection = new MenuSection
             {
@@ -191,12 +238,21 @@ namespace SubExplore.ViewModels.Menu
             MenuSections.Add(mainSection);
             MenuSections.Add(userSection);
             MenuSections.Add(settingsSection);
+            
+            // Add admin section if user has permissions
+            if (adminSection != null)
+            {
+                MenuSections.Add(adminSection);
+            }
+            
             MenuSections.Add(helpSection);
         }
 
         public override async Task InitializeAsync(object parameter = null)
         {
+            _logger.LogInformation("[MenuViewModel] InitializeAsync started");
             await LoadCurrentUser();
+            _logger.LogInformation("[MenuViewModel] InitializeAsync completed - Menu sections count: {Count}", MenuSections.Count);
         }
 
         private async Task LoadCurrentUser()
@@ -214,7 +270,11 @@ namespace SubExplore.ViewModels.Menu
                         UserEmail = CurrentUser.Email;
                         UserAvatarUrl = CurrentUser.AvatarUrl ?? "default_avatar.png";
                         
-                        _logger.LogInformation("Loaded authenticated user: {UserId}", CurrentUser.Id);
+                        _logger.LogInformation("Loaded authenticated user: {UserId} with account type: {AccountType}", 
+                            CurrentUser.Id, CurrentUser.AccountType);
+                        
+                        // Re-initialize menu to show/hide admin options based on user role
+                        InitializeMenu();
                     }
                     else
                     {
@@ -242,6 +302,48 @@ namespace SubExplore.ViewModels.Menu
             UserAvatarUrl = "default_avatar.png";
             
             _logger.LogDebug("User not authenticated - showing guest info");
+            
+            // Re-initialize menu to hide admin options for unauthenticated users
+            InitializeMenu();
+        }
+
+        /// <summary>
+        /// Handle authentication state changes to update menu dynamically
+        /// </summary>
+        private void OnAuthenticationStateChanged(object? sender, AuthenticationStateChangedEventArgs e)
+        {
+            try
+            {
+                _logger.LogInformation("[MenuViewModel] Authentication state changed: {IsAuthenticated}, User: {User}, Reason: {Reason}", 
+                    e.IsAuthenticated, e.User?.DisplayName ?? "NULL", e.Reason);
+                
+                // Update current user and refresh menu
+                CurrentUser = e.User;
+                
+                if (e.IsAuthenticated && e.User != null)
+                {
+                    UserDisplayName = $"{e.User.FirstName} {e.User.LastName}";
+                    UserEmail = e.User.Email;
+                    UserAvatarUrl = e.User.AvatarUrl ?? "default_avatar.png";
+                    
+                    _logger.LogInformation("[MenuViewModel] Updated user info for: {UserId} with account type: {AccountType}", 
+                        e.User.Id, e.User.AccountType);
+                }
+                else
+                {
+                    HandleUnauthenticatedUser();
+                    return; // HandleUnauthenticatedUser already calls InitializeMenu()
+                }
+                
+                // Re-initialize menu with new user context
+                InitializeMenu();
+                
+                _logger.LogInformation("[MenuViewModel] Menu refreshed - sections count: {Count}", MenuSections.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[MenuViewModel] Error handling authentication state change");
+            }
         }
 
         [RelayCommand]
@@ -345,6 +447,20 @@ namespace SubExplore.ViewModels.Menu
         }
 
         [RelayCommand]
+        private async Task NavigateToSpotValidation()
+        {
+            await NavigateToAsync<ViewModels.Admin.SpotValidationViewModel>();
+            IsMenuOpen = false;
+        }
+
+        [RelayCommand]
+        private async Task NavigateToSpotDiagnostic()
+        {
+            await NavigateToAsync<ViewModels.Admin.SpotDiagnosticViewModel>();
+            IsMenuOpen = false;
+        }
+
+        [RelayCommand]
         private async Task Logout()
         {
             var confirmed = await ShowConfirmationAsync(
@@ -370,6 +486,22 @@ namespace SubExplore.ViewModels.Menu
                     _logger.LogError(ex, "Logout failed");
                     await ShowAlertAsync("Erreur", "Erreur lors de la déconnexion", "OK");
                 }
+            }
+        }
+
+        /// <summary>
+        /// Dispose resources and unsubscribe from events
+        /// </summary>
+        public void Dispose()
+        {
+            try
+            {
+                _authenticationService.StateChanged -= OnAuthenticationStateChanged;
+                _logger.LogInformation("[MenuViewModel] Disposed and unsubscribed from authentication events");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[MenuViewModel] Error during disposal");
             }
         }
     }

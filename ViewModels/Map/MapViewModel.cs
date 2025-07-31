@@ -19,7 +19,7 @@ using MenuItemModel = SubExplore.Models.Menu.MenuItem;
 
 namespace SubExplore.ViewModels.Map
 {
-    public partial class MapViewModel : ViewModelBase
+    public partial class MapViewModel : ViewModelBase, IDisposable
     {
         private readonly ISpotRepository _spotRepository;
         private readonly ILocationService _locationService;
@@ -159,6 +159,9 @@ namespace SubExplore.ViewModels.Map
             Pins = new ObservableCollection<Pin>();
             SpotTypes = new ObservableCollection<SpotType>();
             MenuSections = new ObservableCollection<MenuSection>();
+            
+            // Subscribe to authentication state changes to update menu dynamically
+            _authenticationService.StateChanged += OnAuthenticationStateChanged;
 
             // Valeurs par défaut pour Paris, seront remplacées par la géolocalisation si disponible
             double defaultLat = _configuration.GetValue<double>("AppSettings:DefaultLatitude", 48.8566);
@@ -257,6 +260,18 @@ namespace SubExplore.ViewModels.Map
                         System.Diagnostics.Debug.WriteLine("[SUCCESS] MapViewModel initialization completed successfully");
                     });
 
+                    // Step 4.5: Force load current user and update menu AFTER map is initialized
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Force loading current user for menu initialization");
+                    try
+                    {
+                        await LoadCurrentUser();
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] Force LoadCurrentUser completed - menu should now reflect user permissions");
+                    }
+                    catch (Exception userEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERROR] Force LoadCurrentUser failed: {userEx.Message}");
+                    }
+
                     // Step 5: Try to get user's location after map is initialized
                     System.Diagnostics.Debug.WriteLine("[DEBUG] Attempting to get user location on startup");
                     try
@@ -348,7 +363,15 @@ namespace SubExplore.ViewModels.Map
                 var userTask = Task.Run(async () =>
                 {
                     System.Diagnostics.Debug.WriteLine("[DEBUG] Loading user for menu in background");
-                    await LoadCurrentUser();
+                    try
+                    {
+                        await LoadCurrentUser();
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] LoadCurrentUser completed successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERROR] LoadCurrentUser failed: {ex.Message}");
+                    }
                 });
                 
                 var locationTask = Task.Run(async () =>
@@ -1041,6 +1064,13 @@ namespace SubExplore.ViewModels.Map
         }
 
         [RelayCommand]
+        private async Task NavigateToSpotValidation()
+        {
+            await NavigateToAsync<ViewModels.Admin.SpotValidationViewModel>();
+            IsMenuOpen = false;
+        }
+
+        [RelayCommand]
         private async Task Logout()
         {
             var confirmed = await DialogService.ShowConfirmationAsync(
@@ -1072,6 +1102,7 @@ namespace SubExplore.ViewModels.Map
         // Menu helper methods
         private void InitializeMenu()
         {
+            System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeMenu starting - clearing menu sections");
             MenuSections.Clear();
             
             // Main Navigation Section
@@ -1149,19 +1180,64 @@ namespace SubExplore.ViewModels.Map
                 }
             };
             
+            // Admin Section (only for moderators and administrators)
+            MenuSection? adminSection = null;
+            
+            // Check admin permissions
+            var currentUser = _authenticationService.CurrentUser;
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Checking admin permissions - CurrentUser: {currentUser?.Id}, AccountType: {currentUser?.AccountType}");
+            
+            if (currentUser?.AccountType == Models.Enums.AccountType.ExpertModerator ||
+                currentUser?.AccountType == Models.Enums.AccountType.Administrator)
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] ✅ Admin permissions detected - creating admin section");
+                adminSection = new MenuSection
+                {
+                    Title = "Administration",
+                    Items = new ObservableCollection<MenuItemModel>
+                    {
+                        new MenuItemModel
+                        {
+                            Title = "Validation des Spots",
+                            Icon = "✅",
+                            Description = "Gérer la validation des spots",
+                            Command = NavigateToSpotValidationCommand,
+                            IsEnabled = true
+                        }
+                    }
+                };
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] ❌ No admin permissions - admin section will not be created");
+            }
+            
             MenuSections.Add(mainSection);
             MenuSections.Add(userSection);
             MenuSections.Add(settingsSection);
+            
+            // Add admin section if user has permissions
+            if (adminSection != null)
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] ✅ Adding admin section to menu");
+                MenuSections.Add(adminSection);
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeMenu completed - Total sections: {MenuSections.Count}");
         }
 
         private async Task LoadCurrentUser()
         {
+            System.Diagnostics.Debug.WriteLine("[DEBUG] LoadCurrentUser started");
             try
             {
                 // Use authentication service to get current user
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Checking authentication - IsAuthenticated: {_authenticationService.IsAuthenticated}");
+                
                 if (_authenticationService.IsAuthenticated)
                 {
                     var currentUser = _authenticationService.CurrentUser;
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] CurrentUser from auth service: {currentUser?.Id} ({currentUser?.AccountType})");
                     
                     if (currentUser != null)
                     {
@@ -1169,16 +1245,23 @@ namespace SubExplore.ViewModels.Map
                         UserEmail = currentUser.Email;
                         UserAvatarUrl = currentUser.AvatarUrl ?? "default_avatar.png";
                         
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded authenticated user: {currentUser.Id}");
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded authenticated user: {currentUser.Id} with AccountType: {currentUser.AccountType}");
+                        
+                        // Re-initialize menu to show/hide admin options based on user role
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] About to call InitializeMenu");
+                        InitializeMenu();
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeMenu completed");
                     }
                     else
                     {
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] CurrentUser is null despite IsAuthenticated=true");
                         // Should not happen if IsAuthenticated is true, but handle gracefully
                         await HandleUnauthenticatedUser();
                     }
                 }
                 else
                 {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] User not authenticated");
                     await HandleUnauthenticatedUser();
                 }
             }
@@ -1197,8 +1280,49 @@ namespace SubExplore.ViewModels.Map
             
             System.Diagnostics.Debug.WriteLine("[DEBUG] User not authenticated - showing guest info");
             
+            // Re-initialize menu to hide admin options for unauthenticated users
+            InitializeMenu();
+            
             // Optional: Show login prompt or redirect to login
             // For now, just log the state
+        }
+
+        /// <summary>
+        /// Handle authentication state changes to update menu dynamically
+        /// </summary>
+        private void OnAuthenticationStateChanged(object? sender, AuthenticationStateChangedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[MapViewModel] Authentication state changed: {e.IsAuthenticated}, User: {e.User?.DisplayName ?? "NULL"}, Reason: {e.Reason}");
+                
+                if (e.IsAuthenticated && e.User != null)
+                {
+                    UserDisplayName = $"{e.User.FirstName} {e.User.LastName}";
+                    UserEmail = e.User.Email;
+                    UserAvatarUrl = e.User.AvatarUrl ?? "default_avatar.png";
+                    
+                    System.Diagnostics.Debug.WriteLine($"[MapViewModel] Updated user info for: {e.User.Id} with account type: {e.User.AccountType}");
+                }
+                else
+                {
+                    UserDisplayName = "Utilisateur Invité";
+                    UserEmail = "guest@subexplore.com";
+                    UserAvatarUrl = "default_avatar.png";
+                    
+                    System.Diagnostics.Debug.WriteLine("[MapViewModel] User logged out - reverting to guest info");
+                }
+                
+                // Re-initialize menu with new user context
+                System.Diagnostics.Debug.WriteLine("[MapViewModel] Re-initializing menu due to authentication state change");
+                InitializeMenu();
+                
+                System.Diagnostics.Debug.WriteLine($"[MapViewModel] Menu refreshed - sections count: {MenuSections.Count}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MapViewModel] Error handling authentication state change: {ex.Message}");
+            }
         }
 
         public void ForceMapRefresh()
@@ -1743,6 +1867,17 @@ namespace SubExplore.ViewModels.Map
             {
                 _searchCancellationToken?.Cancel();
                 _searchCancellationToken?.Dispose();
+                
+                // Unsubscribe from authentication state changes
+                try
+                {
+                    _authenticationService.StateChanged -= OnAuthenticationStateChanged;
+                    System.Diagnostics.Debug.WriteLine("[MapViewModel] Disposed and unsubscribed from authentication events");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MapViewModel] Error during authentication event disposal: {ex.Message}");
+                }
                 
                 // Unsubscribe from connectivity events
                 try

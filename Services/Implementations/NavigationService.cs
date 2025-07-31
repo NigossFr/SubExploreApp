@@ -13,17 +13,52 @@ namespace SubExplore.Services.Implementations
     public class NavigationService : INavigationService
     {
         private readonly IServiceProvider _serviceProvider;
+        private INavigationGuardService? _navigationGuard;
+        private IDialogService? _dialogService;
 
         public NavigationService(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }
 
+        // Lazy initialization to avoid circular dependencies
+        private INavigationGuardService NavigationGuard => 
+            _navigationGuard ??= _serviceProvider.GetService<INavigationGuardService>();
+        
+        private IDialogService DialogService => 
+            _dialogService ??= _serviceProvider.GetService<IDialogService>();
+
         public async Task NavigateToAsync<TViewModel>(object parameter = null)
         {
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Starting navigation to {typeof(TViewModel).Name}");
+                
+                // Check navigation permissions first
+                if (NavigationGuard != null)
+                {
+                    var canNavigate = await NavigationGuard.CanNavigateToAsync<TViewModel>();
+                    if (!canNavigate)
+                    {
+                        var message = NavigationGuard.GetAccessDeniedMessage(typeof(TViewModel));
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Access denied - {message}");
+                        
+                        if (DialogService != null)
+                        {
+                            await DialogService.ShowAlertAsync("Access Denied", message, "OK");
+                        }
+                        
+                        // Optionally redirect to appropriate page
+                        var redirectType = NavigationGuard.GetRoleBasedRedirect();
+                        if (redirectType != null && redirectType != typeof(TViewModel))
+                        {
+                            await NavigateToAsync(redirectType, parameter);
+                        }
+                        
+                        return;
+                    }
+                }
+                
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Parameter: {parameter}");
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Application.Current: {Application.Current != null}");
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: MainPage type: {Application.Current?.MainPage?.GetType().Name}");
@@ -116,6 +151,36 @@ namespace SubExplore.Services.Implementations
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.GetType().FullName}: {ex.InnerException.Message}");
                 }
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Navigate to a page by type (used for redirects from navigation guard)
+        /// </summary>
+        public async Task NavigateToAsync(Type viewModelType, object parameter = null)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync (Type): Starting navigation to {viewModelType.Name}");
+                
+                // Use reflection to call the generic method
+                var method = typeof(NavigationService).GetMethod(nameof(NavigateToAsync), new[] { typeof(object) });
+                var genericMethod = method?.MakeGenericMethod(viewModelType);
+                
+                if (genericMethod != null)
+                {
+                    var task = (Task)genericMethod.Invoke(this, new[] { parameter });
+                    await task;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToAsync (Type): Could not find generic method for {viewModelType.Name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToAsync (Type): {ex.Message}");
                 throw;
             }
         }
@@ -256,6 +321,7 @@ namespace SubExplore.Services.Implementations
                 "UserProfileViewModel" => "userprofile",
                 "UserPreferencesViewModel" => "userpreferences",
                 "UserStatsViewModel" => "userstats",
+                "SpotValidationViewModel" => "spotvalidation",
                 _ => ConvertViewModelNameToRoute(viewModelName)
             };
         }
@@ -283,6 +349,7 @@ namespace SubExplore.Services.Implementations
                 "UserProfilePage" => "SubExplore.Views.Profile.UserProfilePage",
                 "UserPreferencesPage" => "SubExplore.Views.Profile.UserPreferencesPage",
                 "UserStatsPage" => "SubExplore.Views.Profile.UserStatsPage",
+                "SpotValidationPage" => "SubExplore.Views.Admin.SpotValidationPage",
                 "LoginPage" => "SubExplore.Views.Auth.LoginPage",
                 "RegistrationPage" => "SubExplore.Views.Auth.RegistrationPage",
                 _ => $"SubExplore.Views.{viewTypeName}" // Default fallback

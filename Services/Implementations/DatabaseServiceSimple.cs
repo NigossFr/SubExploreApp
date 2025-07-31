@@ -199,7 +199,7 @@ namespace SubExplore.Services.Implementations
                         TypeId = spotTypes[0].Id, // Apnée
                         CreatorId = adminUser.Id,
                         CreatedAt = DateTime.UtcNow,
-                        CurrentStrength = CurrentStrength.Light,
+                        CurrentStrength = CurrentStrength.Weak,
                         BestConditions = "Mer calme, visibilité 10-15m, température eau >18°C",
                         SafetyNotes = "Idéal pour débutants. Surveiller les autres usagers de la mer.",
                         RequiredEquipment = "Palmes, masque, tuba, combinaison selon saison"
@@ -216,7 +216,7 @@ namespace SubExplore.Services.Implementations
                         TypeId = spotTypes[1].Id, // Photo sous-marine
                         CreatorId = adminUser.Id,
                         CreatedAt = DateTime.UtcNow,
-                        CurrentStrength = CurrentStrength.Light,
+                        CurrentStrength = CurrentStrength.Weak,
                         BestConditions = "Eau calme, excellente visibilité, lumière naturelle optimale",
                         SafetyNotes = "Zone protégée - respecter la faune et la flore. Pêche interdite.",
                         RequiredEquipment = "Appareil photo étanche, palmes, masque, tuba"

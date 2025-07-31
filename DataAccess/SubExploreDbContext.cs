@@ -314,7 +314,7 @@ namespace SubExplore.DataAccess
                     TypeId = 1, // Apnée
                     CreatorId = 1,
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                    CurrentStrength = CurrentStrength.Light,
+                    CurrentStrength = CurrentStrength.Weak,
                     BestConditions = "Mer calme, visibilité 10-15m, température eau >18°C",
                     SafetyNotes = "Idéal pour débutants. Surveiller les autres usagers de la mer.",
                     RequiredEquipment = "Palmes, masque, tuba, combinaison selon saison"
@@ -332,7 +332,7 @@ namespace SubExplore.DataAccess
                     TypeId = 2, // Photo sous-marine
                     CreatorId = 1,
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                    CurrentStrength = CurrentStrength.Light,
+                    CurrentStrength = CurrentStrength.Weak,
                     BestConditions = "Eau calme, excellente visibilité, lumière naturelle optimale",
                     SafetyNotes = "Zone protégée - respecter la faune et la flore. Pêche interdite.",
                     RequiredEquipment = "Appareil photo étanche, palmes, masque, tuba"

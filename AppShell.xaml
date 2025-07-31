@@ -8,6 +8,7 @@
     xmlns:spots="clr-namespace:SubExplore.Views.Spots"
     xmlns:favorites="clr-namespace:SubExplore.Views.Favorites"
     xmlns:profile="clr-namespace:SubExplore.Views.Profile"
+    xmlns:admin="clr-namespace:SubExplore.Views.Admin"
     Shell.FlyoutBehavior="Disabled"
     Title="SubExplore">
 
@@ -62,5 +63,11 @@
         Title="User Stats"
         ContentTemplate="{DataTemplate profile:UserStatsPage}"
         Route="userstats" />
+
+    <!-- Admin Spot Validation Page Route -->
+    <ShellContent
+        Title="Validation des Spots"
+        ContentTemplate="{DataTemplate admin:SpotValidationPage}"
+        Route="spotvalidation" />
 
 </Shell>

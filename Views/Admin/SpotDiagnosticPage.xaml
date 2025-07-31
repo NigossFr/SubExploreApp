@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Admin.SpotDiagnosticPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="Diagnostic des Spots">
+    
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+            
+            <!-- Header -->
+            <Label Text="Diagnostic des Spots" 
+                   FontSize="24" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center" 
+                   Margin="0,0,0,20"/>
+            
+            <!-- Refresh Button -->
+            <Button Text="🔄 Actualiser les données" 
+                    Command="{Binding RefreshDataCommand}"
+                    BackgroundColor="LightBlue"
+                    TextColor="Black"/>
+            
+            <!-- Migration Status -->
+            <Frame BackgroundColor="LightGray" Padding="15">
+                <StackLayout>
+                    <Label Text="📊 État des migrations" FontSize="18" FontAttributes="Bold"/>
+                    <Label Text="{Binding MigrationStatus}" FontSize="14"/>
+                </StackLayout>
+            </Frame>
+            
+            <!-- Current User Info -->
+            <Frame BackgroundColor="LightGreen" Padding="15">
+                <StackLayout>
+                    <Label Text="👤 Utilisateur connecté" FontSize="18" FontAttributes="Bold"/>
+                    <Label Text="{Binding CurrentUserInfo}" FontSize="14"/>
+                </StackLayout>
+            </Frame>
+            
+            <!-- Spots Summary -->
+            <Frame BackgroundColor="LightYellow" Padding="15">
+                <StackLayout>
+                    <Label Text="📍 Résumé des spots" FontSize="18" FontAttributes="Bold"/>
+                    <Label Text="{Binding SpotsSummary}" FontSize="14"/>
+                </StackLayout>
+            </Frame>
+            
+            <!-- Spots List -->
+            <Frame BackgroundColor="White" Padding="15">
+                <StackLayout>
+                    <Label Text="📋 Liste détaillée des spots" FontSize="18" FontAttributes="Bold"/>
+                    <CollectionView ItemsSource="{Binding Spots}" BackgroundColor="Transparent">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="10" BackgroundColor="{Binding StatusColor}">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <Label Grid.Row="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="16"/>
+                                    <Label Grid.Row="1" Text="{Binding Details}" FontSize="12"/>
+                                    <Label Grid.Row="2" Text="{Binding CreatorInfo}" FontSize="12" TextColor="DarkBlue"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </StackLayout>
+            </Frame>
+            
+            <!-- Actions -->
+            <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
+                <Button Text="✅ Forcer migration spots admin" 
+                        Command="{Binding ForceMigrationCommand}"
+                        BackgroundColor="Orange"/>
+                        
+                <Button Text="➕ Créer spot test pending" 
+                        Command="{Binding CreatePendingSpotCommand}"
+                        BackgroundColor="Purple" 
+                        TextColor="White"/>
+            </StackLayout>
+            
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

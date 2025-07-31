@@ -28,7 +28,16 @@
       "Bash(git commit:*)",
       "Bash(ls:*)",
       "Bash(touch:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(git fetch:*)",
+      "Bash(git restore:*)",
+      "WebFetch(domain:learn.microsoft.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(where mysql)",
+      "Bash(del TestMigration.cs)",
+      "Bash(powershell:*)",
+      "Bash(telnet:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

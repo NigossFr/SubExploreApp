@@ -1,5 +1,6 @@
 using SubExplore.Models.Domain;
 using SubExplore.Models.DTOs;
+using SubExplore.Models.Enums;
 
 namespace SubExplore.Services.Interfaces
 {
@@ -79,6 +80,38 @@ namespace SubExplore.Services.Interfaces
         /// <param name="email">User email address</param>
         /// <returns>True if reset email sent</returns>
         Task<bool> RequestPasswordResetAsync(string email);
+
+        /// <summary>
+        /// Elevate user to expert moderator status
+        /// </summary>
+        /// <param name="userId">User ID to elevate</param>
+        /// <param name="specialization">Moderator specialization</param>
+        /// <returns>True if elevation successful</returns>
+        Task<bool> ElevateToModeratorAsync(int userId, ModeratorSpecialization specialization);
+
+        /// <summary>
+        /// Update moderator status (for admin use)
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="status">New moderator status</param>
+        /// <returns>True if update successful</returns>
+        Task<bool> UpdateModeratorStatusAsync(int userId, ModeratorStatus status);
+
+        /// <summary>
+        /// Verify professional account with organization
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="organizationId">Organization ID (future Organizations table)</param>
+        /// <returns>True if verification successful</returns>
+        Task<bool> VerifyProfessionalAccountAsync(int userId, int? organizationId = null);
+
+        /// <summary>
+        /// Update user permissions (admin only)
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="permissions">New permissions</param>
+        /// <returns>True if update successful</returns>
+        Task<bool> UpdateUserPermissionsAsync(int userId, UserPermissions permissions);
     }
 
     /// <summary>

@@ -19,7 +19,9 @@ namespace SubExplore.Models.Enums
     {
         Draft,
         Pending,
+        UnderReview,
         NeedsRevision,
+        SafetyReview,
         Approved,
         Rejected,
         Archived
@@ -28,7 +30,7 @@ namespace SubExplore.Models.Enums
     public enum CurrentStrength
     {
         None,
-        Light,
+        Weak,
         Moderate,
         Strong,
         Extreme

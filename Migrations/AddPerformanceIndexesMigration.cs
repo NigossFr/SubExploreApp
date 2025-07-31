@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace SubExplore.Migrations
+namespace SubExplore.Data.Migrations
 {
     /// <summary>
     /// Migration to add comprehensive performance-optimized database indexes
     /// </summary>
-    public partial class AddPerformanceIndexes : Migration
+    public partial class AddPerformanceIndexes : Microsoft.EntityFrameworkCore.Migrations.Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

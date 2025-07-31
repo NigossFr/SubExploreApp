@@ -193,6 +193,7 @@ public static class MauiProgram
         builder.Services.AddScoped<IDatabaseInitializationService, DatabaseInitializationService>();
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<INavigationService, NavigationService>();
+        builder.Services.AddScoped<INavigationGuardService, NavigationGuardService>();
         builder.Services.AddSingleton<ILocationService, LocationService>();
         builder.Services.AddSingleton<IMediaService, MediaService>();
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
@@ -229,7 +230,13 @@ public static class MauiProgram
         });
         builder.Services.AddSingleton<ISecureConfigurationService, SecureConfigurationService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
-        builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+        builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+        builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+        
+        // Spot validation services
+        builder.Services.AddScoped<ISpotValidationService, SpotValidationService>();
+        builder.Services.AddScoped<TestDataService>();
+        builder.Services.AddScoped<SpotMigrationService>();
         
         // Validation services
         builder.Services.AddScoped<IValidationService, ValidationService>();
@@ -272,6 +279,10 @@ public static class MauiProgram
         // Authentication ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.LoginViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.RegistrationViewModel>();
+        
+        // Admin ViewModels
+        builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotValidationViewModel>();
+        builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotDiagnosticViewModel>();
 
         // Enregistrement des vues (Pages et Views)
         // Pour les Pages et Views, AddTransient est généralement correct.
@@ -298,6 +309,10 @@ public static class MauiProgram
         builder.Services.AddTransient<SubExplore.Views.Auth.WorkingLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.MinimalLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.RegistrationPage>();
+        
+        // Admin Pages
+        builder.Services.AddTransient<SubExplore.Views.Admin.SpotValidationPage>();
+        builder.Services.AddTransient<SubExplore.Views.Admin.SpotDiagnosticPage>();
         
         // Test Pages
         builder.Services.AddTransient<SubExplore.Views.TestPage>();

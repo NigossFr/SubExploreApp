@@ -78,7 +78,7 @@ namespace SubExplore.ViewModels.Spots
             CurrentStrengths = new ObservableCollection<CurrentStrength>
             {
                 CurrentStrength.None,
-                CurrentStrength.Light,
+                CurrentStrength.Weak,
                 CurrentStrength.Moderate,
                 CurrentStrength.Strong,
                 CurrentStrength.Extreme
@@ -93,7 +93,7 @@ namespace SubExplore.ViewModels.Spots
                 DifficultyLevel.TechnicalOnly
             };
 
-            SelectedCurrentStrength = CurrentStrength.Light;
+            SelectedCurrentStrength = CurrentStrength.Weak;
             SelectedDifficultyLevel = DifficultyLevel.Beginner;
             Title = "Caractéristiques du spot";
         }
@@ -112,7 +112,7 @@ namespace SubExplore.ViewModels.Spots
                 RequiredEquipment = spot.RequiredEquipment;
                 SafetyNotes = spot.SafetyNotes;
                 BestConditions = spot.BestConditions;
-                SelectedCurrentStrength = spot.CurrentStrength ?? CurrentStrength.Light;
+                SelectedCurrentStrength = spot.CurrentStrength ?? CurrentStrength.Weak;
             }
         }
 

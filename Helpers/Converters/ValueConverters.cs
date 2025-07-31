@@ -227,21 +227,7 @@ namespace SubExplore.Helpers.Converters
         }
     }
 
-    /// <summary>
-    /// Converter for checking if a value is not null
-    /// </summary>
-    public class IsNotNullConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return value != null;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    // IsNotNullConverter is defined in ValidationConverters.cs to avoid duplication
 
     /// <summary>
     /// Converter for checking if a string is not null or empty
@@ -524,7 +510,7 @@ namespace SubExplore.Helpers.Converters
         private static readonly Dictionary<CurrentStrength, string> CurrentStrengthTranslations = new()
         {
             { CurrentStrength.None, "Aucun" },
-            { CurrentStrength.Light, "Léger" },
+            { CurrentStrength.Weak, "Léger" },
             { CurrentStrength.Moderate, "Modéré" },
             { CurrentStrength.Strong, "Fort" },
             { CurrentStrength.Extreme, "Extrême" }
@@ -546,9 +532,9 @@ namespace SubExplore.Helpers.Converters
             if (value is string text)
             {
                 var pair = CurrentStrengthTranslations.FirstOrDefault(kvp => kvp.Value == text);
-                return pair.Key != default ? pair.Key : CurrentStrength.Light;
+                return pair.Key != default ? pair.Key : CurrentStrength.Weak;
             }
-            return CurrentStrength.Light;
+            return CurrentStrength.Weak;
         }
     }
 

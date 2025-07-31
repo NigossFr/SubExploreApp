@@ -341,7 +341,7 @@ namespace SubExplore.Services.Implementations
                         TypeId = freedivingType?.Id ?? 2,
                         CreatorId = adminUserId,
                         CreatedAt = DateTime.UtcNow,
-                        CurrentStrength = CurrentStrength.Light,
+                        CurrentStrength = CurrentStrength.Weak,
                         BestConditions = "Mer calme, visibilité 10-15m",
                         SafetyNotes = "Idéal pour débutants, surveiller les autres utilisateurs",
                         RequiredEquipment = "Palmes, masque, tuba"
@@ -358,7 +358,7 @@ namespace SubExplore.Services.Implementations
                         TypeId = snorkelingType?.Id ?? 3,
                         CreatorId = adminUserId,
                         CreatedAt = DateTime.UtcNow,
-                        CurrentStrength = CurrentStrength.Light,
+                        CurrentStrength = CurrentStrength.Weak,
                         BestConditions = "Toute condition, protégé du mistral",
                         SafetyNotes = "Attention aux baigneurs en été",
                         RequiredEquipment = "Palmes, masque, tuba"
@@ -843,7 +843,7 @@ namespace SubExplore.Services.Implementations
             return frenchValue?.ToLower() switch
             {
                 "aucun" => Models.Enums.CurrentStrength.None,
-                "léger" => Models.Enums.CurrentStrength.Light,
+                "léger" => Models.Enums.CurrentStrength.Weak,
                 "modéré" => Models.Enums.CurrentStrength.Moderate,
                 "fort" => Models.Enums.CurrentStrength.Strong,
                 "très fort" => Models.Enums.CurrentStrength.Extreme,
