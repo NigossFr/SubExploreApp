@@ -122,6 +122,7 @@ namespace SubExplore.ViewModels.Profile
                 }
             }
         }
+        
 
         // Computed properties for UI binding
         public string ValidationRate
