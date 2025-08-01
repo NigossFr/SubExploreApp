@@ -58,7 +58,7 @@ namespace SubExplore.Views.Auth
                 var email = EmailEntry.Text;
                 var password = PasswordEntry.Text;
 
-                Debug.WriteLine($"[SimpleTestPage] Attempting login with {email}");
+                System.Diagnostics.Debug.WriteLine($"[SimpleTestPage] Attempting login with {email}");
                 
                 var result = await _authService.LoginAsync(email, password);
 
@@ -77,7 +77,7 @@ namespace SubExplore.Views.Auth
             {
                 StatusLabel.Text = $"❌ Error: {ex.Message}";
                 StatusLabel.TextColor = Colors.Red;
-                Debug.WriteLine($"[SimpleTestPage] Login error: {ex}");
+                System.Diagnostics.Debug.WriteLine($"[SimpleTestPage] Login error: {ex}");
             }
         }
 

@@ -16,6 +16,10 @@
     <!--  Turquoise  -->
     <Color x:Key="Error">#E63946</Color>
     <!--  Rouge corail  -->
+    <Color x:Key="Info">#48CAE4</Color>
+    <!--  Bleu info (alias pour Accent)  -->
+    <Color x:Key="Danger">#E63946</Color>
+    <!--  Rouge danger (alias pour Error)  -->
     <Color x:Key="Background">#F8FDFF</Color>
     <!--  Blanc azuré  -->
     <Color x:Key="Surface">#FFFFFF</Color>
