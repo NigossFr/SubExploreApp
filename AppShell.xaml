@@ -23,24 +23,29 @@
                    CornerRadius="0"
                    HasShadow="False"
                    Margin="0">
-                <Grid ColumnDefinitions="60,*,Auto">
+                <Grid ColumnDefinitions="Auto,*,60">
                     
-                    <!-- User Avatar -->
+                    <!-- App Logo/Icon -->
                     <Frame Grid.Column="0"
                            BackgroundColor="White"
                            CornerRadius="30"
-                           Padding="0"
+                           Padding="5"
                            WidthRequest="60"
                            HeightRequest="60"
                            HasShadow="False">
-                        <Label Text="👤" FontSize="40" HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Image Source="icone_subexplore.svg"
+                               WidthRequest="50"
+                               HeightRequest="50"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
                     </Frame>
                     
                     <!-- User Info -->
                     <StackLayout Grid.Column="1"
-                               Margin="15,0,0,0"
+                               Margin="15,0,15,0"
                                VerticalOptions="Center">
-                        <Label Text="Utilisateur SubExplore"
+                        <Label x:Name="UserNameLabel"
+                               Text="Utilisateur SubExplore"
                                FontSize="18"
                                FontAttributes="Bold"
                                TextColor="White" />
@@ -50,12 +55,16 @@
                                Opacity="0.8" />
                     </StackLayout>
                     
-                    <!-- App Logo -->
-                    <Label Grid.Column="2"
-                           Text="🤿"
-                           FontSize="32"
-                           VerticalOptions="Center"
-                           HorizontalOptions="End" />
+                    <!-- User Avatar -->
+                    <Frame Grid.Column="2"
+                           BackgroundColor="White"
+                           CornerRadius="30"
+                           Padding="0"
+                           WidthRequest="60"
+                           HeightRequest="60"
+                           HasShadow="False">
+                        <Label Text="👤" FontSize="40" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Frame>
                 </Grid>
             </Frame>
         </DataTemplate>

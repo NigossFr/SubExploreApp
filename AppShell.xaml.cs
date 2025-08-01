@@ -3,15 +3,30 @@ using SubExplore.Views.Spots;
 using SubExplore.Views.Favorites;
 using SubExplore.Views.Profile;
 using SubExplore.Views.Admin;
+using SubExplore.Services.Interfaces;
 
 namespace SubExplore
 {
     public partial class AppShell : Shell
     {
+        private readonly IAuthenticationService? _authenticationService;
+        
         public AppShell()
         {
             InitializeComponent();
             RegisterRoutes();
+        }
+        
+        public AppShell(IAuthenticationService authenticationService) : this()
+        {
+            _authenticationService = authenticationService;
+            UpdateUserInfo();
+            
+            // Subscribe to authentication state changes
+            if (_authenticationService != null)
+            {
+                _authenticationService.StateChanged += OnAuthenticationStateChanged;
+            }
         }
 
         private void RegisterRoutes()
@@ -84,9 +99,16 @@ namespace SubExplore
                 
                 if (confirm)
                 {
-                    // Here you would typically call your authentication service to logout
-                    // For now, we'll just show a message
-                    await DisplayAlert("Déconnexion", "Vous avez été déconnecté avec succès.", "OK");
+                    // Call authentication service to logout if available
+                    if (_authenticationService != null)
+                    {
+                        await _authenticationService.LogoutAsync();
+                        await DisplayAlert("Déconnexion", "Vous avez été déconnecté avec succès.", "OK");
+                    }
+                    else
+                    {
+                        await DisplayAlert("Déconnexion", "Vous avez été déconnecté avec succès.", "OK");
+                    }
                     
                     // Navigate back to login or main page
                     await GoToAsync("///map");
@@ -96,6 +118,49 @@ namespace SubExplore
             {
                 System.Diagnostics.Debug.WriteLine($"[AppShell] OnLogout error: {ex.Message}");
             }
+        }
+        
+        private void OnAuthenticationStateChanged(object sender, Services.Interfaces.AuthenticationStateChangedEventArgs e)
+        {
+            UpdateUserInfo();
+        }
+        
+        private void UpdateUserInfo()
+        {
+            try
+            {
+                // Find the UserNameLabel in the flyout header template
+                var flyoutHeader = FlyoutHeader;
+                if (flyoutHeader is View headerView)
+                {
+                    var userNameLabel = headerView.FindByName<Label>("UserNameLabel");
+                    if (userNameLabel != null && _authenticationService?.CurrentUser != null)
+                    {
+                        var user = _authenticationService.CurrentUser;
+                        var displayName = !string.IsNullOrEmpty(user.FirstName) && !string.IsNullOrEmpty(user.LastName)
+                            ? $"{user.FirstName} {user.LastName}"
+                            : user.Username ?? "Utilisateur SubExplore";
+                        
+                        userNameLabel.Text = displayName;
+                        System.Diagnostics.Debug.WriteLine($"[AppShell] Updated user name to: {displayName}");
+                    }
+                    else if (userNameLabel != null)
+                    {
+                        userNameLabel.Text = "Utilisateur SubExplore";
+                        System.Diagnostics.Debug.WriteLine($"[AppShell] Set default user name");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AppShell] UpdateUserInfo error: {ex.Message}");
+            }
+        }
+        
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            UpdateUserInfo();
         }
     }
 }

@@ -32,10 +32,186 @@
             <!-- Stats Content -->
             <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}" Spacing="20">
                 
+                <!-- Évolution de l'utilisateur -->
+                <Frame BackgroundColor="{StaticResource Primary}" HasShadow="True" CornerRadius="12">
+                    <StackLayout Spacing="16">
+                        <Label Text="Votre Évolution" 
+                               FontSize="20" 
+                               FontAttributes="Bold" 
+                               TextColor="White" 
+                               HorizontalTextAlignment="Center" />
+                        
+                        <!-- Statut utilisateur -->
+                        <Label Text="{Binding UserStatusDisplay}"
+                               FontSize="14"
+                               TextColor="White"
+                               HorizontalTextAlignment="Center"
+                               FontAttributes="Bold"
+                               Margin="0,4,0,8" />
+
+                        <!-- Niveau actuel -->
+                        <StackLayout Spacing="8">
+                            <Label Text="{Binding ContributionLevel}"
+                                   FontSize="24"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalTextAlignment="Center" />
+                            
+                            <Label Text="{Binding LevelDescription}"
+                                   FontSize="14"
+                                   TextColor="White"
+                                   HorizontalTextAlignment="Center"
+                                   Margin="10,0" />
+                        </StackLayout>
+
+                        <!-- Information sur le prochain niveau -->
+                        <StackLayout Spacing="8">
+                            <Label Text="{Binding NextLevelInfo}"
+                                   FontSize="12"
+                                   TextColor="White"
+                                   HorizontalTextAlignment="Center"
+                                   FontAttributes="Italic" />
+                            
+                            <!-- Barre d'évolution avec échelons premium -->
+                            <StackLayout Spacing="4">
+                                <!-- Barre de progression principale -->
+                                <ProgressBar Progress="{Binding OverallProgress}"
+                                             ProgressColor="{StaticResource Success}"
+                                             BackgroundColor="White"
+                                             HeightRequest="12"
+                                             Margin="0,4" />
+                                
+                                <!-- Échelons premium avec marqueurs -->
+                                <Grid Margin="0,-8,0,0">
+                                    <!-- Marqueurs positionnés proportionnellement (10% = 10 spots, 25% = 25 spots, 50% = 50 spots, 100% = 100 spots) -->
+                                    
+                                    <!-- 10 spots = 1 mois premium (10% de la barre) -->
+                                    <StackLayout HorizontalOptions="Start" Margin="25,0,0,0">
+                                        <Ellipse Fill="{StaticResource Warning}" 
+                                                WidthRequest="14" 
+                                                HeightRequest="14" 
+                                                Stroke="White" 
+                                                StrokeThickness="2"/>
+                                        <Label Text="10" 
+                                               FontSize="9" 
+                                               TextColor="White" 
+                                               HorizontalTextAlignment="Center"
+                                               Margin="0,-2,0,0"/>
+                                        <Label Text="1m" 
+                                               FontSize="7" 
+                                               TextColor="White" 
+                                               HorizontalTextAlignment="Center"
+                                               FontAttributes="Bold"/>
+                                    </StackLayout>
+                                    
+                                    <!-- 25 spots = 3 mois premium (25% de la barre) -->
+                                    <StackLayout HorizontalOptions="Start" Margin="62,0,0,0">
+                                        <Ellipse Fill="#CD7F32" 
+                                                WidthRequest="14" 
+                                                HeightRequest="14" 
+                                                Stroke="White" 
+                                                StrokeThickness="2"/>
+                                        <Label Text="25" 
+                                               FontSize="9" 
+                                               TextColor="White" 
+                                               HorizontalTextAlignment="Center"
+                                               Margin="0,-2,0,0"/>
+                                        <Label Text="3m" 
+                                               FontSize="7" 
+                                               TextColor="White" 
+                                               HorizontalTextAlignment="Center"
+                                               FontAttributes="Bold"/>
+                                    </StackLayout>
+                                    
+                                    <!-- 50 spots = 6 mois premium (50% de la barre) -->
+                                    <StackLayout HorizontalOptions="Center">
+                                        <Ellipse Fill="#C0C0C0" 
+                                                WidthRequest="15" 
+                                                HeightRequest="15" 
+                                                Stroke="White" 
+                                                StrokeThickness="2"/>
+                                        <Label Text="50" 
+                                               FontSize="9" 
+                                               TextColor="White" 
+                                               HorizontalTextAlignment="Center"
+                                               Margin="0,-2,0,0"/>
+                                        <Label Text="6m" 
+                                               FontSize="7" 
+                                               TextColor="White" 
+                                               HorizontalTextAlignment="Center"
+                                               FontAttributes="Bold"/>
+                                    </StackLayout>
+                                    
+                                    <!-- 100 spots = 12 mois premium (100% de la barre) -->
+                                    <StackLayout HorizontalOptions="End" Margin="0,0,15,0">
+                                        <Ellipse Fill="#FFD700" 
+                                                WidthRequest="16" 
+                                                HeightRequest="16" 
+                                                Stroke="White" 
+                                                StrokeThickness="2"/>
+                                        <Label Text="100" 
+                                               FontSize="8" 
+                                               TextColor="White" 
+                                               HorizontalTextAlignment="Center"
+                                               Margin="0,-2,0,0"/>
+                                        <Label Text="12m" 
+                                               FontSize="7" 
+                                               TextColor="White" 
+                                               HorizontalTextAlignment="Center"
+                                               FontAttributes="Bold"/>
+                                    </StackLayout>
+                                </Grid>
+                                
+                                <!-- Information premium si éligible -->
+                                <Label Text="{Binding PremiumStatusInfo}"
+                                       FontSize="12"
+                                       TextColor="White"
+                                       HorizontalTextAlignment="Center"
+                                       FontAttributes="Bold"
+                                       IsVisible="{Binding HasPremiumReward}"
+                                       Margin="0,8,0,0" />
+                                       
+                                <!-- Légende des échelons premium (modérateurs uniquement) -->
+                                <Label Text="🏆 Récompenses Premium pour modérateurs !"
+                                       FontSize="10"
+                                       TextColor="White"
+                                       HorizontalTextAlignment="Center"
+                                       FontAttributes="Italic"
+                                       IsVisible="{Binding IsUserModerator}"
+                                       Margin="0,4,0,0" />
+                                       
+                                <!-- Message pour les utilisateurs standards -->
+                                <Label Text="💪 Continuez à partager pour faire grandir la communauté !"
+                                       FontSize="10"
+                                       TextColor="White"
+                                       HorizontalTextAlignment="Center"
+                                       FontAttributes="Italic"
+                                       IsVisible="{Binding IsUserModerator, Converter={StaticResource InvertBoolConverter}}"
+                                       Margin="0,4,0,0" />
+                            </StackLayout>
+                        </StackLayout>
+
+                        <!-- Spots validés mis en avant -->
+                        <Grid ColumnDefinitions="*,*,*">
+                            <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                                <Label Text="{Binding UserStats.ValidatedSpots}"
+                                       FontSize="32"
+                                       FontAttributes="Bold"
+                                       TextColor="White"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Spots Validés"
+                                       FontSize="14"
+                                       TextColor="White"
+                                       HorizontalTextAlignment="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+                
                 <!-- General Stats -->
                 <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12">
                     <StackLayout Spacing="16">
-                        <Label Text="General Statistics" 
+                        <Label Text="Statistiques Générales" 
                                FontSize="18" 
                                FontAttributes="Bold" 
                                TextColor="{StaticResource Primary}" />
@@ -54,34 +230,21 @@
                                        HorizontalTextAlignment="Center" />
                             </StackLayout>
 
-                            <!-- Validated Spots -->
-                            <StackLayout Grid.Row="0" Grid.Column="1" HorizontalOptions="Center">
-                                <Label Text="{Binding UserStats.ValidatedSpots}"
-                                       FontSize="24"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Success}"
-                                       HorizontalTextAlignment="Center" />
-                                <Label Text="Validated Spots"
-                                       FontSize="12"
-                                       TextColor="{StaticResource Gray600}"
-                                       HorizontalTextAlignment="Center" />
-                            </StackLayout>
-
                             <!-- Pending Spots -->
-                            <StackLayout Grid.Row="1" Grid.Column="0" HorizontalOptions="Center">
+                            <StackLayout Grid.Row="0" Grid.Column="1" HorizontalOptions="Center">
                                 <Label Text="{Binding UserStats.PendingSpots}"
                                        FontSize="24"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Warning}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Pending Spots"
+                                <Label Text="En Attente"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
                             </StackLayout>
 
                             <!-- Total Photos -->
-                            <StackLayout Grid.Row="1" Grid.Column="1" HorizontalOptions="Center">
+                            <StackLayout Grid.Row="1" Grid.Column="0" HorizontalOptions="Center">
                                 <Label Text="{Binding UserStats.TotalPhotos}"
                                        FontSize="24"
                                        FontAttributes="Bold"
@@ -94,42 +257,41 @@
                             </StackLayout>
 
                             <!-- Validation Rate -->
-                            <StackLayout Grid.Row="2" Grid.Column="0" HorizontalOptions="Center">
+                            <StackLayout Grid.Row="1" Grid.Column="1" HorizontalOptions="Center">
                                 <Label Text="{Binding ValidationRate}"
                                        FontSize="20"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Success}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Validation Rate"
+                                <Label Text="Taux de Validation"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
                             </StackLayout>
 
                             <!-- Photos per Spot -->
-                            <StackLayout Grid.Row="2" Grid.Column="1" HorizontalOptions="Center">
+                            <StackLayout Grid.Row="2" Grid.Column="0" HorizontalOptions="Center">
                                 <Label Text="{Binding PhotosPerSpotDisplay}"
                                        FontSize="20"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Info}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Photos per Spot"
+                                <Label Text="Photos par Spot"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
                             </StackLayout>
 
                             <!-- Contribution Score -->
-                            <StackLayout Grid.Row="3" Grid.ColumnSpan="2" HorizontalOptions="Center">
+                            <StackLayout Grid.Row="2" Grid.Column="1" HorizontalOptions="Center">
                                 <Label Text="{Binding UserStats.ContributionScore}"
-                                       FontSize="28"
+                                       FontSize="20"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Warning}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="{Binding ContributionLevel}"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Primary}"
+                                <Label Text="Score de Contribution"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
                             </StackLayout>
                         </Grid>
@@ -139,7 +301,7 @@
                 <!-- Diving Stats -->
                 <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12" IsVisible="{Binding HasSpots}">
                     <StackLayout Spacing="16">
-                        <Label Text="Diving Statistics" 
+                        <Label Text="Statistiques de Plongée" 
                                FontSize="18" 
                                FontAttributes="Bold" 
                                TextColor="{StaticResource Primary}" />
@@ -152,7 +314,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Primary}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Average Depth"
+                                <Label Text="Profondeur Moyenne"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
@@ -165,7 +327,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Danger}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Max Depth"
+                                <Label Text="Profondeur Maximale"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
@@ -178,7 +340,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Primary}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Expertise Level"
+                                <Label Text="Niveau d'Expertise"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
@@ -191,7 +353,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Info}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Days Active"
+                                <Label Text="Jours Actif"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
@@ -204,7 +366,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Primary}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Favorite Spot Type"
+                                <Label Text="Type de Spot Favori"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
@@ -216,7 +378,7 @@
                 <!-- Activity Timeline -->
                 <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12">
                     <StackLayout Spacing="16">
-                        <Label Text="Activity Timeline" 
+                        <Label Text="Chronologie d'Activité" 
                                FontSize="18" 
                                FontAttributes="Bold" 
                                TextColor="{StaticResource Primary}" />
@@ -229,7 +391,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Primary}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Last Activity"
+                                <Label Text="Dernière Activité"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
@@ -242,7 +404,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Success}"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="Last Spot Created"
+                                <Label Text="Dernier Spot Créé"
                                        FontSize="12"
                                        TextColor="{StaticResource Gray600}"
                                        HorizontalTextAlignment="Center" />
@@ -254,7 +416,7 @@
                 <!-- Certifications -->
                 <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="12" IsVisible="{Binding HasCertifications}">
                     <StackLayout Spacing="16">
-                        <Label Text="Recent Certifications" 
+                        <Label Text="Certifications Récentes" 
                                FontSize="18" 
                                FontAttributes="Bold" 
                                TextColor="{StaticResource Primary}" />
@@ -277,7 +439,7 @@
                 </Frame>
 
                 <!-- Back Button -->
-                <Button Text="Back" 
+                <Button Text="Retour" 
                         Command="{Binding GoBackCommand}"
                         BackgroundColor="{StaticResource Primary}"
                         TextColor="White"
