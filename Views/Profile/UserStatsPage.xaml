@@ -64,7 +64,7 @@
 
                 <!-- UI/UX Improvement: Enhanced Error State -->
                 <Frame IsVisible="{Binding IsError}"
-                       BackgroundColor="{StaticResource Danger}"
+                       BackgroundColor="{StaticResource Error}"
                        CornerRadius="12"
                        Padding="20"
                        HasShadow="False">
@@ -82,7 +82,7 @@
                         <Button Text="Réessayer"
                                 Command="{Binding RefreshCommand}"
                                 BackgroundColor="White"
-                                TextColor="{StaticResource Danger}"
+                                TextColor="{StaticResource Error}"
                                 CornerRadius="8"
                                 HorizontalOptions="Center"
                                 WidthRequest="120" />
@@ -106,7 +106,7 @@
                                    HorizontalTextAlignment="Center" />
                         
                             <!-- UI/UX Improvement: Enhanced User Status Display -->
-                            <Frame BackgroundColor="#FFFFFF20" 
+                            <Frame BackgroundColor="{StaticResource PrimaryDark}" 
                                    CornerRadius="12" 
                                    Padding="12,8" 
                                    HasShadow="False"
@@ -145,7 +145,7 @@
                                 <!-- UI/UX Improvement: Enhanced Progress Section -->
                                 <StackLayout Spacing="8">
                                     <!-- UI/UX Improvement: Enhanced Progress Bar -->
-                                    <Frame BackgroundColor="#FFFFFF30" 
+                                    <Frame BackgroundColor="{StaticResource PrimaryDark}" 
                                            CornerRadius="8" 
                                            Padding="4" 
                                            HasShadow="False"
@@ -163,7 +163,7 @@
                                         <!-- UI/UX Improvement: Accessible Progress Milestones -->
                                         <!-- 10 spots milestone -->
                                         <StackLayout Grid.Column="0" HorizontalOptions="Center">
-                                            <Frame BackgroundColor="{StaticResource Warning}" 
+                                            <Frame BackgroundColor="{StaticResource CoralRed}" 
                                                    CornerRadius="12" 
                                                    WidthRequest="24" 
                                                    HeightRequest="24" 
@@ -185,7 +185,7 @@
                                         
                                         <!-- 25 spots milestone -->
                                         <StackLayout Grid.Column="1" HorizontalOptions="Center">
-                                            <Frame BackgroundColor="#CD7F32" 
+                                            <Frame BackgroundColor="{StaticResource SandyBeige}" 
                                                    CornerRadius="12" 
                                                    WidthRequest="24" 
                                                    HeightRequest="24" 
@@ -193,7 +193,7 @@
                                                    HasShadow="False">
                                                 <Label Text="25" 
                                                        FontSize="10" 
-                                                       TextColor="White" 
+                                                       TextColor="{StaticResource TextPrimary}" 
                                                        FontAttributes="Bold"
                                                        HorizontalTextAlignment="Center"
                                                        VerticalTextAlignment="Center" />
@@ -207,7 +207,7 @@
                                         
                                         <!-- 50 spots milestone -->
                                         <StackLayout Grid.Column="2" HorizontalOptions="Center">
-                                            <Frame BackgroundColor="#C0C0C0" 
+                                            <Frame BackgroundColor="{StaticResource Accent}" 
                                                    CornerRadius="12" 
                                                    WidthRequest="24" 
                                                    HeightRequest="24" 
@@ -284,7 +284,7 @@
                             </StackLayout>
 
                             <!-- UI/UX Improvement: Enhanced Validated Spots Highlight -->
-                            <Frame BackgroundColor="#FFFFFF20" 
+                            <Frame BackgroundColor="{StaticResource PrimaryDark}" 
                                    CornerRadius="16" 
                                    Padding="20" 
                                    HasShadow="False"
@@ -331,7 +331,7 @@
                                            Spacing="8">
                                     <Label Text="{Binding UserStats.PendingSpots}"
                                            Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource Warning}" />
+                                           TextColor="{StaticResource CoralRed}" />
                                     <Label Text="En Attente"
                                            Style="{StaticResource StatLabelStyle}" />
                                 </StackLayout>
@@ -371,7 +371,7 @@
                                            Spacing="8">
                                     <Label Text="{Binding UserStats.ContributionScore}"
                                            Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource Warning}" />
+                                           TextColor="{StaticResource CoralRed}" />
                                     <Label Text="Score de Contribution"
                                            Style="{StaticResource StatLabelStyle}" />
                                 </StackLayout>
@@ -405,7 +405,7 @@
                                            Spacing="8">
                                     <Label Text="{Binding MaxDepthDisplay}"
                                            Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource Danger}" />
+                                           TextColor="{StaticResource Error}" />
                                     <Label Text="Profondeur Maximale"
                                            Style="{StaticResource StatLabelStyle}" />
                                 </StackLayout>
