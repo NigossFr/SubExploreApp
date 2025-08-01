@@ -9,7 +9,6 @@
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Map"
     xmlns:common="clr-namespace:SubExplore.Views.Common"
     xmlns:domain="clr-namespace:SubExplore.Models.Domain"
-    xmlns:menu="clr-namespace:SubExplore.Models.Menu"
     x:DataType="viewmodels:MapViewModel"
     Title="Carte"
     BackgroundColor="{StaticResource Background}">
@@ -18,8 +17,6 @@
         <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
         <converters:ResponsiveFontSizeConverter x:Key="ResponsiveFontSizeConverter" />
         <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />
-        <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
-        <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
     </ContentPage.Resources>
 
 
@@ -29,48 +26,10 @@
 
     <Grid>
         <!-- Main Content -->
-        <Grid RowDefinitions="Auto,Auto,*">
-            <!-- Page Header with Menu Icon -->
-            <Frame Grid.Row="0" 
-               BackgroundColor="{StaticResource Primary}"
-               BorderColor="Transparent"
-               CornerRadius="0"
-               Padding="15,10"
-               HasShadow="True">
-            <Grid ColumnDefinitions="*,Auto,Auto">
-                
-                <!-- Page Title -->
-                <Label Grid.Column="0"
-                       Text="{Binding Title}"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="White"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       AutomationId="PageTitle"
-                       SemanticProperties.Description="Titre de la page actuelle" />
-                
-                <!-- Menu Icon Button -->
-                <Button Grid.Column="1"
-                        x:Name="MenuButton"
-                        Text="👤"
-                        BackgroundColor="Transparent"
-                        BorderColor="Transparent"
-                        TextColor="White"
-                        FontSize="20"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        CornerRadius="22"
-                        Padding="0"
-                        Command="{Binding ToggleMenuCommand}"
-                        AutomationId="UserMenuButton"
-                        SemanticProperties.Description="Ouvrir le menu utilisateur"
-                        SemanticProperties.Hint="Appuyez pour ouvrir le menu utilisateur avec profil et navigation" />
-            </Grid>
-        </Frame>
+        <Grid RowDefinitions="Auto,*">
         
         <!-- Search Bar -->
-        <Frame Grid.Row="1" 
+        <Frame Grid.Row="0" 
                BackgroundColor="{StaticResource Surface}"
                BorderColor="{StaticResource Secondary}"
                CornerRadius="25"
@@ -78,8 +37,7 @@
                HasShadow="True"
                Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
                AutomationId="SearchFrame"
-               SemanticProperties.Description="Zone de recherche de spots"
-               IsVisible="{Binding IsMenuOpen, Converter={StaticResource InvertBoolConverter}}">
+               SemanticProperties.Description="Zone de recherche de spots">
             <Grid ColumnDefinitions="*,Auto">
                 <Entry Grid.Column="0"
                        x:Name="SearchEntry"
@@ -115,7 +73,7 @@
             </Grid>
         </Frame>
         
-        <RefreshView Grid.Row="2" Command="{Binding LoadSpotsCommand}" IsRefreshing="{Binding IsBusy}" IsVisible="{Binding IsMenuOpen, Converter={StaticResource InvertBoolConverter}}">
+        <RefreshView Grid.Row="1" Command="{Binding LoadSpotsCommand}" IsRefreshing="{Binding IsBusy}">
             <Grid RowDefinitions="Auto,*,Auto">
                 
                 <!--  Barre de filtres intégrée  -->
@@ -344,170 +302,6 @@
                 </StackLayout>
             </Frame>
         </Grid>
-        </Grid>
-        
-        <!-- Menu Overlay - Now at top level -->
-        <Grid IsVisible="{Binding IsMenuOpen}">
-            <!-- Menu Background -->
-            <BoxView BackgroundColor="Black" Opacity="0.3">
-                <BoxView.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ToggleMenuCommand}" />
-                </BoxView.GestureRecognizers>
-            </BoxView>
-            
-            <!-- Menu Content -->
-            <Frame BackgroundColor="{StaticResource Background}"
-                   BorderColor="{StaticResource Secondary}"
-                   CornerRadius="20"
-                   Padding="0"
-                   HorizontalOptions="Start"
-                   VerticalOptions="FillAndExpand"
-                   WidthRequest="320"
-                   HasShadow="True">
-                
-                <ScrollView>
-                    <StackLayout Spacing="0">
-                        
-                        <!-- User Header -->
-                        <Frame BackgroundColor="{StaticResource Primary}"
-                               Padding="20"
-                               CornerRadius="0"
-                               HasShadow="False">
-                            <Grid ColumnDefinitions="60,*,Auto">
-                                
-                                <!-- User Avatar -->
-                                <Frame Grid.Column="0"
-                                       BackgroundColor="White"
-                                       CornerRadius="30"
-                                       Padding="0"
-                                       WidthRequest="60"
-                                       HeightRequest="60"
-                                       HasShadow="False">
-                                    <Label Text="👤" FontSize="40" HorizontalOptions="Center" VerticalOptions="Center" />
-                                </Frame>
-                                
-                                <!-- User Info -->
-                                <StackLayout Grid.Column="1"
-                                           Margin="15,0,0,0"
-                                           VerticalOptions="Center">
-                                    <Label Text="{Binding UserDisplayName}"
-                                           FontSize="18"
-                                           FontAttributes="Bold"
-                                           TextColor="White" />
-                                    <Label Text="{Binding UserEmail}"
-                                           FontSize="14"
-                                           TextColor="White"
-                                           Opacity="0.8" />
-                                </StackLayout>
-                                
-                                <!-- Close Button -->
-                                <Button Grid.Column="2"
-                                        Text="✕"
-                                        FontSize="18"
-                                        BackgroundColor="Transparent"
-                                        TextColor="White"
-                                        Command="{Binding ToggleMenuCommand}"
-                                        WidthRequest="40"
-                                        HeightRequest="40"
-                                        CornerRadius="20" />
-                            </Grid>
-                        </Frame>
-                        
-                        <!-- Menu Sections -->
-                        <CollectionView ItemsSource="{Binding MenuSections}"
-                                      SelectionMode="None"
-                                      BackgroundColor="Transparent">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="menu:MenuSection">
-                                    <StackLayout>
-                                        
-                                        <!-- Section Title -->
-                                        <Label Text="{Binding Title}"
-                                               FontSize="14"
-                                               FontAttributes="Bold"
-                                               TextColor="{StaticResource Primary}"
-                                               Margin="15,15,15,5" />
-                                        
-                                        <!-- Section Items -->
-                                        <CollectionView ItemsSource="{Binding Items}"
-                                                      SelectionMode="None"
-                                                      BackgroundColor="Transparent">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate x:DataType="menu:MenuItem">
-                                                    <Frame BackgroundColor="Transparent"
-                                                           BorderColor="Transparent"
-                                                           Padding="15,10"
-                                                           Margin="5,2"
-                                                           CornerRadius="8"
-                                                           HasShadow="False">
-                                                        <Frame.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Command}" />
-                                                        </Frame.GestureRecognizers>
-                                                        
-                                                        <Grid ColumnDefinitions="40,*">
-                                                            
-                                                            <!-- Icon -->
-                                                            <Label Grid.Column="0"
-                                                                   Text="{Binding Icon}"
-                                                                   FontSize="20"
-                                                                   HorizontalOptions="Center"
-                                                                   VerticalOptions="Center" />
-                                                            
-                                                            <!-- Title and Description -->
-                                                            <StackLayout Grid.Column="1"
-                                                                       Margin="10,0,0,0"
-                                                                       VerticalOptions="Center">
-                                                                <Label Text="{Binding Title}"
-                                                                       FontSize="16"
-                                                                       TextColor="{StaticResource TextPrimary}"
-                                                                       VerticalOptions="Center" />
-                                                                <Label Text="{Binding Description}"
-                                                                       FontSize="12"
-                                                                       TextColor="{StaticResource TextSecondary}"
-                                                                       VerticalOptions="Center"
-                                                                       IsVisible="{Binding Description, Converter={StaticResource StringNotEmptyConverter}}" />
-                                                            </StackLayout>
-                                                        </Grid>
-                                                    </Frame>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </StackLayout>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-                        
-                        <!-- Logout Button -->
-                        <Frame BackgroundColor="{StaticResource Accent}"
-                               BorderColor="{StaticResource Accent}"
-                               Padding="15,10"
-                               Margin="15,20,15,15"
-                               CornerRadius="8"
-                               HasShadow="False">
-                            <Frame.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding LogoutCommand}" />
-                            </Frame.GestureRecognizers>
-                            
-                            <Grid ColumnDefinitions="40,*">
-                                <Label Grid.Column="0"
-                                       Text="🚪"
-                                       FontSize="20"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center" />
-                                
-                                <Label Grid.Column="1"
-                                       Text="Déconnexion"
-                                       FontSize="16"
-                                       FontAttributes="Bold"
-                                       TextColor="White"
-                                       Margin="10,0,0,0"
-                                       VerticalOptions="Center" />
-                            </Grid>
-                        </Frame>
-                        
-                    </StackLayout>
-                </ScrollView>
-            </Frame>
         </Grid>
         
         <!-- Spot Detail Mini Window - At root level for proper Z-order -->
