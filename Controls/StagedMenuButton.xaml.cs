@@ -7,6 +7,8 @@ public partial class StagedMenuButton : ContentView
     public StagedMenuButton()
     {
         InitializeComponent();
+        UpdateAccessibilityProperties();
+        SetupKeyboardNavigation();
     }
 
     #region Bindable Properties
@@ -239,6 +241,70 @@ public partial class StagedMenuButton : ContentView
     // Event
     public event EventHandler<StagedMenuButtonTappedEventArgs>? Tapped;
 
+    // Accessibility Properties
+    public static readonly BindableProperty AccessibilityNameProperty = BindableProperty.Create(
+        nameof(AccessibilityName), typeof(string), typeof(StagedMenuButton), string.Empty);
+
+    public string AccessibilityName
+    {
+        get => (string)GetValue(AccessibilityNameProperty);
+        set => SetValue(AccessibilityNameProperty, value);
+    }
+
+    public static readonly BindableProperty AccessibilityDescriptionProperty = BindableProperty.Create(
+        nameof(AccessibilityDescription), typeof(string), typeof(StagedMenuButton), string.Empty);
+
+    public string AccessibilityDescription
+    {
+        get => (string)GetValue(AccessibilityDescriptionProperty);
+        set => SetValue(AccessibilityDescriptionProperty, value);
+    }
+
+    public static readonly BindableProperty AccessibilityRoleProperty = BindableProperty.Create(
+        nameof(AccessibilityRole), typeof(string), typeof(StagedMenuButton), "Button");
+
+    public string AccessibilityRole
+    {
+        get => (string)GetValue(AccessibilityRoleProperty);
+        set => SetValue(AccessibilityRoleProperty, value);
+    }
+
+    public static readonly BindableProperty AccessibilityHintProperty = BindableProperty.Create(
+        nameof(AccessibilityHint), typeof(string), typeof(StagedMenuButton), string.Empty);
+
+    public string AccessibilityHint
+    {
+        get => (string)GetValue(AccessibilityHintProperty);
+        set => SetValue(AccessibilityHintProperty, value);
+    }
+
+    public static readonly BindableProperty SemanticHeadingLevelProperty = BindableProperty.Create(
+        nameof(SemanticHeadingLevel), typeof(SemanticHeadingLevel), typeof(StagedMenuButton), SemanticHeadingLevel.None);
+
+    public SemanticHeadingLevel SemanticHeadingLevel
+    {
+        get => (SemanticHeadingLevel)GetValue(SemanticHeadingLevelProperty);
+        set => SetValue(SemanticHeadingLevelProperty, value);
+    }
+
+    public static readonly BindableProperty TitleSemanticLevelProperty = BindableProperty.Create(
+        nameof(TitleSemanticLevel), typeof(SemanticHeadingLevel), typeof(StagedMenuButton), SemanticHeadingLevel.Level3);
+
+    public SemanticHeadingLevel TitleSemanticLevel
+    {
+        get => (SemanticHeadingLevel)GetValue(TitleSemanticLevelProperty);
+        set => SetValue(TitleSemanticLevelProperty, value);
+    }
+
+    public static readonly BindableProperty IconAccessibilityTextProperty = BindableProperty.Create(
+        nameof(IconAccessibilityText), typeof(string), typeof(StagedMenuButton), string.Empty);
+
+    public string IconAccessibilityText
+    {
+        get => (string)GetValue(IconAccessibilityTextProperty);
+        set => SetValue(IconAccessibilityTextProperty, value);
+    }
+
     #endregion
 
     #region Event Handlers
@@ -263,61 +329,73 @@ public partial class StagedMenuButton : ContentView
         if (bindable is StagedMenuButton button && newValue is MenuButtonStage stage)
         {
             button.UpdateStageVisuals(stage);
+            button.UpdateAccessibilityProperties();
         }
     }
 
     private void UpdateStageVisuals(MenuButtonStage stage)
     {
-        // Update text colors based on stage
+        var isDarkTheme = Application.Current?.RequestedTheme == AppTheme.Dark;
+        var isHighContrast = IsHighContrastMode();
+        
+        // Update text colors based on stage with high contrast support
         switch (stage)
         {
             case MenuButtonStage.Active:
-                TitleColor = Colors.White;
-                DescriptionColor = Color.FromArgb("#CCFFFFFF");
-                IconColor = Application.Current?.RequestedTheme == AppTheme.Dark ? Colors.Black : Colors.Black;
-                StageIndicatorColor = Colors.White;
+                TitleColor = isHighContrast ? Colors.White : Colors.White;
+                DescriptionColor = isHighContrast ? Color.FromArgb("#FFFFFF") : Color.FromArgb("#CCFFFFFF");
+                IconColor = isHighContrast ? Colors.White : Colors.Black;
+                StageIndicatorColor = isHighContrast ? Colors.White : Colors.White;
                 break;
 
             case MenuButtonStage.Warning:
-                TitleColor = Colors.White;
-                DescriptionColor = Color.FromArgb("#CCFFFFFF");
-                IconColor = Application.Current?.RequestedTheme == AppTheme.Dark ? Colors.Black : Colors.Black;
-                StageIndicatorColor = Colors.White;
+                TitleColor = isHighContrast ? Colors.Black : Colors.White;
+                DescriptionColor = isHighContrast ? Colors.Black : Color.FromArgb("#CCFFFFFF");
+                IconColor = isHighContrast ? Colors.Black : Colors.Black;
+                StageIndicatorColor = isHighContrast ? Colors.Black : Colors.White;
                 break;
 
             case MenuButtonStage.Success:
-                TitleColor = Colors.White;
-                DescriptionColor = Color.FromArgb("#CCFFFFFF");
-                IconColor = Application.Current?.RequestedTheme == AppTheme.Dark ? Colors.Black : Colors.Black;
-                StageIndicatorColor = Colors.White;
+                TitleColor = isHighContrast ? Colors.White : Colors.White;
+                DescriptionColor = isHighContrast ? Colors.White : Color.FromArgb("#CCFFFFFF");
+                IconColor = isHighContrast ? Colors.White : Colors.Black;
+                StageIndicatorColor = isHighContrast ? Colors.White : Colors.White;
                 break;
 
             case MenuButtonStage.Error:
-                TitleColor = Colors.White;
-                DescriptionColor = Color.FromArgb("#CCFFFFFF");
-                IconColor = Application.Current?.RequestedTheme == AppTheme.Dark ? Colors.Black : Colors.Black;
-                StageIndicatorColor = Colors.White;
+                TitleColor = isHighContrast ? Colors.White : Colors.White;
+                DescriptionColor = isHighContrast ? Colors.White : Color.FromArgb("#CCFFFFFF");
+                IconColor = isHighContrast ? Colors.White : Colors.Black;
+                StageIndicatorColor = isHighContrast ? Colors.White : Colors.White;
                 break;
 
             case MenuButtonStage.Disabled:
-                TitleColor = Colors.Gray;
-                DescriptionColor = Colors.LightGray;
-                IconColor = Colors.Gray;
-                StageIndicatorColor = Colors.Gray;
+                TitleColor = isHighContrast ? Color.FromArgb("#808080") : Colors.Gray;
+                DescriptionColor = isHighContrast ? Color.FromArgb("#606060") : Colors.LightGray;
+                IconColor = isHighContrast ? Color.FromArgb("#808080") : Colors.Gray;
+                StageIndicatorColor = isHighContrast ? Color.FromArgb("#808080") : Colors.Gray;
                 break;
 
             case MenuButtonStage.Default:
             default:
-                // Use theme-based colors
-                if (Application.Current?.Resources.TryGetValue("TextPrimary", out var primaryColor) == true && primaryColor is Color primary)
-                    TitleColor = primary;
+                // Use theme-based colors with high contrast support
+                if (isHighContrast)
+                {
+                    TitleColor = isDarkTheme ? Colors.White : Colors.Black;
+                    DescriptionColor = isDarkTheme ? Color.FromArgb("#CCCCCC") : Color.FromArgb("#333333");
+                }
                 else
-                    TitleColor = Application.Current?.RequestedTheme == AppTheme.Dark ? Colors.White : Colors.Black;
+                {
+                    if (Application.Current?.Resources.TryGetValue("TextPrimary", out var primaryColor) == true && primaryColor is Color primary)
+                        TitleColor = primary;
+                    else
+                        TitleColor = isDarkTheme ? Colors.White : Colors.Black;
 
-                if (Application.Current?.Resources.TryGetValue("TextSecondary", out var secondaryColor) == true && secondaryColor is Color secondary)
-                    DescriptionColor = secondary;
-                else
-                    DescriptionColor = Colors.Gray;
+                    if (Application.Current?.Resources.TryGetValue("TextSecondary", out var secondaryColor) == true && secondaryColor is Color secondary)
+                        DescriptionColor = secondary;
+                    else
+                        DescriptionColor = Colors.Gray;
+                }
 
                 IconColor = TitleColor;
                 StageIndicatorColor = DescriptionColor;
@@ -348,6 +426,117 @@ public partial class StagedMenuButton : ContentView
                 break;
         }
     }
+
+    private bool IsHighContrastMode()
+    {
+        // Check if high contrast mode is enabled
+        // This is a simplified check - in a real app, you'd check system settings
+        try
+        {
+            return Application.Current?.Resources.ContainsKey("HighContrast") == true &&
+                   Application.Current.Resources.TryGetValue("HighContrast", out var value) &&
+                   value is bool isHighContrast && isHighContrast;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void UpdateAccessibilityProperties()
+    {
+        // Update accessibility name if not explicitly set
+        if (string.IsNullOrEmpty(AccessibilityName))
+        {
+            var stageName = Stage switch
+            {
+                MenuButtonStage.Active => "actif",
+                MenuButtonStage.Warning => "attention",
+                MenuButtonStage.Success => "succès",
+                MenuButtonStage.Error => "erreur",
+                MenuButtonStage.Disabled => "désactivé",
+                _ => "défaut"
+            };
+            
+            AccessibilityName = $"{Title}, état {stageName}";
+        }
+
+        // Update accessibility description if not explicitly set
+        if (string.IsNullOrEmpty(AccessibilityDescription))
+        {
+            var description = !string.IsNullOrEmpty(Description) ? Description : "";
+            
+            if (ShowBadge && !string.IsNullOrEmpty(BadgeText))
+            {
+                description += $" Badge: {BadgeText}";
+            }
+            
+            var actionHint = Stage == MenuButtonStage.Disabled ? "" : ", appuyez deux fois pour activer";
+            AccessibilityDescription = $"{description}{actionHint}".Trim();
+        }
+
+        // Update icon accessibility text if not explicitly set
+        if (string.IsNullOrEmpty(IconAccessibilityText) && !string.IsNullOrEmpty(Icon))
+        {
+            IconAccessibilityText = $"Icône {Icon}";
+        }
+
+        // Update accessibility hint based on stage
+        if (string.IsNullOrEmpty(AccessibilityHint))
+        {
+            AccessibilityHint = Stage switch
+            {
+                MenuButtonStage.Warning => "Attention requise",
+                MenuButtonStage.Error => "Erreur détectée",
+                MenuButtonStage.Success => "Terminé avec succès",
+                MenuButtonStage.Disabled => "Non disponible",
+                _ => "Élément de menu"
+            };
+        }
+    }
+
+    private void SetupKeyboardNavigation()
+    {
+        // Add keyboard event handlers for the main frame
+        this.Loaded += OnControlLoaded;
+    }
+    
+    private void OnControlLoaded(object? sender, EventArgs e)
+    {
+        // Setup focus handling on the button frame
+        var buttonFrame = this.FindByName<Frame>("ButtonFrame");
+        if (buttonFrame != null)
+        {
+            buttonFrame.Focused += OnFocused;
+            buttonFrame.Unfocused += OnUnfocused;
+        }
+    }
+
+    private void OnFocused(object? sender, FocusEventArgs e)
+    {
+        // Update visual state for focus
+        if (ButtonFrame != null)
+        {
+            ButtonFrame.BorderColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+                ? Colors.White 
+                : Colors.Black;
+            ButtonFrame.HasShadow = true;
+        }
+        
+        // Announce focus for screen readers
+        SemanticScreenReader.Announce($"Focus sur {AccessibilityName}");
+    }
+
+    private void OnUnfocused(object? sender, FocusEventArgs e)
+    {
+        // Reset visual state
+        if (ButtonFrame != null)
+        {
+            ButtonFrame.BorderColor = ButtonBorderColor;
+            ButtonFrame.HasShadow = false;
+        }
+    }
+
 
     #endregion
 }

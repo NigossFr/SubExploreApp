@@ -2,7 +2,8 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SubExplore.Controls.StagedMenuButton"
-             x:Name="Root">
+             x:Name="Root"
+             AutomationProperties.IsInAccessibleTree="True">
     
     <Frame x:Name="ButtonFrame"
            BackgroundColor="{Binding Source={x:Reference Root}, Path=ButtonBackgroundColor}"
@@ -10,7 +11,11 @@
            Padding="15,10"
            Margin="5,2"
            CornerRadius="8"
-           HasShadow="False">
+           HasShadow="False"
+           AutomationProperties.IsInAccessibleTree="True"
+           SemanticProperties.Hint="{Binding Source={x:Reference Root}, Path=AccessibilityHint}"
+           SemanticProperties.Description="{Binding Source={x:Reference Root}, Path=AccessibilityDescription}"
+           SemanticProperties.HeadingLevel="{Binding Source={x:Reference Root}, Path=SemanticHeadingLevel}">
         
         <Frame.Triggers>
             <!-- Stage-based visual state triggers -->
@@ -81,7 +86,9 @@
                        FontSize="16"
                        TextColor="{Binding Source={x:Reference Root}, Path=IconColor}"
                        HorizontalOptions="Center"
-                       VerticalOptions="Center" />
+                       VerticalOptions="Center"
+                       AutomationProperties.IsInAccessibleTree="False"
+                       SemanticProperties.Description="{Binding Source={x:Reference Root}, Path=IconAccessibilityText}" />
                        
                 <Frame.Triggers>
                     <!-- Stage-based icon styling -->
@@ -121,16 +128,27 @@
                        Text="{Binding Source={x:Reference Root}, Path=Title}"
                        FontSize="{Binding Source={x:Reference Root}, Path=TitleFontSize}"
                        FontAttributes="{Binding Source={x:Reference Root}, Path=TitleFontAttributes}"
-                       TextColor="{Binding Source={x:Reference Root}, Path=TitleColor}"
-                       VerticalOptions="Center" />
+                       VerticalOptions="Center"
+                       AutomationProperties.IsInAccessibleTree="False"
+                       SemanticProperties.HeadingLevel="{Binding Source={x:Reference Root}, Path=TitleSemanticLevel}">
+                    <Label.TextColor>
+                        <AppThemeBinding Light="{Binding Source={x:Reference Root}, Path=TitleColor}"
+                                         Dark="{Binding Source={x:Reference Root}, Path=TitleColor}" />
+                    </Label.TextColor>
+                </Label>
                        
                 <!-- Description -->
                 <Label x:Name="DescriptionLabel"
                        Text="{Binding Source={x:Reference Root}, Path=Description}"
                        FontSize="{Binding Source={x:Reference Root}, Path=DescriptionFontSize}"
-                       TextColor="{Binding Source={x:Reference Root}, Path=DescriptionColor}"
                        VerticalOptions="Center"
-                       IsVisible="{Binding Source={x:Reference Root}, Path=ShowDescription}" />
+                       IsVisible="{Binding Source={x:Reference Root}, Path=ShowDescription}"
+                       AutomationProperties.IsInAccessibleTree="False">
+                    <Label.TextColor>
+                        <AppThemeBinding Light="{Binding Source={x:Reference Root}, Path=DescriptionColor}"
+                                         Dark="{Binding Source={x:Reference Root}, Path=DescriptionColor}" />
+                    </Label.TextColor>
+                </Label>
                        
                 <!-- Badge/Stage Text -->
                 <Frame BackgroundColor="{Binding Source={x:Reference Root}, Path=BadgeBackgroundColor}"
@@ -145,9 +163,15 @@
                            Text="{Binding Source={x:Reference Root}, Path=BadgeText}"
                            FontSize="10"
                            FontAttributes="Bold"
-                           TextColor="{Binding Source={x:Reference Root}, Path=BadgeTextColor}"
                            HorizontalOptions="Center"
-                           VerticalOptions="Center" />
+                           VerticalOptions="Center"
+                           AutomationProperties.IsInAccessibleTree="False"
+                           SemanticProperties.Description="Badge de notification">
+                        <Label.TextColor>
+                            <AppThemeBinding Light="{Binding Source={x:Reference Root}, Path=BadgeTextColor}"
+                                             Dark="{Binding Source={x:Reference Root}, Path=BadgeTextColor}" />
+                        </Label.TextColor>
+                    </Label>
                 </Frame>
                        
             </StackLayout>
@@ -157,9 +181,15 @@
                    x:Name="StageIndicatorLabel"
                    Text="{Binding Source={x:Reference Root}, Path=StageIndicator}"
                    FontSize="14"
-                   TextColor="{Binding Source={x:Reference Root}, Path=StageIndicatorColor}"
                    VerticalOptions="Center"
-                   IsVisible="{Binding Source={x:Reference Root}, Path=ShowStageIndicator}" />
+                   IsVisible="{Binding Source={x:Reference Root}, Path=ShowStageIndicator}"
+                   AutomationProperties.IsInAccessibleTree="False"
+                   SemanticProperties.Description="Indicateur d'état">
+                <Label.TextColor>
+                    <AppThemeBinding Light="{Binding Source={x:Reference Root}, Path=StageIndicatorColor}"
+                                     Dark="{Binding Source={x:Reference Root}, Path=StageIndicatorColor}" />
+                </Label.TextColor>
+            </Label>
                    
         </Grid>
     </Frame>

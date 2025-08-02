@@ -95,4 +95,17 @@
     <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}" />
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}" />
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}" />
+
+    <!--  High Contrast Mode Support  -->
+    <x:Boolean x:Key="HighContrast">False</x:Boolean>
+    
+    <!--  High Contrast Colors  -->
+    <Color x:Key="HighContrastBackground">#FFFFFF</Color>
+    <Color x:Key="HighContrastForeground">#000000</Color>
+    <Color x:Key="HighContrastDisabled">#808080</Color>
+    <Color x:Key="HighContrastButtonText">#FFFFFF</Color>
+    <Color x:Key="HighContrastButtonBackground">#000000</Color>
+    <Color x:Key="HighContrastWarning">#FFFF00</Color>
+    <Color x:Key="HighContrastError">#FF0000</Color>
+    <Color x:Key="HighContrastSuccess">#00FF00</Color>
 </ResourceDictionary>

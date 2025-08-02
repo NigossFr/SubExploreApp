@@ -103,7 +103,11 @@
                         ShowDescription="True"
                         ShowBadge="False"
                         Tapped="OnMenuButtonTapped"
-                        CommandParameter="///map" />
+                        CommandParameter="///map"
+                        AccessibilityName="Carte, explorer les spots de plongée"
+                        AccessibilityDescription="Afficher la carte avec tous les spots de plongée disponibles"
+                        AccessibilityHint="Appuyez deux fois pour ouvrir la carte"
+                        IconAccessibilityText="Icône de carte" />
                     
                     <!-- Mes Spots Section -->
                     <Label Text="Mes Spots"
@@ -122,7 +126,11 @@
                         ShowDescription="True"
                         ShowBadge="False"
                         Tapped="OnMenuButtonTapped"
-                        CommandParameter="///myspots" />
+                        CommandParameter="///myspots"
+                        AccessibilityName="Mes Spots, voir vos spots créés"
+                        AccessibilityDescription="Afficher la liste des spots de plongée que vous avez ajoutés"
+                        AccessibilityHint="Appuyez deux fois pour voir vos spots"
+                        IconAccessibilityText="Icône de localisation" />
                     
                     <!-- Favoris -->
                     <controls:StagedMenuButton 
@@ -134,7 +142,11 @@
                         ShowDescription="True"
                         ShowBadge="False"
                         Tapped="OnMenuButtonTapped"
-                        CommandParameter="///favorites" />
+                        CommandParameter="///favorites"
+                        AccessibilityName="Favoris, vos spots préférés"
+                        AccessibilityDescription="Afficher vos spots de plongée favoris sauvegardés"
+                        AccessibilityHint="Appuyez deux fois pour voir vos favoris"
+                        IconAccessibilityText="Icône d'étoile" />
                     
                     <!-- Profil Section -->
                     <Label Text="Profil"
@@ -197,7 +209,11 @@
                         ShowBadge="True"
                         BadgeText="3"
                         Tapped="OnMenuButtonTapped"
-                        CommandParameter="///spotvalidation" />
+                        CommandParameter="///spotvalidation"
+                        AccessibilityName="Validation des Spots, administration, attention requise"
+                        AccessibilityDescription="Gérer et valider les spots soumis par les utilisateurs. 3 spots en attente de validation"
+                        AccessibilityHint="Appuyez deux fois pour accéder à l'administration"
+                        IconAccessibilityText="Icône de balance de justice" />
                     
                     <!-- Logout Button -->
                     <controls:StagedMenuButton 
