@@ -157,6 +157,7 @@ namespace SubExplore
             }
         }
         
+        
         protected override void OnAppearing()
         {
             base.OnAppearing();

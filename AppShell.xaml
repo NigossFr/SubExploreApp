@@ -10,7 +10,6 @@
     xmlns:profile="clr-namespace:SubExplore.Views.Profile"
     xmlns:admin="clr-namespace:SubExplore.Views.Admin"
     Shell.FlyoutBehavior="Flyout"
-    FlyoutIcon="menu.png"
     FlyoutBackgroundColor="{StaticResource Primary}"
     FlyoutHeaderBehavior="CollapseOnScroll"
     Title="SubExplore">
@@ -63,7 +62,7 @@
                            WidthRequest="60"
                            HeightRequest="60"
                            HasShadow="False">
-                        <Label Text="👤" FontSize="40" HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Label Text="👤" FontSize="30" HorizontalOptions="Center" VerticalOptions="Center" />
                     </Frame>
                 </Grid>
             </Frame>
@@ -94,26 +93,16 @@
                             <TapGestureRecognizer Tapped="OnNavigateToMap" />
                         </Frame.GestureRecognizers>
                         
-                        <Grid ColumnDefinitions="40,*">
-                            <Label Grid.Column="0"
-                                   Text="🗺️"
-                                   FontSize="20"
-                                   HorizontalOptions="Center"
+                        <StackLayout VerticalOptions="Center">
+                            <Label Text="Carte"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
                                    VerticalOptions="Center" />
-                            
-                            <StackLayout Grid.Column="1"
-                                       Margin="10,0,0,0"
-                                       VerticalOptions="Center">
-                                <Label Text="Carte"
-                                       FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}"
-                                       VerticalOptions="Center" />
-                                <Label Text="Explorer les spots de plongée"
-                                       FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}"
-                                       VerticalOptions="Center" />
-                            </StackLayout>
-                        </Grid>
+                            <Label Text="Explorer les spots de plongée"
+                                   FontSize="12"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
                     </Frame>
                     
                     <!-- Mes Spots Section -->
@@ -134,26 +123,16 @@
                             <TapGestureRecognizer Tapped="OnNavigateToMySpots" />
                         </Frame.GestureRecognizers>
                         
-                        <Grid ColumnDefinitions="40,*">
-                            <Label Grid.Column="0"
-                                   Text="📍"
-                                   FontSize="20"
-                                   HorizontalOptions="Center"
+                        <StackLayout VerticalOptions="Center">
+                            <Label Text="Mes Spots"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
                                    VerticalOptions="Center" />
-                            
-                            <StackLayout Grid.Column="1"
-                                       Margin="10,0,0,0"
-                                       VerticalOptions="Center">
-                                <Label Text="Mes Spots"
-                                       FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}"
-                                       VerticalOptions="Center" />
-                                <Label Text="Spots que vous avez créés"
-                                       FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}"
-                                       VerticalOptions="Center" />
-                            </StackLayout>
-                        </Grid>
+                            <Label Text="Spots que vous avez créés"
+                                   FontSize="12"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
                     </Frame>
                     
                     <!-- Favoris -->
@@ -167,26 +146,16 @@
                             <TapGestureRecognizer Tapped="OnNavigateToFavorites" />
                         </Frame.GestureRecognizers>
                         
-                        <Grid ColumnDefinitions="40,*">
-                            <Label Grid.Column="0"
-                                   Text="⭐"
-                                   FontSize="20"
-                                   HorizontalOptions="Center"
+                        <StackLayout VerticalOptions="Center">
+                            <Label Text="Favoris"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
                                    VerticalOptions="Center" />
-                            
-                            <StackLayout Grid.Column="1"
-                                       Margin="10,0,0,0"
-                                       VerticalOptions="Center">
-                                <Label Text="Favoris"
-                                       FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}"
-                                       VerticalOptions="Center" />
-                                <Label Text="Vos spots préférés"
-                                       FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}"
-                                       VerticalOptions="Center" />
-                            </StackLayout>
-                        </Grid>
+                            <Label Text="Vos spots préférés"
+                                   FontSize="12"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
                     </Frame>
                     
                     <!-- Profil Section -->
@@ -207,26 +176,16 @@
                             <TapGestureRecognizer Tapped="OnNavigateToProfile" />
                         </Frame.GestureRecognizers>
                         
-                        <Grid ColumnDefinitions="40,*">
-                            <Label Grid.Column="0"
-                                   Text="👤"
-                                   FontSize="20"
-                                   HorizontalOptions="Center"
+                        <StackLayout VerticalOptions="Center">
+                            <Label Text="Profil"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
                                    VerticalOptions="Center" />
-                            
-                            <StackLayout Grid.Column="1"
-                                       Margin="10,0,0,0"
-                                       VerticalOptions="Center">
-                                <Label Text="Profil"
-                                       FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}"
-                                       VerticalOptions="Center" />
-                                <Label Text="Votre profil utilisateur"
-                                       FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}"
-                                       VerticalOptions="Center" />
-                            </StackLayout>
-                        </Grid>
+                            <Label Text="Votre profil utilisateur"
+                                   FontSize="12"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
                     </Frame>
                     
                     <!-- Préférences -->
@@ -240,26 +199,16 @@
                             <TapGestureRecognizer Tapped="OnNavigateToPreferences" />
                         </Frame.GestureRecognizers>
                         
-                        <Grid ColumnDefinitions="40,*">
-                            <Label Grid.Column="0"
-                                   Text="⚙️"
-                                   FontSize="20"
-                                   HorizontalOptions="Center"
+                        <StackLayout VerticalOptions="Center">
+                            <Label Text="Préférences"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
                                    VerticalOptions="Center" />
-                            
-                            <StackLayout Grid.Column="1"
-                                       Margin="10,0,0,0"
-                                       VerticalOptions="Center">
-                                <Label Text="Préférences"
-                                       FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}"
-                                       VerticalOptions="Center" />
-                                <Label Text="Paramètres de l'application"
-                                       FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}"
-                                       VerticalOptions="Center" />
-                            </StackLayout>
-                        </Grid>
+                            <Label Text="Paramètres de l'application"
+                                   FontSize="12"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
                     </Frame>
                     
                     <!-- Statistiques -->
@@ -273,26 +222,16 @@
                             <TapGestureRecognizer Tapped="OnNavigateToStats" />
                         </Frame.GestureRecognizers>
                         
-                        <Grid ColumnDefinitions="40,*">
-                            <Label Grid.Column="0"
-                                   Text="📊"
-                                   FontSize="20"
-                                   HorizontalOptions="Center"
+                        <StackLayout VerticalOptions="Center">
+                            <Label Text="Statistiques"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
                                    VerticalOptions="Center" />
-                            
-                            <StackLayout Grid.Column="1"
-                                       Margin="10,0,0,0"
-                                       VerticalOptions="Center">
-                                <Label Text="Statistiques"
-                                       FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}"
-                                       VerticalOptions="Center" />
-                                <Label Text="Vos statistiques de plongée"
-                                       FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}"
-                                       VerticalOptions="Center" />
-                            </StackLayout>
-                        </Grid>
+                            <Label Text="Vos statistiques de plongée"
+                                   FontSize="12"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
                     </Frame>
                     
                     <!-- Administration Section (si admin) -->
@@ -313,26 +252,16 @@
                             <TapGestureRecognizer Tapped="OnNavigateToValidation" />
                         </Frame.GestureRecognizers>
                         
-                        <Grid ColumnDefinitions="40,*">
-                            <Label Grid.Column="0"
-                                   Text="⚖️"
-                                   FontSize="20"
-                                   HorizontalOptions="Center"
+                        <StackLayout VerticalOptions="Center">
+                            <Label Text="Validation des Spots"
+                                   FontSize="16"
+                                   TextColor="{StaticResource TextPrimary}"
                                    VerticalOptions="Center" />
-                            
-                            <StackLayout Grid.Column="1"
-                                       Margin="10,0,0,0"
-                                       VerticalOptions="Center">
-                                <Label Text="Validation des Spots"
-                                       FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}"
-                                       VerticalOptions="Center" />
-                                <Label Text="Administration des spots"
-                                       FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}"
-                                       VerticalOptions="Center" />
-                            </StackLayout>
-                        </Grid>
+                            <Label Text="Administration des spots"
+                                   FontSize="12"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
                     </Frame>
                     
                     <!-- Logout Button -->
@@ -346,21 +275,12 @@
                             <TapGestureRecognizer Tapped="OnLogout" />
                         </Frame.GestureRecognizers>
                         
-                        <Grid ColumnDefinitions="40,*">
-                            <Label Grid.Column="0"
-                                   Text="🚪"
-                                   FontSize="20"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center" />
-                            
-                            <Label Grid.Column="1"
-                                   Text="Déconnexion"
-                                   FontSize="16"
-                                   FontAttributes="Bold"
-                                   TextColor="White"
-                                   Margin="10,0,0,0"
-                                   VerticalOptions="Center" />
-                        </Grid>
+                        <Label Text="Déconnexion"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
                     </Frame>
                     
                 </StackLayout>

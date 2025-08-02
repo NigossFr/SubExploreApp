@@ -13,6 +13,7 @@
     Title="Carte"
     BackgroundColor="{StaticResource Background}">
     
+    
     <ContentPage.Resources>
         <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
         <converters:ResponsiveFontSizeConverter x:Key="ResponsiveFontSizeConverter" />

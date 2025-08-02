@@ -562,5 +562,23 @@ namespace SubExplore.Views.Map
                 ViewModel.VisibleRegion = MainMap.VisibleRegion;
             }
         }
+        
+        private async void OnMenuClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                // Ouvrir le flyout menu manuellement
+                var shell = Shell.Current;
+                if (shell != null)
+                {
+                    shell.FlyoutIsPresented = true;
+                    System.Diagnostics.Debug.WriteLine("[INFO] Menu flyout ouvert manuellement via ToolbarItem");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Erreur ouverture menu manuel: {ex.Message}");
+            }
+        }
     }
 }
