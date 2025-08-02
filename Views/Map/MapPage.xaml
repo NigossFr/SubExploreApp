@@ -27,7 +27,7 @@
 
     <Grid>
         <!-- Main Content -->
-        <Grid RowDefinitions="Auto,*">
+        <Grid RowDefinitions="Auto,*,Auto">
         
         <!-- Search Bar -->
         <Frame Grid.Row="0" 
@@ -213,40 +213,39 @@
             </StackLayout>
         </Grid>
 
-        <!--  Barre d'actions améliorée  -->
+        <!--  Barre d'actions simplifiée - Boutons colorés pleine largeur  -->
         <Grid 
             Grid.Row="2"
-            Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
-            Padding="8"
-            ColumnDefinitions="*,*,*"
+            ColumnDefinitions="*,*,*" 
             ColumnSpacing="8"
+            Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='12:15:18'}"
             AutomationId="ActionsGrid"
-            SemanticProperties.Description="Barre d'actions principales">
+            SemanticProperties.Description="Barre d'actions principales de la carte">
+            
+            <!-- Button 1: Actualiser -->
             <Button
                 Grid.Column="0"
                 Command="{Binding LoadSpotsCommand}"
-                Style="{StaticResource ButtonActionStyle}"
-                Text="Actualiser"
-                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                CornerRadius="8"
-                Padding="14,8"
+                Style="{StaticResource ButtonMapActionStyle}"
+                Text="🔄 Actualiser"
                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"
                 AutomationId="RefreshSpotsButton"
                 SemanticProperties.Description="Actualiser les spots sur la carte"
                 SemanticProperties.Hint="Appuyez pour recharger les spots depuis le serveur">
                 <Button.Triggers>
                     <DataTrigger TargetType="Button" Binding="{Binding IsBusy}" Value="True">
-                        <Setter Property="Text" Value="🔄" />
+                        <Setter Property="Text" Value="⏳ Actualiser..." />
+                        <Setter Property="IsEnabled" Value="False" />
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
+            
+            <!-- Button 2: Ma position -->
             <Button
                 Grid.Column="1"
                 Command="{Binding RefreshLocationCommand}"
-                Style="{StaticResource ButtonActionStyle}"
-                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                CornerRadius="8"
-                Padding="14,8"
+                Style="{StaticResource ButtonMapActionStyle}"
+                Text="📍 Localiser"
                 AutomationId="MyLocationButton"
                 SemanticProperties.Description="Centrer la carte sur ma position actuelle"
                 SemanticProperties.Hint="Appuyez pour obtenir votre position GPS et centrer la carte">
@@ -259,14 +258,13 @@
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
+            
+            <!-- Button 3: Nouveau spot -->
             <Button
                 Grid.Column="2"
                 Command="{Binding NavigateToAddSpotCommand}"
-                Style="{StaticResource ButtonPrimaryStyle}"
+                Style="{StaticResource ButtonMapActionStyle}"
                 Text="➕ Nouveau"
-                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                CornerRadius="8"
-                Padding="14,8"
                 AutomationId="AddSpotButton"
                 SemanticProperties.Description="Ajouter un nouveau spot de plongée"
                 SemanticProperties.Hint="Appuyez pour commencer l'ajout d'un nouveau spot" />

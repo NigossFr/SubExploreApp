@@ -289,7 +289,6 @@ public static class MauiProgram
         builder.Services.AddTransient<SpotCharacteristicsViewModel>();
         builder.Services.AddTransient<SpotPhotosViewModel>();
         builder.Services.AddTransient<UserProfileViewModel>();
-        builder.Services.AddTransient<UserPreferencesViewModel>();
         builder.Services.AddTransient<UserStatsViewModel>();
         builder.Services.AddTransient<MenuViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.FlyoutMenuViewModel>();
@@ -319,7 +318,6 @@ public static class MauiProgram
         builder.Services.AddTransient<SpotCharacteristicsView>(); // Idem
         builder.Services.AddTransient<SpotPhotosView>(); // Idem
         builder.Services.AddTransient<UserProfilePage>();
-        builder.Services.AddTransient<UserPreferencesPage>();
         builder.Services.AddTransient<UserStatsPage>();
         
         // Favorites Pages

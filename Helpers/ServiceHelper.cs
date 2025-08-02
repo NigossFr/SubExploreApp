@@ -227,7 +227,6 @@ internal class DefaultNavigationService : Services.Interfaces.INavigationService
             "MySpotsViewModel" or "MySpotsPageViewModel" => "///myspots",
             "FavoritesViewModel" or "FavoriteSpotsViewModel" => "///favorites",
             "UserProfileViewModel" or "ProfileViewModel" => "///userprofile",
-            "UserPreferencesViewModel" or "PreferencesViewModel" => "///userpreferences",
             "UserStatsViewModel" or "StatsViewModel" => "///userstats",
             "SpotValidationViewModel" or "ValidationViewModel" => "///spotvalidation",
             _ => string.Empty

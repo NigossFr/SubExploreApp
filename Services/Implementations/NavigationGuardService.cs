@@ -25,7 +25,6 @@ namespace SubExplore.Services.Implementations
 
             // Standard user pages - require authentication only
             { typeof(UserProfileViewModel), new NavigationRequirement { RequireAuthentication = true } },
-            { typeof(UserPreferencesViewModel), new NavigationRequirement { RequireAuthentication = true } },
 
             // Moderator pages - require moderator role
             { typeof(DatabaseTestViewModel), new NavigationRequirement 

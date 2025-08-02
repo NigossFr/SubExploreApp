@@ -381,7 +381,6 @@ namespace SubExplore.Services.Implementations
                 "SpotDetailsViewModel" => "///spotdetails",
                 "MySpotsViewModel" => "///myspots",
                 "UserProfileViewModel" => "///userprofile",
-                "UserPreferencesViewModel" => "///userpreferences",
                 "UserStatsViewModel" => "///userstats",
                 "SpotValidationViewModel" => "///spotvalidation",
                 _ => "///" + ConvertViewModelNameToRoute(viewModelName)
@@ -409,7 +408,6 @@ namespace SubExplore.Services.Implementations
                 "SettingsPage" => "SubExplore.Views.Settings.SettingsPage",
                 "DatabaseTestPage" => "SubExplore.Views.Settings.DatabaseTestPage",
                 "UserProfilePage" => "SubExplore.Views.Profile.UserProfilePage",
-                "UserPreferencesPage" => "SubExplore.Views.Profile.UserPreferencesPage",
                 "UserStatsPage" => "SubExplore.Views.Profile.UserStatsPage",
                 "SpotValidationPage" => "SubExplore.Views.Admin.SpotValidationPage",
                 "LoginPage" => "SubExplore.Views.Auth.LoginPage",
@@ -598,7 +596,6 @@ namespace SubExplore.Services.Implementations
                 "SpotDetailsViewModel" => "📖 Détails du Spot",
                 "MySpotsViewModel" => "📍 Mes Spots",
                 "UserProfileViewModel" => "👤 Profil",
-                "UserPreferencesViewModel" => "⚙️ Préférences",
                 "UserStatsViewModel" => "📊 Statistiques",
                 "SpotValidationViewModel" => "⚖️ Validation",
                 _ => "Accueil"
@@ -615,7 +612,6 @@ namespace SubExplore.Services.Implementations
                 "SpotDetailsViewModel" => "spotdetails", 
                 "MySpotsViewModel" => "myspots",
                 "UserProfileViewModel" => "userprofile",
-                "UserPreferencesViewModel" => "userpreferences",
                 "UserStatsViewModel" => "userstats",
                 "SpotValidationViewModel" => "spotvalidation",
                 _ => "map"

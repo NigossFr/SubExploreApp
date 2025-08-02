@@ -167,17 +167,6 @@
                         Tapped="OnMenuButtonTapped"
                         CommandParameter="///userprofile" />
                     
-                    <!-- Préférences -->
-                    <controls:StagedMenuButton 
-                        Title="Préférences"
-                        Description="Paramètres de l'application"
-                        Icon="⚙️"
-                        Stage="Default"
-                        ShowIcon="True"
-                        ShowDescription="True"
-                        ShowBadge="False"
-                        Tapped="OnMenuButtonTapped"
-                        CommandParameter="///userpreferences" />
                     
                     <!-- Statistiques -->
                     <controls:StagedMenuButton 
@@ -257,11 +246,6 @@
         Route="userprofile"
         FlyoutItemIsVisible="False" />
         
-    <ShellContent
-        Title="⚙️ Préférences"
-        ContentTemplate="{DataTemplate profile:UserPreferencesPage}"
-        Route="userpreferences"
-        FlyoutItemIsVisible="False" />
         
     <ShellContent
         Title="📊 Statistiques"
