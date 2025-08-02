@@ -292,6 +292,7 @@ public static class MauiProgram
         builder.Services.AddTransient<UserPreferencesViewModel>();
         builder.Services.AddTransient<UserStatsViewModel>();
         builder.Services.AddTransient<MenuViewModel>();
+        builder.Services.AddTransient<SubExplore.ViewModels.FlyoutMenuViewModel>();
         
         // Favorites ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Favorites.FavoriteSpotsViewModel>();

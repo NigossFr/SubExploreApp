@@ -192,6 +192,45 @@ namespace SubExplore.Helpers.Converters
         }
     }
 
+    /// <summary>
+    /// Alias for InvertBoolConverter to match XAML reference
+    /// </summary>
+    public class InvertedBoolConverter : InvertBoolConverter
+    {
+        // Same implementation as InvertBoolConverter
+    }
+
+    /// <summary>
+    /// Multi-value converter for complex visibility logic
+    /// </summary>
+    public class BooleanMultiValueConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values == null || values.Length == 0)
+                return false;
+
+            // Parameter can specify logic: "AND", "OR", "NOT_AND", "NOT_OR"
+            string logic = parameter?.ToString() ?? "NOT_AND";
+
+            bool result = logic switch
+            {
+                "AND" => values.All(v => v is bool b && b),
+                "OR" => values.Any(v => v is bool b && b),
+                "NOT_AND" => !values.All(v => v is bool b && b),
+                "NOT_OR" => !values.Any(v => v is bool b && b),
+                _ => !values.All(v => v is bool b && b) // Default: NOT_AND
+            };
+
+            return result;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class CollectionCountToHeightConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

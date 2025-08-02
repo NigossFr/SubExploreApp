@@ -9,10 +9,21 @@
     xmlns:favorites="clr-namespace:SubExplore.Views.Favorites"
     xmlns:profile="clr-namespace:SubExplore.Views.Profile"
     xmlns:admin="clr-namespace:SubExplore.Views.Admin"
+    xmlns:controls="clr-namespace:SubExplore.Controls"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels"
+    xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
     Shell.FlyoutBehavior="Flyout"
     FlyoutBackgroundColor="{StaticResource Primary}"
     FlyoutHeaderBehavior="CollapseOnScroll"
-    Title="SubExplore">
+    Title="SubExplore"
+    x:Name="AppShellRoot">
+    
+    <Shell.Resources>
+        <ResourceDictionary>
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:BooleanMultiValueConverter x:Key="BooleanMultiValueConverter" />
+        </ResourceDictionary>
+    </Shell.Resources>
 
     <!-- Navigation Header Template - Style du menu de la carte -->
     <Shell.FlyoutHeaderTemplate>
@@ -69,11 +80,11 @@
         </DataTemplate>
     </Shell.FlyoutHeaderTemplate>
     
-    <!-- Custom Flyout Content Template -->
+    <!-- Enhanced Flyout Content Template with Staged Menu Buttons -->
     <Shell.FlyoutContentTemplate>
         <DataTemplate>
             <ScrollView BackgroundColor="{StaticResource Background}">
-                <StackLayout Spacing="0">
+                <StackLayout Spacing="0" x:Name="FlyoutMenuContainer">
                     
                     <!-- Navigation Section -->
                     <Label Text="Navigation"
@@ -83,27 +94,16 @@
                            Margin="15,15,15,5" />
                     
                     <!-- Carte -->
-                    <Frame BackgroundColor="Transparent"
-                           BorderColor="Transparent"
-                           Padding="15,10"
-                           Margin="5,2"
-                           CornerRadius="8"
-                           HasShadow="False">
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNavigateToMap" />
-                        </Frame.GestureRecognizers>
-                        
-                        <StackLayout VerticalOptions="Center">
-                            <Label Text="Carte"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextPrimary}"
-                                   VerticalOptions="Center" />
-                            <Label Text="Explorer les spots de plongée"
-                                   FontSize="12"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
-                    </Frame>
+                    <controls:StagedMenuButton 
+                        Title="Carte"
+                        Description="Explorer les spots de plongée"
+                        Icon="🗺️"
+                        Stage="Default"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="False"
+                        Tapped="OnMenuButtonTapped"
+                        CommandParameter="///map" />
                     
                     <!-- Mes Spots Section -->
                     <Label Text="Mes Spots"
@@ -113,50 +113,28 @@
                            Margin="15,15,15,5" />
                     
                     <!-- Mes Spots -->
-                    <Frame BackgroundColor="Transparent"
-                           BorderColor="Transparent"
-                           Padding="15,10"
-                           Margin="5,2"
-                           CornerRadius="8"
-                           HasShadow="False">
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNavigateToMySpots" />
-                        </Frame.GestureRecognizers>
-                        
-                        <StackLayout VerticalOptions="Center">
-                            <Label Text="Mes Spots"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextPrimary}"
-                                   VerticalOptions="Center" />
-                            <Label Text="Spots que vous avez créés"
-                                   FontSize="12"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
-                    </Frame>
+                    <controls:StagedMenuButton 
+                        Title="Mes Spots"
+                        Description="Spots que vous avez créés"
+                        Icon="📍"
+                        Stage="Default"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="False"
+                        Tapped="OnMenuButtonTapped"
+                        CommandParameter="///myspots" />
                     
                     <!-- Favoris -->
-                    <Frame BackgroundColor="Transparent"
-                           BorderColor="Transparent"
-                           Padding="15,10"
-                           Margin="5,2"
-                           CornerRadius="8"
-                           HasShadow="False">
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNavigateToFavorites" />
-                        </Frame.GestureRecognizers>
-                        
-                        <StackLayout VerticalOptions="Center">
-                            <Label Text="Favoris"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextPrimary}"
-                                   VerticalOptions="Center" />
-                            <Label Text="Vos spots préférés"
-                                   FontSize="12"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
-                    </Frame>
+                    <controls:StagedMenuButton 
+                        Title="Favoris"
+                        Description="Vos spots préférés"
+                        Icon="⭐"
+                        Stage="Default"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="False"
+                        Tapped="OnMenuButtonTapped"
+                        CommandParameter="///favorites" />
                     
                     <!-- Profil Section -->
                     <Label Text="Profil"
@@ -166,75 +144,42 @@
                            Margin="15,15,15,5" />
                     
                     <!-- Profil -->
-                    <Frame BackgroundColor="Transparent"
-                           BorderColor="Transparent"
-                           Padding="15,10"
-                           Margin="5,2"
-                           CornerRadius="8"
-                           HasShadow="False">
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNavigateToProfile" />
-                        </Frame.GestureRecognizers>
-                        
-                        <StackLayout VerticalOptions="Center">
-                            <Label Text="Profil"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextPrimary}"
-                                   VerticalOptions="Center" />
-                            <Label Text="Votre profil utilisateur"
-                                   FontSize="12"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
-                    </Frame>
+                    <controls:StagedMenuButton 
+                        Title="Profil"
+                        Description="Votre profil utilisateur"
+                        Icon="👤"
+                        Stage="Default"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="False"
+                        Tapped="OnMenuButtonTapped"
+                        CommandParameter="///userprofile" />
                     
                     <!-- Préférences -->
-                    <Frame BackgroundColor="Transparent"
-                           BorderColor="Transparent"
-                           Padding="15,10"
-                           Margin="5,2"
-                           CornerRadius="8"
-                           HasShadow="False">
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNavigateToPreferences" />
-                        </Frame.GestureRecognizers>
-                        
-                        <StackLayout VerticalOptions="Center">
-                            <Label Text="Préférences"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextPrimary}"
-                                   VerticalOptions="Center" />
-                            <Label Text="Paramètres de l'application"
-                                   FontSize="12"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
-                    </Frame>
+                    <controls:StagedMenuButton 
+                        Title="Préférences"
+                        Description="Paramètres de l'application"
+                        Icon="⚙️"
+                        Stage="Default"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="False"
+                        Tapped="OnMenuButtonTapped"
+                        CommandParameter="///userpreferences" />
                     
                     <!-- Statistiques -->
-                    <Frame BackgroundColor="Transparent"
-                           BorderColor="Transparent"
-                           Padding="15,10"
-                           Margin="5,2"
-                           CornerRadius="8"
-                           HasShadow="False">
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNavigateToStats" />
-                        </Frame.GestureRecognizers>
-                        
-                        <StackLayout VerticalOptions="Center">
-                            <Label Text="Statistiques"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextPrimary}"
-                                   VerticalOptions="Center" />
-                            <Label Text="Vos statistiques de plongée"
-                                   FontSize="12"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
-                    </Frame>
+                    <controls:StagedMenuButton 
+                        Title="Statistiques"
+                        Description="Vos statistiques de plongée"
+                        Icon="📊"
+                        Stage="Default"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="False"
+                        Tapped="OnMenuButtonTapped"
+                        CommandParameter="///userstats" />
                     
-                    <!-- Administration Section (si admin) -->
+                    <!-- Administration Section -->
                     <Label Text="Administration"
                            FontSize="14"
                            FontAttributes="Bold"
@@ -242,46 +187,29 @@
                            Margin="15,15,15,5" />
                     
                     <!-- Validation des Spots -->
-                    <Frame BackgroundColor="Transparent"
-                           BorderColor="Transparent"
-                           Padding="15,10"
-                           Margin="5,2"
-                           CornerRadius="8"
-                           HasShadow="False">
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNavigateToValidation" />
-                        </Frame.GestureRecognizers>
-                        
-                        <StackLayout VerticalOptions="Center">
-                            <Label Text="Validation des Spots"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextPrimary}"
-                                   VerticalOptions="Center" />
-                            <Label Text="Administration des spots"
-                                   FontSize="12"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
-                    </Frame>
+                    <controls:StagedMenuButton 
+                        Title="Validation des Spots"
+                        Description="Administration des spots"
+                        Icon="⚖️"
+                        Stage="Warning"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="True"
+                        BadgeText="3"
+                        Tapped="OnMenuButtonTapped"
+                        CommandParameter="///spotvalidation" />
                     
                     <!-- Logout Button -->
-                    <Frame BackgroundColor="{StaticResource Accent}"
-                           BorderColor="{StaticResource Accent}"
-                           Padding="15,10"
-                           Margin="15,20,15,15"
-                           CornerRadius="8"
-                           HasShadow="False">
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnLogout" />
-                        </Frame.GestureRecognizers>
-                        
-                        <Label Text="Déconnexion"
-                               FontSize="16"
-                               FontAttributes="Bold"
-                               TextColor="White"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center" />
-                    </Frame>
+                    <controls:StagedMenuButton 
+                        Title="Déconnexion"
+                        Description=""
+                        Icon="🚪"
+                        Stage="Error"
+                        ShowIcon="True"
+                        ShowDescription="False"
+                        ShowBadge="False"
+                        Tapped="OnLogoutButtonTapped"
+                        Margin="15,20,15,15" />
                     
                 </StackLayout>
             </ScrollView>

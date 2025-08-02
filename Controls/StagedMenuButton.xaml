@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SubExplore.Controls.StagedMenuButton"
+             x:Name="Root">
+    
+    <Frame x:Name="ButtonFrame"
+           BackgroundColor="{Binding Source={x:Reference Root}, Path=ButtonBackgroundColor}"
+           BorderColor="{Binding Source={x:Reference Root}, Path=ButtonBorderColor}"
+           Padding="15,10"
+           Margin="5,2"
+           CornerRadius="8"
+           HasShadow="False">
+        
+        <Frame.Triggers>
+            <!-- Stage-based visual state triggers -->
+            <DataTrigger TargetType="Frame" 
+                         Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                         Value="Default">
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="BorderColor" Value="Transparent" />
+            </DataTrigger>
+            
+            <DataTrigger TargetType="Frame" 
+                         Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                         Value="Active">
+                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+            </DataTrigger>
+            
+            <DataTrigger TargetType="Frame" 
+                         Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                         Value="Disabled">
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="BorderColor" Value="Transparent" />
+                <Setter Property="Opacity" Value="0.5" />
+            </DataTrigger>
+            
+            <DataTrigger TargetType="Frame" 
+                         Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                         Value="Warning">
+                <Setter Property="BackgroundColor" Value="{StaticResource Warning}" />
+                <Setter Property="BorderColor" Value="{StaticResource Warning}" />
+            </DataTrigger>
+            
+            <DataTrigger TargetType="Frame" 
+                         Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                         Value="Success">
+                <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
+                <Setter Property="BorderColor" Value="{StaticResource Success}" />
+            </DataTrigger>
+            
+            <DataTrigger TargetType="Frame" 
+                         Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                         Value="Error">
+                <Setter Property="BackgroundColor" Value="{StaticResource Danger}" />
+                <Setter Property="BorderColor" Value="{StaticResource Danger}" />
+            </DataTrigger>
+        </Frame.Triggers>
+        
+        <Frame.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnButtonTapped" />
+        </Frame.GestureRecognizers>
+        
+        <Grid ColumnDefinitions="Auto,*,Auto">
+            
+            <!-- Icon/Stage Indicator -->
+            <Frame Grid.Column="0"
+                   x:Name="IconFrame"
+                   BackgroundColor="Transparent"
+                   BorderColor="Transparent"
+                   Padding="0"
+                   WidthRequest="24"
+                   HeightRequest="24"
+                   CornerRadius="12"
+                   HasShadow="False"
+                   IsVisible="{Binding Source={x:Reference Root}, Path=ShowIcon}">
+                
+                <Label x:Name="IconLabel"
+                       Text="{Binding Source={x:Reference Root}, Path=Icon}"
+                       FontSize="16"
+                       TextColor="{Binding Source={x:Reference Root}, Path=IconColor}"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+                       
+                <Frame.Triggers>
+                    <!-- Stage-based icon styling -->
+                    <DataTrigger TargetType="Frame" 
+                                 Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                                 Value="Active">
+                        <Setter Property="BackgroundColor" Value="White" />
+                    </DataTrigger>
+                    
+                    <DataTrigger TargetType="Frame" 
+                                 Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                                 Value="Warning">
+                        <Setter Property="BackgroundColor" Value="White" />
+                    </DataTrigger>
+                    
+                    <DataTrigger TargetType="Frame" 
+                                 Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                                 Value="Success">
+                        <Setter Property="BackgroundColor" Value="White" />
+                    </DataTrigger>
+                    
+                    <DataTrigger TargetType="Frame" 
+                                 Binding="{Binding Source={x:Reference Root}, Path=Stage}" 
+                                 Value="Error">
+                        <Setter Property="BackgroundColor" Value="White" />
+                    </DataTrigger>
+                </Frame.Triggers>
+            </Frame>
+            
+            <!-- Content -->
+            <StackLayout Grid.Column="1"
+                        Margin="{Binding Source={x:Reference Root}, Path=ContentMargin}"
+                        VerticalOptions="Center">
+                
+                <!-- Title -->
+                <Label x:Name="TitleLabel"
+                       Text="{Binding Source={x:Reference Root}, Path=Title}"
+                       FontSize="{Binding Source={x:Reference Root}, Path=TitleFontSize}"
+                       FontAttributes="{Binding Source={x:Reference Root}, Path=TitleFontAttributes}"
+                       TextColor="{Binding Source={x:Reference Root}, Path=TitleColor}"
+                       VerticalOptions="Center" />
+                       
+                <!-- Description -->
+                <Label x:Name="DescriptionLabel"
+                       Text="{Binding Source={x:Reference Root}, Path=Description}"
+                       FontSize="{Binding Source={x:Reference Root}, Path=DescriptionFontSize}"
+                       TextColor="{Binding Source={x:Reference Root}, Path=DescriptionColor}"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding Source={x:Reference Root}, Path=ShowDescription}" />
+                       
+                <!-- Badge/Stage Text -->
+                <Frame BackgroundColor="{Binding Source={x:Reference Root}, Path=BadgeBackgroundColor}"
+                       BorderColor="Transparent"
+                       Padding="6,2"
+                       CornerRadius="8"
+                       HorizontalOptions="Start"
+                       VerticalOptions="Center"
+                       HasShadow="False"
+                       IsVisible="{Binding Source={x:Reference Root}, Path=ShowBadge}">
+                    <Label x:Name="BadgeLabel"
+                           Text="{Binding Source={x:Reference Root}, Path=BadgeText}"
+                           FontSize="10"
+                           FontAttributes="Bold"
+                           TextColor="{Binding Source={x:Reference Root}, Path=BadgeTextColor}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Frame>
+                       
+            </StackLayout>
+            
+            <!-- Stage Indicator/Arrow -->
+            <Label Grid.Column="2"
+                   x:Name="StageIndicatorLabel"
+                   Text="{Binding Source={x:Reference Root}, Path=StageIndicator}"
+                   FontSize="14"
+                   TextColor="{Binding Source={x:Reference Root}, Path=StageIndicatorColor}"
+                   VerticalOptions="Center"
+                   IsVisible="{Binding Source={x:Reference Root}, Path=ShowStageIndicator}" />
+                   
+        </Grid>
+    </Frame>
+    
+</ContentView>
