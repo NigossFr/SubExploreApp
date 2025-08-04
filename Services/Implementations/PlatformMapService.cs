@@ -1,11 +1,15 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Maui.Controls.Maps;
+using SubExplore.Models.Domain;
 using SubExplore.Services.Interfaces;
 using System.Text;
 using MapControl = Microsoft.Maui.Controls.Maps.Map;
 
 #if ANDROID
 using Android.Content.PM;
+using Microsoft.Maui.Maps.Handlers;
+using Android.Gms.Maps;
+using Microsoft.Maui.Platform;
 #endif
 
 #if IOS
@@ -19,6 +23,8 @@ namespace SubExplore.Services.Implementations
         private readonly IConfiguration _configuration;
         private readonly IDialogService _dialogService;
         private readonly IConnectivityService _connectivityService;
+
+        public event EventHandler<MapPinClickedEventArgs> PinClicked;
 
         public PlatformMapService(
             IConfiguration configuration,
@@ -271,6 +277,34 @@ namespace SubExplore.Services.Implementations
         {
             // Android-specific optimizations
             map.IsTrafficEnabled = false; // Disable traffic for better performance
+
+            var handler = map.Handler as MapHandler;
+            if (handler?.Map is GoogleMap googleMap)
+            {
+                // Disable the default map toolbar that appears on marker click
+                googleMap.UiSettings.MapToolbarEnabled = false;
+
+                // Handle marker clicks directly
+                googleMap.MarkerClick += (sender, e) =>
+                {
+                    var marker = e.Marker;
+                    if (marker != null)
+                    {
+                        // Find the corresponding .NET MAUI Pin.
+                        // We match by location with a small tolerance to handle floating point differences.
+                                                                        var pin = map.Pins.FirstOrDefault(p => p.BindingContext is Spot spot && spot.Id.ToString() == marker.Snippet);
+
+                        if (pin != null)
+                        {
+                            // Raise our custom event
+                            PinClicked?.Invoke(this, new MapPinClickedEventArgs(pin));
+                            System.Diagnostics.Debug.WriteLine($"[INFO] Native pin clicked: {pin.Label}");
+                        }
+                    }
+                    // Mark the event as handled to prevent the default Google Maps behavior
+                    e.Handled = true;
+                };
+            }
         }
 #endif
 

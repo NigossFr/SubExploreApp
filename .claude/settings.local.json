@@ -39,7 +39,9 @@
       "Bash(telnet:*)",
       "Bash(sed:*)",
       "Bash(move \"IconeSubExplore.svg\" \"icone_subexplore.svg\")",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(where keytool)",
+      "Bash(echo $USERPROFILE)"
     ],
     "deny": []
   }

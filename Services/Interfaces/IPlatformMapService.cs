@@ -42,5 +42,23 @@ namespace SubExplore.Services.Interfaces
         /// Refresh map display with platform-specific optimizations
         /// </summary>
         void RefreshMapDisplay(MapControl map);
+
+        /// <summary>
+        /// Event triggered when a pin is clicked on the map
+        /// </summary>
+        event EventHandler<MapPinClickedEventArgs> PinClicked;
+    }
+
+    /// <summary>
+    /// Event arguments for when a pin is clicked
+    /// </summary>
+    public class MapPinClickedEventArgs : EventArgs
+    {
+        public Pin Pin { get; }
+
+        public MapPinClickedEventArgs(Pin pin)
+        {
+            Pin = pin;
+        }
     }
 }

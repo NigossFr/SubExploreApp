@@ -27,6 +27,7 @@ namespace SubExplore.ViewModels.Map
         private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
         private readonly IPlatformMapService _platformMapService;
         private readonly IApplicationPerformanceService _performanceService;
+        private readonly IPinSelectionService _pinSelectionService;
 
         // Map Configuration Constants
         private const double DEFAULT_SEARCH_RADIUS_KM = 10.0;
@@ -129,6 +130,9 @@ namespace SubExplore.ViewModels.Map
         private readonly ISettingsService _settingsService;
         private readonly IAuthenticationService _authenticationService;
 
+        // Public property to expose PinSelectionService to the View for integration
+        public IPinSelectionService PinSelectionService => _pinSelectionService;
+
         public MapViewModel(
             ISpotRepository spotRepository,
             ILocationService locationService,
@@ -141,7 +145,8 @@ namespace SubExplore.ViewModels.Map
             INavigationService navigationService,
             ISettingsService settingsService,
             IAuthenticationService authenticationService,
-            IApplicationPerformanceService performanceService)
+            IApplicationPerformanceService performanceService,
+            IPinSelectionService pinSelectionService)
             : base(dialogService, navigationService)
         {
             _spotRepository = spotRepository;
@@ -152,6 +157,7 @@ namespace SubExplore.ViewModels.Map
             _settingsService = settingsService;
             _authenticationService = authenticationService;
             _performanceService = performanceService;
+            _pinSelectionService = pinSelectionService;
             _configuration = configuration;
             _platformMapService = platformMapService;
 
@@ -1472,10 +1478,10 @@ namespace SubExplore.ViewModels.Map
 
                 var pin = new Pin
                 {
-                    Label = "", // Empty label to prevent callout
-                    Address = "", // Empty address to prevent callout
-                    Location = new Location(lat, lon),
+                    Label = "", // Empty label to prevent Google InfoWindow
+                    Address = "", // Empty address to prevent Google InfoWindow
                     Type = PinType.Place,
+                    Location = new Location(lat, lon),
                     BindingContext = spot
                 };
 
@@ -1813,8 +1819,8 @@ namespace SubExplore.ViewModels.Map
                         {
                             var pin = new Pin
                             {
-                                Label = "", // Empty label to prevent callout
-                                Address = "", // Empty address to prevent callout
+                                Label = "", // Empty label to prevent InfoWindow
+                                Address = "", // Empty address to prevent InfoWindow
                                 Type = PinType.Place,
                                 Location = new Location((double)spot.Latitude, (double)spot.Longitude),
                                 BindingContext = spot // Store spot data for click detection

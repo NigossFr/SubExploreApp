@@ -230,6 +230,12 @@ public static class MauiProgram
         builder.Services.AddSingleton<PinManagementConfig>();
         builder.Services.AddScoped<IPinManagementService, PinManagementService>();
         
+        // Pin selection services
+        builder.Services.AddSingleton<IPinSelectionService, PinSelectionService>();
+        
+        // Data optimization services
+        builder.Services.AddSingleton<ISpotOptimizationService, SpotOptimizationService>();
+        
         // Authentication services
         builder.Services.AddSingleton<ISecureSettingsService>(provider =>
         {

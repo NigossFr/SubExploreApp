@@ -18,6 +18,7 @@
         <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter" />
         <converters:ResponsiveFontSizeConverter x:Key="ResponsiveFontSizeConverter" />
         <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />
+        <converters:SpotToLocationConverter x:Key="SpotToLocationConverter" />
     </ContentPage.Resources>
 
 
@@ -139,7 +140,6 @@
             <maps:Map
                 x:Name="MainMap"
                 IsShowingUser="{Binding IsLocationAvailable}"
-                ItemsSource="{Binding Pins}"
                 MapClicked="OnMapClicked"
                 MapType="Street"
                 HorizontalOptions="FillAndExpand"
@@ -148,24 +148,10 @@
                 IsScrollEnabled="True"
                 AutomationId="MainMap"
                 SemanticProperties.Description="Carte interactive des spots de plongée"
-                SemanticProperties.Hint="Explorez les spots de plongée sur la carte, appuyez sur un marqueur pour voir les détails">
-                
-                <maps:Map.ItemTemplate>
-                    <DataTemplate x:DataType="maps:Pin">
-                        <maps:Pin 
-                            Address=""
-                            Label=""
-                            Location="{Binding Location}"
-                            Type="Place"
-                            AutomationId="SpotPin"
-                            SemanticProperties.Description="Pin de spot de plongée"
-                            SemanticProperties.Hint="Appuyez près du pin pour voir les détails de ce spot">
-                        </maps:Pin>
-                    </DataTemplate>
-                </maps:Map.ItemTemplate>
+                SemanticProperties.Hint="Explorez les spots de plongée sur la carte, cliquez près d'un marqueur pour voir les détails">
                 
             <maps:Map.MapElements>
-                <!--  Vous pouvez ajouter des éléments de carte personnalisés ici  -->
+                <!--  Custom spot markers will be added programmatically in code-behind  -->
             </maps:Map.MapElements>
             </maps:Map>
             
@@ -303,7 +289,7 @@
         </Grid>
         </Grid>
         
-        <!-- Spot Detail Mini Window - At root level for proper Z-order -->
+        <!-- Custom Spot Window - Shows spot info with details button -->
         <Frame x:Name="SpotMiniWindow"
                IsVisible="{Binding IsSpotMiniWindowVisible}"
                BackgroundColor="{StaticResource Surface}"
@@ -403,5 +389,6 @@
                         SemanticProperties.Hint="Appuyez pour ouvrir la page de détails complète du spot" />
             </Grid>
         </Frame>
+        
     </Grid>
 </ContentPage>
