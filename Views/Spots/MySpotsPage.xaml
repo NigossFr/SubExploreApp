@@ -231,38 +231,39 @@
                                 
                                 <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
                                     
-                                    <!-- Header with name and status -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
-                                        <Label Grid.Column="0"
-                                               Text="{Binding Name}"
-                                               FontSize="18"
-                                               FontAttributes="Bold"
-                                               TextColor="{StaticResource Primary}"
-                                               VerticalOptions="Center"
-                                               LineBreakMode="TailTruncation" />
-                                        
-                                        <!-- Status Indicator -->
-                                        <Frame Grid.Column="1"
-                                               BackgroundColor="{Binding ValidationStatus, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='{StaticResource Success}|{StaticResource Warning}'}"
-                                               CornerRadius="10"
-                                               Padding="8,4"
-                                               HasShadow="False"
-                                               Margin="5,0">
-                                            <Label Text="{Binding ValidationStatus}"
-                                                   TextColor="White"
-                                                   FontSize="10"
-                                                   FontAttributes="Bold" />
-                                        </Frame>
+                                    <!-- Header with name and actions -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                        <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                            <Label Text="{Binding Name}"
+                                                   FontSize="18"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource Primary}"
+                                                   VerticalOptions="Center"
+                                                   LineBreakMode="TailTruncation" />
+                                            
+                                            <!-- Status Badge -->
+                                            <Frame BackgroundColor="{Binding ValidationStatus, Converter={StaticResource SpotValidationStatusToColorConverter}}"
+                                                   CornerRadius="12"
+                                                   Padding="8,4"
+                                                   HasShadow="False"
+                                                   VerticalOptions="Center">
+                                                <Label Text="{Binding ValidationStatus, Converter={StaticResource SpotValidationStatusToFrenchConverter}}"
+                                                       TextColor="White"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold" />
+                                            </Frame>
+                                        </StackLayout>
                                         
                                         <!-- Edit Button -->
-                                        <Button Grid.Column="2"
+                                        <Button Grid.Column="1"
                                                 Text="✏️"
-                                                FontSize="20"
-                                                BackgroundColor="Transparent"
-                                                TextColor="{StaticResource Secondary}"
-                                                WidthRequest="40"
-                                                HeightRequest="40"
-                                                CornerRadius="20"
+                                                FontSize="16"
+                                                BackgroundColor="{StaticResource Secondary}"
+                                                TextColor="White"
+                                                WidthRequest="36"
+                                                HeightRequest="36"
+                                                CornerRadius="18"
+                                                Padding="0"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MySpotsViewModel}}, Path=EditSpotCommand}"
                                                 CommandParameter="{Binding .}"
                                                 AutomationId="EditSpotButton"
@@ -278,7 +279,7 @@
                                                TextColor="{StaticResource Secondary}"
                                                VerticalOptions="Center" />
                                         <Label Grid.Column="1"
-                                               Text="{Binding DifficultyLevel, StringFormat='Difficulté: {0}'}"
+                                               Text="{Binding DifficultyLevel, Converter={StaticResource DifficultyLevelToFrenchConverter}, StringFormat='Difficulté : {0}'}"
                                                FontSize="12"
                                                TextColor="{StaticResource TextSecondary}"
                                                VerticalOptions="Center" />
@@ -292,45 +293,34 @@
                                            LineBreakMode="TailTruncation"
                                            MaxLines="2" />
                                     
-                                    <!-- Footer with stats -->
-                                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto">
+                                    <!-- Footer with date and actions -->
+                                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto">
                                         <Label Grid.Column="0"
                                                Text="{Binding CreatedAt, StringFormat='Créé le {0:dd/MM/yyyy}'}"
                                                FontSize="12"
                                                TextColor="{StaticResource TextSecondary}"
                                                VerticalOptions="Center" />
                                         
-                                        <StackLayout Grid.Column="1"
-                                                   Orientation="Horizontal"
-                                                   Spacing="5"
-                                                   VerticalOptions="Center">
-                                            <Label Text=""
-                                                   FontSize="12" />
-                                            <Label Text="{Binding ValidationStatus}"
-                                                   FontSize="12"
-                                                   TextColor="{StaticResource TextSecondary}" />
-                                        </StackLayout>
-                                        
-                                        <Button Grid.Column="2"
+                                        <Button Grid.Column="1"
                                                 Text="Supprimer"
-                                                FontSize="12"
-                                                Padding="8,6"
+                                                FontSize="11"
+                                                Padding="12,4"
                                                 BackgroundColor="{StaticResource Error}"
                                                 TextColor="White"
-                                                CornerRadius="15"
-                                                Margin="0,0,5,0"
+                                                CornerRadius="12"
+                                                Margin="0,0,8,0"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MySpotsViewModel}}, Path=DeleteSpotCommand}"
                                                 CommandParameter="{Binding .}"
                                                 AutomationId="DeleteSpotButton"
                                                 SemanticProperties.Description="Supprimer le spot" />
                                         
-                                        <Button Grid.Column="3"
-                                                Text="Voir"
-                                                FontSize="12"
-                                                Padding="12,6"
+                                        <Button Grid.Column="2"
+                                                Text="Voir détails"
+                                                FontSize="11"
+                                                Padding="12,4"
                                                 BackgroundColor="{StaticResource Primary}"
                                                 TextColor="White"
-                                                CornerRadius="15"
+                                                CornerRadius="12"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MySpotsViewModel}}, Path=ViewSpotDetailsCommand}"
                                                 CommandParameter="{Binding .}"
                                                 AutomationId="ViewSpotButton"

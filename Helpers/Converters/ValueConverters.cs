@@ -577,4 +577,74 @@ namespace SubExplore.Helpers.Converters
         }
     }
 
+    /// <summary>
+    /// Converter for SpotValidationStatus enum to French display text
+    /// </summary>
+    public class SpotValidationStatusToFrenchConverter : IValueConverter
+    {
+        private static readonly Dictionary<SpotValidationStatus, string> StatusTranslations = new()
+        {
+            { SpotValidationStatus.Draft, "Brouillon" },
+            { SpotValidationStatus.Pending, "En attente" },
+            { SpotValidationStatus.UnderReview, "En révision" },
+            { SpotValidationStatus.NeedsRevision, "À réviser" },
+            { SpotValidationStatus.SafetyReview, "Révision sécurité" },
+            { SpotValidationStatus.Approved, "Approuvé" },
+            { SpotValidationStatus.Rejected, "Rejeté" },
+            { SpotValidationStatus.Archived, "Archivé" }
+        };
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is SpotValidationStatus status)
+            {
+                return StatusTranslations.TryGetValue(status, out string translation) 
+                    ? translation 
+                    : status.ToString();
+            }
+            return value?.ToString() ?? string.Empty;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string text)
+            {
+                var pair = StatusTranslations.FirstOrDefault(kvp => kvp.Value == text);
+                return pair.Key != default ? pair.Key : SpotValidationStatus.Pending;
+            }
+            return SpotValidationStatus.Pending;
+        }
+    }
+
+    /// <summary>
+    /// Converter for SpotValidationStatus enum to appropriate background color
+    /// </summary>
+    public class SpotValidationStatusToColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is SpotValidationStatus status)
+            {
+                return status switch
+                {
+                    SpotValidationStatus.Draft => Application.Current.Resources["Secondary"], // Gris/Bleu pour brouillon
+                    SpotValidationStatus.Pending => Application.Current.Resources["Accent"], // Orange pour en attente
+                    SpotValidationStatus.UnderReview => Application.Current.Resources["Primary"], // Bleu pour en révision
+                    SpotValidationStatus.NeedsRevision => Application.Current.Resources["Warning"], // Orange pour à réviser
+                    SpotValidationStatus.SafetyReview => Application.Current.Resources["Warning"], // Orange pour révision sécurité
+                    SpotValidationStatus.Approved => Application.Current.Resources["Success"], // Vert pour approuvé
+                    SpotValidationStatus.Rejected => Application.Current.Resources["Error"], // Rouge pour rejeté
+                    SpotValidationStatus.Archived => Application.Current.Resources["TextSecondary"], // Gris pour archivé
+                    _ => Application.Current.Resources["Secondary"]
+                };
+            }
+            return Application.Current.Resources["Secondary"];
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
 }

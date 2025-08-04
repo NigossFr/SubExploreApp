@@ -207,7 +207,7 @@
                                                 SemanticProperties.Hint="Appuyez pour basculer l'état favori" />
                                         
                                         <!-- Heart icon overlay -->
-                                        <Label Text="{Binding IsFavorite, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='Favori|Ajouter aux favoris'}"
+                                        <Label Text="{Binding IsFavorite, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='❤️|♡'}"
                                                FontSize="26"
                                                TextColor="{Binding IsFavorite, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#E91E63|{StaticResource TextSecondary}'}"
                                                HorizontalOptions="Center"

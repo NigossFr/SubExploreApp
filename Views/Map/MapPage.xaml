@@ -22,7 +22,7 @@
 
 
     <ContentPage.Behaviors>
-        <toolkit:EventToCommandBehavior Command="{Binding InitializeCommand}" EventName="Appearing" />
+        <toolkit:EventToCommandBehavior Command="{Binding InitializeMapCommand}" EventName="Appearing" />
     </ContentPage.Behaviors>
 
     <Grid>

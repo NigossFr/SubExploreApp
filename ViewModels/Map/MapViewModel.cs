@@ -402,6 +402,12 @@ namespace SubExplore.ViewModels.Map
 
 
         [RelayCommand]
+        private async Task InitializeMap()
+        {
+            await InitializeAsync();
+        }
+
+        [RelayCommand]
         private async Task LoadSpots()
         {
             if (IsBusy) return;
@@ -955,12 +961,6 @@ namespace SubExplore.ViewModels.Map
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] ClearFilters failed: {ex.Message}");
             }
-        }
-
-        [RelayCommand]
-        private async Task Initialize()
-        {
-            await InitializeAsync();
         }
 
         [RelayCommand]

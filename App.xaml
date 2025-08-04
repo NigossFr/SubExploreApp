@@ -49,6 +49,8 @@
             <converters:WeatherIconConverter x:Key="WeatherIconConverter" />
             <converters:DifficultyLevelToFrenchConverter x:Key="DifficultyLevelToFrenchConverter" />
             <converters:CurrentStrengthToFrenchConverter x:Key="CurrentStrengthToFrenchConverter" />
+            <converters:SpotValidationStatusToFrenchConverter x:Key="SpotValidationStatusToFrenchConverter" />
+            <converters:SpotValidationStatusToColorConverter x:Key="SpotValidationStatusToColorConverter" />
             
             <!-- Responsive Converters -->
             <converters:ResponsiveHeightConverter x:Key="ResponsiveHeightConverter" />
