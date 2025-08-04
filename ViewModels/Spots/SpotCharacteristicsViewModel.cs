@@ -135,7 +135,7 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les types de spots.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les types de spots.", "D'accord");
             }
         }
 
@@ -170,7 +170,7 @@ namespace SubExplore.ViewModels.Spots
             if (!validationResult.IsValid)
             {
                 ValidationSummary = validationResult.GetErrorsText();
-                await DialogService.ShowAlertAsync("Erreurs de validation", ValidationSummary, "OK");
+                await DialogService.ShowAlertAsync("Erreurs de validation", ValidationSummary, "D'accord");
                 return;
             }
             

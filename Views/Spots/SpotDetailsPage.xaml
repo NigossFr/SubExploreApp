@@ -106,7 +106,7 @@
                                     HorizontalOptions="Center"
                                     IsVisible="{Binding HasPhotos, Converter={StaticResource InvertBoolConverter}}"
                                     AutomationId="NoPhotosPlaceholder">
-                            <Label Text="No Photos"
+                            <Label Text="Aucune photo"
                                    FontSize="18"
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource TextSecondary}"
@@ -634,7 +634,7 @@
         <Grid IsVisible="{Binding IsError}"
               BackgroundColor="{StaticResource Background}">
             <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20" Padding="40">
-                <Label Text="Error"
+                <Label Text="Erreur"
                        FontSize="18"
                        FontAttributes="Bold"
                        TextColor="{StaticResource Error}"

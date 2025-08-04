@@ -81,7 +81,7 @@ namespace SubExplore.ViewModels.Admin
                     CurrentUser?.AccountType != AccountType.Administrator)
                 {
                     await _dialogService.ShowAlertAsync("Accès refusé", 
-                        "Vous n'avez pas les permissions nécessaires pour accéder à cette page.", "OK");
+                        "Vous n'avez pas les permissions nécessaires pour accéder à cette page.", "D'accord");
                     await NavigationService.GoBackAsync();
                     return;
                 }
@@ -173,7 +173,7 @@ namespace SubExplore.ViewModels.Admin
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] SelectSpotAsync error: {ex.Message}");
-                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de la sélection du spot.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de la sélection du spot.", "D'accord");
             }
         }
 
@@ -199,7 +199,7 @@ namespace SubExplore.ViewModels.Admin
             string reason = await _dialogService.ShowPromptAsync(
                 "Raison du rejet", 
                 "Veuillez indiquer pourquoi ce spot est rejeté:", 
-                "OK", 
+                "D'accord", 
                 "Annuler", 
                 "Raison du rejet...");
 
@@ -226,19 +226,19 @@ namespace SubExplore.ViewModels.Admin
                 
                 if (result.Success)
                 {
-                    await _dialogService.ShowAlertAsync("Succès", "Le spot a été assigné pour révision.", "OK");
+                    await _dialogService.ShowAlertAsync("Succès", "Le spot a été assigné pour révision.", "D'accord");
                     await LoadDataAsync();
                     SelectedSpot = null;
                 }
                 else
                 {
-                    await _dialogService.ShowAlertAsync("Erreur", result.ErrorMessage ?? "Impossible d'assigner le spot pour révision.", "OK");
+                    await _dialogService.ShowAlertAsync("Erreur", result.ErrorMessage ?? "Impossible d'assigner le spot pour révision.", "D'accord");
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] AssignForReviewAsync error: {ex.Message}");
-                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de l'assignation du spot.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de l'assignation du spot.", "D'accord");
             }
             finally
             {
@@ -262,7 +262,7 @@ namespace SubExplore.ViewModels.Admin
                 string reviewNotes = await _dialogService.ShowPromptAsync(
                     "Notes de révision", 
                     $"Ajoutez des notes sur cette évaluation de sécurité (optionnel):", 
-                    "OK", 
+                    "D'accord", 
                     "Passer", 
                     "Notes...") ?? string.Empty;
 
@@ -283,20 +283,20 @@ namespace SubExplore.ViewModels.Admin
                 if (result.Success)
                 {
                     var message = isSafe ? "Le spot a été marqué comme sûr." : "Le spot a été marqué comme dangereux.";
-                    await _dialogService.ShowAlertAsync("Succès", message, "OK");
+                    await _dialogService.ShowAlertAsync("Succès", message, "D'accord");
                     await LoadDataAsync();
                     SelectedSpot = null;
                     ValidationNotes = string.Empty;
                 }
                 else
                 {
-                    await _dialogService.ShowAlertAsync("Erreur", result.ErrorMessage ?? "Impossible de compléter la révision de sécurité.", "OK");
+                    await _dialogService.ShowAlertAsync("Erreur", result.ErrorMessage ?? "Impossible de compléter la révision de sécurité.", "D'accord");
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] CompleteSafetyReviewAsync error: {ex.Message}");
-                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de la révision de sécurité.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de la révision de sécurité.", "D'accord");
             }
             finally
             {
@@ -319,7 +319,7 @@ namespace SubExplore.ViewModels.Admin
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] ViewSpotDetailsAsync error: {ex.Message}");
-                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de l'ouverture des détails du spot.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de l'ouverture des détails du spot.", "D'accord");
             }
         }
 
@@ -348,7 +348,7 @@ namespace SubExplore.ViewModels.Admin
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] GoToHomeAsync error: {ex.Message}");
-                await _dialogService.ShowAlertAsync("Erreur", "Impossible de retourner à l'accueil.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Impossible de retourner à l'accueil.", "D'accord");
             }
         }
 
@@ -375,20 +375,20 @@ namespace SubExplore.ViewModels.Admin
                         ? "Le spot a été approuvé avec succès." 
                         : "Le spot a été rejeté.";
                     
-                    await _dialogService.ShowAlertAsync("Succès", message, "OK");
+                    await _dialogService.ShowAlertAsync("Succès", message, "D'accord");
                     await LoadDataAsync();
                     SelectedSpot = null;
                     ValidationNotes = string.Empty;
                 }
                 else
                 {
-                    await _dialogService.ShowAlertAsync("Erreur", result.ErrorMessage ?? "Impossible de valider le spot.", "OK");
+                    await _dialogService.ShowAlertAsync("Erreur", result.ErrorMessage ?? "Impossible de valider le spot.", "D'accord");
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] ValidateSpotAsync error: {ex.Message}");
-                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de la validation du spot.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Erreur lors de la validation du spot.", "D'accord");
             }
             finally
             {

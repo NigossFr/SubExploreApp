@@ -202,12 +202,12 @@ public partial class FlyoutMenuViewModel : ObservableObject
                 {
                     await _authenticationService.LogoutAsync();
                     await Shell.Current.DisplayAlert("Déconnexion", 
-                        "Vous avez été déconnecté avec succès.", "OK");
+                        "Vous avez été déconnecté avec succès.", "D'accord");
                 }
                 else
                 {
                     await Shell.Current.DisplayAlert("Déconnexion", 
-                        "Vous avez été déconnecté avec succès.", "OK");
+                        "Vous avez été déconnecté avec succès.", "D'accord");
                 }
 
                 await Shell.Current.GoToAsync("///map");

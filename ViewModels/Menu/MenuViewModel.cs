@@ -484,7 +484,7 @@ namespace SubExplore.ViewModels.Menu
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Logout failed");
-                    await ShowAlertAsync("Erreur", "Erreur lors de la déconnexion", "OK");
+                    await ShowAlertAsync("Erreur", "Erreur lors de la déconnexion", "D'accord");
                 }
             }
         }

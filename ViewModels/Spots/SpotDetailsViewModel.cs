@@ -662,7 +662,7 @@ namespace SubExplore.ViewModels.Spots
                     await DialogService.ShowAlertAsync(
                         "Signalement",
                         "Merci pour votre signalement. Un modérateur va examiner ce spot.",
-                        "OK");
+                        "D'accord");
                 }
             }
             catch (Exception ex)
@@ -694,7 +694,7 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'ouvrir la carte: {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'ouvrir la carte: {ex.Message}", "D'accord");
             }
         }
 
@@ -783,7 +783,7 @@ namespace SubExplore.ViewModels.Spots
                     else
                     {
                         System.Diagnostics.Debug.WriteLine("[ERROR] ToggleFavorite: Still not authenticated after validation");
-                        await DialogService.ShowAlertAsync("Erreur", "Vous devez être connecté pour utiliser les favoris", "OK");
+                        await DialogService.ShowAlertAsync("Erreur", "Vous devez être connecté pour utiliser les favoris", "D'accord");
                         return;
                     }
                 }
@@ -794,7 +794,7 @@ namespace SubExplore.ViewModels.Spots
                 if (_favoriteSpotService == null)
                 {
                     System.Diagnostics.Debug.WriteLine("[ERROR] ToggleFavorite: FavoriteSpotService is NULL!");
-                    await DialogService.ShowAlertAsync("Erreur", "Service des favoris non disponible", "OK");
+                    await DialogService.ShowAlertAsync("Erreur", "Service des favoris non disponible", "D'accord");
                     return;
                 }
                 
@@ -815,7 +815,7 @@ namespace SubExplore.ViewModels.Spots
                 System.Diagnostics.Debug.WriteLine($"[ERROR] ToggleFavorite: Exception occurred: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[ERROR] ToggleFavorite: Stack trace: {ex.StackTrace}");
                 await DialogService.ShowAlertAsync("Erreur", 
-                    "Impossible de modifier les favoris. Veuillez réessayer.", "OK");
+                    "Impossible de modifier les favoris. Veuillez réessayer.", "D'accord");
             }
             finally
             {
@@ -894,12 +894,12 @@ namespace SubExplore.ViewModels.Spots
                 if (SimilarSpots?.Any() == true)
                 {
                     // TODO: Navigate to similar spots view
-                    await DialogService.ShowAlertAsync("Info", $"Spots similaires trouvés: {SimilarSpots.Count()}", "OK");
+                    await DialogService.ShowAlertAsync("Information", $"Spots similaires trouvés: {SimilarSpots.Count()}", "D'accord");
                 }
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", $"Erreur lors de la navigation: {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Erreur lors de la navigation: {ex.Message}", "D'accord");
             }
         }
 
@@ -921,11 +921,11 @@ namespace SubExplore.ViewModels.Spots
                 //     SpotStatistics = await _spotService.GetSpotStatisticsAsync(SpotId);
                 // }
 
-                await DialogService.ShowAlertAsync("Info", "Visite enregistrée (fonctionnalité en développement)", "OK");
+                await DialogService.ShowAlertAsync("Information", "Visite enregistrée (fonctionnalité en développement)", "D'accord");
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'enregistrer la visite: {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'enregistrer la visite: {ex.Message}", "D'accord");
             }
         }
 
@@ -951,11 +951,11 @@ namespace SubExplore.ViewModels.Spots
                     message += string.Join("\n", SafetyReport.RequiredEquipment.Select(e => $"• {e}"));
                 }
 
-                await DialogService.ShowAlertAsync("Rapport de sécurité", message, "OK");
+                await DialogService.ShowAlertAsync("Rapport de sécurité", message, "D'accord");
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'afficher le rapport: {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'afficher le rapport: {ex.Message}", "D'accord");
             }
         }
 
@@ -1242,7 +1242,7 @@ namespace SubExplore.ViewModels.Spots
         {
             if (CurrentWeather == null)
             {
-                await DialogService.ShowAlertAsync("Info", "Aucune donnée météo disponible", "OK");
+                await DialogService.ShowAlertAsync("Information", "Aucune donnée météo disponible", "D'accord");
                 return;
             }
 
@@ -1277,11 +1277,11 @@ namespace SubExplore.ViewModels.Spots
 
                 message += $"\n\n📅 Dernière mise à jour: {CurrentWeather.LastUpdated:HH:mm}";
 
-                await DialogService.ShowAlertAsync("Conditions météo détaillées", message, "OK");
+                await DialogService.ShowAlertAsync("Conditions météo détaillées", message, "D'accord");
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'afficher les détails météo: {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'afficher les détails météo: {ex.Message}", "D'accord");
             }
         }
 

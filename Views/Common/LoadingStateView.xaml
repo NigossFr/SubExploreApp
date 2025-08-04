@@ -45,7 +45,7 @@
             IsVisible="{Binding IsError}">
             <StackLayout Spacing="15" HorizontalOptions="Center">
                 <Label 
-                    Text="Error"
+                    Text="Erreur"
                     FontSize="20"
                     FontAttributes="Bold"
                     HorizontalOptions="Center"
@@ -93,7 +93,7 @@
             IsVisible="{Binding IsEmpty}">
             <StackLayout Spacing="15" HorizontalOptions="Center">
                 <Label 
-                    Text="No Data"
+                    Text="Aucune donnée"
                     FontSize="16"
                     FontAttributes="Bold"
                     HorizontalOptions="Center"

@@ -415,7 +415,7 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les types de spots.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les types de spots.", "D'accord");
             }
         }
 
@@ -470,7 +470,7 @@ namespace SubExplore.ViewModels.Spots
                 if (existingSpot == null)
                 {
                     _logger.LogWarning("Spot {SpotId} not found for editing", spotId);
-                    await DialogService.ShowAlertAsync("Erreur", "Le spot à modifier n'a pas été trouvé.", "OK");
+                    await DialogService.ShowAlertAsync("Erreur", "Le spot à modifier n'a pas été trouvé.", "D'accord");
                     return;
                 }
 
@@ -530,7 +530,7 @@ namespace SubExplore.ViewModels.Spots
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading spot {SpotId} for editing", spotId);
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger le spot pour modification.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger le spot pour modification.", "D'accord");
             }
         }
 
@@ -874,18 +874,18 @@ namespace SubExplore.ViewModels.Spots
                     IsLocationReady = true;
                     
                     _logger.LogInformation("Successfully obtained current location: {Latitude}, {Longitude}", Latitude, Longitude);
-                    await DialogService.ShowAlertAsync("Succès", "Position actuelle obtenue avec succès.", "OK");
+                    await DialogService.ShowAlertAsync("Succès", "Position actuelle obtenue avec succès.", "D'accord");
                 }
                 else
                 {
                     _logger.LogWarning("Unable to get current location");
-                    await DialogService.ShowAlertAsync("Erreur", "Impossible d'obtenir la position actuelle. Vérifiez les permissions de localisation.", "OK");
+                    await DialogService.ShowAlertAsync("Erreur", "Impossible d'obtenir la position actuelle. Vérifiez les permissions de localisation.", "D'accord");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting current location");
-                await DialogService.ShowAlertAsync("Erreur", "Erreur lors de l'obtention de la position. Vérifiez les permissions de localisation.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Erreur lors de l'obtention de la position. Vérifiez les permissions de localisation.", "D'accord");
             }
             finally
             {
@@ -1072,7 +1072,7 @@ namespace SubExplore.ViewModels.Spots
         private async Task HandleValidationFailureAsync(StepValidationResult result)
         {
             var errorMessage = string.Join("\n", result.Errors);
-            await DialogService.ShowAlertAsync("Validation", errorMessage, "OK");
+            await DialogService.ShowAlertAsync("Validation", errorMessage, "D'accord");
             _logger.LogWarning("Step validation failed for {StepName}: {Errors}", 
                 result.StepName, string.Join(", ", result.Errors));
         }
@@ -1199,14 +1199,14 @@ namespace SubExplore.ViewModels.Spots
                 var successMessage = IsEditMode 
                     ? "Votre spot a été modifié avec succès." 
                     : "Votre spot a été soumis avec succès et sera vérifié par un modérateur.";
-                await DialogService.ShowAlertAsync("Succès", successMessage, "OK");
+                await DialogService.ShowAlertAsync("Succès", successMessage, "D'accord");
 
                 // Retourner à la carte (stay on main thread for UI updates)
                 await NavigationService.NavigateToAsync<ViewModels.Map.MapViewModel>();
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", $"Une erreur est survenue lors de la soumission : {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Une erreur est survenue lors de la soumission : {ex.Message}", "D'accord");
             }
             finally
             {

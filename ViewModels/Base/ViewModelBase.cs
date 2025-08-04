@@ -68,7 +68,7 @@ namespace SubExplore.ViewModels.Base
             IsError = false;
         }
 
-        protected async Task ShowAlertAsync(string title, string message, string buttonText = "OK")
+        protected async Task ShowAlertAsync(string title, string message, string buttonText = "D'accord")
         {
             if (DialogService != null)
             {

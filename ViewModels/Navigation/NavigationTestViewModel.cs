@@ -175,7 +175,7 @@ namespace SubExplore.ViewModels.Navigation
             {
                 if (Application.Current?.MainPage != null)
                 {
-                    await Application.Current.MainPage.DisplayAlert(title, message, "OK");
+                    await Application.Current.MainPage.DisplayAlert(title, message, "D'accord");
                 }
             }
             catch (Exception ex)

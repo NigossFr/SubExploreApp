@@ -112,11 +112,11 @@ namespace SubExplore
                     if (_authenticationService != null)
                     {
                         await _authenticationService.LogoutAsync();
-                        await DisplayAlert("Déconnexion", "Vous avez été déconnecté avec succès.", "OK");
+                        await DisplayAlert("Déconnexion", "Vous avez été déconnecté avec succès.", "D'accord");
                     }
                     else
                     {
-                        await DisplayAlert("Déconnexion", "Vous avez été déconnecté avec succès.", "OK");
+                        await DisplayAlert("Déconnexion", "Vous avez été déconnecté avec succès.", "D'accord");
                     }
                     
                     // Navigate back to login or main page

@@ -206,9 +206,9 @@ namespace SubExplore.ViewModels.Profile
                     IsEditMode = false;
                     
                     await _dialogService.ShowAlertAsync(
-                        "Success",
+                        "Succès",
                         "Your profile has been updated successfully!",
-                        "OK");
+                        "D'accord");
                 }
                 else
                 {
@@ -249,25 +249,25 @@ namespace SubExplore.ViewModels.Profile
                         CurrentUser = await _userProfileService.GetCurrentUserAsync();
                         
                         await _dialogService.ShowAlertAsync(
-                            "Success",
+                            "Succès",
                             "Your profile picture has been updated!",
-                            "OK");
+                            "D'accord");
                     }
                     else
                     {
                         await _dialogService.ShowAlertAsync(
-                            "Error",
+                            "Erreur",
                             "Unable to update profile picture. Please try again.",
-                            "OK");
+                            "D'accord");
                     }
                 }
             }
             catch (Exception ex)
             {
                 await _dialogService.ShowAlertAsync(
-                    "Error",
+                    "Erreur",
                     "An error occurred while updating your profile picture.",
-                    "OK");
+                    "D'accord");
                 System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] ChangeAvatarAsync error: {ex.Message}");
             }
             finally
@@ -351,14 +351,14 @@ namespace SubExplore.ViewModels.Profile
                     await _dialogService.ShowAlertAsync(
                         "Succès",
                         "Vos préférences ont été sauvegardées avec succès !",
-                        "OK");
+                        "D'accord");
                 }
                 else
                 {
                     await _dialogService.ShowAlertAsync(
                         "Erreur",
                         "Impossible de sauvegarder les préférences. Veuillez réessayer.",
-                        "OK");
+                        "D'accord");
                 }
             }
             catch (Exception ex)
@@ -366,7 +366,7 @@ namespace SubExplore.ViewModels.Profile
                 await _dialogService.ShowAlertAsync(
                     "Erreur",
                     "Une erreur s'est produite lors de la sauvegarde de vos préférences.",
-                    "OK");
+                    "D'accord");
                 System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] SavePreferencesAsync error: {ex.Message}");
             }
             finally
@@ -413,7 +413,7 @@ namespace SubExplore.ViewModels.Profile
                     await _dialogService.ShowAlertAsync(
                         "Erreur",
                         "Les mots de passe ne correspondent pas.",
-                        "OK");
+                        "D'accord");
                     return;
                 }
 
@@ -426,14 +426,14 @@ namespace SubExplore.ViewModels.Profile
                 await _dialogService.ShowAlertAsync(
                     "Succès",
                     "Votre mot de passe a été changé avec succès !",
-                    "OK");
+                    "D'accord");
             }
             catch (Exception ex)
             {
                 await _dialogService.ShowAlertAsync(
                     "Erreur",
                     "Une erreur s'est produite lors du changement de mot de passe.",
-                    "OK");
+                    "D'accord");
                 System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] ChangePasswordAsync error: {ex.Message}");
             }
             finally

@@ -157,7 +157,7 @@ namespace SubExplore.ViewModels.Spots
                     if (!_authenticationService.IsAuthenticated || _authenticationService.CurrentUser == null)
                     {
                         await ShowAlertAsync("Authentification requise", 
-                            "Vous devez être connecté pour voir vos spots. Veuillez vous connecter d'abord.", "OK");
+                            "Vous devez être connecté pour voir vos spots. Veuillez vous connecter d'abord.", "D'accord");
                         return;
                     }
                 }
@@ -551,7 +551,7 @@ namespace SubExplore.ViewModels.Spots
         {
             IsError = true;
             ErrorMessage = message;
-            await ShowAlertAsync(title, message, "OK");
+            await ShowAlertAsync(title, message, "D'accord");
         }
 
         protected override void Dispose(bool disposing)

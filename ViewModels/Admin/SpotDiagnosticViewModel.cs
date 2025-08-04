@@ -79,7 +79,7 @@ namespace SubExplore.ViewModels.Admin
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[SpotDiagnostic] Error during data refresh");
-                await ShowAlertAsync("Erreur", $"Erreur lors du rafraîchissement: {ex.Message}", "OK");
+                await ShowAlertAsync("Erreur", $"Erreur lors du rafraîchissement: {ex.Message}", "D'accord");
             }
             finally
             {
@@ -158,7 +158,7 @@ namespace SubExplore.ViewModels.Admin
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[SpotDiagnostic] Error loading spots");
-                await ShowAlertAsync("Erreur", $"Erreur lors du chargement des spots: {ex.Message}", "OK");
+                await ShowAlertAsync("Erreur", $"Erreur lors du chargement des spots: {ex.Message}", "D'accord");
             }
         }
 
@@ -235,7 +235,7 @@ namespace SubExplore.ViewModels.Admin
             {
                 MigrationStatus = $"❌ Erreur migration: {ex.Message}";
                 _logger.LogError(ex, "[SpotDiagnostic] Error during forced migration");
-                await ShowAlertAsync("Erreur", $"Erreur lors de la migration: {ex.Message}", "OK");
+                await ShowAlertAsync("Erreur", $"Erreur lors de la migration: {ex.Message}", "D'accord");
             }
             finally
             {
@@ -262,7 +262,7 @@ namespace SubExplore.ViewModels.Admin
                 }
                 else
                 {
-                    await ShowAlertAsync("Erreur", "SpotMigrationService non trouvé", "OK");
+                    await ShowAlertAsync("Erreur", "SpotMigrationService non trouvé", "D'accord");
                 }
 
                 await RefreshDataAsync();
@@ -270,7 +270,7 @@ namespace SubExplore.ViewModels.Admin
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[SpotDiagnostic] Error creating pending spot");
-                await ShowAlertAsync("Erreur", $"Erreur: {ex.Message}", "OK");
+                await ShowAlertAsync("Erreur", $"Erreur: {ex.Message}", "D'accord");
             }
             finally
             {

@@ -120,7 +120,7 @@ namespace SubExplore.ViewModels.Auth
                     if (result.ValidationErrors?.Any() == true)
                     {
                         var errors = string.Join("\n", result.ValidationErrors);
-                        await _dialogService.ShowAlertAsync("Erreurs de validation", errors, "OK");
+                        await _dialogService.ShowAlertAsync("Erreurs de validation", errors, "D'accord");
                     }
                 }
             }
@@ -128,7 +128,7 @@ namespace SubExplore.ViewModels.Auth
             {
                 _logger.LogError(ex, "Unexpected error during login");
                 ShowLoginError("Une erreur inattendue s'est produite. Veuillez réessayer.");
-                await _dialogService.ShowAlertAsync("Erreur", "Une erreur inattendue s'est produite.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Une erreur inattendue s'est produite.", "D'accord");
             }
             finally
             {
@@ -147,7 +147,7 @@ namespace SubExplore.ViewModels.Auth
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error navigating to registration");
-                await _dialogService.ShowAlertAsync("Erreur", "Impossible d'accéder à la page d'inscription.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Impossible d'accéder à la page d'inscription.", "D'accord");
             }
         }
 
@@ -172,21 +172,21 @@ namespace SubExplore.ViewModels.Auth
                         await _dialogService.ShowAlertAsync(
                             "Email envoyé",
                             "Si cette adresse email est associée à un compte, vous recevrez un email de réinitialisation.",
-                            "OK");
+                            "D'accord");
                     }
                     else
                     {
                         await _dialogService.ShowAlertAsync(
                             "Erreur",
                             "Impossible d'envoyer l'email de réinitialisation. Veuillez réessayer plus tard.",
-                            "OK");
+                            "D'accord");
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in forgot password flow");
-                await _dialogService.ShowAlertAsync("Erreur", "Une erreur s'est produite.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Une erreur s'est produite.", "D'accord");
             }
         }
 
@@ -207,7 +207,7 @@ namespace SubExplore.ViewModels.Auth
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error navigating to main page");
-                await _dialogService.ShowAlertAsync("Erreur", "Impossible d'accéder à l'application.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Impossible d'accéder à l'application.", "D'accord");
             }
         }
 

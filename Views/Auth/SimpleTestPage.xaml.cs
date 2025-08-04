@@ -44,7 +44,7 @@ namespace SubExplore.Views.Auth
             }
             catch (Exception ex)
             {
-                DebugLabel.Text = $"Error loading debug info: {ex.Message}";
+                DebugLabel.Text = $"Erreur lors du chargement des informations de débogage : {ex.Message}";
             }
         }
 
@@ -52,7 +52,7 @@ namespace SubExplore.Views.Auth
         {
             try
             {
-                StatusLabel.Text = "Testing login...";
+                StatusLabel.Text = "Test de connexion en cours...";
                 StatusLabel.TextColor = Colors.Orange;
 
                 var email = EmailEntry.Text;
@@ -64,18 +64,18 @@ namespace SubExplore.Views.Auth
 
                 if (result.IsSuccess)
                 {
-                    StatusLabel.Text = $"✅ Login successful! User: {result.User?.Email}";
+                    StatusLabel.Text = $"✅ Connexion réussie ! Utilisateur : {result.User?.Email}";
                     StatusLabel.TextColor = Colors.Green;
                 }
                 else
                 {
-                    StatusLabel.Text = $"❌ Login failed: {result.ErrorMessage}";
+                    StatusLabel.Text = $"❌ Échec de la connexion : {result.ErrorMessage}";
                     StatusLabel.TextColor = Colors.Red;
                 }
             }
             catch (Exception ex)
             {
-                StatusLabel.Text = $"❌ Error: {ex.Message}";
+                StatusLabel.Text = $"❌ Erreur : {ex.Message}";
                 StatusLabel.TextColor = Colors.Red;
                 System.Diagnostics.Debug.WriteLine($"[SimpleTestPage] Login error: {ex}");
             }
@@ -94,13 +94,13 @@ namespace SubExplore.Views.Auth
                 }
                 else
                 {
-                    StatusLabel.Text = "❌ LoginViewModel not found";
+                    StatusLabel.Text = "❌ LoginViewModel introuvable";
                     StatusLabel.TextColor = Colors.Red;
                 }
             }
             catch (Exception ex)
             {
-                StatusLabel.Text = $"❌ Error switching to login page: {ex.Message}";
+                StatusLabel.Text = $"❌ Erreur lors du passage à la page de connexion : {ex.Message}";
                 StatusLabel.TextColor = Colors.Red;
             }
         }

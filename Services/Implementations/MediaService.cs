@@ -27,7 +27,7 @@ namespace SubExplore.Services.Implementations
             {
                 if (!MediaPicker.Default.IsCaptureSupported)
                 {
-                    await _dialogService.ShowAlertAsync("Erreur", "La prise de photo n'est pas supportée sur cet appareil.", "OK");
+                    await _dialogService.ShowAlertAsync("Erreur", "La prise de photo n'est pas supportée sur cet appareil.", "D'accord");
                     return null;
                 }
 
@@ -57,7 +57,7 @@ namespace SubExplore.Services.Implementations
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowAlertAsync("Erreur", $"Impossible de prendre une photo : {ex.Message}", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", $"Impossible de prendre une photo : {ex.Message}", "D'accord");
                 return null;
             }
         }
@@ -92,7 +92,7 @@ namespace SubExplore.Services.Implementations
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowAlertAsync("Erreur", $"Impossible de sélectionner une photo : {ex.Message}", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", $"Impossible de sélectionner une photo : {ex.Message}", "D'accord");
                 return null;
             }
         }
@@ -106,7 +106,7 @@ namespace SubExplore.Services.Implementations
             {
                 if (!_connectivityService.IsConnected)
                 {
-                    await _dialogService.ShowAlertAsync("Erreur", "Impossible de télécharger l'image. Vérifiez votre connexion internet.", "OK");
+                    await _dialogService.ShowAlertAsync("Erreur", "Impossible de télécharger l'image. Vérifiez votre connexion internet.", "D'accord");
                     return null;
                 }
 
@@ -124,7 +124,7 @@ namespace SubExplore.Services.Implementations
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowAlertAsync("Erreur", $"Échec du téléchargement : {ex.Message}", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", $"Échec du téléchargement : {ex.Message}", "D'accord");
                 return null;
             }
         }
@@ -212,7 +212,7 @@ namespace SubExplore.Services.Implementations
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowAlertAsync("Erreur", $"Impossible de créer le média : {ex.Message}", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", $"Impossible de créer le média : {ex.Message}", "D'accord");
                 return null;
             }
         }

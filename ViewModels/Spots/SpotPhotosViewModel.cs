@@ -113,7 +113,7 @@ namespace SubExplore.ViewModels.Spots
         {
             if (PhotosPaths.Count >= MaxPhotosAllowed)
             {
-                await DialogService.ShowAlertAsync("Limite atteinte", $"Vous ne pouvez pas ajouter plus de {MaxPhotosAllowed} photos.", "OK");
+                await DialogService.ShowAlertAsync("Limite atteinte", $"Vous ne pouvez pas ajouter plus de {MaxPhotosAllowed} photos.", "D'accord");
                 return;
             }
 
@@ -140,7 +140,7 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de prendre une photo.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de prendre une photo.", "D'accord");
             }
             finally
             {
@@ -154,7 +154,7 @@ namespace SubExplore.ViewModels.Spots
         {
             if (PhotosPaths.Count >= MaxPhotosAllowed)
             {
-                await DialogService.ShowAlertAsync("Limite atteinte", $"Vous ne pouvez pas ajouter plus de {MaxPhotosAllowed} photos.", "OK");
+                await DialogService.ShowAlertAsync("Limite atteinte", $"Vous ne pouvez pas ajouter plus de {MaxPhotosAllowed} photos.", "D'accord");
                 return;
             }
 
@@ -181,7 +181,7 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de sélectionner une photo.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de sélectionner une photo.", "D'accord");
             }
             finally
             {
@@ -221,7 +221,7 @@ namespace SubExplore.ViewModels.Spots
             
             if (!validationResult.IsValid)
             {
-                await DialogService.ShowAlertAsync("Erreurs de validation", validationResult.GetErrorsText(), "OK");
+                await DialogService.ShowAlertAsync("Erreurs de validation", validationResult.GetErrorsText(), "D'accord");
                 return;
             }
             

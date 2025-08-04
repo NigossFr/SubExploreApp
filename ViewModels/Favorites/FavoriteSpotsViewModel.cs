@@ -254,7 +254,7 @@ namespace SubExplore.ViewModels.Favorites
                         await DialogService.ShowAlertAsync(
                             "Erreur", 
                             "Impossible de retirer le spot des favoris.", 
-                            "OK").ConfigureAwait(false);
+                            "D'accord").ConfigureAwait(false);
                     }
                 }
                 catch (Exception serviceEx)
@@ -271,7 +271,7 @@ namespace SubExplore.ViewModels.Favorites
                 await DialogService.ShowAlertAsync(
                     "Erreur", 
                     "Une erreur est survenue lors de la suppression.", 
-                    "OK").ConfigureAwait(false);
+                    "D'accord").ConfigureAwait(false);
             }
         }
 
@@ -305,7 +305,7 @@ namespace SubExplore.ViewModels.Favorites
                 await DialogService.ShowAlertAsync(
                     "Erreur", 
                     "Impossible d'afficher les détails du spot.", 
-                    "OK");
+                    "D'accord");
             }
         }
 
@@ -357,7 +357,7 @@ namespace SubExplore.ViewModels.Favorites
                 await DialogService.ShowAlertAsync(
                     "Erreur", 
                     "Impossible de mettre à jour la priorité.", 
-                    "OK").ConfigureAwait(false);
+                    "D'accord").ConfigureAwait(false);
             }
         }
 
@@ -514,7 +514,7 @@ namespace SubExplore.ViewModels.Favorites
             await DialogService.ShowAlertAsync(
                 "Authentification requise",
                 "Vous devez être connecté pour accéder à vos favoris.",
-                "OK").ConfigureAwait(false);
+                "D'accord").ConfigureAwait(false);
             
             // TODO: Navigate to login page
         }
@@ -735,7 +735,7 @@ namespace SubExplore.ViewModels.Favorites
                 await DialogService.ShowAlertAsync(
                     "Météo du spot",
                     weatherInfo,
-                    "OK");
+                    "D'accord");
             }
             catch (Exception ex)
             {
@@ -773,7 +773,7 @@ namespace SubExplore.ViewModels.Favorites
                     await DialogService.ShowAlertAsync(
                         "Navigation indisponible",
                         "Impossible d'ouvrir l'application de navigation.",
-                        "OK");
+                        "D'accord");
                 }
             }
             catch (Exception ex)
@@ -782,7 +782,7 @@ namespace SubExplore.ViewModels.Favorites
                 await DialogService.ShowAlertAsync(
                     "Erreur",
                     "Impossible de lancer la navigation.",
-                    "OK");
+                    "D'accord");
             }
         }
 
@@ -819,7 +819,7 @@ namespace SubExplore.ViewModels.Favorites
                 await DialogService.ShowAlertAsync(
                     "Erreur",
                     "Impossible de partager le spot.",
-                    "OK");
+                    "D'accord");
             }
         }
 
@@ -836,7 +836,7 @@ namespace SubExplore.ViewModels.Favorites
                     await DialogService.ShowAlertAsync(
                         "Aucun favori",
                         "Vous n'avez aucun favori à exporter.",
-                        "OK");
+                        "D'accord");
                     return;
                 }
 
@@ -861,7 +861,7 @@ namespace SubExplore.ViewModels.Favorites
                 await DialogService.ShowAlertAsync(
                     "Erreur",
                     "Impossible d'exporter les favoris.",
-                    "OK");
+                    "D'accord");
             }
         }
 
@@ -876,7 +876,7 @@ namespace SubExplore.ViewModels.Favorites
                 await DialogService.ShowAlertAsync(
                     "Import de favoris",
                     "Fonctionnalité d'import en cours de développement.\n\nVous pourrez bientôt importer vos favoris depuis un fichier CSV ou depuis d'autres applications de plongée.",
-                    "OK");
+                    "D'accord");
             }
             catch (Exception ex)
             {

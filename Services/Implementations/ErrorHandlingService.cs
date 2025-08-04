@@ -40,7 +40,7 @@ namespace SubExplore.Services.Implementations
                 if (showToUser && _dialogService != null)
                 {
                     var message = userMessage ?? GetUserFriendlyMessage(exception);
-                    await _dialogService.ShowAlertAsync("Erreur", message, "OK");
+                    await _dialogService.ShowAlertAsync("Erreur", message, "D'accord");
                 }
             }
             catch (Exception ex)
@@ -69,7 +69,7 @@ namespace SubExplore.Services.Implementations
 
             if (_dialogService != null)
             {
-                await _dialogService.ShowAlertAsync("Validation", validationMessage, "OK");
+                await _dialogService.ShowAlertAsync("Validation", validationMessage, "D'accord");
             }
         }
 
@@ -84,7 +84,7 @@ namespace SubExplore.Services.Implementations
             
             if (_dialogService != null)
             {
-                await _dialogService.ShowAlertAsync("Connexion", userMessage, "OK");
+                await _dialogService.ShowAlertAsync("Connexion", userMessage, "D'accord");
             }
         }
 
@@ -113,7 +113,7 @@ namespace SubExplore.Services.Implementations
 
             if (_dialogService != null)
             {
-                await _dialogService.ShowAlertAsync("Base de données", userMessage, "OK");
+                await _dialogService.ShowAlertAsync("Base de données", userMessage, "D'accord");
             }
         }
 

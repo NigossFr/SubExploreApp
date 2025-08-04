@@ -95,7 +95,7 @@ namespace SubExplore.ViewModels.Map
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to initialize spot management");
-                await ShowAlertAsync("Erreur", $"Impossible d'initialiser les données : {ex.Message}", "OK");
+                await ShowAlertAsync("Erreur", $"Impossible d'initialiser les données : {ex.Message}", "D'accord");
             }
         }
 
@@ -136,7 +136,7 @@ namespace SubExplore.ViewModels.Map
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to load spots");
-                await ShowAlertAsync("Erreur", "Impossible de charger les spots. Veuillez réessayer plus tard.", "OK");
+                await ShowAlertAsync("Erreur", "Impossible de charger les spots. Veuillez réessayer plus tard.", "D'accord");
             }
             finally
             {
@@ -174,7 +174,7 @@ namespace SubExplore.ViewModels.Map
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to load spot types");
-                await ShowAlertAsync("Erreur", "Impossible de charger les types de spots.", "OK");
+                await ShowAlertAsync("Erreur", "Impossible de charger les types de spots.", "D'accord");
             }
             finally
             {
@@ -217,7 +217,7 @@ namespace SubExplore.ViewModels.Map
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to filter spots by type {SpotType}", spotType?.Name);
-                await ShowAlertAsync("Erreur", "Impossible de filtrer les spots. Veuillez réessayer plus tard.", "OK");
+                await ShowAlertAsync("Erreur", "Impossible de filtrer les spots. Veuillez réessayer plus tard.", "D'accord");
             }
             finally
             {
@@ -294,7 +294,7 @@ namespace SubExplore.ViewModels.Map
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to search spots for: {SearchText}", SearchText);
-                await ShowAlertAsync("Erreur", "Impossible d'effectuer la recherche. Veuillez réessayer plus tard.", "OK");
+                await ShowAlertAsync("Erreur", "Impossible d'effectuer la recherche. Veuillez réessayer plus tard.", "D'accord");
             }
             finally
             {

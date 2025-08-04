@@ -170,7 +170,7 @@ namespace SubExplore.ViewModels.Auth
                     if (result.ValidationErrors?.Any() == true)
                     {
                         var errors = string.Join("\n", result.ValidationErrors);
-                        await _dialogService.ShowAlertAsync("Erreurs de validation", errors, "OK");
+                        await _dialogService.ShowAlertAsync("Erreurs de validation", errors, "D'accord");
                     }
                 }
             }
@@ -178,7 +178,7 @@ namespace SubExplore.ViewModels.Auth
             {
                 _logger.LogError(ex, "Unexpected error during registration");
                 ShowRegistrationError("Une erreur inattendue s'est produite. Veuillez réessayer.");
-                await _dialogService.ShowAlertAsync("Erreur", "Une erreur inattendue s'est produite.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Une erreur inattendue s'est produite.", "D'accord");
             }
             finally
             {
@@ -197,7 +197,7 @@ namespace SubExplore.ViewModels.Auth
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error navigating to login");
-                await _dialogService.ShowAlertAsync("Erreur", "Impossible d'accéder à la page de connexion.", "OK");
+                await _dialogService.ShowAlertAsync("Erreur", "Impossible d'accéder à la page de connexion.", "D'accord");
             }
         }
 

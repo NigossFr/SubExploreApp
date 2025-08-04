@@ -3,23 +3,23 @@
     x:Class="SubExplore.Views.TestPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Test Page"
+    Title="Page de Test"
     BackgroundColor="White">
 
     <StackLayout Padding="20" Spacing="20" VerticalOptions="Center">
         
-        <Label Text="TEST PAGE"
+        <Label Text="PAGE DE TEST"
                FontSize="32"
                FontAttributes="Bold"
                TextColor="Blue"
                HorizontalOptions="Center" />
         
-        <Label Text="This is a test page to verify the app is working"
+        <Label Text="Ceci est une page de test pour vérifier que l'application fonctionne"
                FontSize="16"
                TextColor="Gray"
                HorizontalOptions="Center" />
 
-        <Button Text="TEST BUTTON"
+        <Button Text="BOUTON DE TEST"
                 BackgroundColor="Blue"
                 TextColor="White"
                 FontSize="16"

@@ -55,7 +55,7 @@ namespace SubExplore.Services.Implementations
                         
                         if (DialogService != null)
                         {
-                            await DialogService.ShowAlertAsync("Access Denied", message, "OK");
+                            await DialogService.ShowAlertAsync("Access Denied", message, "D'accord");
                         }
                         
                         // Optionally redirect to appropriate page

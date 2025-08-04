@@ -213,7 +213,7 @@ namespace SubExplore.ViewModels.Map
                     if (!mapInitialized)
                     {
                         System.Diagnostics.Debug.WriteLine("[ERROR] Platform map initialization failed");
-                        await DialogService.ShowAlertAsync("Erreur", "Impossible d'initialiser les cartes pour cette plateforme", "OK");
+                        await DialogService.ShowAlertAsync("Erreur", "Impossible d'initialiser les cartes pour cette plateforme", "D'accord");
                         return;
                     }
 
@@ -334,7 +334,7 @@ namespace SubExplore.ViewModels.Map
                         _isInitialized = false;
                         _isInitializing = false;
                         IsBusy = false;
-                        await DialogService.ShowAlertAsync("Erreur", $"Erreur d'initialisation: {innerEx.Message}", "OK");
+                        await DialogService.ShowAlertAsync("Erreur", $"Erreur d'initialisation: {innerEx.Message}", "D'accord");
                     });
                 }
             }
@@ -343,7 +343,7 @@ namespace SubExplore.ViewModels.Map
                 _isInitializing = false;
                 IsBusy = false;
                 System.Diagnostics.Debug.WriteLine($"[ERROR] InitializeAsync failed: {ex.Message}");
-                await DialogService.ShowAlertAsync("Erreur", $"Une erreur s'est produite lors de l'initialisation : {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Une erreur s'est produite lors de l'initialisation : {ex.Message}", "D'accord");
             }
         }
 
@@ -490,7 +490,7 @@ namespace SubExplore.ViewModels.Map
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpots failed: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les spots. Veuillez réessayer plus tard.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les spots. Veuillez réessayer plus tard.", "D'accord");
             }
             finally
             {
@@ -516,7 +516,7 @@ namespace SubExplore.ViewModels.Map
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotTypes failed: {ex.Message}");
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les types de spots.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les types de spots.", "D'accord");
             }
             finally
             {
@@ -538,7 +538,7 @@ namespace SubExplore.ViewModels.Map
                     IsLocationAvailable = false;
                     await DialogService.ShowAlertAsync("Permissions", 
                         "L'accès à la localisation a été refusé. Vous pouvez l'activer dans les paramètres de l'application.", 
-                        "OK");
+                        "D'accord");
                     return;
                 }
                 
@@ -550,7 +550,7 @@ namespace SubExplore.ViewModels.Map
                     IsLocationAvailable = false;
                     await DialogService.ShowAlertAsync("Permissions", 
                         "L'accès à la localisation est nécessaire pour cette fonctionnalité. Vous pouvez l'activer dans les paramètres.", 
-                        "OK");
+                        "D'accord");
                     return;
                 }
 
@@ -580,7 +580,7 @@ namespace SubExplore.ViewModels.Map
                     IsLocationAvailable = false;
                     await DialogService.ShowAlertAsync("Localisation", 
                         "Impossible d'obtenir votre position. Vérifiez que les services de localisation sont activés.", 
-                        "OK");
+                        "D'accord");
                 }
             }
             catch (Exception ex)
@@ -588,7 +588,7 @@ namespace SubExplore.ViewModels.Map
                 IsLocationAvailable = false;
                 await DialogService.ShowAlertAsync("Localisation", 
                     "La géolocalisation n'est pas disponible.", 
-                    "OK");
+                    "D'accord");
             }
         }
 
@@ -636,7 +636,7 @@ namespace SubExplore.ViewModels.Map
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de filtrer les spots. Veuillez réessayer plus tard.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de filtrer les spots. Veuillez réessayer plus tard.", "D'accord");
             }
             finally
             {
@@ -749,7 +749,7 @@ namespace SubExplore.ViewModels.Map
                 if (NavigationService == null)
                 {
                     System.Diagnostics.Debug.WriteLine("[ERROR] NavigationService is null - cannot navigate");
-                    await DialogService.ShowAlertAsync("Erreur", "Service de navigation non disponible", "OK");
+                    await DialogService.ShowAlertAsync("Erreur", "Service de navigation non disponible", "D'accord");
                     return;
                 }
                 
@@ -761,7 +761,7 @@ namespace SubExplore.ViewModels.Map
                 if (NavigationService == null)
                 {
                     System.Diagnostics.Debug.WriteLine("[ERROR] ViewSpotDetails: NavigationService became null before navigation call");
-                    await DialogService.ShowAlertAsync("Erreur", "Service de navigation non disponible", "OK");
+                    await DialogService.ShowAlertAsync("Erreur", "Service de navigation non disponible", "D'accord");
                     return;
                 }
                 
@@ -795,7 +795,7 @@ namespace SubExplore.ViewModels.Map
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
                 }
-                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'ouvrir les détails du spot: {ex.Message}", "OK");
+                await DialogService.ShowAlertAsync("Erreur", $"Impossible d'ouvrir les détails du spot: {ex.Message}", "D'accord");
             }
         }
 
@@ -868,7 +868,7 @@ namespace SubExplore.ViewModels.Map
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] NavigateToAddSpot failed: {ex.Message}");
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de naviguer vers l'ajout de spot. Veuillez réessayer.", "OK");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de naviguer vers l'ajout de spot. Veuillez réessayer.", "D'accord");
             }
         }
 
@@ -927,7 +927,7 @@ namespace SubExplore.ViewModels.Map
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible d'effectuer la recherche. Veuillez réessayer plus tard.", "OK"); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
+                await DialogService.ShowAlertAsync("Erreur", "Impossible d'effectuer la recherche. Veuillez réessayer plus tard.", "D'accord"); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
             }
             finally
             {
@@ -1094,7 +1094,7 @@ namespace SubExplore.ViewModels.Map
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERROR] Logout failed: {ex.Message}");
-                    await DialogService.ShowAlertAsync("Erreur", "Erreur lors de la déconnexion", "OK");
+                    await DialogService.ShowAlertAsync("Erreur", "Erreur lors de la déconnexion", "D'accord");
                 }
             }
         }
@@ -1786,7 +1786,7 @@ namespace SubExplore.ViewModels.Map
                 System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotsOptimized failed: {ex.Message}");
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les spots. Veuillez réessayer.", "OK");
+                    await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les spots. Veuillez réessayer.", "D'accord");
                 });
             }
         }

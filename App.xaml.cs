@@ -298,10 +298,10 @@ namespace SubExplore
                             Children =
                             {
                                 new Label { Text = "Services d'authentification non trouvés", TextColor = Colors.Red, FontSize = 16 },
-                                new Label { Text = $"LoginViewModel: {(loginViewModel != null ? "OK" : "MISSING")}", FontSize = 14 },
-                                new Label { Text = $"AuthService: {(authService != null ? "OK" : "MISSING")}", FontSize = 14 },
-                                new Label { Text = $"DialogService: {(dialogService != null ? "OK" : "MISSING")}", FontSize = 14 },
-                                new Label { Text = $"NavigationService: {(navService != null ? "OK" : "MISSING")}", FontSize = 14 }
+                                new Label { Text = $"LoginViewModel: {(loginViewModel != null ? "D'accord" : "MISSING")}", FontSize = 14 },
+                                new Label { Text = $"AuthService: {(authService != null ? "D'accord" : "MISSING")}", FontSize = 14 },
+                                new Label { Text = $"DialogService: {(dialogService != null ? "D'accord" : "MISSING")}", FontSize = 14 },
+                                new Label { Text = $"NavigationService: {(navService != null ? "D'accord" : "MISSING")}", FontSize = 14 }
                             },
                             Padding = 20,
                             Spacing = 10
