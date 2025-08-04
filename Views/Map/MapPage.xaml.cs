@@ -126,13 +126,34 @@ namespace SubExplore.Views.Map
                         // Get spot type color if available, otherwise use blue
                         var spotColor = GetSpotTypeColor(spot);
                         
-                        // Create a pin-shaped polygon instead of a circle
-                        var pinPolygon = CreatePinShapePolygon(lat, lon, markerRadius, spotColor, strokeWidth);
+                        // Create a double-circle system for maximum visibility
+                        // 1. Outer circle - white background for contrast
+                        var outerCircle = new Microsoft.Maui.Controls.Maps.Circle
+                        {
+                            Center = new Location(lat, lon),
+                            Radius = Distance.FromMeters(markerRadius * 1.3), // 30% plus grand
+                            StrokeColor = Colors.DarkGray,
+                            StrokeWidth = 2,
+                            FillColor = Colors.White // Fond blanc
+                        };
                         
-                        // Store spot reference for click detection
-                        pinPolygon.ClassId = spot.Id.ToString();
+                        // 2. Inner circle - colored for spot type
+                        var innerCircle = new Microsoft.Maui.Controls.Maps.Circle
+                        {
+                            Center = new Location(lat, lon),
+                            Radius = Distance.FromMeters(markerRadius),
+                            StrokeColor = Colors.DarkGray,
+                            StrokeWidth = 2,
+                            FillColor = spotColor // Couleur du type de spot
+                        };
                         
-                        MainMap.MapElements.Add(pinPolygon);
+                        // Store spot reference for click detection on both circles
+                        outerCircle.ClassId = spot.Id.ToString();
+                        innerCircle.ClassId = spot.Id.ToString();
+                        
+                        // Add both circles (outer first, then inner)
+                        MainMap.MapElements.Add(outerCircle);
+                        MainMap.MapElements.Add(innerCircle);
                         System.Diagnostics.Debug.WriteLine($"[DEBUG] Added dynamic marker for spot {spot.Name} at {lat}, {lon} (radius: {markerRadius}m)");
                     }
                     catch (Exception ex)
@@ -286,99 +307,6 @@ namespace SubExplore.Views.Map
             }
         }
         
-        private int GetAlphaForFill(double markerRadius)
-        {
-            // Ajuster la transparence selon la taille du marqueur
-            // Plus le marqueur est grand, plus il doit être transparent pour ne pas masquer la carte
-            if (markerRadius <= 50) return 200; // 78% opacity pour petits marqueurs - plus visible
-            else if (markerRadius <= 100) return 180; // 70% opacity pour marqueurs normaux
-            else if (markerRadius <= 500) return 160; // 63% opacity pour grands marqueurs
-            else if (markerRadius <= 2000) return 140; // 55% opacity pour très grands marqueurs
-            else return 120; // 47% opacity pour marqueurs énormes
-        }
-        
-        private Microsoft.Maui.Controls.Maps.Polygon CreatePinShapePolygon(double lat, double lon, double radiusMeters, Color pinColor, int strokeWidth)
-        {
-            try
-            {
-                // Convertir le radius en degrés approximatifs (1 degré ≈ 111km)
-                double radiusDegrees = radiusMeters / 111000.0;
-                
-                var geoPositions = new List<Location>();
-                
-                // Créer une forme de pin Google Maps en utilisant des coordonnées géographiques
-                // Le pin est composé d'un cercle (tête) et d'un triangle pointant vers le bas
-                
-                double headRadius = radiusDegrees * 0.6; // Tête du pin (60% du radius total)
-                double tailLength = radiusDegrees * 0.8; // Longueur de la pointe (80% du radius total)
-                
-                // Créer la tête circulaire du pin (partie supérieure)
-                int circlePoints = 16; // Nombre de points pour approximer le cercle
-                for (int i = 0; i < circlePoints; i++)
-                {
-                    double angle = (2 * Math.PI * i) / circlePoints;
-                    double offsetLat = headRadius * Math.Cos(angle);
-                    double offsetLon = headRadius * Math.Sin(angle) / Math.Cos(lat * Math.PI / 180); // Correction pour la courbure terrestre
-                    
-                    geoPositions.Add(new Location(lat + offsetLat, lon + offsetLon));
-                }
-                
-                // Ajouter la pointe du pin (triangle pointant vers le centre du spot)
-                geoPositions.Add(new Location(lat - tailLength, lon)); // Pointe vers le bas
-                
-                var polygon = new Microsoft.Maui.Controls.Maps.Polygon
-                {
-                    StrokeColor = Colors.White, // Contour blanc pour contraste
-                    StrokeWidth = Math.Max(2, strokeWidth), // Contour plus épais pour visibilité
-                    FillColor = Color.FromArgb($"#{GetAlphaForFill(radiusMeters):X2}{pinColor.ToArgbHex()[2..]}") // Couleur avec transparence
-                };
-                
-                // Ajouter tous les points du polygone
-                foreach (var position in geoPositions)
-                {
-                    polygon.Geopath.Add(position);
-                }
-                
-                return polygon;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to create pin shape polygon: {ex.Message}");
-                
-                // Fallback: créer un petit cercle simple
-                return CreateFallbackCirclePolygon(lat, lon, radiusMeters, pinColor, strokeWidth);
-            }
-        }
-        
-        private Microsoft.Maui.Controls.Maps.Polygon CreateFallbackCirclePolygon(double lat, double lon, double radiusMeters, Color pinColor, int strokeWidth)
-        {
-            double radiusDegrees = radiusMeters / 111000.0;
-            var geoPositions = new List<Location>();
-            
-            // Créer un cercle simple avec 12 points
-            for (int i = 0; i < 12; i++)
-            {
-                double angle = (2 * Math.PI * i) / 12;
-                double offsetLat = radiusDegrees * Math.Cos(angle);
-                double offsetLon = radiusDegrees * Math.Sin(angle) / Math.Cos(lat * Math.PI / 180);
-                
-                geoPositions.Add(new Location(lat + offsetLat, lon + offsetLon));
-            }
-            
-            var polygon = new Microsoft.Maui.Controls.Maps.Polygon
-            {
-                StrokeColor = Colors.White,
-                StrokeWidth = strokeWidth,
-                FillColor = Color.FromArgb($"#{GetAlphaForFill(radiusMeters):X2}{pinColor.ToArgbHex()[2..]}")
-            };
-            
-            foreach (var position in geoPositions)
-            {
-                polygon.Geopath.Add(position);
-            }
-            
-            return polygon;
-        }
 
         private void OnPlatformPinClicked(object sender, MapPinClickedEventArgs e)
         {
