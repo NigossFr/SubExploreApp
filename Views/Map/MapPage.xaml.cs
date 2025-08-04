@@ -131,9 +131,9 @@ namespace SubExplore.Views.Map
                         var outerCircle = new Microsoft.Maui.Controls.Maps.Circle
                         {
                             Center = new Location(lat, lon),
-                            Radius = Distance.FromMeters(markerRadius * 1.3), // 30% plus grand
+                            Radius = Distance.FromMeters(markerRadius * 1.15), // Seulement 15% plus grand
                             StrokeColor = Colors.DarkGray,
-                            StrokeWidth = 2,
+                            StrokeWidth = 1,
                             FillColor = Colors.White // Fond blanc
                         };
                         
@@ -143,7 +143,7 @@ namespace SubExplore.Views.Map
                             Center = new Location(lat, lon),
                             Radius = Distance.FromMeters(markerRadius),
                             StrokeColor = Colors.DarkGray,
-                            StrokeWidth = 2,
+                            StrokeWidth = 1,
                             FillColor = spotColor // Couleur du type de spot
                         };
                         
@@ -191,39 +191,39 @@ namespace SubExplore.Views.Map
                 
                 if (avgSpan < 0.001) // Very zoomed in (street level)
                 {
-                    markerRadius = 25; // 25m - très petit pour vue détaillée
+                    markerRadius = 8; // 8m - très petit pour vue détaillée
                 }
                 else if (avgSpan < 0.005) // Zoomed in (neighborhood level)
                 {
-                    markerRadius = 50; // 50m - petit pour vue de quartier
+                    markerRadius = 15; // 15m - petit pour vue de quartier
                 }
                 else if (avgSpan < 0.01) // Medium zoom (district level)
                 {
-                    markerRadius = 100; // 100m - taille normale
+                    markerRadius = 30; // 30m - taille normale
                 }
                 else if (avgSpan < 0.05) // Zoomed out (city level)
                 {
-                    markerRadius = 300; // 300m - plus grand pour visibilité
+                    markerRadius = 80; // 80m - plus grand pour visibilité
                 }
                 else if (avgSpan < 0.1) // More zoomed out (city region)
                 {
-                    markerRadius = 800; // 800m - grand pour vue régionale
+                    markerRadius = 200; // 200m - grand pour vue régionale
                 }
                 else if (avgSpan < 0.5) // Country level
                 {
-                    markerRadius = 2000; // 2km - très grand pour vue nationale
+                    markerRadius = 500; // 500m - très grand pour vue nationale
                 }
                 else if (avgSpan < 1.0) // Large country level
                 {
-                    markerRadius = 5000; // 5km - énorme pour vue continentale
+                    markerRadius = 1200; // 1.2km - énorme pour vue continentale
                 }
                 else if (avgSpan < 2.0) // Continental level
                 {
-                    markerRadius = 10000; // 10km - très énorme pour vue continentale
+                    markerRadius = 2500; // 2.5km - très énorme pour vue continentale
                 }
                 else // World level - très dézoomé
                 {
-                    markerRadius = 20000; // 20km - maximum pour vue mondiale
+                    markerRadius = 5000; // 5km - maximum pour vue mondiale
                 }
                 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] Calculated marker size: {markerRadius}m for zoom span {avgSpan:F6}°");
