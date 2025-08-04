@@ -256,8 +256,8 @@
                                         
                                         <!-- Edit Button -->
                                         <Button Grid.Column="2"
-                                                Text="Modifier"
-                                                FontSize="16"
+                                                Text="✏️"
+                                                FontSize="20"
                                                 BackgroundColor="Transparent"
                                                 TextColor="{StaticResource Secondary}"
                                                 WidthRequest="40"
