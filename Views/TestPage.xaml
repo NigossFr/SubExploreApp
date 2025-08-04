@@ -8,7 +8,7 @@
 
     <StackLayout Padding="20" Spacing="20" VerticalOptions="Center">
         
-        <Label Text="🌊 TEST PAGE"
+        <Label Text="TEST PAGE"
                FontSize="32"
                FontAttributes="Bold"
                TextColor="Blue"

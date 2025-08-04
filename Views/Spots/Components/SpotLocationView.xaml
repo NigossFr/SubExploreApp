@@ -114,8 +114,15 @@
                 BorderColor="{StaticResource Warning}">
                 <StackLayout Orientation="Horizontal">
                     <Label
-                        FontSize="20"
-                        Text="⚠️"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        Text="!"
+                        TextColor="#E65100"
+                        BackgroundColor="White"
+                        WidthRequest="20"
+                        HeightRequest="20"
+                        HorizontalTextAlignment="Center"
+                        VerticalTextAlignment="Center"
                         VerticalOptions="Center" />
                     <Label
                         Margin="10,0,0,0"

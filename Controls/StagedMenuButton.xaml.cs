@@ -409,7 +409,7 @@ public partial class StagedMenuButton : ContentView
                 StageIndicator = "●";
                 break;
             case MenuButtonStage.Warning:
-                StageIndicator = "⚠";
+                StageIndicator = "!";
                 break;
             case MenuButtonStage.Success:
                 StageIndicator = "✓";

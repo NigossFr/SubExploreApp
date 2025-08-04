@@ -11,7 +11,7 @@
             
             <!-- Header -->
             <StackLayout Spacing="15">
-                <Label Text="🌊 SubExplore"
+                <Label Text="SubExplore"
                        FontSize="32"
                        FontAttributes="Bold"
                        TextColor="DarkBlue"

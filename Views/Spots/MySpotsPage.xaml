@@ -146,7 +146,7 @@
                     
                     <!-- Clear Filters Button -->
                     <Button Grid.Column="2"
-                            Text="🔄"
+                            Text="Effacer"
                             FontSize="18"
                             WidthRequest="50"
                             HeightRequest="50"
@@ -187,7 +187,7 @@
                          HorizontalOptions="Center"
                          Spacing="20"
                          Padding="40">
-                <Label Text="📍"
+                <Label Text=""
                        FontSize="64"
                        HorizontalOptions="Center"
                        SemanticProperties.Description="Icône spot vide" />
@@ -256,7 +256,7 @@
                                         
                                         <!-- Edit Button -->
                                         <Button Grid.Column="2"
-                                                Text="✏️"
+                                                Text="Modifier"
                                                 FontSize="16"
                                                 BackgroundColor="Transparent"
                                                 TextColor="{StaticResource Secondary}"
@@ -304,7 +304,7 @@
                                                    Orientation="Horizontal"
                                                    Spacing="5"
                                                    VerticalOptions="Center">
-                                            <Label Text="⭐"
+                                            <Label Text=""
                                                    FontSize="12" />
                                             <Label Text="{Binding ValidationStatus}"
                                                    FontSize="12"
@@ -312,7 +312,7 @@
                                         </StackLayout>
                                         
                                         <Button Grid.Column="2"
-                                                Text="🗑️"
+                                                Text="Supprimer"
                                                 FontSize="12"
                                                 Padding="8,6"
                                                 BackgroundColor="{StaticResource Error}"

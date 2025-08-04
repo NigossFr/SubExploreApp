@@ -73,7 +73,12 @@
                            WidthRequest="60"
                            HeightRequest="60"
                            HasShadow="False">
-                        <Label Text="👤" FontSize="30" HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Image Source="user_avatar_placeholder.png"
+                               WidthRequest="30"
+                               HeightRequest="30"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               Aspect="AspectFit" />
                     </Frame>
                 </Grid>
             </Frame>
@@ -97,7 +102,7 @@
                     <controls:StagedMenuButton 
                         Title="Carte"
                         Description="Explorer les spots de plongée"
-                        Icon="🗺️"
+                        Icon=""
                         Stage="Default"
                         ShowIcon="True"
                         ShowDescription="True"
@@ -120,7 +125,7 @@
                     <controls:StagedMenuButton 
                         Title="Mes Spots"
                         Description="Spots que vous avez créés"
-                        Icon="📍"
+                        Icon=""
                         Stage="Default"
                         ShowIcon="True"
                         ShowDescription="True"
@@ -136,7 +141,7 @@
                     <controls:StagedMenuButton 
                         Title="Favoris"
                         Description="Vos spots préférés"
-                        Icon="⭐"
+                        Icon=""
                         Stage="Default"
                         ShowIcon="True"
                         ShowDescription="True"
@@ -159,7 +164,7 @@
                     <controls:StagedMenuButton 
                         Title="Profil"
                         Description="Votre profil utilisateur"
-                        Icon="👤"
+                        Icon=""
                         Stage="Default"
                         ShowIcon="True"
                         ShowDescription="True"
@@ -172,7 +177,7 @@
                     <controls:StagedMenuButton 
                         Title="Statistiques"
                         Description="Vos statistiques de plongée"
-                        Icon="📊"
+                        Icon=""
                         Stage="Default"
                         ShowIcon="True"
                         ShowDescription="True"
@@ -191,7 +196,7 @@
                     <controls:StagedMenuButton 
                         Title="Validation des Spots"
                         Description="Administration des spots"
-                        Icon="⚖️"
+                        Icon=""
                         Stage="Warning"
                         ShowIcon="True"
                         ShowDescription="True"
@@ -208,7 +213,7 @@
                     <controls:StagedMenuButton 
                         Title="Déconnexion"
                         Description=""
-                        Icon="🚪"
+                        Icon=""
                         Stage="Error"
                         ShowIcon="True"
                         ShowDescription="False"
@@ -223,32 +228,32 @@
 
     <!-- Main Navigation Content - Hidden FlyoutItems for routing -->
     <ShellContent
-        Title="🗺️ Carte"
+        Title="Carte"
         ContentTemplate="{DataTemplate map:MapPage}"
         Route="map" />
         
     <!-- Hidden routes for navigation -->
     <ShellContent
-        Title="📍 Mes Spots"
+        Title="Mes Spots"
         ContentTemplate="{DataTemplate spots:MySpotsPage}"
         Route="myspots"
         FlyoutItemIsVisible="False" />
         
     <ShellContent
-        Title="⭐ Favoris"
+        Title="Favoris"
         ContentTemplate="{DataTemplate favorites:FavoriteSpotsPage}"
         Route="favorites"
         FlyoutItemIsVisible="False" />
         
     <ShellContent
-        Title="👤 Profil"
+        Title="Profil"
         ContentTemplate="{DataTemplate profile:UserProfilePage}"
         Route="userprofile"
         FlyoutItemIsVisible="False" />
         
         
     <ShellContent
-        Title="📊 Statistiques"
+        Title="Statistiques"
         ContentTemplate="{DataTemplate profile:UserStatsPage}"
         Route="userstats"
         FlyoutItemIsVisible="False" />
@@ -256,19 +261,19 @@
     <!-- Modal Pages - Outside main navigation -->
     <!-- Add Spot Page Route -->
     <ShellContent
-        Title="➕ Ajouter un Spot"
+        Title="Ajouter un Spot"
         ContentTemplate="{DataTemplate spots:AddSpotPage}"
         Route="addspot" />
 
     <!-- Spot Details Page Route -->
     <ShellContent
-        Title="📖 Détails du Spot"
+        Title="Détails du Spot"
         ContentTemplate="{DataTemplate spots:SpotDetailsPage}"
         Route="spotdetails" />
 
     <!-- Admin route - Hidden -->
     <ShellContent
-        Title="⚖️ Validation des Spots"
+        Title="Validation des Spots"
         ContentTemplate="{DataTemplate admin:SpotValidationPage}"
         Route="spotvalidation"
         FlyoutItemIsVisible="False" />

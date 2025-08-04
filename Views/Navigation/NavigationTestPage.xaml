@@ -129,21 +129,21 @@
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
                             
                             <Button Grid.Row="0" Grid.Column="0"
-                                    Text="🗺️ Carte"
+                                    Text="Carte"
                                     Command="{Binding NavigateToMapCommand}"
                                     BackgroundColor="{StaticResource Primary}"
                                     TextColor="White"
                                     CornerRadius="8" />
                                     
                             <Button Grid.Row="0" Grid.Column="1"
-                                    Text="⭐ Favoris"
+                                    Text="Favoris"
                                     Command="{Binding NavigateToFavoritesCommand}"
                                     BackgroundColor="{StaticResource Secondary}"
                                     TextColor="White"
                                     CornerRadius="8" />
                                     
                             <Button Grid.Row="1" Grid.Column="0"
-                                    Text="👤 Profil"
+                                    Text="Profil"
                                     Command="{Binding NavigateToProfileCommand}"
                                     BackgroundColor="{StaticResource Accent}"
                                     TextColor="White"

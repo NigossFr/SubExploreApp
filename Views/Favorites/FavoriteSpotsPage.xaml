@@ -102,18 +102,14 @@
                     BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
                     Margin="0,8,0,0">
                 <Grid ColumnDefinitions="Auto,*,Auto" Padding="12,8">
-                    <Label Grid.Column="0" 
-                           Text="🔍" 
-                           FontSize="16" 
-                           VerticalOptions="Center" 
-                           Margin="0,0,8,0" />
+            
                     <Entry Grid.Column="1"
                            Text="{Binding SearchText}"
                            Placeholder="Rechercher dans vos favoris..."
                            BackgroundColor="Transparent"
                            FontSize="14" />
                     <Button Grid.Column="2"
-                            Text="❌"
+                            Text="Effacer"
                             BackgroundColor="Transparent"
                             FontSize="14"
                             Command="{Binding ClearSearchCommand}"
@@ -125,7 +121,7 @@
             <!-- Filters -->
             <ScrollView Orientation="Horizontal" Margin="0,8,0,0">
                 <StackLayout Orientation="Horizontal" Spacing="8">
-                    <Button Text="{Binding ShowByPriority, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='📅 Par date|⭐ Par priorité'}"
+                    <Button Text="{Binding ShowByPriority, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='Par date|Par priorité'}"
                             Command="{Binding ToggleSortingCommand}"
                             Style="{StaticResource SecondaryButtonStyle}"
                             FontSize="12" />
@@ -140,12 +136,12 @@
                             Style="{StaticResource SecondaryButtonStyle}"
                             FontSize="12" />
                     
-                    <Button Text="🔄 Actualiser"
+                    <Button Text="Actualiser"
                             Command="{Binding RefreshCommand}"
                             Style="{StaticResource SecondaryButtonStyle}"
                             FontSize="12" />
                     
-                    <Button Text="🗺️ Explorer"
+                    <Button Text="Explorer"
                             Command="{Binding ExploreMapCommand}"
                             Style="{StaticResource PrimaryButtonStyle}"
                             FontSize="12" />
@@ -167,7 +163,7 @@
                        VerticalOptions="Center"
                        HorizontalOptions="Center"
                        Padding="32">
-                <Label Text="❌" 
+                <Label Text="" 
                        FontSize="48" 
                        HorizontalOptions="Center" />
                 <Label Text="{Binding ErrorMessage}"
@@ -195,7 +191,7 @@
                        HeightRequest="100"
                        HasShadow="False"
                        Padding="0">
-                    <Label Text="⭐" 
+                    <Label Text="" 
                            FontSize="48" 
                            HorizontalOptions="Center"
                            VerticalOptions="Center" />
@@ -216,17 +212,17 @@
                        
                 <!-- Quick Start Actions -->
                 <StackLayout Spacing="12">
-                    <Button Text="🗺️ Explorer la carte"
+                    <Button Text="Explorer la carte"
                             Command="{Binding ExploreMapCommand}"
                             Style="{StaticResource PrimaryButtonStyle}"
                             WidthRequest="250" />
                             
-                    <Button Text="📍 Voir mes spots"
+                    <Button Text="Voir mes spots"
                             Command="{Binding ViewMySpotsCommand}"
                             Style="{StaticResource SecondaryButtonStyle}"
                             WidthRequest="250" />
                             
-                    <Button Text="📋 Importer des favoris"
+                    <Button Text="Importer des favoris"
                             Command="{Binding ImportFavoritesCommand}"
                             Style="{StaticResource SecondaryButtonStyle}"
                             WidthRequest="250" />
@@ -239,7 +235,7 @@
                        Margin="0,24,0,0"
                        MaximumWidthRequest="300">
                     <StackLayout Spacing="8">
-                        <Label Text="💡 Astuce"
+                        <Label Text="Astuce"
                                FontSize="14"
                                FontAttributes="Bold"
                                TextColor="White" />
@@ -333,7 +329,7 @@
                                                            HorizontalTextAlignment="Center" />
                                                 </Border>
                                                 
-                                                <Label Text="{Binding Spot.MaxDepth, StringFormat='🌊 {0}m'}" 
+                                                <Label Text="{Binding Spot.MaxDepth, StringFormat='{0}m'}" 
                                                        FontSize="12"
                                                        FontAttributes="Bold"
                                                        TextColor="{StaticResource Primary}"
@@ -382,7 +378,7 @@
 
                                             <!-- Notification toggle -->
                                             <Button Grid.Column="2"
-                                                   Text="{Binding NotificationEnabled, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='🔕|🔔'}"
+                                                   Text="{Binding NotificationEnabled, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='Notifications off|Notifications on'}"
                                                    Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=ToggleNotificationCommand}"
                                                    CommandParameter="{Binding .}"
                                                    Style="{StaticResource IconButtonStyle}"
@@ -390,7 +386,7 @@
 
                                             <!-- View details -->
                                             <Button Grid.Column="3"
-                                                   Text="👁️"
+                                                   Text="Voir"
                                                    Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=ViewSpotDetailsCommand}"
                                                    CommandParameter="{Binding .}"
                                                    Style="{StaticResource IconButtonStyle}"
@@ -400,7 +396,7 @@
 
                                             <!-- Remove favorite -->
                                             <Button Grid.Column="4"
-                                                   Text="🗑️"
+                                                   Text="Retirer"
                                                    Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=RemoveFromFavoritesCommand}"
                                                    CommandParameter="{Binding .}"
                                                    Style="{StaticResource IconButtonStyle}"

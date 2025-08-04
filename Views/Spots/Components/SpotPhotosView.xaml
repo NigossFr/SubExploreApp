@@ -41,11 +41,13 @@
                                CornerRadius="25" 
                                BackgroundColor="{StaticResource Secondary}"
                                HorizontalOptions="Center">
-                            <Label Text="📷" 
+                            <Label Text="+" 
                                    HorizontalOptions="Center" 
                                    VerticalOptions="Center"
-                                   FontSize="24"
-                                   SemanticProperties.Description="Icône appareil photo" />
+                                   FontSize="32"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   SemanticProperties.Description="Ajouter une photo" />
                         </Frame>
                         <Label Text="Vue générale du site conseillée" 
                                Margin="0,10,0,0"
@@ -142,7 +144,7 @@
                                     <HorizontalStackLayout HorizontalOptions="Center" 
                                                           VerticalOptions="Center"
                                                           Spacing="15">
-                                        <Button Text="🗑️" 
+                                        <Button Text="×" 
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.RemovePhotoCommand}"
                                                 CommandParameter="{Binding .}"
                                                 BackgroundColor="{StaticResource Error}"
@@ -155,7 +157,7 @@
                                                 SemanticProperties.Description="Supprimer cette photo"
                                                 SemanticProperties.Hint="Appuyez pour retirer cette image de la liste" />
 
-                                        <Button Text="⭐" 
+                                        <Button Text="★" 
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SetPrimaryPhotoCommand}"
                                                 CommandParameter="{Binding .}"
                                                 BackgroundColor="{StaticResource Primary}"

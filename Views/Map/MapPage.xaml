@@ -60,14 +60,14 @@
                 <Button Grid.Column="1"
                         Command="{Binding SearchSpotsCommand}"
                         Style="{StaticResource ButtonActionStyle}"
-                        Text="🔍"
+                        Text="Rechercher"
                         IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
                         AutomationId="SearchButton"
                         SemanticProperties.Description="Lancer la recherche de spots"
                         SemanticProperties.Hint="Appuyez pour rechercher des spots correspondant au texte saisi">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button" Binding="{Binding IsSearching}" Value="True">
-                            <Setter Property="Text" Value="⏳" />
+                            <Setter Property="Text" Value="Recherche..." />
                         </DataTrigger>
                     </Button.Triggers>
                 </Button>
@@ -177,7 +177,7 @@
                 VerticalOptions="Center"
                 Spacing="10">
                 <Label
-                    Text="🗺️"
+                    Text=""
                     FontSize="48"
                     HorizontalOptions="Center" />
                 <Label
@@ -198,7 +198,7 @@
                 VerticalOptions="Center"
                 Spacing="10">
                 <Label
-                    Text="📶"
+                    Text=""
                     FontSize="48"
                     HorizontalOptions="Center" />
                 <Label
@@ -227,14 +227,14 @@
                 Grid.Column="0"
                 Command="{Binding LoadSpotsCommand}"
                 Style="{StaticResource ButtonMapActionStyle}"
-                Text="🔄 Actualiser"
+                Text="Actualiser"
                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"
                 AutomationId="RefreshSpotsButton"
                 SemanticProperties.Description="Actualiser les spots sur la carte"
                 SemanticProperties.Hint="Appuyez pour recharger les spots depuis le serveur">
                 <Button.Triggers>
                     <DataTrigger TargetType="Button" Binding="{Binding IsBusy}" Value="True">
-                        <Setter Property="Text" Value="⏳ Actualiser..." />
+                        <Setter Property="Text" Value="Actualiser..." />
                         <Setter Property="IsEnabled" Value="False" />
                     </DataTrigger>
                 </Button.Triggers>
@@ -245,16 +245,16 @@
                 Grid.Column="1"
                 Command="{Binding RefreshLocationCommand}"
                 Style="{StaticResource ButtonMapActionStyle}"
-                Text="📍 Localiser"
+                Text="Localiser"
                 AutomationId="MyLocationButton"
                 SemanticProperties.Description="Centrer la carte sur ma position actuelle"
                 SemanticProperties.Hint="Appuyez pour obtenir votre position GPS et centrer la carte">
                 <Button.Triggers>
                     <DataTrigger TargetType="Button" Binding="{Binding IsLocationAvailable}" Value="True">
-                        <Setter Property="Text" Value="📍 Ma position" />
+                        <Setter Property="Text" Value="Ma position" />
                     </DataTrigger>
                     <DataTrigger TargetType="Button" Binding="{Binding IsLocationAvailable}" Value="False">
-                        <Setter Property="Text" Value="📍 Localiser" />
+                        <Setter Property="Text" Value="Localiser" />
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
@@ -264,7 +264,7 @@
                 Grid.Column="2"
                 Command="{Binding NavigateToAddSpotCommand}"
                 Style="{StaticResource ButtonMapActionStyle}"
-                Text="➕ Nouveau"
+                Text="Nouveau"
                 AutomationId="AddSpotButton"
                 SemanticProperties.Description="Ajouter un nouveau spot de plongée"
                 SemanticProperties.Hint="Appuyez pour commencer l'ajout d'un nouveau spot" />

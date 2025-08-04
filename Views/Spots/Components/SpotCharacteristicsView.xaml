@@ -150,7 +150,16 @@
             <!-- Avertissement -->
             <Frame Padding="15" BackgroundColor="#FFF3E0" BorderColor="{StaticResource Warning}">
                 <StackLayout Orientation="Horizontal">
-                    <Label Text="⚠️" FontSize="20" VerticalOptions="Center" />
+                    <Label Text="!" 
+                           FontSize="16" 
+                           FontAttributes="Bold"
+                           TextColor="#E65100"
+                           BackgroundColor="White"
+                           WidthRequest="20"
+                           HeightRequest="20"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center"
+                           VerticalOptions="Center" />
                     <Label Text="Les plongeurs doivent planifier leur plongée en fonction de leur niveau et des conditions du jour." 
                           Margin="10,0,0,0" 
                           FontSize="14"

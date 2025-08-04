@@ -69,7 +69,7 @@
                        Padding="20"
                        HasShadow="False">
                     <StackLayout Spacing="12">
-                        <Label Text="⚠️ Erreur de chargement"
+                        <Label Text="Erreur de chargement"
                                FontSize="18"
                                FontAttributes="Bold"
                                TextColor="White"
@@ -99,7 +99,7 @@
                            CornerRadius="20" 
                            Padding="24">
                         <StackLayout Spacing="20">
-                            <Label Text="🏆 Votre Évolution" 
+                            <Label Text="Votre Évolution" 
                                    FontSize="24" 
                                    FontAttributes="Bold" 
                                    TextColor="White" 
@@ -265,7 +265,7 @@
                                     </Frame>
                                        
                                     <!-- UI/UX Improvement: Enhanced Motivational Messages -->
-                                    <Label Text="🏆 Récompenses Premium pour modérateurs !"
+                                    <Label Text="Récompenses Premium pour modérateurs !"
                                            FontSize="12"
                                            TextColor="#FFFFFFCC"
                                            HorizontalTextAlignment="Center"

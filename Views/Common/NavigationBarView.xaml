@@ -66,8 +66,8 @@
                 
                 <!-- Home Quick Access -->
                 <Button Grid.Column="2"
-                        Text="🏠"
-                        FontSize="18"
+                        Text="Home"
+                        FontSize="14"
                         TextColor="White"
                         BackgroundColor="Transparent"
                         BorderColor="Transparent"

@@ -45,11 +45,12 @@
             IsVisible="{Binding IsError}">
             <StackLayout Spacing="15" HorizontalOptions="Center">
                 <Label 
-                    Text="⚠️"
-                    FontSize="40"
+                    Text="Error"
+                    FontSize="20"
+                    FontAttributes="Bold"
                     HorizontalOptions="Center"
-                    TextColor="{StaticResource Warning}"
-                    SemanticProperties.Description="Icône d'erreur" />
+                    TextColor="{StaticResource Error}"
+                    SemanticProperties.Description="Erreur de chargement" />
                 
                 <Label 
                     Text="{Binding ErrorTitle, FallbackValue='Erreur'}"
@@ -92,11 +93,12 @@
             IsVisible="{Binding IsEmpty}">
             <StackLayout Spacing="15" HorizontalOptions="Center">
                 <Label 
-                    Text="{Binding EmptyIcon, FallbackValue='🏊'}"
-                    FontSize="60"
+                    Text="No Data"
+                    FontSize="16"
+                    FontAttributes="Bold"
                     HorizontalOptions="Center"
                     TextColor="{StaticResource Secondary}"
-                    SemanticProperties.Description="Icône d'état vide" />
+                    SemanticProperties.Description="Aucune donnée disponible" />
                 
                 <Label 
                     Text="{Binding EmptyTitle, FallbackValue='Aucun élément trouvé'}"
