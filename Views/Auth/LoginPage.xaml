@@ -10,6 +10,8 @@
     Title="{Binding Title}"
     BackgroundColor="{StaticResource Background}"
     Shell.NavBarIsVisible="False">
+    
+    <!-- FORCE RECOMPILE: Modified login page with removed continue button and enhanced remember me -->
 
     <ContentPage.Resources>
         <converters:InvertBoolConverter x:Key="InvertBoolConverter" />

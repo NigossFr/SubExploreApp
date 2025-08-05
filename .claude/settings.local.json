@@ -41,7 +41,8 @@
       "Bash(move \"IconeSubExplore.svg\" \"icone_subexplore.svg\")",
       "Bash(mv:*)",
       "Bash(where keytool)",
-      "Bash(echo $USERPROFILE)"
+      "Bash(echo $USERPROFILE)",
+      "Bash(dotnet:*)"
     ],
     "deny": []
   }
