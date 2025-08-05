@@ -168,14 +168,29 @@
                         </StackLayout>
 
                         <!-- Remember Me -->
-                        <StackLayout Orientation="Horizontal" Spacing="12" Margin="0,5,0,0">
-                            <CheckBox IsChecked="{Binding RememberMe}"
-                                      Color="{StaticResource Primary}" />
-                            <Label Text="Se souvenir de moi"
-                                   FontSize="14"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,5,0,0">
+                            <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                                <CheckBox IsChecked="{Binding RememberMe}"
+                                          Color="{StaticResource Primary}" />
+                                <Label Text="Se souvenir de moi"
+                                       FontSize="14"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
+                            
+                            <!-- Clear Credentials Button (only show if credentials are remembered) -->
+                            <Button Grid.Column="2"
+                                    Text="🗑️"
+                                    Command="{Binding ClearRememberedCredentialsCommand}"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource Gray500}"
+                                    FontSize="16"
+                                    Padding="8"
+                                    ToolTipProperties.Text="Oublier les identifiants sauvegardés"
+                                    WidthRequest="32"
+                                    HeightRequest="32"
+                                    IsVisible="{Binding RememberMe}" />
+                        </Grid>
                         
                     </StackLayout>
                 </Frame>
@@ -199,33 +214,6 @@
                         HorizontalOptions="Center"
                         Margin="0,5,0,0" />
 
-                <!-- Divider -->
-                <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,30,0,20">
-                    <BoxView BackgroundColor="{StaticResource Gray300}"
-                             HeightRequest="1"
-                             VerticalOptions="Center"
-                             HorizontalOptions="FillAndExpand" />
-                    <Label Text="ou"
-                           FontSize="14"
-                           TextColor="{StaticResource Gray500}"
-                           VerticalOptions="Center" />
-                    <BoxView BackgroundColor="{StaticResource Gray300}"
-                             HeightRequest="1"
-                             VerticalOptions="Center"
-                             HorizontalOptions="FillAndExpand" />
-                </StackLayout>
-
-                <!-- Continue Without Login -->
-                <Button Text="Continuer sans compte"
-                        Command="{Binding NavigateToMainWithoutLoginCommand}"
-                        BackgroundColor="Transparent"
-                        TextColor="{StaticResource Secondary}"
-                        FontSize="16"
-                        BorderColor="{StaticResource Secondary}"
-                        BorderWidth="2"
-                        CornerRadius="12"
-                        HeightRequest="50"
-                        HorizontalOptions="FillAndExpand" />
             </StackLayout>
 
             <!-- Footer Section -->

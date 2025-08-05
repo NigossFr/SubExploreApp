@@ -55,6 +55,7 @@ namespace SubExplore.ViewModels.Auth
         private readonly IDialogService _dialogService;
         private readonly INavigationService _navigationService;
         private readonly IPasswordResetService _passwordResetService;
+        private readonly ISecureSettingsService _secureSettings;
 
         public string Title { get; set; } = "Connexion";
 
@@ -63,13 +64,15 @@ namespace SubExplore.ViewModels.Auth
             ILogger<LoginViewModel> logger,
             IDialogService dialogService,
             INavigationService navigationService,
-            IPasswordResetService passwordResetService)
+            IPasswordResetService passwordResetService,
+            ISecureSettingsService secureSettings)
         {
             _authenticationService = authenticationService;
             _logger = logger;
             _dialogService = dialogService;
             _navigationService = navigationService;
             _passwordResetService = passwordResetService;
+            _secureSettings = secureSettings;
             Title = "Connexion";
         }
 
@@ -104,6 +107,16 @@ namespace SubExplore.ViewModels.Auth
                 {
                     _logger.LogInformation("Login successful for user: {UserId}", result.User?.Id);
                     LoginProgress = 1.0;
+                    
+                    // Save credentials if "Remember Me" is checked
+                    if (RememberMe)
+                    {
+                        await SaveRememberedCredentialsAsync();
+                    }
+                    else
+                    {
+                        await ClearRememberedCredentialsAsync();
+                    }
                     
                     await _dialogService.ShowToastAsync("🎉 Connexion réussie !");
                     
@@ -205,20 +218,6 @@ namespace SubExplore.ViewModels.Auth
             IsPasswordVisible = !IsPasswordVisible;
         }
 
-        [RelayCommand]
-        private async Task NavigateToMainWithoutLogin()
-        {
-            try
-            {
-                _logger.LogInformation("User chose to continue without login");
-                await _navigationService.NavigateToAsync<MapViewModel>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error navigating to main page");
-                await _dialogService.ShowAlertAsync("Erreur", "Impossible d'accéder à l'application.", "D'accord");
-            }
-        }
 
         public async Task InitializeAsync(object parameter = null)
         {
@@ -233,6 +232,9 @@ namespace SubExplore.ViewModels.Auth
                 Password = string.Empty;
                 RememberMe = false;
                 IsPasswordVisible = false;
+                
+                // Load remembered credentials if available
+                await LoadRememberedCredentialsAsync();
                 
                 _logger.LogInformation("LoginViewModel initialized successfully");
             }
@@ -338,6 +340,88 @@ namespace SubExplore.ViewModels.Auth
         partial void OnIsLoginInProgressChanged(bool value)
         {
             UpdateCanLogin();
+        }
+
+        /// <summary>
+        /// Save user credentials securely when "Remember Me" is checked
+        /// </summary>
+        private async Task SaveRememberedCredentialsAsync()
+        {
+            try
+            {
+                await _secureSettings.SetSecureAsync("remembered_email", Email);
+                await _secureSettings.SetSecureAsync("remember_me", true);
+                _logger.LogInformation("User credentials saved securely");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving remembered credentials");
+            }
+        }
+
+        /// <summary>
+        /// Load previously saved credentials if "Remember Me" was used
+        /// </summary>
+        private async Task LoadRememberedCredentialsAsync()
+        {
+            try
+            {
+                var rememberMe = await _secureSettings.GetSecureAsync("remember_me", false);
+                
+                if (rememberMe)
+                {
+                    var savedEmail = await _secureSettings.GetSecureAsync("remembered_email", string.Empty);
+                    
+                    if (!string.IsNullOrWhiteSpace(savedEmail))
+                    {
+                        Email = savedEmail;
+                        RememberMe = true;
+                        _logger.LogInformation("Loaded remembered credentials for user");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading remembered credentials");
+            }
+        }
+
+        /// <summary>
+        /// Clear saved credentials when "Remember Me" is unchecked
+        /// </summary>
+        private async Task ClearRememberedCredentialsAsync()
+        {
+            try
+            {
+                await _secureSettings.RemoveSecureAsync("remembered_email");
+                await _secureSettings.RemoveSecureAsync("remember_me");
+                _logger.LogInformation("Cleared remembered credentials");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error clearing remembered credentials");
+            }
+        }
+
+        /// <summary>
+        /// Add command to clear remembered credentials if user wants to forget
+        /// </summary>
+        [RelayCommand]
+        private async Task ClearRememberedCredentials()
+        {
+            try
+            {
+                await ClearRememberedCredentialsAsync();
+                Email = string.Empty;
+                Password = string.Empty;
+                RememberMe = false;
+                await _dialogService.ShowToastAsync("🗑️ Identifiants oubliés");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in clear remembered credentials command");
+                await _dialogService.ShowAlertAsync("Erreur", "Impossible d'effacer les identifiants sauvegardés.", "D'accord");
+            }
         }
     }
 }
