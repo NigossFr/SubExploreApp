@@ -45,5 +45,11 @@ namespace SubExplore.Services.Interfaces
         /// Rotate JWT secret key (for security maintenance)
         /// </summary>
         Task<bool> RotateJwtSecretAsync();
+
+        /// <summary>
+        /// Get email configuration with secure SMTP credentials
+        /// </summary>
+        /// <returns>Email configuration</returns>
+        Task<EmailConfiguration> GetEmailConfigurationAsync();
     }
 }

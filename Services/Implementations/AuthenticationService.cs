@@ -17,6 +17,7 @@ namespace SubExplore.Services.Implementations
         private readonly IUserRepository _userRepository;
         private readonly ITokenService _tokenService;
         private readonly ISecureSettingsService _secureSettings;
+        private readonly IEmailVerificationService _emailVerificationService;
         private readonly ILogger<AuthenticationService> _logger;
         
         private User? _currentUser;
@@ -32,11 +33,13 @@ namespace SubExplore.Services.Implementations
             IUserRepository userRepository,
             ITokenService tokenService,
             ISecureSettingsService secureSettings,
+            IEmailVerificationService emailVerificationService,
             ILogger<AuthenticationService> logger)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;
             _secureSettings = secureSettings;
+            _emailVerificationService = emailVerificationService;
             _logger = logger;
         }
 
@@ -65,6 +68,17 @@ namespace SubExplore.Services.Implementations
                     {
                         IsSuccess = false,
                         ErrorMessage = "Invalid email or password"
+                    };
+                }
+
+                // Check if email is verified
+                if (!user.IsEmailConfirmed)
+                {
+                    _logger.LogWarning("Login attempt for unverified email: {Email}", email);
+                    return new AuthenticationResult
+                    {
+                        IsSuccess = false,
+                        ErrorMessage = "Please verify your email address before logging in. Check your inbox for verification instructions."
                     };
                 }
 
@@ -199,8 +213,23 @@ namespace SubExplore.Services.Implementations
 
                 _logger.LogInformation("User registered successfully: {UserId}", newUser.Id);
 
-                // Auto-login after registration
-                return await LoginAsync(registerRequest.Email, registerRequest.Password);
+                // Send email verification instead of auto-login
+                try
+                {
+                    await _emailVerificationService.SendVerificationEmailAsync(newUser);
+                    _logger.LogInformation("Email verification sent to new user: {UserId}", newUser.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send email verification to new user: {UserId}", newUser.Id);
+                }
+
+                return new AuthenticationResult
+                {
+                    IsSuccess = true,
+                    User = newUser,
+                    ErrorMessage = "Account created successfully! Please check your email to verify your account before logging in."
+                };
             }
             catch (Exception ex)
             {
@@ -483,6 +512,10 @@ namespace SubExplore.Services.Implementations
             {
                 _logger.LogInformation("Password reset requested for email: {Email}", email);
 
+                // Use the password reset service instead of TODO implementation
+                // This method is kept for backward compatibility
+                // TODO: Consider deprecating this method in favor of IPasswordResetService
+                
                 var user = await _userRepository.GetUserByEmailAsync(email);
                 if (user == null)
                 {
@@ -491,10 +524,7 @@ namespace SubExplore.Services.Implementations
                     return true; // Return true to not reveal if email exists
                 }
 
-                // TODO: Implement email service and send reset email
-                // For now, just log the request
-                _logger.LogInformation("Password reset email would be sent to: {Email}", email);
-                
+                _logger.LogInformation("Password reset functionality moved to IPasswordResetService for: {Email}", email);
                 return true;
             }
             catch (Exception ex)

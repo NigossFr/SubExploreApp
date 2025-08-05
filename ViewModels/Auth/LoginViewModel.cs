@@ -54,6 +54,7 @@ namespace SubExplore.ViewModels.Auth
         // Services for navigation and dialogs
         private readonly IDialogService _dialogService;
         private readonly INavigationService _navigationService;
+        private readonly IPasswordResetService _passwordResetService;
 
         public string Title { get; set; } = "Connexion";
 
@@ -61,12 +62,14 @@ namespace SubExplore.ViewModels.Auth
             IAuthenticationService authenticationService,
             ILogger<LoginViewModel> logger,
             IDialogService dialogService,
-            INavigationService navigationService)
+            INavigationService navigationService,
+            IPasswordResetService passwordResetService)
         {
             _authenticationService = authenticationService;
             _logger = logger;
             _dialogService = dialogService;
             _navigationService = navigationService;
+            _passwordResetService = passwordResetService;
             Title = "Connexion";
         }
 
@@ -156,7 +159,7 @@ namespace SubExplore.ViewModels.Auth
         {
             try
             {
-                // Show forgot password dialog for now
+                // Show forgot password dialog
                 var email = await _dialogService.ShowPromptAsync(
                     "Mot de passe oublié",
                     "Entrez votre adresse email pour réinitialiser votre mot de passe :",
@@ -166,20 +169,26 @@ namespace SubExplore.ViewModels.Auth
 
                 if (!string.IsNullOrWhiteSpace(email))
                 {
-                    var success = await _authenticationService.RequestPasswordResetAsync(email);
-                    if (success)
+                    // Use the dedicated password reset service
+                    var result = await _passwordResetService.RequestPasswordResetAsync(email);
+                    
+                    if (result.Success)
                     {
                         await _dialogService.ShowAlertAsync(
-                            "Email envoyé",
-                            "Si cette adresse email est associée à un compte, vous recevrez un email de réinitialisation.",
+                            "🔒 Email envoyé",
+                            "Si cette adresse email est associée à un compte vérifié, vous recevrez un email de réinitialisation.\n\nVérifiez votre boîte de réception et vos spams.",
                             "D'accord");
                     }
                     else
                     {
-                        await _dialogService.ShowAlertAsync(
-                            "Erreur",
-                            "Impossible d'envoyer l'email de réinitialisation. Veuillez réessayer plus tard.",
-                            "D'accord");
+                        string errorMessage = result.ResultType switch
+                        {
+                            PasswordResetResultType.DailyLimitReached => "Limite quotidienne atteinte. Réessayez demain.",
+                            PasswordResetResultType.UserNotVerified => "Veuillez d'abord vérifier votre adresse email.",
+                            _ => "Impossible d'envoyer l'email de réinitialisation. Veuillez réessayer plus tard."
+                        };
+
+                        await _dialogService.ShowAlertAsync("Erreur", errorMessage, "D'accord");
                     }
                 }
             }

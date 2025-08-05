@@ -236,6 +236,65 @@ namespace SubExplore.Services.Implementations
             }
         }
 
+        public async Task<EmailConfiguration> GetEmailConfigurationAsync()
+        {
+            try
+            {
+                var config = new EmailConfiguration();
+                _configuration.GetSection("EmailService").Bind(config);
+
+                // Override with environment variables if available (higher security)
+                var envSmtpHost = Environment.GetEnvironmentVariable("SUBEXPLORE_SMTP_HOST");
+                if (!string.IsNullOrEmpty(envSmtpHost))
+                {
+                    config.SmtpHost = envSmtpHost;
+                }
+
+                var envSmtpUser = Environment.GetEnvironmentVariable("SUBEXPLORE_SMTP_USER");
+                if (!string.IsNullOrEmpty(envSmtpUser))
+                {
+                    config.Username = envSmtpUser;
+                }
+
+                var envSmtpPassword = Environment.GetEnvironmentVariable("SUBEXPLORE_SMTP_PASSWORD");
+                if (!string.IsNullOrEmpty(envSmtpPassword))
+                {
+                    config.Password = envSmtpPassword;
+                }
+
+                var envFromEmail = Environment.GetEnvironmentVariable("SUBEXPLORE_FROM_EMAIL");
+                if (!string.IsNullOrEmpty(envFromEmail))
+                {
+                    config.FromEmail = envFromEmail;
+                }
+
+                var envBaseUrl = Environment.GetEnvironmentVariable("SUBEXPLORE_BASE_URL");
+                if (!string.IsNullOrEmpty(envBaseUrl))
+                {
+                    config.BaseUrl = envBaseUrl;
+                }
+
+                // Validate configuration
+                if (string.IsNullOrEmpty(config.SmtpHost))
+                {
+                    throw new InvalidOperationException("SMTP host is required for email configuration");
+                }
+
+                if (string.IsNullOrEmpty(config.FromEmail))
+                {
+                    throw new InvalidOperationException("From email is required for email configuration");
+                }
+
+                _logger.LogDebug("Email configuration loaded successfully");
+                return config;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading email configuration");
+                throw;
+            }
+        }
+
         private async Task<JwtConfiguration> LoadJwtConfiguration()
         {
             try

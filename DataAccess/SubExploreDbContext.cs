@@ -24,6 +24,8 @@ namespace SubExplore.DataAccess
         public DbSet<SpotType> SpotTypes { get; set; }
         public DbSet<RevokedToken> RevokedTokens { get; set; }
         public DbSet<UserFavoriteSpot> UserFavoriteSpots { get; set; }
+        public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -146,6 +148,39 @@ namespace SubExplore.DataAccess
                       .WithMany()
                       .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<EmailVerificationToken>(entity =>
+            {
+                entity.HasIndex(e => e.TokenHash).IsUnique().HasDatabaseName("IX_EmailVerificationTokens_TokenHash_Unique");
+                entity.HasIndex(e => e.UserId).HasDatabaseName("IX_EmailVerificationTokens_UserId");
+                entity.HasIndex(e => e.Email).HasDatabaseName("IX_EmailVerificationTokens_Email");
+                entity.HasIndex(e => e.ExpiresAt).HasDatabaseName("IX_EmailVerificationTokens_ExpiresAt");
+                entity.HasIndex(e => e.CreatedAt).HasDatabaseName("IX_EmailVerificationTokens_CreatedAt");
+                entity.HasIndex(e => new { e.UserId, e.CreatedAt }).HasDatabaseName("IX_EmailVerificationTokens_User_Date");
+                entity.HasIndex(e => new { e.IsUsed, e.ExpiresAt }).HasDatabaseName("IX_EmailVerificationTokens_Used_Expires");
+
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<PasswordResetToken>(entity =>
+            {
+                entity.HasIndex(e => e.TokenHash).IsUnique().HasDatabaseName("IX_PasswordResetTokens_TokenHash_Unique");
+                entity.HasIndex(e => e.UserId).HasDatabaseName("IX_PasswordResetTokens_UserId");
+                entity.HasIndex(e => e.Email).HasDatabaseName("IX_PasswordResetTokens_Email");
+                entity.HasIndex(e => e.ExpiresAt).HasDatabaseName("IX_PasswordResetTokens_ExpiresAt");
+                entity.HasIndex(e => e.CreatedAt).HasDatabaseName("IX_PasswordResetTokens_CreatedAt");
+                entity.HasIndex(e => new { e.UserId, e.CreatedAt }).HasDatabaseName("IX_PasswordResetTokens_User_Date");
+                entity.HasIndex(e => new { e.Email, e.CreatedAt }).HasDatabaseName("IX_PasswordResetTokens_Email_Date");
+                entity.HasIndex(e => new { e.IsUsed, e.ExpiresAt }).HasDatabaseName("IX_PasswordResetTokens_Used_Expires");
+
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Seed data configuration

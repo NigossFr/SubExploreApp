@@ -195,6 +195,8 @@ public static class MauiProgram
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IRevokedTokenRepository, RevokedTokenRepository>();
         builder.Services.AddScoped<IUserFavoriteSpotRepository, UserFavoriteSpotRepository>();
+        builder.Services.AddScoped<IEmailVerificationTokenRepository, EmailVerificationTokenRepository>();
+        builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
         // Enregistrement des services
         builder.Services.AddScoped<IDatabaseService, DatabaseServiceSimple>();
@@ -247,6 +249,11 @@ public static class MauiProgram
         builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
         builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
         
+        // Email services
+        builder.Services.AddSingleton<IEmailService, EmailService>();
+        builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+        builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+        
         // Spot validation services
         builder.Services.AddScoped<ISpotValidationService, SpotValidationService>();
         builder.Services.AddScoped<TestDataService>();
@@ -280,6 +287,8 @@ public static class MauiProgram
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.Add("User-Agent", "SubExplore/1.0");
         });
+        
+        // Note: EmailService doesn't require HttpClient in constructor, so we don't need to configure it specifically
 
         // Enregistrement des ViewModels
         // Pour les ViewModels, AddTransient est souvent un bon choix, mais AddScoped peut aussi être pertinent
@@ -305,6 +314,7 @@ public static class MauiProgram
         // Authentication ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.LoginViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.RegistrationViewModel>();
+        builder.Services.AddTransient<SubExplore.ViewModels.Auth.EmailTestViewModel>();
         
         // Admin ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotValidationViewModel>();
