@@ -98,6 +98,12 @@ namespace SubExplore.ViewModels.Map
         [ObservableProperty]
         private System.Threading.CancellationTokenSource _searchCancellationToken;
 
+        [ObservableProperty]
+        private ObservableCollection<string> _searchSuggestions;
+
+        [ObservableProperty]
+        private bool _areSuggestionsVisible;
+
         // Initialization flag to prevent multiple initializations
         private bool _isInitialized = false;
         private bool _isInitializing = false;
@@ -165,6 +171,7 @@ namespace SubExplore.ViewModels.Map
             Pins = new ObservableCollection<Pin>();
             SpotTypes = new ObservableCollection<SpotType>();
             MenuSections = new ObservableCollection<MenuSection>();
+            SearchSuggestions = new ObservableCollection<string>();
             
             // Subscribe to authentication state changes to update menu dynamically
             _authenticationService.StateChanged += OnAuthenticationStateChanged;
@@ -891,17 +898,32 @@ namespace SubExplore.ViewModels.Map
             _searchCancellationToken?.Cancel();
             _searchCancellationToken = new System.Threading.CancellationTokenSource();
             
-            // Debounce search - wait 500ms after user stops typing
             try
             {
+                // Immediate suggestions for responsive UI
+                if (!string.IsNullOrWhiteSpace(SearchText) && SearchText.Length >= 1)
+                {
+                    _ = Task.Run(async () => await GenerateSearchSuggestions(), _searchCancellationToken.Token);
+                }
+                else
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        AreSuggestionsVisible = false;
+                        SearchSuggestions.Clear();
+                    });
+                }
+
+                // Debounce actual search - wait 500ms after user stops typing
                 await Task.Delay(500, _searchCancellationToken.Token).ConfigureAwait(false);
+                
                 if (!string.IsNullOrWhiteSpace(SearchText) && SearchText.Length >= 2)
                 {
-                    await SearchSpots(); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
+                    await SearchSpots();
                 }
                 else if (string.IsNullOrWhiteSpace(SearchText))
                 {
-                    await LoadSpots(); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
+                    await LoadSpots();
                 }
             }
             catch (TaskCanceledException)
@@ -921,7 +943,19 @@ namespace SubExplore.ViewModels.Map
                 IsBusy = true;
                 IsSearching = true;
 
-                var searchResults = await _spotRepository.SearchSpotsAsync(SearchText); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
+                // Hide suggestions when performing actual search
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    AreSuggestionsVisible = false;
+                    SearchSuggestions.Clear();
+                });
+
+                // Add a small delay to ensure suggestion operations complete
+                await Task.Delay(100);
+
+                // Use standard search without geographic limitations to find spots anywhere
+                var searchResults = await _spotRepository.SearchSpotsAsync(SearchText);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Global search performed for '{SearchText}' - no geographic restrictions");
 
                 RefreshSpotsList(searchResults);
                 UpdatePins();
@@ -931,21 +965,112 @@ namespace SubExplore.ViewModels.Map
                 if (Spots.Count > 0)
                 {
                     CenterMapOnSpots(Spots);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Found {Spots.Count} spots, centering map on results");
                 }
                 else
                 {
-                    await DialogService.ShowToastAsync("Aucun spot trouvé pour cette recherche"); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
+                    await DialogService.ShowToastAsync("Aucun spot trouvé pour cette recherche");
                 }
             }
             catch (Exception ex)
             {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible d'effectuer la recherche. Veuillez réessayer plus tard.", "D'accord"); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Search failed: {ex.Message}");
+                await DialogService.ShowAlertAsync("Erreur", "recherche impossible", "D'accord");
             }
             finally
             {
                 IsBusy = false;
                 IsSearching = false;
                 UpdateEmptyState();
+            }
+        }
+
+        /// <summary>
+        /// Generate search suggestions based on current search text
+        /// </summary>
+        private async Task GenerateSearchSuggestions()
+        {
+            try
+            {
+                // Check for cancellation
+                if (_searchCancellationToken?.Token.IsCancellationRequested == true)
+                    return;
+
+                if (string.IsNullOrWhiteSpace(SearchText) || SearchText.Length < 1)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        AreSuggestionsVisible = false;
+                        SearchSuggestions.Clear();
+                    });
+                    return;
+                }
+
+                // Get optimized suggestions from repository with cancellation support
+                var databaseSuggestions = await _spotRepository.GetSearchSuggestionsAsync(SearchText, 3);
+                
+                // Check for cancellation again after database call
+                if (_searchCancellationToken?.Token.IsCancellationRequested == true)
+                    return;
+
+                var suggestions = new List<string>(databaseSuggestions);
+
+                // Add contextual suggestions based on search terms
+                string searchLower = SearchText.ToLower();
+                if (searchLower.Contains("mer") || searchLower.Contains("ocean"))
+                    suggestions.Add("Spots en mer");
+                if (searchLower.Contains("lac"))
+                    suggestions.Add("Spots de lac");
+                if (searchLower.Contains("profond"))
+                    suggestions.Add("Plongée profonde");
+                if (searchLower.Contains("debutant") || searchLower.Contains("facile"))
+                    suggestions.Add("Spots débutant");
+                if (searchLower.Contains("avance") || searchLower.Contains("expert"))
+                    suggestions.Add("Spots avancés");
+
+                // Final cancellation check before UI update
+                if (_searchCancellationToken?.Token.IsCancellationRequested == true)
+                    return;
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    SearchSuggestions.Clear();
+                    foreach (var suggestion in suggestions.Take(5))
+                    {
+                        SearchSuggestions.Add(suggestion);
+                    }
+                    AreSuggestionsVisible = SearchSuggestions.Count > 0;
+                });
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected when search is cancelled
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] GenerateSearchSuggestions failed: {ex.Message}");
+                // Don't throw - this is a background operation
+            }
+        }
+
+        /// <summary>
+        /// Select a search suggestion and perform search
+        /// </summary>
+        [RelayCommand]
+        private async Task SelectSuggestion(string suggestion)
+        {
+            if (string.IsNullOrEmpty(suggestion))
+                return;
+
+            try
+            {
+                SearchText = suggestion;
+                AreSuggestionsVisible = false;
+                await SearchSpots();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] SelectSuggestion failed: {ex.Message}");
             }
         }
 
@@ -956,6 +1081,8 @@ namespace SubExplore.ViewModels.Map
             {
                 SelectedSpotType = null;
                 SearchText = string.Empty;
+                AreSuggestionsVisible = false;
+                SearchSuggestions.Clear();
                 IsFiltering = false;
                 IsSearching = false;
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Clearing all filters");

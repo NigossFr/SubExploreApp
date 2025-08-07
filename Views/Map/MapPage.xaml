@@ -30,50 +30,124 @@
         <!-- Main Content -->
         <Grid RowDefinitions="Auto,*,Auto">
         
-        <!-- Search Bar -->
-        <Frame Grid.Row="0" 
-               BackgroundColor="{StaticResource Surface}"
-               BorderColor="{StaticResource Secondary}"
-               CornerRadius="25"
-               Padding="5"
-               HasShadow="True"
-               Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
-               AutomationId="SearchFrame"
-               SemanticProperties.Description="Zone de recherche de spots">
-            <Grid ColumnDefinitions="*,Auto">
-                <Entry Grid.Column="0"
-                       x:Name="SearchEntry"
-                       Margin="5,0"
-                       ClearButtonVisibility="WhileEditing"
-                       Placeholder="Rechercher un spot..."
-                       ReturnCommand="{Binding SearchSpotsCommand}"
-                       ReturnType="Search"
-                       Text="{Binding SearchText}"
-                       FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='1.0'}"
-                       IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
-                       AutomationId="SearchEntry"
-                       SemanticProperties.Description="Rechercher des spots de plongée par nom ou localisation"
-                       SemanticProperties.Hint="Entrez le nom d'un spot ou d'une localisation pour effectuer une recherche">
-                    <Entry.Behaviors>
-                        <toolkit:EventToCommandBehavior EventName="TextChanged" Command="{Binding SearchTextChangedCommand}" />
-                    </Entry.Behaviors>
-                </Entry>
-                <Button Grid.Column="1"
-                        Command="{Binding SearchSpotsCommand}"
-                        Style="{StaticResource ButtonActionStyle}"
-                        Text="Rechercher"
-                        IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
-                        AutomationId="SearchButton"
-                        SemanticProperties.Description="Lancer la recherche de spots"
-                        SemanticProperties.Hint="Appuyez pour rechercher des spots correspondant au texte saisi">
-                    <Button.Triggers>
-                        <DataTrigger TargetType="Button" Binding="{Binding IsSearching}" Value="True">
-                            <Setter Property="Text" Value="Recherche..." />
-                        </DataTrigger>
-                    </Button.Triggers>
-                </Button>
-            </Grid>
-        </Frame>
+        <!-- Enhanced Search Bar with Suggestions -->
+        <StackLayout Grid.Row="0">
+            <!-- Main Search Frame -->
+            <Frame BackgroundColor="{StaticResource Surface}"
+                   BorderColor="{StaticResource Secondary}"
+                   CornerRadius="25"
+                   Padding="5"
+                   HasShadow="True"
+                   Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
+                   AutomationId="SearchFrame"
+                   SemanticProperties.Description="Zone de recherche de spots améliorée">
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <Entry Grid.Column="0"
+                           x:Name="SearchEntry"
+                           Margin="5,0"
+                           ClearButtonVisibility="WhileEditing"
+                           Placeholder="Rechercher un spot, lieu ou type..."
+                           ReturnCommand="{Binding SearchSpotsCommand}"
+                           ReturnType="Search"
+                           Text="{Binding SearchText}"
+                           FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='1.0'}"
+                           IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
+                           AutomationId="SearchEntry"
+                           SemanticProperties.Description="Rechercher des spots de plongée par nom, localisation ou type"
+                           SemanticProperties.Hint="Entrez le nom d'un spot, d'une localisation ou d'un type d'activité">
+                        <Entry.Behaviors>
+                            <toolkit:EventToCommandBehavior EventName="TextChanged" Command="{Binding SearchTextChangedCommand}" />
+                        </Entry.Behaviors>
+                    </Entry>
+                    
+                    <!-- Clear Button -->
+                    <Button Grid.Column="1"
+                            Command="{Binding ClearFiltersCommand}"
+                            Style="{StaticResource ButtonActionStyle}"
+                            Text="✕"
+                            FontSize="14"
+                            WidthRequest="35"
+                            HeightRequest="35"
+                            CornerRadius="17"
+                            Padding="0"
+                            IsVisible="{Binding SearchText, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                            AutomationId="ClearSearchButton"
+                            SemanticProperties.Description="Effacer la recherche"
+                            SemanticProperties.Hint="Appuyez pour effacer le texte de recherche" />
+                    
+                    <!-- Search Button -->
+                    <Button Grid.Column="2"
+                            Command="{Binding SearchSpotsCommand}"
+                            Style="{StaticResource ButtonActionStyle}"
+                            Text="🔍"
+                            FontSize="16"
+                            WidthRequest="40"
+                            HeightRequest="35"
+                            IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
+                            AutomationId="SearchButton"
+                            SemanticProperties.Description="Lancer la recherche de spots"
+                            SemanticProperties.Hint="Appuyez pour rechercher des spots correspondant au texte saisi">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsSearching}" Value="True">
+                                <Setter Property="Text" Value="⏳" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </Grid>
+            </Frame>
+            
+            <!-- Search Suggestions Dropdown -->
+            <Frame IsVisible="{Binding AreSuggestionsVisible}"
+                   BackgroundColor="{StaticResource Surface}"
+                   BorderColor="{StaticResource Gray200}"
+                   CornerRadius="15"
+                   Padding="8"
+                   HasShadow="True"
+                   Margin="15,0,15,5"
+                   AutomationId="SuggestionsFrame"
+                   SemanticProperties.Description="Suggestions de recherche">
+                <CollectionView ItemsSource="{Binding SearchSuggestions}"
+                                SelectionMode="None"
+                                VerticalOptions="Start"
+                                AutomationId="SuggestionsList"
+                                SemanticProperties.Description="Liste des suggestions de recherche">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="{x:Type x:String}">
+                            <Grid Padding="8,4">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=SelectSuggestionCommand}"
+                                                         CommandParameter="{Binding .}" />
+                                </Grid.GestureRecognizers>
+                                
+                                <StackLayout Orientation="Horizontal" Spacing="8">
+                                    <Label Text="🔍"
+                                           FontSize="14"
+                                           TextColor="{StaticResource Gray500}"
+                                           VerticalOptions="Center" />
+                                    <Label Text="{Binding .}"
+                                           FontSize="14"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           VerticalOptions="Center"
+                                           LineBreakMode="TailTruncation" />
+                                </StackLayout>
+                                
+                                <!-- Hover Effect -->
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup Name="CommonStates">
+                                        <VisualState Name="Normal" />
+                                        <VisualState Name="Selected">
+                                            <VisualState.Setters>
+                                                <Setter TargetName="SuggestionFrame" Property="BackgroundColor" Value="{StaticResource Gray100}" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Frame>
+        </StackLayout>
         
         <RefreshView Grid.Row="1" Command="{Binding LoadSpotsCommand}" IsRefreshing="{Binding IsBusy}">
             <Grid RowDefinitions="Auto,*,Auto">

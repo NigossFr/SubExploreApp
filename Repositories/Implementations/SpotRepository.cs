@@ -199,11 +199,106 @@ namespace SubExplore.Repositories.Implementations
                 .Include(s => s.Type)
                 .Include(s => s.Media.Where(m => m.IsPrimary))
                 .Where(s => (EF.Functions.Like(s.Name.ToLower(), $"%{normalizedQuery}%") ||
-                            EF.Functions.Like(s.Description.ToLower(), $"%{normalizedQuery}%")) &&
+                            EF.Functions.Like(s.Description.ToLower(), $"%{normalizedQuery}%") ||
+                            EF.Functions.Like(s.Type.Name.ToLower(), $"%{normalizedQuery}%")) &&
                             s.ValidationStatus == SpotValidationStatus.Approved)
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync()
                 .ConfigureAwait(false);
         }
+
+        public async Task<IEnumerable<Spot>> SearchSpotsWithLocationAsync(string query, decimal? userLatitude = null, decimal? userLongitude = null, double radiusKm = 50)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                if (userLatitude.HasValue && userLongitude.HasValue)
+                {
+                    return await GetNearbySpots(userLatitude.Value, userLongitude.Value, radiusKm);
+                }
+                return await GetAllAsync();
+            }
+
+            string normalizedQuery = query.ToLower();
+            var baseQuery = _context.Spots
+                .AsNoTracking()
+                .Include(s => s.Type)
+                .Include(s => s.Media.Where(m => m.IsPrimary))
+                .Where(s => (EF.Functions.Like(s.Name.ToLower(), $"%{normalizedQuery}%") ||
+                            EF.Functions.Like(s.Description.ToLower(), $"%{normalizedQuery}%") ||
+                            EF.Functions.Like(s.Type.Name.ToLower(), $"%{normalizedQuery}%")) &&
+                            s.ValidationStatus == SpotValidationStatus.Approved);
+
+            if (userLatitude.HasValue && userLongitude.HasValue)
+            {
+                // Calculate distance and sort by relevance + proximity
+                var results = await baseQuery.ToListAsync().ConfigureAwait(false);
+                
+                return results
+                    .Select(s => new
+                    {
+                        Spot = s,
+                        Distance = CalculateDistance((double)userLatitude.Value, (double)userLongitude.Value, 
+                                                   (double)s.Latitude, (double)s.Longitude)
+                    })
+                    .Where(x => x.Distance <= radiusKm)
+                    .OrderBy(x => x.Distance)
+                    .Select(x => x.Spot);
+            }
+
+            return await baseQuery
+                .OrderByDescending(s => s.CreatedAt)
+                .ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<string>> GetSearchSuggestionsAsync(string query, int limit = 5)
+        {
+            if (string.IsNullOrWhiteSpace(query) || query.Length < 1)
+                return Enumerable.Empty<string>();
+
+            string normalizedQuery = query.ToLower();
+            var suggestions = new List<string>();
+
+            // Get spot name suggestions
+            var spotNames = await _context.Spots
+                .AsNoTracking()
+                .Where(s => EF.Functions.Like(s.Name.ToLower(), $"%{normalizedQuery}%") &&
+                           s.ValidationStatus == SpotValidationStatus.Approved)
+                .Select(s => s.Name)
+                .Distinct()
+                .Take(3)
+                .ToListAsync()
+                .ConfigureAwait(false);
+            
+            suggestions.AddRange(spotNames);
+
+            // Get spot type suggestions
+            var typeNames = await _context.SpotTypes
+                .AsNoTracking()
+                .Where(t => EF.Functions.Like(t.Name.ToLower(), $"%{normalizedQuery}%"))
+                .Select(t => t.Name)
+                .Distinct()
+                .Take(2)
+                .ToListAsync()
+                .ConfigureAwait(false);
+                
+            suggestions.AddRange(typeNames);
+
+            return suggestions.Take(limit);
+        }
+
+        private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double R = 6371; // Earth's radius in kilometers
+            var dLat = ToRadians(lat2 - lat1);
+            var dLon = ToRadians(lon2 - lon1);
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                    Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return R * c;
+        }
+
+        private static double ToRadians(double degrees) => degrees * (Math.PI / 180);
     }
 }
