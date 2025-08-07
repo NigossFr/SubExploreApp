@@ -18,6 +18,7 @@ namespace SubExplore
         public AppShell()
         {
             InitializeComponent();
+            
             RegisterRoutes();
             
             // Initialize flyout menu ViewModel
@@ -44,7 +45,9 @@ namespace SubExplore
             {
                 _authenticationService.StateChanged += OnAuthenticationStateChanged;
             }
+            
         }
+        
         
         // Alternative constructor for explicit dependency injection
         public AppShell(IAuthenticationService authenticationService, INavigationService navigationService) : this()
@@ -244,10 +247,11 @@ namespace SubExplore
             }
         }
         
-        
+
         protected override void OnAppearing()
         {
             base.OnAppearing();
+            
             UpdateUserInfo();
             _flyoutMenuViewModel?.RefreshMenu();
         }

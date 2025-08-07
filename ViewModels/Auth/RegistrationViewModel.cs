@@ -47,6 +47,9 @@ namespace SubExplore.ViewModels.Auth
         private bool _acceptTermsAndConditions = false;
 
         [ObservableProperty]
+        private bool _acceptNewsletter = false;
+
+        [ObservableProperty]
         private bool _isPasswordVisible = false;
 
         [ObservableProperty]

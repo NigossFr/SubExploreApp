@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.DebugLoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Debug Login"
+    BackgroundColor="Red"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20" BackgroundColor="LightGreen">
+            
+            <!-- Test if XAML loads at all -->
+            <Label Text="🔥 DEBUG LOGIN PAGE LOADED" 
+                   FontSize="24" 
+                   FontAttributes="Bold"
+                   TextColor="Black"
+                   BackgroundColor="Yellow"
+                   HorizontalOptions="Center" />
+            
+            <Label Text="Si vous voyez ce texte, le XAML fonctionne" 
+                   FontSize="16"
+                   TextColor="DarkBlue"
+                   HorizontalOptions="Center" />
+
+            <!-- Test basic binding -->
+            <Label Text="{Binding Title}" 
+                   FontSize="18"
+                   TextColor="Purple"
+                   HorizontalOptions="Center" />
+
+            <!-- Test simple controls -->
+            <Entry Text="Test Entry"
+                   FontSize="16"
+                   BackgroundColor="White" />
+
+            <Button Text="Test Button"
+                    BackgroundColor="Blue"
+                    TextColor="White"
+                    FontSize="16"
+                    HeightRequest="50" />
+
+            <!-- Debug info -->
+            <Label Text="BindingContext disponible ?" 
+                   FontSize="14"
+                   TextColor="Black"
+                   HorizontalOptions="Center" />
+                   
+            <!-- Test ViewModel binding -->
+            <Label Text="{Binding Email}" 
+                   FontSize="14"
+                   TextColor="Green"
+                   HorizontalOptions="Center" />
+
+        </StackLayout>
+    </ScrollView>
+
+</ContentPage>

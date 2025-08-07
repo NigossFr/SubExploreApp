@@ -9,10 +9,15 @@
     xmlns:favorites="clr-namespace:SubExplore.Views.Favorites"
     xmlns:profile="clr-namespace:SubExplore.Views.Profile"
     xmlns:admin="clr-namespace:SubExplore.Views.Admin"
+    xmlns:auth="clr-namespace:SubExplore.Views.Auth"
     xmlns:controls="clr-namespace:SubExplore.Controls"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels"
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
     Shell.FlyoutBehavior="Flyout"
+    Shell.BackgroundColor="White" 
+    Shell.ForegroundColor="Black"
+    Shell.TitleColor="Black"
+    FlyoutIcon="hamburger.svg"
     FlyoutBackgroundColor="{StaticResource Primary}"
     FlyoutHeaderBehavior="CollapseOnScroll"
     Title="SubExplore"
@@ -34,7 +39,7 @@
                    HasShadow="False"
                    Margin="0">
                 <Grid ColumnDefinitions="Auto,*,60">
-                    
+
                     <!-- App Logo/Icon -->
                     <Frame Grid.Column="0"
                            BackgroundColor="White"
@@ -49,7 +54,7 @@
                                HorizontalOptions="Center"
                                VerticalOptions="Center" />
                     </Frame>
-                    
+
                     <!-- User Info -->
                     <StackLayout Grid.Column="1"
                                Margin="15,0,15,0"
@@ -64,7 +69,7 @@
                                TextColor="White"
                                Opacity="0.8" />
                     </StackLayout>
-                    
+
                     <!-- User Avatar -->
                     <Frame Grid.Column="2"
                            BackgroundColor="White"
@@ -84,8 +89,7 @@
             </Frame>
         </DataTemplate>
     </Shell.FlyoutHeaderTemplate>
-    
-    <!-- Enhanced Flyout Content Template with Staged Menu Buttons -->
+
     <Shell.FlyoutContentTemplate>
         <DataTemplate>
             <ScrollView BackgroundColor="{StaticResource Background}">
@@ -231,27 +235,27 @@
         Title="Carte"
         ContentTemplate="{DataTemplate map:MapPage}"
         Route="map" />
-        
+
     <!-- Hidden routes for navigation -->
     <ShellContent
         Title="Mes Spots"
         ContentTemplate="{DataTemplate spots:MySpotsPage}"
         Route="myspots"
         FlyoutItemIsVisible="False" />
-        
+
     <ShellContent
         Title="Favoris"
         ContentTemplate="{DataTemplate favorites:FavoriteSpotsPage}"
         Route="favorites"
         FlyoutItemIsVisible="False" />
-        
+
     <ShellContent
         Title="Profil"
         ContentTemplate="{DataTemplate profile:UserProfilePage}"
         Route="userprofile"
         FlyoutItemIsVisible="False" />
-        
-        
+
+
     <ShellContent
         Title="Statistiques"
         ContentTemplate="{DataTemplate profile:UserStatsPage}"
@@ -276,6 +280,19 @@
         Title="Validation des Spots"
         ContentTemplate="{DataTemplate admin:SpotValidationPage}"
         Route="spotvalidation"
+        FlyoutItemIsVisible="False" />
+
+    <!-- Authentication routes - Hidden from flyout -->
+    <ShellContent
+        Title="Connexion"
+        ContentTemplate="{DataTemplate auth:ProductionLoginPage}"
+        Route="login"
+        FlyoutItemIsVisible="False" />
+
+    <ShellContent
+        Title="Inscription"
+        ContentTemplate="{DataTemplate auth:RegistrationPage}"
+        Route="register"
         FlyoutItemIsVisible="False" />
 
 </Shell>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.UltraSimpleLoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Auth"
+    x:DataType="viewmodels:LoginViewModel"
+    Title="Ultra Simple Login"
+    BackgroundColor="LightBlue"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <StackLayout Padding="30" Spacing="20">
+            
+            <!-- Simple Header -->
+            <Label Text="🌊 SubExplore" 
+                   FontSize="28" 
+                   FontAttributes="Bold"
+                   TextColor="DarkBlue"
+                   HorizontalOptions="Center" />
+            
+            <Label Text="Ultra Simple Login Test" 
+                   FontSize="16"
+                   TextColor="DarkBlue"
+                   HorizontalOptions="Center" />
+
+            <!-- Simple Email Field -->
+            <Label Text="Email:" FontSize="16" TextColor="DarkBlue" />
+            <Entry Text="{Binding Email}"
+                   Placeholder="admin@subexplore.com"
+                   FontSize="16"
+                   BackgroundColor="White" />
+
+            <!-- Simple Password Field -->
+            <Label Text="Password:" FontSize="16" TextColor="DarkBlue" />
+            <Entry Text="{Binding Password}"
+                   Placeholder="Admin123!"
+                   IsPassword="True"
+                   FontSize="16"
+                   BackgroundColor="White" />
+
+            <!-- Simple Login Button -->
+            <Button Text="Se connecter"
+                    Command="{Binding LoginCommand}"
+                    BackgroundColor="DarkBlue"
+                    TextColor="White"
+                    FontSize="16"
+                    HeightRequest="50" />
+
+            <!-- Simple Error Display -->
+            <Label Text="{Binding LoginErrorMessage}"
+                   FontSize="14"
+                   TextColor="Red"
+                   IsVisible="{Binding HasLoginError}"
+                   HorizontalOptions="Center" />
+
+            <!-- Simple Loading Indicator -->
+            <ActivityIndicator IsRunning="{Binding IsLoginInProgress}"
+                              Color="DarkBlue"
+                              IsVisible="{Binding IsLoginInProgress}" />
+
+        </StackLayout>
+    </ScrollView>
+
+</ContentPage>

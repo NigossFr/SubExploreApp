@@ -228,8 +228,8 @@ namespace SubExplore.ViewModels.Auth
                 
                 // Clear any previous state
                 ClearLoginError();
-                Email = string.Empty;
-                Password = string.Empty;
+                Email = "admin@subexplore.com"; // Pre-fill for debugging
+                Password = "Admin123!"; // Pre-fill for debugging
                 RememberMe = false;
                 IsPasswordVisible = false;
                 

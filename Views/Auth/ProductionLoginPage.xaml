@@ -4,14 +4,13 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Auth"
+    x:DataType="viewmodels:LoginViewModel"
     Title="{Binding Title}"
     BackgroundColor="#F8FDFF"
     Shell.NavBarIsVisible="False">
 
-    <ContentPage.Resources>
-        <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
-        <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
-    </ContentPage.Resources>
+    <!-- Resources removed to test converter issue -->
 
     <ScrollView>
         <Grid RowDefinitions="Auto,*,Auto" Padding="30,60,30,30">
@@ -95,7 +94,7 @@
                             </StackLayout>
                             
                             <Frame BackgroundColor="#FFFFFF"
-                                   BorderColor="{Binding IsEmailValid, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='#28a745|#C8C8C8'}"
+                                   BorderColor="#C8C8C8"
                                    CornerRadius="8"
                                    HasShadow="False"
                                    Padding="0">
@@ -142,7 +141,7 @@
                                     <Entry Grid.Column="0"
                                            Text="{Binding Password}"
                                            Placeholder="Minimum 8 caractères"
-                                           IsPassword="{Binding IsPasswordVisible, Converter={StaticResource InvertBoolConverter}}"
+                                           IsPassword="True"
                                            FontSize="16"
                                            TextColor="#333333"
                                            PlaceholderColor="#919191"
@@ -152,7 +151,7 @@
                                            ReturnType="Go" />
                                     
                                     <Button Grid.Column="1"
-                                            Text="{Binding IsPasswordVisible, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='🙈|👁️'}"
+                                            Text="👁️"
                                             FontSize="18"
                                             BackgroundColor="Transparent"
                                             TextColor="#6E6E6E"
@@ -238,17 +237,7 @@
                              HorizontalOptions="FillAndExpand" />
                 </StackLayout>
 
-                <!-- Continue Without Login -->
-                <Button Text="Continuer sans compte"
-                        Command="{Binding NavigateToMainWithoutLoginCommand}"
-                        BackgroundColor="Transparent"
-                        TextColor="#00B4D8"
-                        FontSize="16"
-                        BorderColor="#00B4D8"
-                        BorderWidth="2"
-                        CornerRadius="12"
-                        HeightRequest="50"
-                        HorizontalOptions="FillAndExpand" />
+                <!-- Continue Without Login button removed - authentication required -->
             </StackLayout>
 
             <!-- Footer Section -->

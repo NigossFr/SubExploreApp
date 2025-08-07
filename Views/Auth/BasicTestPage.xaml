@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Auth.BasicTestPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Basic Test"
+    BackgroundColor="Orange"
+    Shell.NavBarIsVisible="False">
+
+    <StackLayout Padding="20" Spacing="20" BackgroundColor="LightBlue">
+        
+        <Label Text="🧪 BASIC TEST PAGE" 
+               FontSize="28" 
+               FontAttributes="Bold"
+               TextColor="DarkRed"
+               BackgroundColor="Yellow"
+               HorizontalOptions="Center"
+               Padding="10" />
+        
+        <Label Text="Cette page ne nécessite aucun service" 
+               FontSize="18"
+               TextColor="DarkBlue"
+               HorizontalOptions="Center" />
+
+        <Label Text="Si vous voyez ceci, MAUI fonctionne correctement" 
+               FontSize="16"
+               TextColor="Green"
+               HorizontalOptions="Center" />
+
+        <Button Text="Page statique - Pas de binding"
+                BackgroundColor="Purple"
+                TextColor="White"
+                FontSize="16"
+                HeightRequest="50" />
+
+        <Label Text="Test de rendu XAML de base réussi ✅" 
+               FontSize="14"
+               TextColor="DarkGreen"
+               HorizontalOptions="Center"
+               FontAttributes="Bold" />
+
+    </StackLayout>
+
+</ContentPage>

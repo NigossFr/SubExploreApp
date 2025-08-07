@@ -29,6 +29,10 @@ using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
 using Microsoft.Maui.Devices; // Ajouté pour DeviceInfo
 using DotNetEnv; // Pour charger les variables d'environnement
+using Microsoft.Maui.Handlers;
+#if WINDOWS
+using SubExplore.Platforms.Windows;
+#endif
 
 namespace SubExplore;
 
@@ -58,7 +62,8 @@ public static class MauiProgram
                 // Temporarily commented out to fix font loading issues
                 // fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 // fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-            });
+            })
+;
 
 #if ANDROID
         // Additional Android-specific Google Maps configuration will be handled by the platform-specific code
@@ -342,10 +347,18 @@ public static class MauiProgram
         
         // Authentication Pages
         builder.Services.AddTransient<SubExplore.Views.Auth.LoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.ProductionLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.DiagnosticLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.SimpleLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.WorkingLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.MinimalLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.UltraSimpleLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.DebugLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.BasicTestPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.CodeOnlyTestPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.CodeOnlyLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.CompleteLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.CompleteRegistrationPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.RegistrationPage>();
         
         // Admin Pages
@@ -368,6 +381,7 @@ public static class MauiProgram
             // Log fatal exception through proper logging when app is running
             // For now, system will handle the exception appropriately
         };
+
 
         return builder.Build();
     }

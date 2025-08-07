@@ -81,12 +81,13 @@
                    HasShadow="False"
                    IsVisible="{Binding Source={x:Reference Root}, Path=ShowIcon}">
                 
-                <Label x:Name="IconLabel"
-                       Text="{Binding Source={x:Reference Root}, Path=Icon}"
-                       FontSize="16"
-                       TextColor="{Binding Source={x:Reference Root}, Path=IconColor}"
+                                   <Image x:Name="IconImage"
+                       Source="{Binding Source={x:Reference Root}, Path=Icon}"
+                       WidthRequest="24"
+                       HeightRequest="24"
                        HorizontalOptions="Center"
                        VerticalOptions="Center"
+                       Aspect="AspectFit"
                        AutomationProperties.IsInAccessibleTree="False"
                        SemanticProperties.Description="{Binding Source={x:Reference Root}, Path=IconAccessibilityText}" />
                        

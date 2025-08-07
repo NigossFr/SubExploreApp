@@ -235,20 +235,91 @@ namespace SubExplore
                 var navService = services.GetService<INavigationService>();
                 Debug.WriteLine($"[App.xaml.cs] NavigationService: {(navService != null ? "✓ Found" : "✗ Not found")}");
                 
-                // Try to create the beautiful LoginPage
+                // SOLUTION: Use Complete Login Page (full-featured, no XAML issues)
+                Debug.WriteLine("[App.xaml.cs] Using Complete Login Page with all features...");
+                
                 if (loginViewModel != null)
                 {
-                    Debug.WriteLine("[App.xaml.cs] Creating MinimalLoginPage - ultra-simple to avoid performance issues");
+                    Debug.WriteLine("[App.xaml.cs] === USING COMPLETE LOGIN PAGE ===");
                     try
                     {
-                        // Use the minimal login page to avoid OpenGL/rendering performance issues
-                        var minimalLoginPage = new SubExplore.Views.Auth.MinimalLoginPage(loginViewModel);
-                        Debug.WriteLine("[App.xaml.cs] MinimalLoginPage created successfully");
+                        var completeLoginPage = new SubExplore.Views.Auth.CompleteLoginPage(loginViewModel);
+                        Debug.WriteLine("[App.xaml.cs] ✓ CompleteLoginPage created successfully");
                         
-                        // For authentication, use NavigationPage temporarily
-                        // After login success, we'll switch to AppShell
-                        MainPage = new NavigationPage(minimalLoginPage);
-                        Debug.WriteLine("[App.xaml.cs] ✓ MinimalLoginPage set as MainPage successfully (temp NavigationPage)");
+                        MainPage = new NavigationPage(completeLoginPage);
+                        Debug.WriteLine("[App.xaml.cs] ✓ CompleteLoginPage set as MainPage - FULL LOGIN FEATURES READY");
+                        return; // This is our complete solution
+                    }
+                    catch (Exception loginEx)
+                    {
+                        Debug.WriteLine($"[App.xaml.cs] ❌ Complete Login failed: {loginEx.Message}");
+                        Debug.WriteLine($"[App.xaml.cs] Stack trace: {loginEx.StackTrace}");
+                        
+                        // Fallback to simple version
+                        try
+                        {
+                            var codeOnlyLoginPage = new SubExplore.Views.Auth.CodeOnlyLoginPage(loginViewModel);
+                            Debug.WriteLine("[App.xaml.cs] ✓ Fallback to CodeOnlyLoginPage");
+                            MainPage = new NavigationPage(codeOnlyLoginPage);
+                            return;
+                        }
+                        catch (Exception fallbackEx)
+                        {
+                            Debug.WriteLine($"[App.xaml.cs] ❌ Fallback also failed: {fallbackEx.Message}");
+                        }
+                    }
+                }
+                
+                // STEP 1: Test absolute minimal XAML if code-only works
+                Debug.WriteLine("[App.xaml.cs] === TESTING MINIMAL XAML ===");
+                try
+                {
+                    var xamlDiagnosticPage = new SubExplore.Views.Auth.XamlDiagnosticPage();
+                    Debug.WriteLine("[App.xaml.cs] ✓ XamlDiagnosticPage created successfully");
+                    
+                    MainPage = xamlDiagnosticPage;
+                    Debug.WriteLine("[App.xaml.cs] ✓ XamlDiagnosticPage set as MainPage (NO NavigationPage wrapper)");
+                    return; // Exit early for testing
+                }
+                catch (Exception xamlEx)
+                {
+                    Debug.WriteLine($"[App.xaml.cs] ❌ CRITICAL: XAML compilation failed: {xamlEx.Message}");
+                    Debug.WriteLine($"[App.xaml.cs] XAML Stack trace: {xamlEx.StackTrace}");
+                    if (xamlEx.InnerException != null)
+                    {
+                        Debug.WriteLine($"[App.xaml.cs] XAML Inner exception: {xamlEx.InnerException.Message}");
+                    }
+                }
+                
+                // STEP 1: Test BasicTestPage if XAML works
+                Debug.WriteLine("[App.xaml.cs] === TESTING BASIC PAGE (NO SERVICES) ===");
+                try
+                {
+                    var basicTestPage = new SubExplore.Views.Auth.BasicTestPage();
+                    Debug.WriteLine("[App.xaml.cs] ✓ BasicTestPage created successfully");
+                    
+                    MainPage = new NavigationPage(basicTestPage);
+                    Debug.WriteLine("[App.xaml.cs] ✓ BasicTestPage set as MainPage");
+                    return; // Exit early for testing
+                }
+                catch (Exception basicEx)
+                {
+                    Debug.WriteLine($"[App.xaml.cs] ❌ CRITICAL: BasicTestPage failed: {basicEx.Message}");
+                    Debug.WriteLine($"[App.xaml.cs] Stack trace: {basicEx.StackTrace}");
+                }
+                
+                // STEP 2: If basic page works, try DebugLoginPage with services
+                if (loginViewModel != null)
+                {
+                    Debug.WriteLine("[App.xaml.cs] Creating DebugLoginPage for issue diagnosis");
+                    try
+                    {
+                        // Use DebugLoginPage first to see if basic XAML works
+                        var debugLoginPage = new SubExplore.Views.Auth.DebugLoginPage(loginViewModel);
+                        Debug.WriteLine("[App.xaml.cs] DebugLoginPage created successfully");
+                        
+                        MainPage = new NavigationPage(debugLoginPage);
+                        Debug.WriteLine("[App.xaml.cs] ✓ DebugLoginPage set as MainPage successfully");
                     }
                     catch (Exception ex)
                     {

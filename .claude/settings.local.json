@@ -42,7 +42,8 @@
       "Bash(mv:*)",
       "Bash(where keytool)",
       "Bash(echo $USERPROFILE)",
-      "Bash(dotnet:*)"
+      "Bash(dotnet:*)",
+      "WebFetch(domain:www.telerik.com)"
     ],
     "deny": []
   }
