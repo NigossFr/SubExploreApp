@@ -6,7 +6,7 @@
              xmlns:models="clr-namespace:SubExplore.Models.Domain"
              x:DataType="vm:SpotValidationViewModel"
              Title="{Binding Title}"
-             Shell.BackgroundColor="{StaticResource Primary}">
+             Shell.BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
 
     <Shell.TitleView>
         <Grid>

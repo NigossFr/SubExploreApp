@@ -7,7 +7,7 @@
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Auth"
     x:DataType="viewmodels:LoginViewModel"
     Title="{Binding Title}"
-    BackgroundColor="#F8FDFF"
+    BackgroundColor="{AppThemeBinding Light=#F8FDFF, Dark={StaticResource BackgroundDark}}"
     Shell.NavBarIsVisible="False">
 
     <!-- Resources removed to test converter issue -->
@@ -18,7 +18,7 @@
             <!-- Header Section -->
             <StackLayout Grid.Row="0" Spacing="30" Margin="0,0,0,50">
                 <!-- App Logo/Icon -->
-                <Frame BackgroundColor="#006994"
+                <Frame BackgroundColor="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}"
                        CornerRadius="35"
                        HeightRequest="70"
                        WidthRequest="70"
@@ -30,7 +30,7 @@
                            FontAttributes="Bold"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
-                           TextColor="White" />
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                 </Frame>
 
                 <!-- Welcome Text -->
@@ -38,13 +38,13 @@
                     <Label Text="Bienvenue sur SubExplore"
                            FontSize="32"
                            FontAttributes="Bold"
-                           TextColor="#006994"
+                           TextColor="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center" />
                     
                     <Label Text="Découvrez et partagez les plus beaux spots de plongée"
                            FontSize="16"
-                           TextColor="#666666"
+                           TextColor="{AppThemeBinding Light=#666666, Dark={StaticResource TextSecondary}}"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center"
                            Margin="0,0,0,10" />
@@ -55,7 +55,7 @@
             <StackLayout Grid.Row="1" Spacing="25">
                 
                 <!-- Error Message -->
-                <Frame BackgroundColor="#E63946"
+                <Frame BackgroundColor="{AppThemeBinding Light=#E63946, Dark={StaticResource Error}}"
                        CornerRadius="12"
                        Padding="20,15"
                        IsVisible="{Binding HasLoginError}"
@@ -69,8 +69,8 @@
                 </Frame>
 
                 <!-- Login Credentials Card -->
-                <Frame BackgroundColor="#FFFFFF"
-                       BorderColor="#C8C8C8"
+                <Frame BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark={StaticResource SurfaceDark}}"
+                       BorderColor="{AppThemeBinding Light=#C8C8C8, Dark={StaticResource BorderColorDark}}"
                        CornerRadius="12"
                        HasShadow="False"
                        Padding="25,30"
@@ -83,7 +83,7 @@
                                 <Label Text="Adresse email"
                                        FontSize="14"
                                        FontAttributes="Bold"
-                                       TextColor="#333333"
+                                       TextColor="{AppThemeBinding Light=#333333, Dark={StaticResource TextPrimary}}"
                                        VerticalOptions="Center" />
                                 
                                 <Label Text="✓"
@@ -93,8 +93,8 @@
                                        VerticalOptions="Center" />
                             </StackLayout>
                             
-                            <Frame BackgroundColor="#FFFFFF"
-                                   BorderColor="#C8C8C8"
+                            <Frame BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark={StaticResource SurfaceDark}}"
+                                   BorderColor="{AppThemeBinding Light=#C8C8C8, Dark={StaticResource BorderColorDark}}"
                                    CornerRadius="8"
                                    HasShadow="False"
                                    Padding="0">
@@ -102,8 +102,8 @@
                                        Placeholder="admin@subexplore.com"
                                        Keyboard="Email"
                                        FontSize="16"
-                                       TextColor="#333333"
-                                       PlaceholderColor="#919191"
+                                       TextColor="{AppThemeBinding Light=#333333, Dark={StaticResource TextPrimary}}"
+                                       PlaceholderColor="{AppThemeBinding Light=#919191, Dark={StaticResource Gray400}}"
                                        BackgroundColor="Transparent"
                                        Margin="20,0"
                                        HeightRequest="50"
@@ -122,7 +122,7 @@
                                 <Label Text="Mot de passe"
                                        FontSize="14"
                                        FontAttributes="Bold"
-                                       TextColor="#333333"
+                                       TextColor="{AppThemeBinding Light=#333333, Dark={StaticResource TextPrimary}}"
                                        VerticalOptions="Center" />
                                 
                                 <Label Text="✓"
@@ -132,8 +132,8 @@
                                        VerticalOptions="Center" />
                             </StackLayout>
                             
-                            <Frame BackgroundColor="#FFFFFF"
-                                   BorderColor="#C8C8C8"
+                            <Frame BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark={StaticResource SurfaceDark}}"
+                                   BorderColor="{AppThemeBinding Light=#C8C8C8, Dark={StaticResource BorderColorDark}}"
                                    CornerRadius="8"
                                    HasShadow="False"
                                    Padding="0">
@@ -143,8 +143,8 @@
                                            Placeholder="Minimum 8 caractères"
                                            IsPassword="True"
                                            FontSize="16"
-                                           TextColor="#333333"
-                                           PlaceholderColor="#919191"
+                                           TextColor="{AppThemeBinding Light=#333333, Dark={StaticResource TextPrimary}}"
+                                           PlaceholderColor="{AppThemeBinding Light=#919191, Dark={StaticResource Gray400}}"
                                            BackgroundColor="Transparent"
                                            Margin="20,0,0,0"
                                            HeightRequest="50"
@@ -154,7 +154,7 @@
                                             Text="👁️"
                                             FontSize="18"
                                             BackgroundColor="Transparent"
-                                            TextColor="#6E6E6E"
+                                            TextColor="{AppThemeBinding Light=#6E6E6E, Dark={StaticResource Gray400}}"
                                             Padding="15"
                                             Command="{Binding TogglePasswordVisibilityCommand}" />
                                 </Grid>
@@ -169,10 +169,10 @@
                         <!-- Remember Me -->
                         <StackLayout Orientation="Horizontal" Spacing="12" Margin="0,5,0,0">
                             <CheckBox IsChecked="{Binding RememberMe}"
-                                      Color="#006994" />
+                                      Color="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}" />
                             <Label Text="Se souvenir de moi"
                                    FontSize="14"
-                                   TextColor="#666666"
+                                   TextColor="{AppThemeBinding Light=#666666, Dark={StaticResource TextSecondary}}"
                                    VerticalOptions="Center" />
                         </StackLayout>
                         
@@ -183,14 +183,14 @@
                 <StackLayout Spacing="8">
                     <!-- Progress Bar -->
                     <ProgressBar Progress="{Binding LoginProgress}"
-                                 ProgressColor="#006994"
-                                 BackgroundColor="#E0E0E0"
+                                 ProgressColor="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}"
+                                 BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark={StaticResource Gray700}}"
                                  HeightRequest="4"
                                  IsVisible="{Binding IsLoginInProgress}" />
                     
                     <Button Text="Se connecter"
                             Command="{Binding LoginCommand}"
-                            BackgroundColor="#006994"
+                            BackgroundColor="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}"
                             TextColor="White"
                             FontSize="16"
                             FontAttributes="Bold"
@@ -214,7 +214,7 @@
                 <Button Text="Mot de passe oublié ?"
                         Command="{Binding NavigateToForgotPasswordCommand}"
                         BackgroundColor="Transparent"
-                        TextColor="#006994"
+                        TextColor="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}"
                         FontSize="14"
                         FontAttributes="Bold"
                         Padding="0"
@@ -223,15 +223,15 @@
 
                 <!-- Divider -->
                 <StackLayout Orientation="Horizontal" Spacing="15" Margin="0,30,0,20">
-                    <BoxView BackgroundColor="#ACACAC"
+                    <BoxView BackgroundColor="{AppThemeBinding Light=#ACACAC, Dark={StaticResource Gray600}}"
                              HeightRequest="1"
                              VerticalOptions="Center"
                              HorizontalOptions="FillAndExpand" />
                     <Label Text="ou"
                            FontSize="14"
-                           TextColor="#6E6E6E"
+                           TextColor="{AppThemeBinding Light=#6E6E6E, Dark={StaticResource Gray400}}"
                            VerticalOptions="Center" />
-                    <BoxView BackgroundColor="#ACACAC"
+                    <BoxView BackgroundColor="{AppThemeBinding Light=#ACACAC, Dark={StaticResource Gray600}}"
                              HeightRequest="1"
                              VerticalOptions="Center"
                              HorizontalOptions="FillAndExpand" />
@@ -249,13 +249,13 @@
                              Spacing="8">
                     <Label Text="Pas encore de compte ?"
                            FontSize="15"
-                           TextColor="#666666"
+                           TextColor="{AppThemeBinding Light=#666666, Dark={StaticResource TextSecondary}}"
                            VerticalOptions="Center" />
                     
                     <Button Text="S'inscrire"
                             Command="{Binding NavigateToRegistrationCommand}"
                             BackgroundColor="Transparent"
-                            TextColor="#006994"
+                            TextColor="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}"
                             FontSize="15"
                             FontAttributes="Bold"
                             Padding="0"
@@ -265,7 +265,7 @@
                 <!-- Version Info -->
                 <Label Text="SubExplore v1.0 - Explorez en toute sécurité"
                        FontSize="12"
-                       TextColor="#919191"
+                       TextColor="{AppThemeBinding Light=#919191, Dark={StaticResource Gray400}}"
                        HorizontalOptions="Center"
                        HorizontalTextAlignment="Center"
                        Margin="0,15,0,0" />
@@ -276,8 +276,8 @@
 
     <!-- Enhanced Loading Overlay -->
     <Grid IsVisible="{Binding IsLoginInProgress}"
-          BackgroundColor="#80000000">
-        <Frame BackgroundColor="#FFFFFF"
+          BackgroundColor="{AppThemeBinding Light=#80000000, Dark=#C0000000}">
+        <Frame BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark={StaticResource SurfaceDark}}"
                CornerRadius="16"
                WidthRequest="160"
                HeightRequest="140"
@@ -289,7 +289,7 @@
                          HorizontalOptions="Center"
                          VerticalOptions="Center">
                 <ActivityIndicator IsRunning="{Binding IsLoginInProgress}"
-                                   Color="#006994"
+                                   Color="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}"
                                    WidthRequest="50"
                                    HeightRequest="50" />
                 
@@ -297,12 +297,12 @@
                     <Label Text="🔐 Connexion en cours..."
                            FontSize="16"
                            FontAttributes="Bold"
-                           TextColor="#333333"
+                           TextColor="{AppThemeBinding Light=#333333, Dark={StaticResource TextPrimary}}"
                            HorizontalOptions="Center" />
                     
                     <ProgressBar Progress="{Binding LoginProgress}"
-                                 ProgressColor="#006994"
-                                 BackgroundColor="#E0E0E0"
+                                 ProgressColor="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}"
+                                 BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark={StaticResource Gray700}}"
                                  HeightRequest="6"
                                  WidthRequest="120"
                                  HorizontalOptions="Center" />

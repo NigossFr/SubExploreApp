@@ -8,14 +8,14 @@
     xmlns:domain="clr-namespace:SubExplore.Models.Domain"
     x:DataType="viewmodels:MySpotsViewModel"
     Title="{Binding Title}"
-    BackgroundColor="{StaticResource Background}">
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}">
 
     <Grid RowDefinitions="Auto,*">
 
         <!-- Search and Filter Section -->
         <Frame Grid.Row="0" 
                Padding="15"
-               BackgroundColor="{StaticResource Background}"
+               BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}"
                BorderColor="Transparent">
             <StackLayout Spacing="15">
                 
@@ -25,7 +25,7 @@
                     <!-- Total Spots -->
                     <Frame Grid.Column="0"
                            Padding="10"
-                           BackgroundColor="{StaticResource Primary}"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            CornerRadius="8"
                            HasShadow="False">
                         <StackLayout HorizontalOptions="Center" Spacing="2">
@@ -44,7 +44,7 @@
                     <!-- Validated Spots -->
                     <Frame Grid.Column="1"
                            Padding="10"
-                           BackgroundColor="{StaticResource Success}"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}"
                            CornerRadius="8"
                            HasShadow="False">
                         <StackLayout HorizontalOptions="Center" Spacing="2">
@@ -63,7 +63,7 @@
                     <!-- Rejected Spots -->
                     <Frame Grid.Column="2"
                            Padding="10"
-                           BackgroundColor="{StaticResource Error}"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Error}, Dark={StaticResource Error}}"
                            CornerRadius="8"
                            HasShadow="False">
                         <StackLayout HorizontalOptions="Center" Spacing="2">
@@ -82,7 +82,7 @@
                     <!-- Pending Spots -->
                     <Frame Grid.Column="3"
                            Padding="10"
-                           BackgroundColor="{StaticResource Accent}"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource Accent}}"
                            CornerRadius="8"
                            HasShadow="False">
                         <StackLayout HorizontalOptions="Center" Spacing="2">
@@ -104,8 +104,8 @@
                     
                     <!-- Search Entry -->
                     <Frame Grid.Column="0"
-                           BackgroundColor="{StaticResource Surface}"
-                           BorderColor="{StaticResource BorderColor}"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}"
                            CornerRadius="8"
                            Padding="0"
                            HasShadow="False">
@@ -122,8 +122,8 @@
                     
                     <!-- Filter Picker -->
                     <Frame Grid.Column="1"
-                           BackgroundColor="{StaticResource Surface}"
-                           BorderColor="{StaticResource BorderColor}"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}"
                            CornerRadius="8"
                            Padding="0"
                            HasShadow="False"
@@ -144,7 +144,7 @@
                             WidthRequest="50"
                             HeightRequest="50"
                             CornerRadius="25"
-                            BackgroundColor="{StaticResource Secondary}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                             TextColor="White"
                             Command="{Binding ClearFiltersCommand}"
                             AutomationId="ClearFiltersButton"
@@ -163,7 +163,7 @@
                          HorizontalOptions="Center"
                          Spacing="20">
                 <ActivityIndicator IsRunning="{Binding IsLoading}"
-                                   Color="{StaticResource Primary}"
+                                   Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
                                    HeightRequest="50"
                                    WidthRequest="50"
                                    AutomationId="LoadingIndicator" />
@@ -346,7 +346,7 @@
                 WidthRequest="60"
                 HeightRequest="60"
                 CornerRadius="30"
-                BackgroundColor="{StaticResource Primary}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                 TextColor="White"
                 HorizontalOptions="End"
                 VerticalOptions="End"

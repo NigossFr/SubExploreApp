@@ -194,8 +194,8 @@
             <StackLayout Spacing="16" Padding="16">
 
                 <!-- Edit Mode Form -->
-                <Frame BackgroundColor="{StaticResource Surface}" 
-                       BorderColor="{StaticResource BorderColor}"
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}" 
+                       BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}"
                        CornerRadius="12" 
                        IsVisible="{Binding IsEditMode}" 
                        Padding="16" 
@@ -337,8 +337,8 @@
                 </Frame>
 
                 <!-- Account Information Section -->
-                <Frame BackgroundColor="{StaticResource Surface}" 
-                       BorderColor="{StaticResource BorderColor}"
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}" 
+                       BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}"
                        CornerRadius="12" 
                        Padding="16" 
                        HasShadow="False"
@@ -384,7 +384,7 @@
                 </Frame>
 
                 <!-- Appearance Preferences Section -->
-                <Frame BackgroundColor="{StaticResource Primary}" 
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
                        CornerRadius="12" 
                        Padding="16" 
                        HasShadow="False"
@@ -398,7 +398,7 @@
                                TextColor="White" />
 
                         <!-- Theme Selection -->
-                        <Frame BackgroundColor="{StaticResource Secondary}"
+                        <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                CornerRadius="8"
                                HasShadow="False"
                                Padding="12">
@@ -424,7 +424,7 @@
                         </Frame>
 
                         <!-- Language Selection -->
-                        <Frame BackgroundColor="{StaticResource Secondary}"
+                        <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                CornerRadius="8"
                                HasShadow="False"
                                Padding="12">
@@ -450,7 +450,7 @@
                         </Frame>
 
                         <!-- Display Name Selection -->
-                        <Frame BackgroundColor="{StaticResource Secondary}"
+                        <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                CornerRadius="8"
                                HasShadow="False"
                                Padding="12">
@@ -478,7 +478,7 @@
                 </Frame>
 
                 <!-- Notification Preferences Section -->
-                <Frame BackgroundColor="{StaticResource Primary}" 
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
                        CornerRadius="12" 
                        Padding="16" 
                        HasShadow="False"
@@ -494,7 +494,7 @@
                         <!-- Enhanced Notification Settings -->
                         <StackLayout Spacing="12">
                             <!-- Push Notifications -->
-                            <Frame BackgroundColor="{StaticResource Secondary}"
+                            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                    CornerRadius="8"
                                    HasShadow="False"
                                    Padding="12">
@@ -520,7 +520,7 @@
                             </Frame>
 
                             <!-- Email Notifications -->
-                            <Frame BackgroundColor="{StaticResource Secondary}"
+                            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                    CornerRadius="8"
                                    HasShadow="False"
                                    Padding="12">
@@ -546,7 +546,7 @@
                             </Frame>
 
                             <!-- Nearby Spots -->
-                            <Frame BackgroundColor="{StaticResource Secondary}"
+                            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                    CornerRadius="8"
                                    HasShadow="False"
                                    Padding="12">
@@ -572,7 +572,7 @@
                             </Frame>
 
                             <!-- Community Updates -->
-                            <Frame BackgroundColor="{StaticResource Secondary}"
+                            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                    CornerRadius="8"
                                    HasShadow="False"
                                    Padding="12">
@@ -598,7 +598,7 @@
                             </Frame>
 
                             <!-- Safety Alerts -->
-                            <Frame BackgroundColor="{StaticResource Secondary}"
+                            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                    CornerRadius="8"
                                    HasShadow="False"
                                    Padding="12">
@@ -629,7 +629,7 @@
                 <!-- Save Preferences Button -->
                 <Button Text="Enregistrer les préférences"
                         Command="{Binding SavePreferencesCommand}"
-                        BackgroundColor="{StaticResource Primary}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                         TextColor="White"
                         FontSize="16"
                         CornerRadius="8"

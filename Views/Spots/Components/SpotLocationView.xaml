@@ -14,7 +14,7 @@
             <!--  Carte  -->
             <Frame
                 Padding="0"
-                BorderColor="{StaticResource Secondary}"
+                BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                 HeightRequest="250"
                 IsClippedToBounds="True">
                 <Grid>
@@ -96,7 +96,7 @@
                    Text="Description de l'accès *"
                    AutomationId="AccessDescriptionLabel"
                    SemanticProperties.Description="Description de l'accès au spot" />
-            <Frame Padding="10" BorderColor="{StaticResource Secondary}">
+            <Frame Padding="10" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                 <Editor
                     AutoSize="TextChanges"
                     HeightRequest="150"

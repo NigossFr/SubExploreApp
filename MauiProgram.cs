@@ -223,6 +223,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMapDiagnosticService, MapDiagnosticService>();
         builder.Services.AddSingleton<IPlatformMapService, PlatformMapService>();
         builder.Services.AddSingleton<IMenuService, MenuService>();
+        builder.Services.AddSingleton<IThemeService, ThemeService>();
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
         builder.Services.AddScoped<ISpotService, SpotService>();
         builder.Services.AddScoped<IFavoriteSpotService, FavoriteSpotService>();

@@ -17,11 +17,11 @@
             <!-- Refresh Button -->
             <Button Text="🔄 Actualiser les données" 
                     Command="{Binding RefreshDataCommand}"
-                    BackgroundColor="LightBlue"
-                    TextColor="Black"/>
+                    BackgroundColor="{AppThemeBinding Light=LightBlue, Dark={StaticResource Primary}}"
+                    TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
             
             <!-- Migration Status -->
-            <Frame BackgroundColor="LightGray" Padding="15">
+            <Frame BackgroundColor="{AppThemeBinding Light=LightGray, Dark={StaticResource Gray800}}" Padding="15">
                 <StackLayout>
                     <Label Text="📊 État des migrations" FontSize="18" FontAttributes="Bold"/>
                     <Label Text="{Binding MigrationStatus}" FontSize="14"/>
@@ -29,7 +29,7 @@
             </Frame>
             
             <!-- Current User Info -->
-            <Frame BackgroundColor="LightGreen" Padding="15">
+            <Frame BackgroundColor="{AppThemeBinding Light=LightGreen, Dark={StaticResource Success}}" Padding="15">
                 <StackLayout>
                     <Label Text="👤 Utilisateur connecté" FontSize="18" FontAttributes="Bold"/>
                     <Label Text="{Binding CurrentUserInfo}" FontSize="14"/>
@@ -37,7 +37,7 @@
             </Frame>
             
             <!-- Spots Summary -->
-            <Frame BackgroundColor="LightYellow" Padding="15">
+            <Frame BackgroundColor="{AppThemeBinding Light=LightYellow, Dark={StaticResource Warning}}" Padding="15">
                 <StackLayout>
                     <Label Text="📍 Résumé des spots" FontSize="18" FontAttributes="Bold"/>
                     <Label Text="{Binding SpotsSummary}" FontSize="14"/>
@@ -45,7 +45,7 @@
             </Frame>
             
             <!-- Spots List -->
-            <Frame BackgroundColor="White" Padding="15">
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource SurfaceDark}}" Padding="15">
                 <StackLayout>
                     <Label Text="📋 Liste détaillée des spots" FontSize="18" FontAttributes="Bold"/>
                     <CollectionView ItemsSource="{Binding Spots}" BackgroundColor="Transparent">

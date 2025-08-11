@@ -9,7 +9,7 @@
     xmlns:domain="clr-namespace:SubExplore.Models.Domain"
     x:DataType="viewmodels:SpotDetailsViewModel"
     Title="{Binding Title}"
-    BackgroundColor="{StaticResource Background}">
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- Page Header with Menu -->

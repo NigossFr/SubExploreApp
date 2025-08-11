@@ -6,7 +6,7 @@
              x:DataType="viewmodels:NavigationBarViewModel">
 
     <!-- Enhanced Navigation Bar with Breadcrumbs and Context -->
-    <Frame BackgroundColor="{StaticResource Primary}"
+    <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
            BorderColor="Transparent"
            CornerRadius="0"
            Padding="15,10"
@@ -21,7 +21,7 @@
                 <Button Grid.Column="0"
                         Text="◀"
                         FontSize="20"
-                        TextColor="White"
+                        TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                         BackgroundColor="Transparent"
                         BorderColor="Transparent"
                         WidthRequest="40"
@@ -48,7 +48,7 @@
                     <Label Text="{Binding CurrentPageTitle}"
                            FontSize="18"
                            FontAttributes="Bold"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                            HorizontalOptions="Center"
                            AutomationId="PageTitle"
                            SemanticProperties.Description="Titre de la page actuelle" />
@@ -56,7 +56,7 @@
                     <!-- Navigation Context/Subtitle -->
                     <Label Text="{Binding NavigationContext}"
                            FontSize="12"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                            Opacity="0.8"
                            HorizontalOptions="Center"
                            IsVisible="{Binding HasNavigationContext}"
@@ -68,7 +68,7 @@
                 <Button Grid.Column="2"
                         Text="Home"
                         FontSize="14"
-                        TextColor="White"
+                        TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                         BackgroundColor="Transparent"
                         BorderColor="Transparent"
                         WidthRequest="40"
@@ -84,7 +84,7 @@
                 <Button Grid.Column="3"
                         Text="☰"
                         FontSize="18"
-                        TextColor="White"
+                        TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                         BackgroundColor="Transparent"
                         BorderColor="Transparent"
                         WidthRequest="40"
@@ -118,7 +118,7 @@
                                 <!-- Breadcrumb Item -->
                                 <Label Text="{Binding Title}"
                                        FontSize="12"
-                                       TextColor="White"
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                        VerticalOptions="Center"
                                        AutomationId="BreadcrumbItem"
                                        SemanticProperties.Description="{Binding Title, StringFormat='Naviguer vers {0}'}">
@@ -138,7 +138,7 @@
                                 <!-- Separator -->
                                 <Label Text="›"
                                        FontSize="12"
-                                       TextColor="White"
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                        Opacity="0.5"
                                        VerticalOptions="Center"
                                        IsVisible="{Binding ShowSeparator}" />

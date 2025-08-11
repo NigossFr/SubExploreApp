@@ -16,6 +16,7 @@ namespace SubExplore.ViewModels.Profile
         private readonly IDialogService _dialogService;
         private readonly INavigationService _navigationService;
         private readonly IMediaService _mediaService;
+        private readonly IThemeService _themeService;
 
         [ObservableProperty]
         private User? _currentUser;
@@ -89,6 +90,7 @@ namespace SubExplore.ViewModels.Profile
             IDialogService dialogService,
             INavigationService navigationService,
             IMediaService mediaService,
+            IThemeService themeService,
             IAuthorizationService authorizationService,
             IAuthenticationService authenticationService)
             : base(authorizationService, authenticationService)
@@ -97,6 +99,7 @@ namespace SubExplore.ViewModels.Profile
             _dialogService = dialogService;
             _navigationService = navigationService;
             _mediaService = mediaService;
+            _themeService = themeService;
             
             Title = "Profil";
         }
@@ -332,7 +335,8 @@ namespace SubExplore.ViewModels.Profile
                 }
 
                 // Update preferences object
-                CurrentPreferences.Theme = _themeOptions[SelectedThemeIndex];
+                var selectedTheme = _themeOptions[SelectedThemeIndex];
+                CurrentPreferences.Theme = selectedTheme;
                 CurrentPreferences.DisplayNamePreference = _displayNameOptions[SelectedDisplayNameIndex];
                 CurrentPreferences.Language = _languageOptions[SelectedLanguageIndex];
                 CurrentPreferences.NotificationSettings = JsonSerializer.Serialize(new
@@ -348,6 +352,9 @@ namespace SubExplore.ViewModels.Profile
 
                 if (success)
                 {
+                    // Apply theme change
+                    await ApplyThemeAsync(selectedTheme);
+                    
                     await _dialogService.ShowAlertAsync(
                         "Succès",
                         "Vos préférences ont été sauvegardées avec succès !",
@@ -622,6 +629,26 @@ namespace SubExplore.ViewModels.Profile
             OnPropertyChanged(nameof(ShowModeratorInfo));
             OnPropertyChanged(nameof(ShowProfessionalInfo));
             OnPropertyChanged(nameof(ShowAdminInfo));
+        }
+
+        private async Task ApplyThemeAsync(string theme)
+        {
+            try
+            {
+                var appTheme = theme switch
+                {
+                    "light" => AppTheme.Light,
+                    "dark" => AppTheme.Dark,
+                    "auto" => AppTheme.Unspecified,
+                    _ => AppTheme.Light
+                };
+
+                await _themeService.SetThemeAsync(appTheme);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] ApplyThemeAsync error: {ex.Message}");
+            }
         }
     }
 

@@ -14,7 +14,7 @@
         <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
         
         <Style x:Key="HeaderFrame" TargetType="Frame">
-            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
             <Setter Property="BorderColor" Value="Transparent" />
             <Setter Property="CornerRadius" Value="0" />
             <Setter Property="Padding" Value="15,10" />
@@ -24,14 +24,14 @@
         <Style x:Key="HeaderTitle" TargetType="Label">
             <Setter Property="FontSize" Value="20" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="White" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
             <Setter Property="VerticalOptions" Value="Center" />
         </Style>
         
         <Style x:Key="MenuIconButton" TargetType="Button">
             <Setter Property="BackgroundColor" Value="Transparent" />
             <Setter Property="BorderColor" Value="Transparent" />
-            <Setter Property="TextColor" Value="White" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
             <Setter Property="FontSize" Value="20" />
             <Setter Property="WidthRequest" Value="44" />
             <Setter Property="HeightRequest" Value="44" />
@@ -40,8 +40,8 @@
         </Style>
         
         <Style x:Key="SearchFrame" TargetType="Frame">
-            <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
-            <Setter Property="BorderColor" Value="{StaticResource Secondary}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}" />
+            <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}" />
             <Setter Property="CornerRadius" Value="25" />
             <Setter Property="Padding" Value="5" />
             <Setter Property="HasShadow" Value="True" />

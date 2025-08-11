@@ -13,7 +13,7 @@
             
             <!-- UI/UX Improvement: Enhanced Style Resources -->
             <Style x:Key="StatCardStyle" TargetType="Frame">
-                <Setter Property="BackgroundColor" Value="{StaticResource Gray100}" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}" />
                 <Setter Property="HasShadow" Value="True" />
                 <Setter Property="CornerRadius" Value="16" />
                 <Setter Property="Padding" Value="20" />
@@ -27,7 +27,7 @@
             
             <Style x:Key="StatLabelStyle" TargetType="Label">
                 <Setter Property="FontSize" Value="13" />
-                <Setter Property="TextColor" Value="{StaticResource Gray600}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
                 <Setter Property="HorizontalTextAlignment" Value="Center" />
                 <Setter Property="Margin" Value="0,4,0,0" />
             </Style>
@@ -35,7 +35,7 @@
             <Style x:Key="SectionHeaderStyle" TargetType="Label">
                 <Setter Property="FontSize" Value="20" />
                 <Setter Property="FontAttributes" Value="Bold" />
-                <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                 <Setter Property="Margin" Value="0,0,0,16" />
             </Style>
         </ResourceDictionary>
@@ -44,7 +44,7 @@
     <!-- UI/UX Improvement: RefreshView for pull-to-refresh -->
     <RefreshView Command="{Binding RefreshCommand}" 
                  IsRefreshing="{Binding IsLoading}"
-                 RefreshColor="{StaticResource Primary}">
+                 RefreshColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
         <ScrollView>
             <StackLayout Padding="20" Spacing="24">
             

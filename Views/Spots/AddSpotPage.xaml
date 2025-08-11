@@ -9,7 +9,7 @@
     xmlns:domain="clr-namespace:SubExplore.Models.Domain"
     x:DataType="viewmodels:AddSpotViewModel"
     Title="{Binding Title}"
-    BackgroundColor="{StaticResource Background}">
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}">
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
         <!-- Page Header with Menu -->
@@ -23,7 +23,7 @@
             Grid.Row="1"
             Margin="10,5"
             Padding="10"
-            BorderColor="{StaticResource Secondary}"
+            BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
             AutomationId="ProgressHeader"
             SemanticProperties.Description="Progression de création du spot">
             <Grid ColumnDefinitions="*,*,*,*">
@@ -173,7 +173,7 @@
                     <Label Style="{StaticResource Headline}" Text="Récapitulatif" />
 
                     <!--  Localisation  -->
-                    <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                    <Frame Padding="15" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                         <StackLayout Spacing="10">
                             <Label FontAttributes="Bold" Text="Localisation" />
                             <Label Text="{Binding Latitude, StringFormat='Latitude: {0:F6}'}" />
@@ -183,7 +183,7 @@
                     </Frame>
 
                     <!--  Caractéristiques  -->
-                    <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                    <Frame Padding="15" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                         <StackLayout Spacing="10">
                             <Label FontAttributes="Bold" Text="Caractéristiques" />
                             <Label Text="{Binding SpotName, StringFormat='Nom: {0}'}" />
@@ -219,7 +219,7 @@
                     </Frame>
 
                     <!--  Photos  -->
-                    <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                    <Frame Padding="15" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                         <StackLayout Spacing="10">
                             <Label FontAttributes="Bold" Text="Photos" />
                             <Label Text="{Binding PhotosPaths.Count, StringFormat='{0} photo(s) à télécharger'}" />

@@ -8,7 +8,7 @@
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Auth"
     x:DataType="viewmodels:RegistrationViewModel"
     Title="{Binding Title}"
-    BackgroundColor="{StaticResource Background}"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}"
     Shell.NavBarIsVisible="False">
 
     <ContentPage.Resources>
@@ -28,14 +28,14 @@
                 <Button Text="← Retour"
                         Command="{Binding NavigateToLoginCommand}"
                         BackgroundColor="Transparent"
-                        TextColor="{StaticResource Primary}"
+                        TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                         FontSize="16"
                         Padding="0"
                         HorizontalOptions="Start"
                         VerticalOptions="Start" />
 
                 <!-- App Logo/Icon -->
-                <Frame BackgroundColor="{StaticResource Primary}"
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                        CornerRadius="30"
                        HeightRequest="60"
                        WidthRequest="60"
@@ -54,7 +54,7 @@
                     <Label Text="Rejoignez SubExplore"
                            FontSize="{Binding ., Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='24'}"
                            FontAttributes="Bold"
-                           TextColor="{StaticResource Primary}"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            HorizontalOptions="Center" />
                     
                     <Label Text="Créez votre compte pour découvrir et partager les meilleurs spots de plongée"
@@ -332,7 +332,7 @@
                             <Button Text="conditions d'utilisation"
                                     Command="{Binding ShowTermsAndConditionsCommand}"
                                     BackgroundColor="Transparent"
-                                    TextColor="{StaticResource Primary}"
+                                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                     FontSize="14"
                                      Padding="0"
                                     VerticalOptions="Center" />
@@ -351,7 +351,7 @@
                     
                     <Button Text="Créer mon compte"
                             Command="{Binding RegisterCommand}"
-                            BackgroundColor="{StaticResource Primary}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                             TextColor="White"
                             FontSize="16"
                             FontAttributes="Bold"
@@ -388,7 +388,7 @@
                     <Button Text="Se connecter"
                             Command="{Binding NavigateToLoginCommand}"
                             BackgroundColor="Transparent"
-                            TextColor="{StaticResource Primary}"
+                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                             FontSize="14"
                             FontAttributes="Bold"
                             Padding="0"

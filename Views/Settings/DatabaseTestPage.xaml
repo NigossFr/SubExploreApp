@@ -20,27 +20,27 @@
                 Text="Status de la Base de Données" />
             <Frame
                 Padding="15"
-                BorderColor="#DDDDDD"
+                BorderColor="{AppThemeBinding Light=#DDDDDD, Dark={StaticResource BorderColorDark}}"
                 CornerRadius="10">
                 <StackLayout Spacing="10">
                     <Label FontAttributes="Bold" Text="État de la connexion" />
-                    <Label Text="{Binding CanConnect, StringFormat='Connexion: {0}'}" TextColor="Magenta" />
+                    <Label Text="{Binding CanConnect, StringFormat='Connexion: {0}'}" TextColor="{AppThemeBinding Light=Magenta, Dark={StaticResource Magenta}}" />
                     <Button Command="{Binding TestConnectionCommand}" Text="Tester la connexion" />
                 </StackLayout>
             </Frame>
             <Frame
                 Padding="15"
-                BorderColor="#DDDDDD"
+                BorderColor="{AppThemeBinding Light=#DDDDDD, Dark={StaticResource BorderColorDark}}"
                 CornerRadius="10">
                 <StackLayout Spacing="10">
                     <Label FontAttributes="Bold" Text="Structure de la base de données" />
-                    <Label Text="{Binding IsDataSeeded, StringFormat='Données initialisées: {0}'}" TextColor="Magenta" />
+                    <Label Text="{Binding IsDataSeeded, StringFormat='Données initialisées: {0}'}" TextColor="{AppThemeBinding Light=Magenta, Dark={StaticResource Magenta}}" />
                     <Button Command="{Binding EnsureDatabaseCreatedCommand}" Text="Créer le schéma" />
                 </StackLayout>
             </Frame>
             <Frame
                 Padding="15"
-                BorderColor="#DDDDDD"
+                BorderColor="{AppThemeBinding Light=#DDDDDD, Dark={StaticResource BorderColorDark}}"
                 CornerRadius="10">
                 <StackLayout Spacing="10">
                     <Label FontAttributes="Bold" Text="Données initiales" />
@@ -293,7 +293,7 @@
             <Frame
                 Padding="15"
                 BackgroundColor="#F8F8F8"
-                BorderColor="#DDDDDD"
+                BorderColor="{AppThemeBinding Light=#DDDDDD, Dark={StaticResource BorderColorDark}}"
                 CornerRadius="10"
                 HeightRequest="200">
                 <ScrollView>

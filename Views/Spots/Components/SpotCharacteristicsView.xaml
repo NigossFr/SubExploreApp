@@ -14,7 +14,7 @@
             <Label Text="Nom du spot *"
                    AutomationId="SpotNameLabel"
                    SemanticProperties.Description="Nom du spot de plongée" />
-            <Frame Padding="5" BorderColor="{StaticResource Secondary}">
+            <Frame Padding="5" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                 <Entry Text="{Binding SpotName}" 
                       Placeholder="Donnez un nom à ce spot"
                       MaxLength="100"
@@ -27,7 +27,7 @@
             <Label Text="Type d'activité *" Margin="0,10,0,0"
                    AutomationId="ActivityTypeLabel"
                    SemanticProperties.Description="Type d'activité sous-marine" />
-            <Frame Padding="10" BorderColor="{StaticResource Secondary}">
+            <Frame Padding="10" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                 <CollectionView ItemsSource="{Binding AvailableSpotTypes}" 
                               SelectionMode="None"
                               HeightRequest="200"
@@ -76,7 +76,7 @@
             <Label Text="Profondeur maximale (m)" Margin="0,10,0,0"
                    AutomationId="MaxDepthLabel"
                    SemanticProperties.Description="Profondeur maximale du spot" />
-            <Frame Padding="5" BorderColor="{StaticResource Secondary}">
+            <Frame Padding="5" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                 <StackLayout Orientation="Horizontal">
                     <Entry Text="{Binding MaxDepth}" 
                           Keyboard="Numeric"
@@ -96,7 +96,7 @@
             <Label Text="Niveau de difficulté" Margin="0,10,0,0"
                    AutomationId="DifficultyLabel"
                    SemanticProperties.Description="Niveau de difficulté du spot" />
-            <Frame Padding="10" BorderColor="{StaticResource Secondary}">
+            <Frame Padding="10" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                 <Picker ItemsSource="{Binding DifficultyLevels}"
                        SelectedItem="{Binding SelectedDifficultyLevel}"
                        ItemDisplayBinding="{Binding ., Converter={StaticResource DifficultyLevelToFrenchConverter}}"
@@ -110,7 +110,7 @@
             <Label Text="Force du courant" Margin="0,10,0,0"
                    AutomationId="CurrentStrengthLabel"
                    SemanticProperties.Description="Force du courant marin" />
-            <Frame Padding="10" BorderColor="{StaticResource Secondary}">
+            <Frame Padding="10" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                 <Picker ItemsSource="{Binding CurrentStrengths}"
                        SelectedItem="{Binding SelectedCurrentStrength}"
                        ItemDisplayBinding="{Binding ., Converter={StaticResource CurrentStrengthToFrenchConverter}}"
@@ -122,7 +122,7 @@
 
             <!-- Équipement requis -->
             <Label Text="Équipement requis" Margin="0,10,0,0" />
-            <Frame Padding="10" BorderColor="{StaticResource Secondary}">
+            <Frame Padding="10" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                 <Editor Text="{Binding RequiredEquipment}" 
                        Placeholder="Équipement recommandé (combinaison, lampe, etc.)"
                        HeightRequest="100"
@@ -131,7 +131,7 @@
 
             <!-- Notes de sécurité -->
             <Label Text="Notes de sécurité" Margin="0,10,0,0" />
-            <Frame Padding="10" BorderColor="{StaticResource Secondary}">
+            <Frame Padding="10" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                 <Editor Text="{Binding SafetyNotes}" 
                        Placeholder="Précautions de sécurité à prendre"
                        HeightRequest="100"
@@ -140,7 +140,7 @@
 
             <!-- Meilleures conditions -->
             <Label Text="Meilleures conditions" Margin="0,10,0,0" />
-            <Frame Padding="10" BorderColor="{StaticResource Secondary}">
+            <Frame Padding="10" BorderColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}">
                 <Editor Text="{Binding BestConditions}" 
                        Placeholder="Conditions idéales (météo, saison, marée, etc.)"
                        HeightRequest="100"

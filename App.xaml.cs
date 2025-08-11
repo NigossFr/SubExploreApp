@@ -73,7 +73,44 @@ namespace SubExplore
         {
             try
             {
-                Debug.WriteLine("[App.xaml.cs] Initializing database and authentication services");
+                Debug.WriteLine("[App.xaml.cs] Initializing database, theme, and authentication services");
+                
+                // Initialize theme service first to ensure proper theming throughout app lifecycle
+                var themeService = services.GetService<IThemeService>();
+                if (themeService != null)
+                {
+                    // Load and apply user's saved theme preference
+                    var userProfileService = services.GetService<IUserProfileService>();
+                    if (userProfileService != null)
+                    {
+                        try
+                        {
+                            var currentUser = await userProfileService.GetCurrentUserAsync();
+                            if (currentUser?.Preferences?.Theme != null)
+                            {
+                                var appTheme = currentUser.Preferences.Theme switch
+                                {
+                                    "light" => AppTheme.Light,
+                                    "dark" => AppTheme.Dark,
+                                    "auto" => AppTheme.Unspecified,
+                                    _ => AppTheme.Light
+                                };
+                                await themeService.SetThemeAsync(appTheme);
+                                Debug.WriteLine($"[App.xaml.cs] ✓ Applied user theme preference: {currentUser.Preferences.Theme}");
+                            }
+                        }
+                        catch (Exception themeEx)
+                        {
+                            Debug.WriteLine($"[App.xaml.cs] ⚠️ Could not load user theme preference: {themeEx.Message}");
+                            // Continue with default theme
+                        }
+                    }
+                    Debug.WriteLine("[App.xaml.cs] ✓ Theme service initialized");
+                }
+                else
+                {
+                    Debug.WriteLine("[App.xaml.cs] ⚠️ Theme service not found");
+                }
                 
                 // Skip heavy migrations at startup for better performance
                 // These migrations only need to run once and are already applied

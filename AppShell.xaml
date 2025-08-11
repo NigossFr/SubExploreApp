@@ -15,11 +15,11 @@
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels"
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
     Shell.FlyoutBehavior="Flyout"
-    Shell.BackgroundColor="White" 
-    Shell.ForegroundColor="Black"
-    Shell.TitleColor="Black"
+    Shell.BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource OffBlack}}" 
+    Shell.ForegroundColor="{AppThemeBinding Light=Black, Dark=White}"
+    Shell.TitleColor="{AppThemeBinding Light=Black, Dark=White}"
     FlyoutIcon="hamburger.svg"
-    FlyoutBackgroundColor="{StaticResource Primary}"
+    FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
     FlyoutHeaderBehavior="CollapseOnScroll"
     Title="SubExplore"
     x:Name="AppShellRoot">
@@ -34,7 +34,7 @@
     <!-- Navigation Header Template - Style du menu de la carte -->
     <Shell.FlyoutHeaderTemplate>
         <DataTemplate>
-            <Frame BackgroundColor="{StaticResource Primary}"
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                    Padding="20"
                    CornerRadius="0"
                    HasShadow="False"
@@ -43,7 +43,7 @@
 
                     <!-- App Logo/Icon -->
                     <Frame Grid.Column="0"
-                           BackgroundColor="White"
+                           BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}"
                            CornerRadius="30"
                            Padding="5"
                            WidthRequest="60"
@@ -64,16 +64,16 @@
                                Text="Utilisateur SubExplore"
                                FontSize="18"
                                FontAttributes="Bold"
-                               TextColor="White" />
+                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                         <Label Text="Explorez les profondeurs"
                                FontSize="14"
-                               TextColor="White"
+                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource SecondaryDarkText}}"
                                Opacity="0.8" />
                     </StackLayout>
 
                     <!-- User Avatar -->
                     <Frame Grid.Column="2"
-                           BackgroundColor="White"
+                           BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}"
                            CornerRadius="30"
                            Padding="0"
                            WidthRequest="60"
@@ -93,14 +93,14 @@
 
     <Shell.FlyoutContentTemplate>
         <DataTemplate>
-            <ScrollView BackgroundColor="{StaticResource Background}">
+            <ScrollView BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}">
                 <StackLayout Spacing="0" x:Name="FlyoutMenuContainer">
                     
                     <!-- Navigation Section -->
                     <Label Text="Navigation"
                            FontSize="14"
                            FontAttributes="Bold"
-                           TextColor="{StaticResource Primary}"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="15,15,15,5" />
                     
                     <!-- Carte -->
@@ -123,7 +123,7 @@
                     <Label Text="Mes Spots"
                            FontSize="14"
                            FontAttributes="Bold"
-                           TextColor="{StaticResource Primary}"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="15,15,15,5" />
                     
                     <!-- Mes Spots -->
@@ -162,7 +162,7 @@
                     <Label Text="Profil"
                            FontSize="14"
                            FontAttributes="Bold"
-                           TextColor="{StaticResource Primary}"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="15,15,15,5" />
                     
                     <!-- Profil -->
@@ -194,7 +194,7 @@
                     <Label Text="Administration"
                            FontSize="14"
                            FontAttributes="Bold"
-                           TextColor="{StaticResource Primary}"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="15,15,15,5" />
                     
                     <!-- Validation des Spots -->
