@@ -259,6 +259,7 @@
                                             <RowDefinition Height="*" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
 
 
@@ -342,45 +343,42 @@
                                               IsVisible="{Binding Notes, Converter={StaticResource IsNotNullOrEmptyConverter}}"
                                               Margin="0,8,0,0" />
 
-                                        <!-- Actions -->
-                                        <Grid Grid.Row="3" Margin="0,12,0,0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
+                                        <!-- Activity type and date info -->
+                                        <StackLayout Grid.Row="3" Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+                                            <Label Text="{Binding Spot.Type.Name}"
+                                                   FontSize="12"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                                            <Label Text="•"
+                                                   FontSize="12"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                                            <Label Text="{Binding CreatedAt, StringFormat='{0:dd/MM/yyyy}'}"
+                                                   FontSize="12"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                                        </StackLayout>
 
-                                            <!-- Activity type and date info -->
-                                            <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalOptions="Center">
-                                                <Label Text="{Binding Spot.Type.Name}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
-                                                <Label Text="{Binding CreatedAt, StringFormat='{0:dd/MM/yyyy}'}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
-                                            </StackLayout>
-
+                                        <!-- Action Buttons Row -->
+                                        <Grid Grid.Row="4" ColumnDefinitions="*,*,*" ColumnSpacing="8" Margin="0,12,0,0">
+                                            
                                             <!-- Notification toggle -->
-                                            <Button Grid.Column="1"
+                                            <Button Grid.Column="0"
                                                     Text="{Binding NotificationEnabled, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='🔔|🔕'}"
-                                                    FontSize="18"
-                                                    WidthRequest="40"
-                                                    HeightRequest="40"
-                                                    CornerRadius="20"
+                                                    FontSize="16"
+                                                    HeightRequest="44"
+                                                    CornerRadius="8"
                                                     BackgroundColor="{StaticResource Surface}"
+                                                    BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                                                    BorderWidth="1"
                                                     Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=ToggleNotificationCommand}"
                                                     CommandParameter="{Binding .}"
                                                     AutomationId="NotificationButton"
                                                     SemanticProperties.Description="Activer/désactiver les notifications" />
 
                                             <!-- View details -->
-                                            <Button Grid.Column="2"
+                                            <Button Grid.Column="1"
                                                     Text="👁"
-                                                    FontSize="18"
-                                                    WidthRequest="40"
-                                                    HeightRequest="40"
-                                                    CornerRadius="20"
+                                                    FontSize="16"
+                                                    HeightRequest="44"
+                                                    CornerRadius="8"
                                                     BackgroundColor="{StaticResource Primary}"
                                                     TextColor="White"
                                                     Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=ViewSpotDetailsCommand}"
@@ -389,12 +387,12 @@
                                                     SemanticProperties.Description="Voir les détails du spot" />
 
                                             <!-- Remove favorite -->
-                                            <Button Grid.Column="3"
-                                                    Text="❤️"
-                                                    FontSize="18"
-                                                    WidthRequest="40"
-                                                    HeightRequest="40"
-                                                    CornerRadius="20"
+                                            <Button Grid.Column="2"
+                                                    Text="×"
+                                                    FontSize="20"
+                                                    FontAttributes="Bold"
+                                                    HeightRequest="44"
+                                                    CornerRadius="8"
                                                     BackgroundColor="#FF4444"
                                                     TextColor="White"
                                                     Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=RemoveFromFavoritesCommand}"
