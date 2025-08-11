@@ -5,528 +5,631 @@
              xmlns:vm="clr-namespace:SubExplore.ViewModels.Profile"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:DataType="vm:UserStatsViewModel"
-             Title="{Binding Title}">
+             Title="{Binding Title}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}">
 
     <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertBoolConverter" />
             
-            <!-- UI/UX Improvement: Enhanced Style Resources -->
+            <!-- Coherent Style Resources matching other profile pages -->
             <Style x:Key="StatCardStyle" TargetType="Frame">
-                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}" />
-                <Setter Property="HasShadow" Value="True" />
-                <Setter Property="CornerRadius" Value="16" />
-                <Setter Property="Padding" Value="20" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}" />
+                <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}" />
+                <Setter Property="HasShadow" Value="False" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="Padding" Value="16" />
             </Style>
             
             <Style x:Key="StatValueStyle" TargetType="Label">
-                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontSize" Value="20" />
                 <Setter Property="FontAttributes" Value="Bold" />
                 <Setter Property="HorizontalTextAlignment" Value="Center" />
+                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
             </Style>
             
             <Style x:Key="StatLabelStyle" TargetType="Label">
-                <Setter Property="FontSize" Value="13" />
-                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                <Setter Property="FontSize" Value="10" />
+                <Setter Property="TextColor" Value="White" />
                 <Setter Property="HorizontalTextAlignment" Value="Center" />
-                <Setter Property="Margin" Value="0,4,0,0" />
+                <Setter Property="Margin" Value="0,2,0,0" />
             </Style>
             
             <Style x:Key="SectionHeaderStyle" TargetType="Label">
-                <Setter Property="FontSize" Value="20" />
+                <Setter Property="FontSize" Value="16" />
                 <Setter Property="FontAttributes" Value="Bold" />
-                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
-                <Setter Property="Margin" Value="0,0,0,16" />
+                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="Margin" Value="0,0,0,12" />
             </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <!-- UI/UX Improvement: RefreshView for pull-to-refresh -->
-    <RefreshView Command="{Binding RefreshCommand}" 
-                 IsRefreshing="{Binding IsLoading}"
-                 RefreshColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
-        <ScrollView>
-            <StackLayout Padding="20" Spacing="24">
-            
-                <!-- UI/UX Improvement: Enhanced Loading State -->
-                <StackLayout IsVisible="{Binding IsLoading}" 
-                           Spacing="16" 
-                           VerticalOptions="CenterAndExpand"
-                           HeightRequest="300">
-                    <ActivityIndicator IsRunning="{Binding IsLoading}"
-                                     Color="{StaticResource Primary}"
-                                     Scale="1.5" />
-                    <Label Text="Chargement de vos statistiques..."
-                           FontSize="16"
-                           TextColor="{StaticResource Gray600}"
-                           HorizontalTextAlignment="Center" />
-                </StackLayout>
+    <Grid RowDefinitions="Auto,*">
 
-                <!-- UI/UX Improvement: Enhanced Error State -->
-                <Frame IsVisible="{Binding IsError}"
-                       BackgroundColor="{StaticResource Error}"
-                       CornerRadius="12"
-                       Padding="20"
-                       HasShadow="False">
-                    <StackLayout Spacing="12">
-                        <Label Text="Erreur de chargement"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="White"
-                               HorizontalTextAlignment="Center" />
-                        <Label Text="{Binding ErrorMessage}"
-                               FontSize="14"
-                               TextColor="White"
-                               HorizontalTextAlignment="Center"
-                               LineBreakMode="WordWrap" />
-                        <Button Text="Réessayer"
-                                Command="{Binding RefreshCommand}"
-                                BackgroundColor="White"
-                                TextColor="{StaticResource Error}"
-                                CornerRadius="8"
-                                HorizontalOptions="Center"
-                                WidthRequest="120" />
+        <!-- Header Section with Statistics Cards -->
+        <Frame Grid.Row="0" 
+               Padding="15"
+               BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15">
+
+                <!-- Statistics Cards matching other pages -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                    
+                    <!-- Total Spots -->
+                    <Frame Grid.Column="0"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding UserStats.TotalSpots}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Spots"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Validated Spots -->
+                    <Frame Grid.Column="1"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding UserStats.ValidatedSpots}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Validés"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Contribution Score -->
+                    <Frame Grid.Column="2"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource Warning}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding UserStats.ContributionScore}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Points"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                </Grid>
+            </StackLayout>
+        </Frame>
+
+        <!-- Content Area -->
+        <RefreshView Grid.Row="1" Command="{Binding RefreshCommand}" 
+                     IsRefreshing="{Binding IsLoading}"
+                     RefreshColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
+            <ScrollView>
+                <StackLayout Padding="16" Spacing="16">
+ 
+                    <!-- Loading State -->
+                    <StackLayout IsVisible="{Binding IsLoading}" 
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center"
+                               Spacing="20"
+                               Padding="40">
+                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                         Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
+                                         HeightRequest="50"
+                                         WidthRequest="50" />
+                        <Label Text="Chargement de vos statistiques..."
+                               FontSize="16"
+                               TextColor="{StaticResource TextSecondary}"
+                               HorizontalOptions="Center" />
                     </StackLayout>
-                </Frame>
 
-                <!-- Stats Content -->
-                <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}" 
-                           Spacing="24">
-                
-                    <!-- UI/UX Improvement: Enhanced Evolution Section -->
-                    <Frame BackgroundColor="{StaticResource Primary}" 
-                           HasShadow="True" 
-                           CornerRadius="20" 
-                           Padding="24">
-                        <StackLayout Spacing="20">
-                            <Label Text="Votre Évolution" 
-                                   FontSize="24" 
-                                   FontAttributes="Bold" 
-                                   TextColor="White" 
+                    <!-- Error State -->
+                    <Frame IsVisible="{Binding IsError}" 
+                           BackgroundColor="{StaticResource Error}" 
+                           CornerRadius="12" 
+                           Padding="16" 
+                           HasShadow="False">
+                        <StackLayout Spacing="12">
+                            <Label Text="⚠️ Erreur de chargement"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
                                    HorizontalTextAlignment="Center" />
-                        
-                            <!-- UI/UX Improvement: Enhanced User Status Display -->
-                            <Frame BackgroundColor="{StaticResource PrimaryDark}" 
-                                   CornerRadius="12" 
-                                   Padding="12,8" 
-                                   HasShadow="False"
-                                   HorizontalOptions="Center">
-                                <Label Text="{Binding UserStatusDisplay}"
-                                       FontSize="16"
-                                       TextColor="White"
-                                       FontAttributes="Bold" />
-                            </Frame>
+                            <Label Text="{Binding ErrorMessage}"
+                                   FontSize="15"
+                                   TextColor="White"
+                                   HorizontalTextAlignment="Center"
+                                   LineBreakMode="WordWrap" />
+                            <Button Text="Réessayer"
+                                    Command="{Binding RefreshCommand}"
+                                    BackgroundColor="White"
+                                    TextColor="{StaticResource Error}"
+                                    CornerRadius="8"
+                                    Padding="16,8"
+                                    HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
 
-                            <!-- UI/UX Improvement: Enhanced Level Display -->
-                            <StackLayout Spacing="12">
-                                <Label Text="{Binding ContributionLevel}"
-                                       FontSize="28"
-                                       FontAttributes="Bold"
-                                       TextColor="White"
+                    <!-- Stats Content -->
+                    <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}" 
+                               Spacing="16">
+                    
+                        <!-- Evolution Section -->
+                        <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                               HasShadow="False" 
+                               CornerRadius="12" 
+                               Padding="16">
+                            <StackLayout Spacing="16">
+                                <Label Text="Votre Évolution" 
+                                       FontSize="16" 
+                                       FontAttributes="Bold" 
+                                       TextColor="White" 
                                        HorizontalTextAlignment="Center" />
-                                
-                                <Label Text="{Binding LevelDescription}"
-                                       FontSize="15"
-                                       TextColor="#FFFFFFCC"
-                                       HorizontalTextAlignment="Center"
-                                       LineBreakMode="WordWrap"
-                                       Margin="16,0" />
-                            </StackLayout>
-
-                            <!-- UI/UX Improvement: Enhanced Next Level Section -->
-                            <StackLayout Spacing="12">
-                                <Label Text="{Binding NextLevelInfo}"
-                                       FontSize="14"
-                                       TextColor="#FFFFFFCC"
-                                       HorizontalTextAlignment="Center"
-                                       FontAttributes="Italic"
-                                       LineBreakMode="WordWrap" />
                             
-                                <!-- UI/UX Improvement: Enhanced Progress Section -->
-                                <StackLayout Spacing="8">
-                                    <!-- UI/UX Improvement: Enhanced Progress Bar -->
-                                    <Frame BackgroundColor="{StaticResource PrimaryDark}" 
-                                           CornerRadius="8" 
-                                           Padding="4" 
-                                           HasShadow="False"
-                                           Margin="0,8">
-                                        <ProgressBar Progress="{Binding OverallProgress}"
-                                                     ProgressColor="{StaticResource Success}"
-                                                     BackgroundColor="Transparent"
-                                                     HeightRequest="16" />
-                                    </Frame>
-                                
-                                    <!-- UI/UX Improvement: Simplified Progress Markers -->
-                                    <Grid Margin="0,4,0,0" 
-                                          RowDefinitions="Auto,Auto"
-                                          ColumnDefinitions="*,*,*,*">
-                                        <!-- UI/UX Improvement: Accessible Progress Milestones -->
-                                        <!-- 10 spots milestone -->
-                                        <StackLayout Grid.Column="0" HorizontalOptions="Center">
-                                            <Frame BackgroundColor="{StaticResource CoralRed}" 
-                                                   CornerRadius="12" 
-                                                   WidthRequest="24" 
-                                                   HeightRequest="24" 
-                                                   Padding="0" 
-                                                   HasShadow="False">
-                                                <Label Text="10" 
-                                                       FontSize="10" 
-                                                       TextColor="White" 
-                                                       FontAttributes="Bold"
-                                                       HorizontalTextAlignment="Center"
-                                                       VerticalTextAlignment="Center" />
-                                            </Frame>
-                                            <Label Text="1 mois" 
-                                                   FontSize="9" 
-                                                   TextColor="#FFFFFFCC" 
-                                                   HorizontalTextAlignment="Center"
-                                                   FontAttributes="Bold" />
-                                        </StackLayout>
-                                        
-                                        <!-- 25 spots milestone -->
-                                        <StackLayout Grid.Column="1" HorizontalOptions="Center">
-                                            <Frame BackgroundColor="{StaticResource SandyBeige}" 
-                                                   CornerRadius="12" 
-                                                   WidthRequest="24" 
-                                                   HeightRequest="24" 
-                                                   Padding="0" 
-                                                   HasShadow="False">
-                                                <Label Text="25" 
-                                                       FontSize="10" 
-                                                       TextColor="{StaticResource TextPrimary}" 
-                                                       FontAttributes="Bold"
-                                                       HorizontalTextAlignment="Center"
-                                                       VerticalTextAlignment="Center" />
-                                            </Frame>
-                                            <Label Text="3 mois" 
-                                                   FontSize="9" 
-                                                   TextColor="#FFFFFFCC" 
-                                                   HorizontalTextAlignment="Center"
-                                                   FontAttributes="Bold" />
-                                        </StackLayout>
-                                        
-                                        <!-- 50 spots milestone -->
-                                        <StackLayout Grid.Column="2" HorizontalOptions="Center">
-                                            <Frame BackgroundColor="{StaticResource Accent}" 
-                                                   CornerRadius="12" 
-                                                   WidthRequest="24" 
-                                                   HeightRequest="24" 
-                                                   Padding="0" 
-                                                   HasShadow="False">
-                                                <Label Text="50" 
-                                                       FontSize="10" 
-                                                       TextColor="White" 
-                                                       FontAttributes="Bold"
-                                                       HorizontalTextAlignment="Center"
-                                                       VerticalTextAlignment="Center" />
-                                            </Frame>
-                                            <Label Text="6 mois" 
-                                                   FontSize="9" 
-                                                   TextColor="#FFFFFFCC" 
-                                                   HorizontalTextAlignment="Center"
-                                                   FontAttributes="Bold" />
-                                        </StackLayout>
-                                        
-                                        <!-- 100 spots milestone -->
-                                        <StackLayout Grid.Column="3" HorizontalOptions="Center">
-                                            <Frame BackgroundColor="{StaticResource CoralRed}" 
-                                                   CornerRadius="12" 
-                                                   WidthRequest="24" 
-                                                   HeightRequest="24" 
-                                                   Padding="0" 
-                                                   HasShadow="False">
-                                                <Label Text="100" 
-                                                       FontSize="9" 
-                                                       TextColor="White" 
-                                                       FontAttributes="Bold"
-                                                       HorizontalTextAlignment="Center"
-                                                       VerticalTextAlignment="Center" />
-                                            </Frame>
-                                            <Label Text="12 mois" 
-                                                   FontSize="9" 
-                                                   TextColor="#FFFFFFCC" 
-                                                   HorizontalTextAlignment="Center"
-                                                   FontAttributes="Bold" />
-                                        </StackLayout>
-                                    </Grid>
-                                
-                                    <!-- UI/UX Improvement: Enhanced Premium Status -->
-                                    <Frame IsVisible="{Binding HasPremiumReward}"
-                                           BackgroundColor="{StaticResource Success}"
-                                           CornerRadius="12"
-                                           Padding="12,8"
-                                           HasShadow="False"
-                                           HorizontalOptions="Center"
-                                           Margin="0,12,0,0">
-                                        <Label Text="{Binding PremiumStatusInfo}"
-                                               FontSize="14"
-                                               TextColor="White"
-                                               FontAttributes="Bold" />
-                                    </Frame>
-                                       
-                                    <!-- UI/UX Improvement: Enhanced Motivational Messages -->
-                                    <Label Text="Récompenses Premium pour modérateurs !"
-                                           FontSize="12"
-                                           TextColor="#FFFFFFCC"
-                                           HorizontalTextAlignment="Center"
-                                           FontAttributes="Italic"
-                                           IsVisible="{Binding IsUserModerator}"
-                                           Margin="0,8,0,0" />
-                                           
-                                    <Label Text="💪 Continuez à partager pour faire grandir la communauté !"
-                                           FontSize="12"
-                                           TextColor="#FFFFFFCC"
-                                           HorizontalTextAlignment="Center"
-                                           FontAttributes="Italic"
-                                           IsVisible="{Binding IsUserModerator, Converter={StaticResource InvertBoolConverter}}"
-                                           Margin="0,8,0,0" />
-                                </StackLayout>
-                            </StackLayout>
+                                <!-- User Status Display -->
+                                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}" 
+                                       CornerRadius="8" 
+                                       Padding="12,8" 
+                                       HasShadow="False"
+                                       HorizontalOptions="Center">
+                                    <Label Text="{Binding UserStatusDisplay}"
+                                           FontSize="14"
+                                           TextColor="White"
+                                           FontAttributes="Bold" />
+                                </Frame>
 
-                            <!-- UI/UX Improvement: Enhanced Validated Spots Highlight -->
-                            <Frame BackgroundColor="{StaticResource PrimaryDark}" 
-                                   CornerRadius="16" 
-                                   Padding="20" 
-                                   HasShadow="False"
-                                   HorizontalOptions="Center"
-                                   Margin="0,12,0,0">
-                                <StackLayout HorizontalOptions="Center" Spacing="4">
-                                    <Label Text="{Binding UserStats.ValidatedSpots}"
-                                           FontSize="36"
+                                <!-- Level Display -->
+                                <StackLayout Spacing="8">
+                                    <Label Text="{Binding ContributionLevel}"
+                                           FontSize="20"
                                            FontAttributes="Bold"
                                            TextColor="White"
                                            HorizontalTextAlignment="Center" />
-                                    <Label Text="Spots Validés"
-                                           FontSize="16"
-                                           TextColor="#FFFFFFCC"
-                                           HorizontalTextAlignment="Center" />
-                                </StackLayout>
-                            </Frame>
-                        </StackLayout>
-                    </Frame>
-                
-                    <!-- UI/UX Improvement: Enhanced General Stats Section -->
-                    <Frame Style="{StaticResource StatCardStyle}">
-                        <StackLayout Spacing="20">
-                            <Label Text="📊 Statistiques Générales" 
-                                   Style="{StaticResource SectionHeaderStyle}" />
-
-                            <Grid RowDefinitions="Auto,Auto,Auto" 
-                                  ColumnDefinitions="*,*" 
-                                  RowSpacing="20" 
-                                  ColumnSpacing="16">
-                                <!-- UI/UX Improvement: Enhanced Stat Cards -->
-                                <StackLayout Grid.Row="0" Grid.Column="0" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding UserStats.TotalSpots}"
-                                           Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource Primary}" />
-                                    <Label Text="Total Spots"
-                                           Style="{StaticResource StatLabelStyle}" />
+                                    
+                                    <Label Text="{Binding LevelDescription}"
+                                           FontSize="14"
+                                           TextColor="White"
+                                           Opacity="0.8"
+                                           HorizontalTextAlignment="Center"
+                                           LineBreakMode="WordWrap"
+                                           Margin="12,0" />
                                 </StackLayout>
 
-                                <StackLayout Grid.Row="0" Grid.Column="1" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding UserStats.PendingSpots}"
-                                           Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource CoralRed}" />
-                                    <Label Text="En Attente"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-
-                                <StackLayout Grid.Row="1" Grid.Column="0" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding UserStats.TotalPhotos}"
-                                           Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource Info}" />
-                                    <Label Text="Total Photos"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-
-                                <StackLayout Grid.Row="1" Grid.Column="1" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding ValidationRate}"
-                                           Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource Success}" />
-                                    <Label Text="Taux de Validation"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-
-                                <StackLayout Grid.Row="2" Grid.Column="0" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding PhotosPerSpotDisplay}"
-                                           Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource Info}" />
-                                    <Label Text="Photos par Spot"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-
-                                <StackLayout Grid.Row="2" Grid.Column="1" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding UserStats.ContributionScore}"
-                                           Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource CoralRed}" />
-                                    <Label Text="Score de Contribution"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-                            </Grid>
-                        </StackLayout>
-                    </Frame>
-
-                    <!-- UI/UX Improvement: Enhanced Diving Stats -->
-                    <Frame Style="{StaticResource StatCardStyle}" 
-                           IsVisible="{Binding HasSpots}">
-                        <StackLayout Spacing="20">
-                            <Label Text="🤿 Statistiques de Plongée" 
-                                   Style="{StaticResource SectionHeaderStyle}" />
-
-                            <Grid RowDefinitions="Auto,Auto,Auto" 
-                                  ColumnDefinitions="*,*" 
-                                  RowSpacing="20" 
-                                  ColumnSpacing="16">
-                                <StackLayout Grid.Row="0" Grid.Column="0" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding AverageDepthDisplay}"
-                                           Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource Primary}" />
-                                    <Label Text="Profondeur Moyenne"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-
-                                <StackLayout Grid.Row="0" Grid.Column="1" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding MaxDepthDisplay}"
-                                           Style="{StaticResource StatValueStyle}"
-                                           TextColor="{StaticResource Error}" />
-                                    <Label Text="Profondeur Maximale"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-
-                                <StackLayout Grid.Row="1" Grid.Column="0" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding ExpertiseLevelDisplay}"
-                                           FontSize="20"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Primary}"
-                                           HorizontalTextAlignment="Center" />
-                                    <Label Text="Niveau d'Expertise"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-
-                                <StackLayout Grid.Row="1" Grid.Column="1" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding UserStats.DaysActive}"
-                                           Style="{StaticResource StatValueStyle}"
-                                           FontSize="20"
-                                           TextColor="{StaticResource Info}" />
-                                    <Label Text="Jours Actif"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-
-                                <StackLayout Grid.Row="2" Grid.ColumnSpan="2" 
-                                           HorizontalOptions="Center" 
-                                           IsVisible="{Binding HasSpotsByType}"
-                                           Spacing="8">
-                                    <Label Text="{Binding UserStats.FavoriteSpotType}"
-                                           FontSize="20"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Primary}"
-                                           HorizontalTextAlignment="Center" />
-                                    <Label Text="Type de Spot Favori"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-                            </Grid>
-                        </StackLayout>
-                    </Frame>
-
-                    <!-- UI/UX Improvement: Enhanced Activity Timeline -->
-                    <Frame Style="{StaticResource StatCardStyle}">
-                        <StackLayout Spacing="20">
-                            <Label Text="⏰ Chronologie d'Activité" 
-                                   Style="{StaticResource SectionHeaderStyle}" />
-
-                            <Grid RowDefinitions="Auto" 
-                                  ColumnDefinitions="*,*" 
-                                  ColumnSpacing="16">
-                                <StackLayout Grid.Column="0" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding LastActivityDisplay}"
-                                           FontSize="16"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Primary}"
-                                           HorizontalTextAlignment="Center" />
-                                    <Label Text="Dernière Activité"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-
-                                <StackLayout Grid.Column="1" 
-                                           HorizontalOptions="FillAndExpand" 
-                                           Spacing="8">
-                                    <Label Text="{Binding LastSpotCreatedDisplay}"
-                                           FontSize="16"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Success}"
-                                           HorizontalTextAlignment="Center" />
-                                    <Label Text="Dernier Spot Créé"
-                                           Style="{StaticResource StatLabelStyle}" />
-                                </StackLayout>
-                            </Grid>
-                        </StackLayout>
-                    </Frame>
-
-                    <!-- UI/UX Improvement: Enhanced Certifications Section -->
-                    <Frame Style="{StaticResource StatCardStyle}" 
-                           IsVisible="{Binding HasCertifications}">
-                        <StackLayout Spacing="20">
-                            <Label Text="🏅️ Certifications Récentes" 
-                                   Style="{StaticResource SectionHeaderStyle}" />
-
-                            <CollectionView ItemsSource="{Binding UserStats.RecentCertifications}"
-                                          SelectionMode="None">
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Padding="4">
-                                            <Frame BackgroundColor="White" 
-                                                   HasShadow="True" 
-                                                   CornerRadius="12" 
-                                                   Padding="16,12">
-                                                <Label Text="{Binding .}" 
-                                                       FontSize="15" 
-                                                       FontAttributes="Bold"
-                                                       TextColor="{StaticResource Primary}" 
-                                                       HorizontalTextAlignment="Center" />
-                                            </Frame>
+                                <!-- Next Level Section -->
+                                <StackLayout Spacing="8">
+                                    <Label Text="{Binding NextLevelInfo}"
+                                           FontSize="12"
+                                           TextColor="White"
+                                           Opacity="0.8"
+                                           HorizontalTextAlignment="Center"
+                                           FontAttributes="Italic"
+                                           LineBreakMode="WordWrap" />
+                                
+                                    <!-- Progress Section -->
+                                    <StackLayout Spacing="6">
+                                        <!-- Progress Bar -->
+                                        <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}" 
+                                               CornerRadius="6" 
+                                               Padding="3" 
+                                               HasShadow="False"
+                                               Margin="0,6">
+                                            <ProgressBar Progress="{Binding OverallProgress}"
+                                                         ProgressColor="{StaticResource Success}"
+                                                         BackgroundColor="Transparent"
+                                                         HeightRequest="12" />
+                                        </Frame>
+                                    
+                                        <!-- Progress Milestones -->
+                                        <Grid Margin="0,4,0,0" 
+                                              RowDefinitions="Auto,Auto"
+                                              ColumnDefinitions="*,*,*,*">
+                                            <!-- 10 spots milestone -->
+                                            <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                                                <Frame BackgroundColor="{StaticResource CoralRed}" 
+                                                       CornerRadius="10" 
+                                                       WidthRequest="20" 
+                                                       HeightRequest="20" 
+                                                       Padding="0" 
+                                                       HasShadow="False">
+                                                    <Label Text="10" 
+                                                           FontSize="9" 
+                                                           TextColor="White" 
+                                                           FontAttributes="Bold"
+                                                           HorizontalTextAlignment="Center"
+                                                           VerticalTextAlignment="Center" />
+                                                </Frame>
+                                                <Label Text="1 mois" 
+                                                       FontSize="8" 
+                                                       TextColor="White" 
+                                                       Opacity="0.8"
+                                                       HorizontalTextAlignment="Center"
+                                                       FontAttributes="Bold" />
+                                            </StackLayout>
+                                            
+                                            <!-- 25 spots milestone -->
+                                            <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                                                <Frame BackgroundColor="{StaticResource SandyBeige}" 
+                                                       CornerRadius="10" 
+                                                       WidthRequest="20" 
+                                                       HeightRequest="20" 
+                                                       Padding="0" 
+                                                       HasShadow="False">
+                                                    <Label Text="25" 
+                                                           FontSize="9" 
+                                                           TextColor="{StaticResource TextPrimary}" 
+                                                           FontAttributes="Bold"
+                                                           HorizontalTextAlignment="Center"
+                                                           VerticalTextAlignment="Center" />
+                                                </Frame>
+                                                <Label Text="3 mois" 
+                                                       FontSize="8" 
+                                                       TextColor="White" 
+                                                       Opacity="0.8"
+                                                       HorizontalTextAlignment="Center"
+                                                       FontAttributes="Bold" />
+                                            </StackLayout>
+                                            
+                                            <!-- 50 spots milestone -->
+                                            <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                                                <Frame BackgroundColor="{StaticResource Accent}" 
+                                                       CornerRadius="10" 
+                                                       WidthRequest="20" 
+                                                       HeightRequest="20" 
+                                                       Padding="0" 
+                                                       HasShadow="False">
+                                                    <Label Text="50" 
+                                                           FontSize="9" 
+                                                           TextColor="White" 
+                                                           FontAttributes="Bold"
+                                                           HorizontalTextAlignment="Center"
+                                                           VerticalTextAlignment="Center" />
+                                                </Frame>
+                                                <Label Text="6 mois" 
+                                                       FontSize="8" 
+                                                       TextColor="White" 
+                                                       Opacity="0.8"
+                                                       HorizontalTextAlignment="Center"
+                                                       FontAttributes="Bold" />
+                                            </StackLayout>
+                                            
+                                            <!-- 100 spots milestone -->
+                                            <StackLayout Grid.Column="3" HorizontalOptions="Center">
+                                                <Frame BackgroundColor="{StaticResource CoralRed}" 
+                                                       CornerRadius="10" 
+                                                       WidthRequest="20" 
+                                                       HeightRequest="20" 
+                                                       Padding="0" 
+                                                       HasShadow="False">
+                                                    <Label Text="100" 
+                                                           FontSize="8" 
+                                                           TextColor="White" 
+                                                           FontAttributes="Bold"
+                                                           HorizontalTextAlignment="Center"
+                                                           VerticalTextAlignment="Center" />
+                                                </Frame>
+                                                <Label Text="12 mois" 
+                                                       FontSize="8" 
+                                                       TextColor="White" 
+                                                       Opacity="0.8"
+                                                       HorizontalTextAlignment="Center"
+                                                       FontAttributes="Bold" />
+                                            </StackLayout>
                                         </Grid>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
-                        </StackLayout>
-                    </Frame>
+                                    
+                                        <!-- Premium Status -->
+                                        <Frame IsVisible="{Binding HasPremiumReward}"
+                                               BackgroundColor="{StaticResource Success}"
+                                               CornerRadius="8"
+                                               Padding="8,6"
+                                               HasShadow="False"
+                                               HorizontalOptions="Center"
+                                               Margin="0,8,0,0">
+                                            <Label Text="{Binding PremiumStatusInfo}"
+                                                   FontSize="12"
+                                                   TextColor="White"
+                                                   FontAttributes="Bold" />
+                                        </Frame>
+                                           
+                                        <!-- Motivational Messages -->
+                                        <Label Text="Récompenses Premium pour modérateurs !"
+                                               FontSize="11"
+                                               TextColor="White"
+                                               Opacity="0.8"
+                                               HorizontalTextAlignment="Center"
+                                               FontAttributes="Italic"
+                                               IsVisible="{Binding IsUserModerator}"
+                                               Margin="0,6,0,0" />
+                                               
+                                        <Label Text="💪 Continuez à partager pour faire grandir la communauté !"
+                                               FontSize="11"
+                                               TextColor="White"
+                                               Opacity="0.8"
+                                               HorizontalTextAlignment="Center"
+                                               FontAttributes="Italic"
+                                               IsVisible="{Binding IsUserModerator, Converter={StaticResource InvertBoolConverter}}"
+                                               Margin="0,6,0,0" />
+                                    </StackLayout>
+                                </StackLayout>
 
-                    <!-- UI/UX Improvement: Enhanced Back Button -->
-                    <Button Text="← Retour au Profil" 
-                            Command="{Binding GoBackCommand}"
-                            BackgroundColor="{StaticResource Primary}"
-                            TextColor="White"
-                            CornerRadius="16"
-                            FontSize="16"
-                            FontAttributes="Bold"
-                            Padding="24,12"
-                            HorizontalOptions="Center"
-                            Margin="0,8,0,24" />
+                                <!-- Validated Spots Highlight -->
+                                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}" 
+                                       CornerRadius="12" 
+                                       Padding="16" 
+                                       HasShadow="False"
+                                       HorizontalOptions="Center"
+                                       Margin="0,8,0,0">
+                                    <StackLayout HorizontalOptions="Center" Spacing="4">
+                                        <Label Text="{Binding UserStats.ValidatedSpots}"
+                                               FontSize="24"
+                                               FontAttributes="Bold"
+                                               TextColor="White"
+                                               HorizontalTextAlignment="Center" />
+                                        <Label Text="Spots Validés"
+                                               FontSize="12"
+                                               TextColor="White"
+                                               Opacity="0.9"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+                                </Frame>
+                            </StackLayout>
+                        </Frame>
+                    
+                        <!-- General Stats Section -->
+                        <Frame Style="{StaticResource StatCardStyle}">
+                            <StackLayout Spacing="16">
+                                <Label Text="📊 Statistiques Générales" 
+                                       Style="{StaticResource SectionHeaderStyle}" />
+
+                                <Grid RowDefinitions="Auto,Auto,Auto" 
+                                      ColumnDefinitions="*,*" 
+                                      RowSpacing="16" 
+                                      ColumnSpacing="12">
+                                    <!-- Stat Cards -->
+                                    <StackLayout Grid.Row="0" Grid.Column="0" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding UserStats.TotalSpots}"
+                                               Style="{StaticResource StatValueStyle}" />
+                                        <Label Text="Total Spots"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Row="0" Grid.Column="1" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding UserStats.PendingSpots}"
+                                               Style="{StaticResource StatValueStyle}" />
+                                        <Label Text="En Attente"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Row="1" Grid.Column="0" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding UserStats.TotalPhotos}"
+                                               Style="{StaticResource StatValueStyle}" />
+                                        <Label Text="Total Photos"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Row="1" Grid.Column="1" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding ValidationRate}"
+                                               Style="{StaticResource StatValueStyle}" />
+                                        <Label Text="Taux de Validation"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Row="2" Grid.Column="0" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding PhotosPerSpotDisplay}"
+                                               Style="{StaticResource StatValueStyle}" />
+                                        <Label Text="Photos par Spot"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Row="2" Grid.Column="1" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding UserStats.ContributionScore}"
+                                               Style="{StaticResource StatValueStyle}" />
+                                        <Label Text="Score de Contribution"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+                                </Grid>
+                            </StackLayout>
+                        </Frame>
+
+                        <!-- Diving Stats -->
+                        <Frame Style="{StaticResource StatCardStyle}" 
+                               IsVisible="{Binding HasSpots}">
+                            <StackLayout Spacing="16">
+                                <Label Text="🤿 Statistiques de Plongée" 
+                                       Style="{StaticResource SectionHeaderStyle}" />
+
+                                <Grid RowDefinitions="Auto,Auto,Auto" 
+                                      ColumnDefinitions="*,*" 
+                                      RowSpacing="16" 
+                                      ColumnSpacing="12">
+                                    <StackLayout Grid.Row="0" Grid.Column="0" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding AverageDepthDisplay}"
+                                               Style="{StaticResource StatValueStyle}" />
+                                        <Label Text="Profondeur Moyenne"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Row="0" Grid.Column="1" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding MaxDepthDisplay}"
+                                               Style="{StaticResource StatValueStyle}" />
+                                        <Label Text="Profondeur Maximale"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Row="1" Grid.Column="0" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding ExpertiseLevelDisplay}"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource Primary}"
+                                               HorizontalTextAlignment="Center" />
+                                        <Label Text="Niveau d'Expertise"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Row="1" Grid.Column="1" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding UserStats.DaysActive}"
+                                               Style="{StaticResource StatValueStyle}" />
+                                        <Label Text="Jours Actif"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Row="2" Grid.ColumnSpan="2" 
+                                               HorizontalOptions="Center" 
+                                               IsVisible="{Binding HasSpotsByType}"
+                                               Spacing="4">
+                                        <Label Text="{Binding UserStats.FavoriteSpotType}"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource Primary}"
+                                               HorizontalTextAlignment="Center" />
+                                        <Label Text="Type de Spot Favori"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+                                </Grid>
+                            </StackLayout>
+                        </Frame>
+
+                        <!-- Activity Timeline -->
+                        <Frame Style="{StaticResource StatCardStyle}">
+                            <StackLayout Spacing="16">
+                                <Label Text="⏰ Chronologie d'Activité" 
+                                       Style="{StaticResource SectionHeaderStyle}" />
+
+                                <Grid RowDefinitions="Auto" 
+                                      ColumnDefinitions="*,*" 
+                                      ColumnSpacing="12">
+                                    <StackLayout Grid.Column="0" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding LastActivityDisplay}"
+                                               FontSize="14"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource Primary}"
+                                               HorizontalTextAlignment="Center" />
+                                        <Label Text="Dernière Activité"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Column="1" 
+                                               HorizontalOptions="FillAndExpand" 
+                                               Spacing="4">
+                                        <Label Text="{Binding LastSpotCreatedDisplay}"
+                                               FontSize="14"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource Success}"
+                                               HorizontalTextAlignment="Center" />
+                                        <Label Text="Dernier Spot Créé"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalTextAlignment="Center" />
+                                    </StackLayout>
+                                </Grid>
+                            </StackLayout>
+                        </Frame>
+
+                        <!-- Certifications Section -->
+                        <Frame Style="{StaticResource StatCardStyle}" 
+                               IsVisible="{Binding HasCertifications}">
+                            <StackLayout Spacing="16">
+                                <Label Text="🏅️ Certifications Récentes" 
+                                       Style="{StaticResource SectionHeaderStyle}" />
+
+                                <CollectionView ItemsSource="{Binding UserStats.RecentCertifications}"
+                                              SelectionMode="None">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Padding="4">
+                                                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                                                       HasShadow="False" 
+                                                       CornerRadius="8" 
+                                                       Padding="12,8">
+                                                    <Label Text="{Binding .}" 
+                                                           FontSize="14" 
+                                                           FontAttributes="Bold"
+                                                           TextColor="White" 
+                                                           HorizontalTextAlignment="Center" />
+                                                </Frame>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </StackLayout>
+                        </Frame>
+
+                        <!-- Back Button -->
+                        <Button Text="← Retour au Profil" 
+                                Command="{Binding GoBackCommand}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                TextColor="White"
+                                CornerRadius="8"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                Padding="16,12"
+                                HorizontalOptions="Center"
+                                HeightRequest="44"
+                                Margin="0,8,0,16" />
+                    </StackLayout>
                 </StackLayout>
-            </StackLayout>
-        </ScrollView>
-    </RefreshView>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
 </ContentPage>
