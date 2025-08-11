@@ -13,8 +13,14 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <ScrollView Padding="0">
-        <StackLayout Padding="16" Spacing="16">
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Search and Profile Section -->
+        <Frame Grid.Row="0" 
+               Padding="15"
+               BackgroundColor="{StaticResource Background}"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15">
             
             <!-- Loading & Error States -->
             <Grid IsVisible="{Binding IsLoading}" Padding="0,40">
@@ -60,417 +66,145 @@
                 </StackLayout>
             </Frame>
 
-            <!-- Profile Content -->
-            <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}" Spacing="16">
+                <!-- Profile Content -->
+                <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}" Spacing="16">
                 
-                <!-- Enhanced Profile Header -->
-                <Frame BackgroundColor="{StaticResource Primary}" 
-                       HasShadow="True" 
-                       CornerRadius="20" 
-                       Padding="24" 
-                       Margin="0,8,0,8">
-                    <Frame.Shadow>
-                        <Shadow Brush="Black" Opacity="0.1" Radius="8" Offset="0,4" />
-                    </Frame.Shadow>
-                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                        
-                        <!-- Enhanced Avatar with Touch Feedback -->
-                        <Grid Grid.RowSpan="4" Grid.Column="0" WidthRequest="80" HeightRequest="80">
-                            <Frame BackgroundColor="White" 
-                                   CornerRadius="40" 
-                                   HasShadow="True"
-                                   Padding="2"
-                                   HorizontalOptions="Fill"
-                                   VerticalOptions="Fill">
-                                <Frame.Shadow>
-                                    <Shadow Brush="Black" Opacity="0.15" Radius="4" Offset="0,2" />
-                                </Frame.Shadow>
-                                <Border BackgroundColor="Transparent"
-                                        StrokeThickness="0"
-                                        WidthRequest="76"
-                                        HeightRequest="76">
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="38" />
-                                    </Border.StrokeShape>
-                                    <Image Source="{Binding AvatarUrl}" 
-                                           Aspect="AspectFill">
-                                        <Image.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding ChangeAvatarCommand}" />
-                                        </Image.GestureRecognizers>
-                                    </Image>
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding ChangeAvatarCommand}" />
-                                    </Border.GestureRecognizers>
-                                </Border>
-                            </Frame>
-                            
-                            <!-- Enhanced Verification Badge -->
-                            <Frame BackgroundColor="{StaticResource Success}"
-                                   CornerRadius="10"
-                                   HasShadow="True"
-                                   Padding="3"
-                                   WidthRequest="20"
-                                   HeightRequest="20"
-                                   HorizontalOptions="End"
-                                   VerticalOptions="End"
-                                   Margin="0,0,-2,-2"
-                                   IsVisible="{Binding CurrentUser.IsEmailConfirmed}">
-                                <Frame.Shadow>
-                                    <Shadow Brush="Black" Opacity="0.2" Radius="2" Offset="0,1" />
-                                </Frame.Shadow>
-                                <Label Text="✓"
-                                       FontSize="12"
-                                       FontAttributes="Bold"
-                                       TextColor="White"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center" />
-                            </Frame>
-                            
-                            <!-- Camera Overlay Hint -->
-                            <Frame BackgroundColor="Black"
-                                   Opacity="0.7"
-                                   CornerRadius="40"
-                                   HasShadow="False"
-                                   Padding="0"
-                                   HorizontalOptions="Fill"
-                                   VerticalOptions="Fill"
-                                   IsVisible="False"
-                                   x:Name="CameraOverlay">
-                                <Label Text="📷"
-                                       FontSize="24"
-                                       TextColor="White"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center" />
-                            </Frame>
-                        </Grid>
-                        
-                        <!-- Enhanced Name and Badges Section -->
-                        <StackLayout Grid.Row="0" Grid.Column="1" Spacing="4">
-                            <StackLayout Orientation="Horizontal" Spacing="8">
-                                <Label Text="{Binding DisplayName}"
-                                       FontSize="22"
-                                       FontAttributes="Bold"
-                                       TextColor="White"
-                                       VerticalOptions="Center"
-                                       LineBreakMode="TailTruncation"
-                                       MaxLines="1"
-                                       LineHeight="1.2" />
-                                
-                                <!-- Enhanced Account type badge -->
-                                <Frame BackgroundColor="{StaticResource Secondary}"
-                                       CornerRadius="8"
-                                       HasShadow="True"
-                                       Padding="6,3"
-                                       VerticalOptions="Center"
-                                       IsVisible="{Binding ShowAccountTypeBadge}">
-                                    <Frame.Shadow>
-                                        <Shadow Brush="Black" Opacity="0.15" Radius="2" Offset="0,1" />
-                                    </Frame.Shadow>
-                                    <Label Text="{Binding AccountTypeDisplay}"
-                                           FontSize="10"
-                                           FontAttributes="Bold"
-                                           TextColor="White" />
-                                </Frame>
-                            </StackLayout>
-                        </StackLayout>
-                        
-                        <StackLayout Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="0,2,0,0">
-                            <Label FontSize="13"
-                                   TextColor="White"
-                                   Opacity="0.8"
-                                   LineBreakMode="TailTruncation">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="@" />
-                                        <Span Text="{Binding CurrentUser.Username}" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            
-                            <!-- Expertise Level -->
-                            <Label FontSize="11"
-                                   TextColor="White"
-                                   Opacity="0.8"
-                                   IsVisible="{Binding CurrentUser.ExpertiseLevel, Converter={toolkit:IsNotNullConverter}}">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="• " />
-                                        <Span Text="{Binding ExpertiseLevelDisplay}" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                        </StackLayout>
-                        
-                        <!-- Member Since -->
-                        <Label Grid.Row="2" Grid.Column="1" 
-                               FontSize="11"
-                               TextColor="White"
-                               Opacity="0.7"
-                               Margin="0,2,0,0"
-                               LineBreakMode="TailTruncation">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="📅 Member since " />
-                                    <Span Text="{Binding MemberSince}" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
-                        
-                        <!-- Last Login -->
-                        <Label Grid.Row="3" Grid.Column="1" 
-                               FontSize="10"
-                               TextColor="White"
-                               Opacity="0.6"
-                               Margin="0,1,0,0"
-                               LineBreakMode="TailTruncation"
-                               IsVisible="{Binding CurrentUser.LastLogin, Converter={toolkit:IsNotNullConverter}}">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="🔄 Last seen " />
-                                    <Span Text="{Binding LastSeenDisplay}" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
-                        
-                        <!-- Enhanced Edit Button with Better Touch Target -->
-                        <Button Grid.RowSpan="4" Grid.Column="2" 
-                                Text="✏️"
-                                Command="{Binding ToggleEditModeCommand}"
-                                BackgroundColor="White"
-                                TextColor="{StaticResource Primary}"
-                                FontSize="16"
-                                Padding="12"
-                                CornerRadius="22"
-                                WidthRequest="48"
-                                HeightRequest="48"
-                                VerticalOptions="Start"
-                                IsVisible="{Binding IsEditMode, Converter={StaticResource InvertBoolConverter}}"
-                                AutomationId="EditProfileButton"
-                                SemanticProperties.Description="Modifier les informations de votre profil"
-                                SemanticProperties.Hint="Appuyez deux fois pour passer en mode édition">
-                            <Button.Shadow>
-                                <Shadow Brush="Black" Opacity="0.15" Radius="4" Offset="0,2" />
-                            </Button.Shadow>
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup Name="CommonStates">
-                                    <VisualState Name="Normal">
-                                        <VisualState.Setters>
-                                            <Setter Property="Scale" Value="1" />
-                                            <Setter Property="Opacity" Value="1" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Property="Scale" Value="0.95" />
-                                            <Setter Property="Opacity" Value="0.8" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState Name="Disabled">
-                                        <VisualState.Setters>
-                                            <Setter Property="Opacity" Value="0.5" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                        </Button>
-                    </Grid>
-                </Frame>
-
-                <!-- Enhanced Stats Section -->
-                <Frame BackgroundColor="{StaticResource Gray100}" 
-                       HasShadow="True" 
-                       CornerRadius="20" 
-                       IsVisible="{Binding HasStats}" 
-                       Padding="20" 
-                       Margin="0,4,0,8">
-                    <Frame.Shadow>
-                        <Shadow Brush="Black" Opacity="0.08" Radius="6" Offset="0,3" />
-                    </Frame.Shadow>
-                    <StackLayout Spacing="16">
-                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8">
-                            <Label Text="📊"
-                                   FontSize="20"
-                                   VerticalOptions="Center" />
-                            <Label Text="Votre activité"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Primary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
-                        
-                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,*,*" RowSpacing="12" ColumnSpacing="8">
-                            
-                            <!-- Enhanced Total Spots Card -->
-                            <Frame Grid.Row="0" Grid.Column="0" 
-                                   BackgroundColor="White" 
-                                   CornerRadius="16" 
-                                   Padding="16,12" 
-                                   HasShadow="True"
-                                   HorizontalOptions="Fill">
-                                <Frame.Shadow>
-                                    <Shadow Brush="Black" Opacity="0.06" Radius="4" Offset="0,2" />
-                                </Frame.Shadow>
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding ViewStatsCommand}" />
-                                </Frame.GestureRecognizers>
-                                <StackLayout HorizontalOptions="Center" Spacing="4">
-                                    <Label Text="📍"
-                                           FontSize="24"
-                                           HorizontalTextAlignment="Center"
-                                           SemanticProperties.Description="Icône spots de plongée" />
-                                    <Label Text="{Binding UserStats.TotalSpots}"
-                                           FontSize="24"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Primary}"
-                                           HorizontalTextAlignment="Center"
-                                           AutomationId="TotalSpotsCount"
-                                           SemanticProperties.Description="Nombre total de spots créés" />
-                                    <Label Text="Spots"
-                                           FontSize="12"
-                                           TextColor="{StaticResource Gray600}"
-                                           HorizontalTextAlignment="Center" />
-                                </StackLayout>
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup Name="CommonStates">
-                                        <VisualState Name="Normal">
-                                            <VisualState.Setters>
-                                                <Setter Property="Scale" Value="1" />
-                                            </VisualState.Setters>
-                                        </VisualState>
-                                        <VisualState Name="Pressed">
-                                            <VisualState.Setters>
-                                                <Setter Property="Scale" Value="0.97" />
-                                            </VisualState.Setters>
-                                        </VisualState>
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
-                            </Frame>
-
-                            <!-- Enhanced Validated Spots Card -->
-                            <Frame Grid.Row="0" Grid.Column="1" 
-                                   BackgroundColor="White" 
-                                   CornerRadius="16" 
-                                   Padding="16,12" 
-                                   HasShadow="True"
-                                   HorizontalOptions="Fill">
-                                <Frame.Shadow>
-                                    <Shadow Brush="Black" Opacity="0.06" Radius="4" Offset="0,2" />
-                                </Frame.Shadow>
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding ViewStatsCommand}" />
-                                </Frame.GestureRecognizers>
-                                <StackLayout HorizontalOptions="Center" Spacing="4">
-                                    <Label Text="✅"
-                                           FontSize="24"
-                                           HorizontalTextAlignment="Center"
-                                           SemanticProperties.Description="Icône spots validés" />
-                                    <Label Text="{Binding UserStats.ValidatedSpots}"
-                                           FontSize="24"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Success}"
-                                           HorizontalTextAlignment="Center"
-                                           AutomationId="ValidatedSpotsCount"
-                                           SemanticProperties.Description="Nombre de spots validés par la communauté" />
-                                    <Label Text="Validés"
-                                           FontSize="12"
-                                           TextColor="{StaticResource Gray600}"
-                                           HorizontalTextAlignment="Center" />
-                                </StackLayout>
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup Name="CommonStates">
-                                        <VisualState Name="Normal">
-                                            <VisualState.Setters>
-                                                <Setter Property="Scale" Value="1" />
-                                            </VisualState.Setters>
-                                        </VisualState>
-                                        <VisualState Name="Pressed">
-                                            <VisualState.Setters>
-                                                <Setter Property="Scale" Value="0.97" />
-                                            </VisualState.Setters>
-                                        </VisualState>
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
-                            </Frame>
-
-                            <!-- Enhanced Contribution Score Card -->
-                            <Frame Grid.Row="0" Grid.Column="2" 
-                                   BackgroundColor="White" 
-                                   CornerRadius="16" 
-                                   Padding="16,12" 
-                                   HasShadow="True"
-                                   HorizontalOptions="Fill">
-                                <Frame.Shadow>
-                                    <Shadow Brush="Black" Opacity="0.06" Radius="4" Offset="0,2" />
-                                </Frame.Shadow>
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding ViewStatsCommand}" />
-                                </Frame.GestureRecognizers>
-                                <StackLayout HorizontalOptions="Center" Spacing="4">
-                                    <Label Text="⭐"
-                                           FontSize="24"
-                                           HorizontalTextAlignment="Center"
-                                           SemanticProperties.Description="Icône score de contribution" />
-                                    <Label Text="{Binding UserStats.ContributionScore}"
-                                           FontSize="24"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Warning}"
-                                           HorizontalTextAlignment="Center"
-                                           AutomationId="ContributionScore"
-                                           SemanticProperties.Description="Votre score de contribution à la communauté" />
-                                    <Label Text="Points"
-                                           FontSize="12"
-                                           TextColor="{StaticResource Gray600}"
-                                           HorizontalTextAlignment="Center" />
-                                </StackLayout>
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup Name="CommonStates">
-                                        <VisualState Name="Normal">
-                                            <VisualState.Setters>
-                                                <Setter Property="Scale" Value="1" />
-                                            </VisualState.Setters>
-                                        </VisualState>
-                                        <VisualState Name="Pressed">
-                                            <VisualState.Setters>
-                                                <Setter Property="Scale" Value="0.97" />
-                                            </VisualState.Setters>
-                                        </VisualState>
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
-                            </Frame>
-
-                            <!-- Enhanced Contribution Level Badge -->
-                            <Frame Grid.Row="1" Grid.ColumnSpan="3" 
-                                   BackgroundColor="{StaticResource Primary}"
-                                   CornerRadius="16"
-                                   HasShadow="True"
-                                   Padding="16,8"
-                                   Margin="8,8,8,0"
-                                   HorizontalOptions="Center">
-                                <Frame.Shadow>
-                                    <Shadow Brush="Black" Opacity="0.12" Radius="4" Offset="0,2" />
-                                </Frame.Shadow>
-                                <StackLayout Orientation="Horizontal" Spacing="8" HorizontalOptions="Center">
-                                    <Label Text="🏆"
-                                           FontSize="16"
-                                           VerticalOptions="Center" />
-                                    <Label Text="{Binding ContributionLevel}"
-                                           FontSize="14"
-                                           FontAttributes="Bold"
-                                           TextColor="White"
-                                           VerticalOptions="Center" />
-                                </StackLayout>
-                            </Frame>
-                        </Grid>
+                <!-- Profile Header -->
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,0,8">
+                    
+                    <!-- Avatar -->
+                    <Frame Grid.Column="0"
+                           BackgroundColor="White"
+                           CornerRadius="35"
+                           Padding="2"
+                           WidthRequest="70"
+                           HeightRequest="70"
+                           HasShadow="False">
+                        <Image Source="{Binding AvatarUrl}"
+                               Aspect="AspectFill"
+                               WidthRequest="66"
+                               HeightRequest="66">
+                            <Image.Clip>
+                                <EllipseGeometry Center="33,33" RadiusX="33" RadiusY="33" />
+                            </Image.Clip>
+                            <Image.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ChangeAvatarCommand}" />
+                            </Image.GestureRecognizers>
+                        </Image>
+                    </Frame>
+                    
+                    <!-- User Info -->
+                    <StackLayout Grid.Column="1" VerticalOptions="Center" Spacing="4">
+                        <Label Text="{Binding DisplayName}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextPrimary}"
+                               LineBreakMode="TailTruncation" />
+                        <Label Text="{Binding CurrentUser.Username, StringFormat='@{0}'}"
+                               FontSize="14"
+                               TextColor="{StaticResource TextSecondary}" />
+                        <Label Text="{Binding MemberSince, StringFormat='Membre depuis {0}'}"
+                               FontSize="12"
+                               TextColor="{StaticResource TextSecondary}" />
                     </StackLayout>
-                </Frame>
+                    
+                    <!-- Edit Button -->
+                    <Button Grid.Column="2"
+                            Text="✏️"
+                            FontSize="18"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="White"
+                            WidthRequest="48"
+                            HeightRequest="40"
+                            CornerRadius="20"
+                            Padding="2"
+                            Command="{Binding ToggleEditModeCommand}"
+                            IsVisible="{Binding IsEditMode, Converter={StaticResource InvertBoolConverter}}" />
+                </Grid>
+
+                <!-- Statistics Cards -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10" IsVisible="{Binding HasStats}">
+                    
+                    <!-- Total Spots -->
+                    <Frame Grid.Column="0"
+                           Padding="10"
+                           BackgroundColor="{StaticResource Primary}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding UserStats.TotalSpots}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Spots"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ViewStatsCommand}" />
+                        </Frame.GestureRecognizers>
+                    </Frame>
+                    
+                    <!-- Validated Spots -->
+                    <Frame Grid.Column="1"
+                           Padding="10"
+                           BackgroundColor="{StaticResource Success}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding UserStats.ValidatedSpots}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Validés"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Contribution Score -->
+                    <Frame Grid.Column="2"
+                           Padding="10"
+                           BackgroundColor="{StaticResource Warning}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding UserStats.ContributionScore}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Points"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                </Grid>
+                </StackLayout>
+            </StackLayout>
+        </Frame>
+
+        <!-- Content Area -->
+        <ScrollView Grid.Row="1">
+            <StackLayout Spacing="16" Padding="16">
 
                 <!-- Edit Mode Form -->
-                <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="15" IsVisible="{Binding IsEditMode}" Padding="18" Margin="0,0,0,5">
+                <Frame BackgroundColor="{StaticResource Surface}" 
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="12" 
+                       IsVisible="{Binding IsEditMode}" 
+                       Padding="16" 
+                       HasShadow="False">
                     <StackLayout Spacing="16">
-                        <Label Text="✏️ Modifier le profil" 
-                               FontSize="18" 
+                        <Label Text="Modifier le profil" 
+                               FontSize="16" 
                                FontAttributes="Bold" 
-                               TextColor="{StaticResource Primary}" />
+                               TextColor="{StaticResource TextPrimary}" />
 
                         <!-- Validation Message -->
                         <Label Text="{Binding ValidationMessage}"
@@ -521,19 +255,27 @@
                         </StackLayout>
 
                         <!-- Buttons -->
-                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="16">
-                            <Button Text="Annuler" 
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Grid.Column="0"
+                                    Text="Annuler" 
                                     Command="{Binding ToggleEditModeCommand}"
-                                    BackgroundColor="{StaticResource Gray300}"
-                                    TextColor="Black"
+                                    BackgroundColor="{StaticResource Surface}"
+                                    TextColor="{StaticResource TextPrimary}"
+                                    BorderColor="{StaticResource BorderColor}"
+                                    BorderWidth="1"
+                                    CornerRadius="8"
+                                    HeightRequest="44"
                                     IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
                             
-                            <Button Text="Enregistrer" 
+                            <Button Grid.Column="1"
+                                    Text="Enregistrer" 
                                     Command="{Binding SaveProfileCommand}"
                                     BackgroundColor="{StaticResource Primary}"
                                     TextColor="White"
+                                    CornerRadius="8"
+                                    HeightRequest="44"
                                     IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
-                        </StackLayout>
+                        </Grid>
 
                         <!-- Updating Indicator -->
                         <ActivityIndicator IsVisible="{Binding IsUpdating}" 
@@ -544,13 +286,17 @@
                 </Frame>
 
                 <!-- Certifications Section -->
-                <Frame BackgroundColor="{StaticResource Gray100}" HasShadow="True" CornerRadius="15" 
-                       IsVisible="{Binding HasCertifications}" Padding="18" Margin="0,0,0,5">
+                <Frame BackgroundColor="{StaticResource Primary}" 
+                       CornerRadius="12" 
+                       IsVisible="{Binding HasCertifications}" 
+                       Padding="16" 
+                       HasShadow="False"
+                       Margin="0,0,0,5">
                     <StackLayout Spacing="10">
-                        <Label Text="🏅 Certifications"
+                        <Label Text="Certifications"
                                FontSize="15"
                                FontAttributes="Bold"
-                               TextColor="{StaticResource Primary}" />
+                               TextColor="White" />
                         
                         <CollectionView ItemsSource="{Binding CertificationsList}"
                                         SelectionMode="None">
@@ -559,25 +305,29 @@
                                     <Grid ColumnDefinitions="Auto,*,Auto" 
                                           Padding="6,3"
                                           ColumnSpacing="8">
-                                        <Label Grid.Column="0"
-                                               Text="🏅"
-                                               FontSize="14"
+                                        <Frame Grid.Column="0"
+                                               BackgroundColor="{StaticResource Warning}"
+                                               CornerRadius="6"
+                                               Padding="4"
+                                               WidthRequest="16"
+                                               HeightRequest="16"
+                                               HasShadow="False"
                                                VerticalOptions="Center" />
                                         <StackLayout Grid.Column="1" Spacing="1">
                                             <Label Text="{Binding Type}"
                                                    FontSize="13"
                                                    FontAttributes="Bold"
-                                                   TextColor="{StaticResource TextPrimary}"
+                                                   TextColor="White"
                                                    LineBreakMode="TailTruncation" />
                                             <Label Text="{Binding Level}"
                                                    FontSize="11"
-                                                   TextColor="{StaticResource Gray600}"
+                                                   TextColor="White"
                                                    LineBreakMode="TailTruncation" />
                                         </StackLayout>
                                         <Label Grid.Column="2"
                                                Text="{Binding Date, StringFormat='{0:MMM yyyy}'}"
                                                FontSize="10"
-                                               TextColor="{StaticResource Gray500}"
+                                               TextColor="White"
                                                VerticalOptions="Center" />
                                     </Grid>
                                 </DataTemplate>
@@ -586,196 +336,81 @@
                     </StackLayout>
                 </Frame>
 
-                <!-- Enhanced Account Information Section -->
-                <Frame BackgroundColor="White" 
-                       HasShadow="True" 
-                       CornerRadius="20" 
-                       Padding="20" 
-                       Margin="0,4,0,8" 
+                <!-- Account Information Section -->
+                <Frame BackgroundColor="{StaticResource Surface}" 
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="12" 
+                       Padding="16" 
+                       HasShadow="False"
                        IsVisible="{Binding IsEditMode, Converter={StaticResource InvertBoolConverter}}">
-                    <Frame.Shadow>
-                        <Shadow Brush="Black" Opacity="0.08" Radius="6" Offset="0,3" />
-                    </Frame.Shadow>
-                    <StackLayout Spacing="16">
-                        <!-- Enhanced Section Header -->
-                        <StackLayout Orientation="Horizontal" Spacing="12">
-                            <Frame BackgroundColor="{StaticResource Primary}"
-                                   CornerRadius="12"
-                                   HasShadow="False"
-                                   Padding="8"
-                                   WidthRequest="40"
-                                   HeightRequest="40"
-                                   VerticalOptions="Center">
-                                <Label Text="📧"
-                                       FontSize="20"
-                                       TextColor="White"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center" />
-                            </Frame>
-                            <StackLayout VerticalOptions="Center">
-                                <Label Text="Informations du compte"
-                                       FontSize="18"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Primary}" />
-                                <Label Text="Gérez vos informations personnelles"
-                                       FontSize="12"
-                                       TextColor="{StaticResource Gray600}" />
-                            </StackLayout>
+                    <StackLayout Spacing="12">
+                        <Label Text="Informations du compte"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextPrimary}" />
+                        
+                        <!-- Email Display -->
+                        <StackLayout Spacing="4">
+                            <Label Text="Adresse email"
+                                   FontSize="12"
+                                   TextColor="{StaticResource TextSecondary}" />
+                            <Label Text="{Binding CurrentUser.Email}"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextPrimary}" />
                         </StackLayout>
                         
-                        <!-- Enhanced Email Display Card -->
-                        <Frame BackgroundColor="{StaticResource Gray100}"
-                               CornerRadius="16"
-                               HasShadow="False"
-                               Padding="16">
-                            <StackLayout Spacing="8">
-                                <StackLayout Orientation="Horizontal" Spacing="12">
-                                    <Label Text="✉️"
-                                           FontSize="16"
-                                           VerticalOptions="Center" />
-                                    <StackLayout HorizontalOptions="StartAndExpand">
-                                        <Label Text="Adresse email"
-                                               FontSize="12"
-                                               TextColor="{StaticResource Gray600}" />
-                                        <Label Text="{Binding CurrentUser.Email}"
-                                               FontSize="16"
-                                               FontAttributes="Bold"
-                                               TextColor="{StaticResource TextPrimary}" />
-                                    </StackLayout>
-                                    <Frame BackgroundColor="{StaticResource Success}"
-                                           CornerRadius="12"
-                                           HasShadow="True"
-                                           Padding="8,4"
-                                           VerticalOptions="Center"
-                                           IsVisible="{Binding CurrentUser.IsEmailConfirmed}">
-                                        <Frame.Shadow>
-                                            <Shadow Brush="Black" Opacity="0.1" Radius="2" Offset="0,1" />
-                                        </Frame.Shadow>
-                                        <StackLayout Orientation="Horizontal" Spacing="4">
-                                            <Label Text="✓"
-                                                   FontSize="12"
-                                                   FontAttributes="Bold"
-                                                   TextColor="White" />
-                                            <Label Text="Vérifié"
-                                                   FontSize="12"
-                                                   FontAttributes="Bold"
-                                                   TextColor="White" />
-                                        </StackLayout>
-                                    </Frame>
-                                </StackLayout>
-                            </StackLayout>
-                        </Frame>
-                        
-                        <!-- Enhanced Action Buttons -->
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                            <!-- Enhanced Password Change Button -->
-                            <Frame Grid.Column="0"
-                                   BackgroundColor="{StaticResource Secondary}"
-                                   CornerRadius="16"
-                                   HasShadow="True"
-                                   Padding="0">
-                                <Frame.Shadow>
-                                    <Shadow Brush="Black" Opacity="0.06" Radius="4" Offset="0,2" />
-                                </Frame.Shadow>
-                                <Button Text="🔒 Changer mot de passe"
-                                        Command="{Binding ChangePasswordCommand}"
-                                        BackgroundColor="Transparent"
-                                        TextColor="White"
-                                        FontSize="13"
-                                        FontAttributes="Bold"
-                                        Padding="16,12"
-                                        CornerRadius="16"
-                                        AutomationId="ChangePasswordButton"
-                                        SemanticProperties.Description="Modifier votre mot de passe actuel"
-                                        SemanticProperties.Hint="Appuyez deux fois pour changer votre mot de passe" />
-                            </Frame>
+                        <!-- Action Buttons -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Grid.Column="0"
+                                    Text="Changer mot de passe"
+                                    Command="{Binding ChangePasswordCommand}"
+                                    BackgroundColor="{StaticResource Secondary}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    HeightRequest="44"
+                                    FontSize="12" />
                             
-                            <!-- Enhanced Stats Button -->
-                            <Frame Grid.Column="1"
-                                   BackgroundColor="{StaticResource Primary}"
-                                   CornerRadius="16"
-                                   HasShadow="True"
-                                   Padding="0"
-                                   IsVisible="{Binding HasStats}">
-                                <Frame.Shadow>
-                                    <Shadow Brush="Black" Opacity="0.06" Radius="4" Offset="0,2" />
-                                </Frame.Shadow>
-                                <Button Text="📊 Voir statistiques"
-                                        Command="{Binding ViewStatsCommand}"
-                                        BackgroundColor="Transparent"
-                                        TextColor="White"
-                                        FontSize="13"
-                                        FontAttributes="Bold"
-                                        Padding="16,12"
-                                        CornerRadius="16"
-                                        AutomationId="ViewStatsButton"
-                                        SemanticProperties.Description="Consulter vos statistiques de plongée détaillées"
-                                        SemanticProperties.Hint="Appuyez deux fois pour voir vos statistiques complètes" />
-                            </Frame>
+                            <Button Grid.Column="1"
+                                    Text="Voir statistiques"
+                                    Command="{Binding ViewStatsCommand}"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    HeightRequest="44"
+                                    FontSize="12"
+                                    IsVisible="{Binding HasStats}" />
                         </Grid>
                     </StackLayout>
                 </Frame>
 
-                <!-- Enhanced Appearance Preferences Section -->
-                <Frame BackgroundColor="White" 
-                       HasShadow="True" 
-                       CornerRadius="20" 
-                       Padding="20" 
+                <!-- Appearance Preferences Section -->
+                <Frame BackgroundColor="{StaticResource Primary}" 
+                       CornerRadius="12" 
+                       Padding="16" 
+                       HasShadow="False"
                        Margin="0,4,0,8" 
                        IsVisible="{Binding IsEditMode, Converter={StaticResource InvertBoolConverter}}">
-                    <Frame.Shadow>
-                        <Shadow Brush="Black" Opacity="0.08" Radius="6" Offset="0,3" />
-                    </Frame.Shadow>
                     <StackLayout Spacing="18">
-                        <!-- Enhanced Section Header -->
-                        <StackLayout Orientation="Horizontal" Spacing="12">
-                            <Frame BackgroundColor="{StaticResource Warning}"
-                                   CornerRadius="12"
-                                   HasShadow="False"
-                                   Padding="8"
-                                   WidthRequest="40"
-                                   HeightRequest="40"
-                                   VerticalOptions="Center">
-                                <Label Text="🎨"
-                                       FontSize="20"
-                                       TextColor="White"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center" />
-                            </Frame>
-                            <StackLayout VerticalOptions="Center">
-                                <Label Text="Préférences d'apparence"
-                                       FontSize="18"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Primary}" />
-                                <Label Text="Personnalisez votre interface"
-                                       FontSize="12"
-                                       TextColor="{StaticResource Gray600}" />
-                            </StackLayout>
-                        </StackLayout>
+                        <!-- Section Header -->
+                        <Label Text="Préférences d'apparence"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               TextColor="White" />
 
-                        <!-- Enhanced Theme Selection -->
-                        <Frame BackgroundColor="{StaticResource Gray100}"
-                               CornerRadius="16"
+                        <!-- Theme Selection -->
+                        <Frame BackgroundColor="{StaticResource Secondary}"
+                               CornerRadius="8"
                                HasShadow="False"
-                               Padding="16">
+                               Padding="12">
                             <StackLayout Spacing="8">
-                                <StackLayout Orientation="Horizontal" Spacing="8">
-                                    <Label Text="🌓"
-                                           FontSize="16"
-                                           VerticalOptions="Center" />
-                                    <Label Text="Thème"
-                                           FontSize="14"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource TextPrimary}"
-                                           VerticalOptions="Center" />
-                                </StackLayout>
+                                <Label Text="Thème"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="White" />
                                 <Frame BackgroundColor="White"
-                                       CornerRadius="12"
-                                       HasShadow="True"
+                                       CornerRadius="8"
+                                       HasShadow="False"
                                        Padding="0">
-                                    <Frame.Shadow>
-                                        <Shadow Brush="Black" Opacity="0.06" Radius="2" Offset="0,1" />
-                                    </Frame.Shadow>
                                     <Picker ItemsSource="{Binding ThemeOptionsDisplay}" 
                                             SelectedIndex="{Binding SelectedThemeIndex}" 
                                             BackgroundColor="Transparent"
@@ -788,29 +423,20 @@
                             </StackLayout>
                         </Frame>
 
-                        <!-- Enhanced Language Selection -->
-                        <Frame BackgroundColor="{StaticResource Gray100}"
-                               CornerRadius="16"
+                        <!-- Language Selection -->
+                        <Frame BackgroundColor="{StaticResource Secondary}"
+                               CornerRadius="8"
                                HasShadow="False"
-                               Padding="16">
+                               Padding="12">
                             <StackLayout Spacing="8">
-                                <StackLayout Orientation="Horizontal" Spacing="8">
-                                    <Label Text="🌍"
-                                           FontSize="16"
-                                           VerticalOptions="Center" />
-                                    <Label Text="Langue"
-                                           FontSize="14"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource TextPrimary}"
-                                           VerticalOptions="Center" />
-                                </StackLayout>
+                                <Label Text="Langue"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="White" />
                                 <Frame BackgroundColor="White"
-                                       CornerRadius="12"
-                                       HasShadow="True"
+                                       CornerRadius="8"
+                                       HasShadow="False"
                                        Padding="0">
-                                    <Frame.Shadow>
-                                        <Shadow Brush="Black" Opacity="0.06" Radius="2" Offset="0,1" />
-                                    </Frame.Shadow>
                                     <Picker ItemsSource="{Binding LanguageOptionsDisplay}" 
                                             SelectedIndex="{Binding SelectedLanguageIndex}" 
                                             BackgroundColor="Transparent"
@@ -823,29 +449,20 @@
                             </StackLayout>
                         </Frame>
 
-                        <!-- Enhanced Display Name Selection -->
-                        <Frame BackgroundColor="{StaticResource Gray100}"
-                               CornerRadius="16"
+                        <!-- Display Name Selection -->
+                        <Frame BackgroundColor="{StaticResource Secondary}"
+                               CornerRadius="8"
                                HasShadow="False"
-                               Padding="16">
+                               Padding="12">
                             <StackLayout Spacing="8">
-                                <StackLayout Orientation="Horizontal" Spacing="8">
-                                    <Label Text="📝"
-                                           FontSize="16"
-                                           VerticalOptions="Center" />
-                                    <Label Text="Affichage du nom"
-                                           FontSize="14"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource TextPrimary}"
-                                           VerticalOptions="Center" />
-                                </StackLayout>
+                                <Label Text="Affichage du nom"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="White" />
                                 <Frame BackgroundColor="White"
-                                       CornerRadius="12"
-                                       HasShadow="True"
+                                       CornerRadius="8"
+                                       HasShadow="False"
                                        Padding="0">
-                                    <Frame.Shadow>
-                                        <Shadow Brush="Black" Opacity="0.06" Radius="2" Offset="0,1" />
-                                    </Frame.Shadow>
                                     <Picker ItemsSource="{Binding DisplayNameOptionsDisplay}" 
                                             SelectedIndex="{Binding SelectedDisplayNameIndex}" 
                                             BackgroundColor="Transparent"
@@ -860,76 +477,42 @@
                     </StackLayout>
                 </Frame>
 
-                <!-- Enhanced Notification Preferences Section -->
-                <Frame BackgroundColor="White" 
-                       HasShadow="True" 
-                       CornerRadius="20" 
-                       Padding="20" 
+                <!-- Notification Preferences Section -->
+                <Frame BackgroundColor="{StaticResource Primary}" 
+                       CornerRadius="12" 
+                       Padding="16" 
+                       HasShadow="False"
                        Margin="0,4,0,8" 
                        IsVisible="{Binding IsEditMode, Converter={StaticResource InvertBoolConverter}}">
-                    <Frame.Shadow>
-                        <Shadow Brush="Black" Opacity="0.08" Radius="6" Offset="0,3" />
-                    </Frame.Shadow>
                     <StackLayout Spacing="18">
-                        <!-- Enhanced Section Header -->
-                        <StackLayout Orientation="Horizontal" Spacing="12">
-                            <Frame BackgroundColor="{StaticResource Info}"
-                                   CornerRadius="12"
-                                   HasShadow="False"
-                                   Padding="8"
-                                   WidthRequest="40"
-                                   HeightRequest="40"
-                                   VerticalOptions="Center">
-                                <Label Text="🔔"
-                                       FontSize="20"
-                                       TextColor="White"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center" />
-                            </Frame>
-                            <StackLayout VerticalOptions="Center">
-                                <Label Text="Notifications"
-                                       FontSize="18"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Primary}" />
-                                <Label Text="Contrôlez vos notifications"
-                                       FontSize="12"
-                                       TextColor="{StaticResource Gray600}" />
-                            </StackLayout>
-                        </StackLayout>
+                        <!-- Section Header -->
+                        <Label Text="Notifications"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               TextColor="White" />
 
                         <!-- Enhanced Notification Settings -->
                         <StackLayout Spacing="12">
                             <!-- Push Notifications -->
-                            <Frame BackgroundColor="{StaticResource Gray100}"
-                                   CornerRadius="16"
+                            <Frame BackgroundColor="{StaticResource Secondary}"
+                                   CornerRadius="8"
                                    HasShadow="False"
-                                   Padding="16">
+                                   Padding="12">
                                 <StackLayout Orientation="Horizontal" Spacing="12">
-                                    <Frame BackgroundColor="{StaticResource Primary}"
-                                           CornerRadius="10"
-                                           HasShadow="False"
-                                           Padding="6"
-                                           WidthRequest="32"
-                                           HeightRequest="32"
-                                           VerticalOptions="Center">
-                                        <Label Text="📱"
-                                               FontSize="14"
-                                               TextColor="White"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center" />
-                                    </Frame>
                                     <StackLayout HorizontalOptions="StartAndExpand" VerticalOptions="Center">
                                         <Label Text="Notifications push"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="{StaticResource TextPrimary}" />
+                                               TextColor="White" />
                                         <Label Text="Recevez des alertes sur votre appareil"
                                                FontSize="12"
-                                               TextColor="{StaticResource Gray600}" />
+                                               TextColor="White" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding PushNotifications}" 
-                                            OnColor="{StaticResource Primary}"
+                                            OnColor="#FFD700"
+                                            ThumbColor="White"
                                             VerticalOptions="Center"
+                                            BackgroundColor="Transparent"
                                             AutomationId="PushNotificationsSwitch"
                                             SemanticProperties.Description="Activer ou désactiver les notifications push"
                                             SemanticProperties.Hint="Basculez pour modifier ce paramètre" />
@@ -937,36 +520,25 @@
                             </Frame>
 
                             <!-- Email Notifications -->
-                            <Frame BackgroundColor="{StaticResource Gray100}"
-                                   CornerRadius="16"
+                            <Frame BackgroundColor="{StaticResource Secondary}"
+                                   CornerRadius="8"
                                    HasShadow="False"
-                                   Padding="16">
+                                   Padding="12">
                                 <StackLayout Orientation="Horizontal" Spacing="12">
-                                    <Frame BackgroundColor="{StaticResource Secondary}"
-                                           CornerRadius="10"
-                                           HasShadow="False"
-                                           Padding="6"
-                                           WidthRequest="32"
-                                           HeightRequest="32"
-                                           VerticalOptions="Center">
-                                        <Label Text="📧"
-                                               FontSize="14"
-                                               TextColor="White"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center" />
-                                    </Frame>
                                     <StackLayout HorizontalOptions="StartAndExpand" VerticalOptions="Center">
                                         <Label Text="Notifications par email"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="{StaticResource TextPrimary}" />
+                                               TextColor="White" />
                                         <Label Text="Recevez des résumés par email"
                                                FontSize="12"
-                                               TextColor="{StaticResource Gray600}" />
+                                               TextColor="White" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding EmailNotifications}" 
-                                            OnColor="{StaticResource Primary}"
+                                            OnColor="#FFD700"
+                                            ThumbColor="White"
                                             VerticalOptions="Center"
+                                            BackgroundColor="Transparent"
                                             AutomationId="EmailNotificationsSwitch"
                                             SemanticProperties.Description="Activer ou désactiver les notifications par email"
                                             SemanticProperties.Hint="Basculez pour modifier ce paramètre" />
@@ -974,36 +546,25 @@
                             </Frame>
 
                             <!-- Nearby Spots -->
-                            <Frame BackgroundColor="{StaticResource Gray100}"
-                                   CornerRadius="16"
+                            <Frame BackgroundColor="{StaticResource Secondary}"
+                                   CornerRadius="8"
                                    HasShadow="False"
-                                   Padding="16">
+                                   Padding="12">
                                 <StackLayout Orientation="Horizontal" Spacing="12">
-                                    <Frame BackgroundColor="{StaticResource Success}"
-                                           CornerRadius="10"
-                                           HasShadow="False"
-                                           Padding="6"
-                                           WidthRequest="32"
-                                           HeightRequest="32"
-                                           VerticalOptions="Center">
-                                        <Label Text="📍"
-                                               FontSize="14"
-                                               TextColor="White"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center" />
-                                    </Frame>
                                     <StackLayout HorizontalOptions="StartAndExpand" VerticalOptions="Center">
                                         <Label Text="Nouveaux spots à proximité"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="{StaticResource TextPrimary}" />
+                                               TextColor="White" />
                                         <Label Text="Découvrez les spots près de vous"
                                                FontSize="12"
-                                               TextColor="{StaticResource Gray600}" />
+                                               TextColor="White" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding SpotsNearby}" 
-                                            OnColor="{StaticResource Primary}"
+                                            OnColor="#FFD700"
+                                            ThumbColor="White"
                                             VerticalOptions="Center"
+                                            BackgroundColor="Transparent"
                                             AutomationId="SpotsNearbySwitch"
                                             SemanticProperties.Description="Recevoir des notifications pour les nouveaux spots à proximité"
                                             SemanticProperties.Hint="Basculez pour modifier ce paramètre" />
@@ -1011,36 +572,25 @@
                             </Frame>
 
                             <!-- Community Updates -->
-                            <Frame BackgroundColor="{StaticResource Gray100}"
-                                   CornerRadius="16"
+                            <Frame BackgroundColor="{StaticResource Secondary}"
+                                   CornerRadius="8"
                                    HasShadow="False"
-                                   Padding="16">
+                                   Padding="12">
                                 <StackLayout Orientation="Horizontal" Spacing="12">
-                                    <Frame BackgroundColor="{StaticResource Warning}"
-                                           CornerRadius="10"
-                                           HasShadow="False"
-                                           Padding="6"
-                                           WidthRequest="32"
-                                           HeightRequest="32"
-                                           VerticalOptions="Center">
-                                        <Label Text="👥"
-                                               FontSize="14"
-                                               TextColor="White"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center" />
-                                    </Frame>
                                     <StackLayout HorizontalOptions="StartAndExpand" VerticalOptions="Center">
                                         <Label Text="Actualités de la communauté"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="{StaticResource TextPrimary}" />
+                                               TextColor="White" />
                                         <Label Text="Restez informé des nouvelles"
                                                FontSize="12"
-                                               TextColor="{StaticResource Gray600}" />
+                                               TextColor="White" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding CommunityUpdates}" 
-                                            OnColor="{StaticResource Primary}"
+                                            OnColor="#FFD700"
+                                            ThumbColor="White"
                                             VerticalOptions="Center"
+                                            BackgroundColor="Transparent"
                                             AutomationId="CommunityUpdatesSwitch"
                                             SemanticProperties.Description="Recevoir les actualités de la communauté SubExplore"
                                             SemanticProperties.Hint="Basculez pour modifier ce paramètre" />
@@ -1048,36 +598,25 @@
                             </Frame>
 
                             <!-- Safety Alerts -->
-                            <Frame BackgroundColor="{StaticResource Gray100}"
-                                   CornerRadius="16"
+                            <Frame BackgroundColor="{StaticResource Secondary}"
+                                   CornerRadius="8"
                                    HasShadow="False"
-                                   Padding="16">
+                                   Padding="12">
                                 <StackLayout Orientation="Horizontal" Spacing="12">
-                                    <Frame BackgroundColor="{StaticResource Danger}"
-                                           CornerRadius="10"
-                                           HasShadow="False"
-                                           Padding="6"
-                                           WidthRequest="32"
-                                           HeightRequest="32"
-                                           VerticalOptions="Center">
-                                        <Label Text="⚠️"
-                                               FontSize="14"
-                                               TextColor="White"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center" />
-                                    </Frame>
                                     <StackLayout HorizontalOptions="StartAndExpand" VerticalOptions="Center">
                                         <Label Text="Alertes de sécurité"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="{StaticResource TextPrimary}" />
+                                               TextColor="White" />
                                         <Label Text="Informations importantes de sécurité"
                                                FontSize="12"
-                                               TextColor="{StaticResource Gray600}" />
+                                               TextColor="White" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding SafetyAlerts}" 
-                                            OnColor="{StaticResource Primary}"
+                                            OnColor="#FFD700"
+                                            ThumbColor="White"
                                             VerticalOptions="Center"
+                                            BackgroundColor="Transparent"
                                             AutomationId="SafetyAlertsSwitch"
                                             SemanticProperties.Description="Recevoir les alertes de sécurité importantes"
                                             SemanticProperties.Hint="Basculez pour modifier ce paramètre" />
@@ -1087,31 +626,18 @@
                     </StackLayout>
                 </Frame>
 
-                <!-- Enhanced Save Preferences Button -->
-                <Frame BackgroundColor="{StaticResource Primary}"
-                       CornerRadius="20"
-                       HasShadow="True"
-                       Padding="0"
-                       Margin="0,8,0,16"
-                       IsVisible="{Binding IsEditMode, Converter={StaticResource InvertBoolConverter}}">
-                    <Frame.Shadow>
-                        <Shadow Brush="Black" Opacity="0.12" Radius="8" Offset="0,4" />
-                    </Frame.Shadow>
-                    <Button Text="💾 Enregistrer les préférences"
-                            Command="{Binding SavePreferencesCommand}"
-                            BackgroundColor="Transparent"
-                            TextColor="White"
-                            FontSize="16"
-                            FontAttributes="Bold"
-                            Padding="24,16"
-                            CornerRadius="20"
-                            HorizontalOptions="Fill"
-                            AutomationId="SavePreferencesButton"
-                            SemanticProperties.Description="Enregistrer toutes vos préférences modifiées"
-                            SemanticProperties.Hint="Appuyez deux fois pour sauvegarder vos paramètres" />
-                </Frame>
+                <!-- Save Preferences Button -->
+                <Button Text="Enregistrer les préférences"
+                        Command="{Binding SavePreferencesCommand}"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White"
+                        FontSize="16"
+                        CornerRadius="8"
+                        HeightRequest="48"
+                        Margin="0,8,0,16"
+                        IsVisible="{Binding IsEditMode, Converter={StaticResource InvertBoolConverter}}" />
 
             </StackLayout>
-        </StackLayout>
-    </ScrollView>
+        </ScrollView>
+    </Grid>
 </ContentPage>
