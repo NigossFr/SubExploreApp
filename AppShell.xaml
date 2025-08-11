@@ -230,6 +230,29 @@
                         AccessibilityHint="Appuyez deux fois pour accéder aux outils de base de données"
                         IconAccessibilityText="Icône de base de données" />
                     
+                    <!-- Information Section -->
+                    <Label Text="Informations"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                           Margin="15,15,15,5" />
+                    
+                    <!-- À Propos -->
+                    <controls:StagedMenuButton 
+                        Title="À Propos"
+                        Description="Informations sur l'application"
+                        Icon=""
+                        Stage="Default"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="False"
+                        Tapped="OnMenuButtonTapped"
+                        CommandParameter="///about"
+                        AccessibilityName="À Propos, informations sur l'application"
+                        AccessibilityDescription="Voir les informations détaillées sur l'application SubExplore"
+                        AccessibilityHint="Appuyez deux fois pour voir les informations de l'application"
+                        IconAccessibilityText="Icône d'information" />
+                    
                     <!-- Logout Button -->
                     <controls:StagedMenuButton 
                         Title="Déconnexion"
@@ -304,6 +327,13 @@
         Title="Test Base de Données"
         ContentTemplate="{DataTemplate settings:DatabaseTestPage}"
         Route="databasetest"
+        FlyoutItemIsVisible="False" />
+
+    <!-- About route - Hidden -->
+    <ShellContent
+        Title="À Propos"
+        ContentTemplate="{DataTemplate settings:AboutPage}"
+        Route="about"
         FlyoutItemIsVisible="False" />
 
     <!-- Authentication routes - Hidden from flyout -->

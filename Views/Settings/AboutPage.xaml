@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Settings.AboutPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SubExplore.ViewModels.Settings"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:DataType="vm:AboutViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertBoolConverter" />
+            
+            <!-- Section Card Style -->
+            <Style x:Key="SectionCardStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}" />
+                <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}" />
+                <Setter Property="HasShadow" Value="False" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="Padding" Value="16" />
+            </Style>
+            
+            <!-- Section Header Style -->
+            <Style x:Key="SectionHeaderStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="Margin" Value="0,0,0,12" />
+            </Style>
+            
+            <!-- Info Item Style -->
+            <Style x:Key="InfoItemStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+                <Setter Property="Margin" Value="0,4,0,4" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Header Section -->
+        <Frame Grid.Row="0" 
+               Padding="15"
+               BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15">
+
+                <!-- App Header Card -->
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                       CornerRadius="12" 
+                       HasShadow="False" 
+                       Padding="16">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                        
+                        <!-- App Icon -->
+                        <Frame Grid.Column="0"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}"
+                               CornerRadius="30"
+                               Padding="8"
+                               WidthRequest="60"
+                               HeightRequest="60"
+                               HasShadow="False">
+                            <Image Source="icone_subexplore.svg"
+                                   WidthRequest="44"
+                                   HeightRequest="44"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Frame>
+                        
+                        <!-- App Info -->
+                        <StackLayout Grid.Column="1" 
+                                   VerticalOptions="Center" 
+                                   Spacing="4">
+                            <Label Text="{Binding AppName}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White" />
+                            <Label Text="{Binding AppVersion, StringFormat='Version {0}'}"
+                                   FontSize="14"
+                                   TextColor="White"
+                                   Opacity="0.9" />
+                            <Label Text="{Binding AppDescription}"
+                                   FontSize="12"
+                                   TextColor="White"
+                                   Opacity="0.8"
+                                   LineBreakMode="WordWrap" />
+                        </StackLayout>
+                    </Grid>
+                </Frame>
+            </StackLayout>
+        </Frame>
+
+        <!-- Content Area -->
+        <ScrollView Grid.Row="1">
+            <StackLayout Padding="16" Spacing="16">
+
+                <!-- App Information Section -->
+                <Frame Style="{StaticResource SectionCardStyle}">
+                    <StackLayout Spacing="12">
+                        <Label Text="📱 Informations de l'application" 
+                               Style="{StaticResource SectionHeaderStyle}" />
+
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" 
+                              ColumnDefinitions="Auto,*" 
+                              RowSpacing="8" 
+                              ColumnSpacing="12">
+                            
+                            <Label Grid.Row="0" Grid.Column="0" Text="Nom :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding AppName}" Style="{StaticResource InfoItemStyle}" />
+                            
+                            <Label Grid.Row="1" Grid.Column="0" Text="Version :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding AppVersion}" Style="{StaticResource InfoItemStyle}" />
+                            
+                            <Label Grid.Row="2" Grid.Column="0" Text="Build :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="2" Grid.Column="1" Text="{Binding BuildNumber}" Style="{StaticResource InfoItemStyle}" />
+                            
+                            <Label Grid.Row="3" Grid.Column="0" Text="Plateforme :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="3" Grid.Column="1" Text="{Binding Platform}" Style="{StaticResource InfoItemStyle}" />
+                            
+                            <Label Grid.Row="4" Grid.Column="0" Text="Framework :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="4" Grid.Column="1" Text="{Binding Framework}" Style="{StaticResource InfoItemStyle}" />
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Developer Information Section -->
+                <Frame Style="{StaticResource SectionCardStyle}">
+                    <StackLayout Spacing="12">
+                        <Label Text="👨‍💻 Développement" 
+                               Style="{StaticResource SectionHeaderStyle}" />
+
+                        <Grid RowDefinitions="Auto,Auto,Auto" 
+                              ColumnDefinitions="Auto,*" 
+                              RowSpacing="8" 
+                              ColumnSpacing="12">
+                            
+                            <Label Grid.Row="0" Grid.Column="0" Text="Développeur :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding DeveloperName}" Style="{StaticResource InfoItemStyle}" />
+                            
+                            <Label Grid.Row="1" Grid.Column="0" Text="Copyright :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding Copyright}" Style="{StaticResource InfoItemStyle}" />
+                            
+                            <Label Grid.Row="2" Grid.Column="0" Text="Contact :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="2" Grid.Column="1" Text="{Binding ContactEmail}" Style="{StaticResource InfoItemStyle}" />
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Features Section -->
+                <Frame Style="{StaticResource SectionCardStyle}">
+                    <StackLayout Spacing="12">
+                        <Label Text="⚙️ Fonctionnalités principales" 
+                               Style="{StaticResource SectionHeaderStyle}" />
+
+                        <StackLayout Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="🗺️" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Carte interactive des spots de plongée" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="📍" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Création et gestion de vos spots personnels" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="⭐" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Système de favoris et notifications" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="📊" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Statistiques personnelles de plongée" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="🌙" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Mode sombre/clair adaptatif" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="🔒" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Validation communautaire des spots" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Technical Information Section -->
+                <Frame Style="{StaticResource SectionCardStyle}">
+                    <StackLayout Spacing="12">
+                        <Label Text="🛠️ Technologies utilisées" 
+                               Style="{StaticResource SectionHeaderStyle}" />
+
+                        <StackLayout Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="📱" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Microsoft .NET MAUI (Multi-platform App UI)" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="🗄️" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Entity Framework Core avec MySQL" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="🗺️" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Microsoft Maps pour la cartographie" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="🎨" FontSize="16" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="XAML avec thèmes adaptatifs" Style="{StaticResource InfoItemStyle}" />
+                            </Grid>
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Legal Information Section -->
+                <Frame Style="{StaticResource SectionCardStyle}">
+                    <StackLayout Spacing="12">
+                        <Label Text="⚖️ Informations légales" 
+                               Style="{StaticResource SectionHeaderStyle}" />
+
+                        <StackLayout Spacing="8">
+                            <Label Text="{Binding LegalDisclaimer}" 
+                                   Style="{StaticResource InfoItemStyle}"
+                                   LineBreakMode="WordWrap" />
+                                   
+                            <Label Text="Cette application est destinée aux plongeurs expérimentés. Vérifiez toujours les conditions locales et respectez les règles de sécurité en plongée." 
+                                   Style="{StaticResource InfoItemStyle}"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{StaticResource Warning}"
+                                   FontAttributes="Italic" />
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Action Buttons -->
+                <StackLayout Spacing="12" Margin="0,8,0,16">
+                    
+                    <!-- Contact Button -->
+                    <Button Text="📧 Nous contacter"
+                            Command="{Binding ContactCommand}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                            TextColor="White"
+                            CornerRadius="8"
+                            FontSize="14"
+                            FontAttributes="Bold"
+                            HeightRequest="44" />
+                    
+                    <!-- Privacy Policy Button -->
+                    <Button Text="🔒 Politique de confidentialité"
+                            Command="{Binding PrivacyPolicyCommand}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
+                            TextColor="White"
+                            CornerRadius="8"
+                            FontSize="14"
+                            FontAttributes="Bold"
+                            HeightRequest="44" />
+                    
+                    <!-- Back Button -->
+                    <Button Text="← Retour"
+                            Command="{Binding GoBackCommand}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}"
+                            TextColor="{StaticResource TextPrimary}"
+                            BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}"
+                            BorderWidth="1"
+                            CornerRadius="8"
+                            FontSize="14"
+                            FontAttributes="Bold"
+                            HeightRequest="44" />
+                </StackLayout>
+            </StackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

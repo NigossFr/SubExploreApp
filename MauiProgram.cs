@@ -334,6 +334,9 @@ public static class MauiProgram
         
         // Navigation ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Common.NavigationBarViewModel>();
+        
+        // Settings ViewModels
+        builder.Services.AddTransient<AboutViewModel>();
 
         // Enregistrement des vues (Pages et Views)
         // Pour les Pages et Views, AddTransient est généralement correct.
@@ -374,6 +377,9 @@ public static class MauiProgram
         
         // Common Views
         builder.Services.AddTransient<SubExplore.Views.Common.NavigationBarView>();
+        
+        // Settings Pages
+        builder.Services.AddTransient<AboutPage>();
         
         // Test Pages
         builder.Services.AddTransient<SubExplore.Views.TestPage>();
