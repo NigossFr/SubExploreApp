@@ -130,7 +130,7 @@ namespace SubExplore.Services.Interfaces
     {
         public int TotalFavorites { get; set; }
         public int NotificationEnabled { get; set; }
-        public int HighPriorityFavorites { get; set; }
+        public int ActivityFavorites { get; set; }
         public Dictionary<string, int> FavoritesByType { get; set; } = new();
         public DateTime? MostRecentFavorite { get; set; }
         public DateTime? OldestFavorite { get; set; }

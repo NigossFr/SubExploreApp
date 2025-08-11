@@ -391,7 +391,7 @@ namespace SubExplore.Services.Implementations
                 {
                     TotalFavorites = favoritesList.Count,
                     NotificationEnabled = favoritesList.Count(f => f.NotificationEnabled),
-                    HighPriorityFavorites = favoritesList.Count(f => f.Priority <= 3),
+                    ActivityFavorites = favoritesList.Count(f => f.Spot?.Type?.Category == Models.Enums.ActivityCategory.Activity),
                     FavoritesByType = favoritesList
                         .Where(f => f.Spot?.Type != null)
                         .GroupBy(f => f.Spot!.Type!.Name)

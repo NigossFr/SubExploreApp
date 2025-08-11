@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using SubExplore.Models.Domain;
+using SubExplore.Models.Enums;
 using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels.Base;
 
@@ -36,7 +37,7 @@ namespace SubExplore.ViewModels.Favorites
         private string _emptyStateMessage;
 
         [ObservableProperty]
-        private bool _showByPriority;
+        private bool _showByActivity;
 
         [ObservableProperty]
         private UserFavoriteSpot? _selectedFavorite;
@@ -48,7 +49,7 @@ namespace SubExplore.ViewModels.Favorites
         private bool _hasSearchText;
 
         [ObservableProperty]
-        private int? _selectedPriorityFilter;
+        private ActivityCategory? _selectedActivityFilter;
 
         [ObservableProperty]
         private string _notificationFilter = "Tous"; // "Tous", "Activées", "Désactivées"
@@ -75,7 +76,7 @@ namespace SubExplore.ViewModels.Favorites
             _allFavorites = new ObservableCollection<UserFavoriteSpot>();
             EmptyStateMessage = "Aucun spot favori pour le moment.\nExplorez la carte pour découvrir et ajouter des spots à vos favoris !";
             Title = "Mes Favoris";
-            ShowByPriority = false;
+            ShowByActivity = false;
             
             // Setup search timer for real-time search
             _searchTimer = new System.Timers.Timer(300); // 300ms delay
@@ -113,9 +114,7 @@ namespace SubExplore.ViewModels.Favorites
 
                 // Load favorites and stats sequentially to prevent DbContext concurrency issues
                 // "A second operation was started on this context instance before a previous operation completed"
-                var favorites = ShowByPriority 
-                    ? await _favoriteSpotService.GetUserFavoritesByPriorityAsync(currentUserId.Value).ConfigureAwait(false)
-                    : await _favoriteSpotService.GetUserFavoritesAsync(currentUserId.Value).ConfigureAwait(false);
+                var favorites = await _favoriteSpotService.GetUserFavoritesAsync(currentUserId.Value).ConfigureAwait(false);
                 
                 var stats = await _favoriteSpotService.GetUserFavoriteStatsAsync(currentUserId.Value).ConfigureAwait(false);
 
@@ -309,57 +308,6 @@ namespace SubExplore.ViewModels.Favorites
             }
         }
 
-        /// <summary>
-        /// Update favorite priority
-        /// </summary>
-        /// <param name="favorite">Favorite to update</param>
-        [RelayCommand]
-        private async Task UpdatePriorityAsync(UserFavoriteSpot favorite)
-        {
-            if (favorite == null)
-                return;
-
-            try
-            {
-                // TODO: Implement priority picker dialog or slider
-                var newPriority = await ShowPriorityPickerAsync(favorite.Priority).ConfigureAwait(false);
-                if (newPriority == null || newPriority == favorite.Priority)
-                    return;
-
-                var currentUserId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-                if (currentUserId == null)
-                {
-                    await HandleNotAuthenticatedAsync().ConfigureAwait(false);
-                    return;
-                }
-
-                var updated = await _favoriteSpotService.UpdateFavoritePriorityAsync(
-                    currentUserId.Value, 
-                    favorite.SpotId, 
-                    newPriority.Value).ConfigureAwait(false);
-
-                if (updated)
-                {
-                    favorite.Priority = newPriority.Value;
-                    
-                    // Refresh if showing by priority to maintain correct order
-                    if (ShowByPriority)
-                    {
-                        await LoadFavoritesAsync().ConfigureAwait(false);
-                    }
-
-                    await DialogService.ShowToastAsync("Priorité mise à jour").ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating favorite priority");
-                await DialogService.ShowAlertAsync(
-                    "Erreur", 
-                    "Impossible de mettre à jour la priorité.", 
-                    "D'accord").ConfigureAwait(false);
-            }
-        }
 
         /// <summary>
         /// Toggle notification for a favorite spot
@@ -404,12 +352,12 @@ namespace SubExplore.ViewModels.Favorites
         }
 
         /// <summary>
-        /// Toggle sorting between priority and date
+        /// Toggle sorting between activity and date
         /// </summary>
         [RelayCommand]
         private async Task ToggleSortingAsync()
         {
-            ShowByPriority = !ShowByPriority;
+            ShowByActivity = !ShowByActivity;
             await ApplyFiltersAsync();
         }
 
@@ -519,42 +467,6 @@ namespace SubExplore.ViewModels.Favorites
             // TODO: Navigate to login page
         }
 
-        /// <summary>
-        /// Show priority picker dialog
-        /// </summary>
-        private async Task<int?> ShowPriorityPickerAsync(int currentPriority)
-        {
-            try
-            {
-                // TODO: Implement custom priority picker dialog
-                // For now, show a simple prompt
-                var priorities = new[] { "1 - Très haute", "2 - Haute", "3 - Moyenne-haute", "4 - Moyenne", "5 - Normale", 
-                                       "6 - Moyenne-basse", "7 - Basse", "8 - Très basse", "9 - Faible", "10 - Très faible" };
-                
-                var selected = await DialogService.ShowActionSheetAsync(
-                    "Sélectionner la priorité",
-                    "Annuler",
-                    null,
-                    priorities).ConfigureAwait(false);
-
-                if (string.IsNullOrEmpty(selected) || selected == "Annuler")
-                    return null;
-
-                // Extract priority number from selection
-                var priorityChar = selected[0];
-                if (char.IsDigit(priorityChar))
-                {
-                    return int.Parse(priorityChar.ToString());
-                }
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error showing priority picker");
-                return null;
-            }
-        }
 
         /// <summary>
         /// Apply search and filters to the favorites list
@@ -576,10 +488,10 @@ namespace SubExplore.ViewModels.Favorites
                         (f.Spot?.Type?.Name?.ToLowerInvariant().Contains(searchLower) ?? false));
                 }
 
-                // Apply priority filter
-                if (SelectedPriorityFilter.HasValue)
+                // Apply activity category filter
+                if (SelectedActivityFilter.HasValue)
                 {
-                    filteredFavorites = filteredFavorites.Where(f => f.Priority == SelectedPriorityFilter.Value);
+                    filteredFavorites = filteredFavorites.Where(f => f.Spot?.Type?.Category == SelectedActivityFilter.Value);
                 }
 
                 // Apply notification filter
@@ -593,9 +505,9 @@ namespace SubExplore.ViewModels.Favorites
                 }
 
                 // Apply sorting
-                if (ShowByPriority)
+                if (ShowByActivity)
                 {
-                    filteredFavorites = filteredFavorites.OrderBy(f => f.Priority).ThenByDescending(f => f.CreatedAt);
+                    filteredFavorites = filteredFavorites.OrderBy(f => f.Spot?.Type?.Category).ThenByDescending(f => f.CreatedAt);
                 }
                 else
                 {
@@ -649,30 +561,24 @@ namespace SubExplore.ViewModels.Favorites
         }
 
         /// <summary>
-        /// Show priority filter options
+        /// Show activity category filter options
         /// </summary>
         [RelayCommand]
-        private async Task ShowPriorityFilterAsync()
+        private async Task ShowActivityFilterAsync()
         {
             try
             {
                 var options = new[] 
                 { 
-                    "Toutes les priorités",
-                    "1 - Très haute", 
-                    "2 - Haute", 
-                    "3 - Moyenne-haute", 
-                    "4 - Moyenne", 
-                    "5 - Normale",
-                    "6 - Moyenne-basse", 
-                    "7 - Basse", 
-                    "8 - Très basse", 
-                    "9 - Faible", 
-                    "10 - Très faible" 
+                    "Toutes les activités",
+                    "Activités sous-marines", 
+                    "Structures (clubs, centres)", 
+                    "Boutiques et magasins", 
+                    "Autres types" 
                 };
                 
                 var selected = await DialogService.ShowActionSheetAsync(
-                    "Filtrer par priorité",
+                    "Filtrer par type d'activité",
                     "Annuler",
                     null,
                     options);
@@ -680,24 +586,21 @@ namespace SubExplore.ViewModels.Favorites
                 if (string.IsNullOrEmpty(selected) || selected == "Annuler")
                     return;
 
-                if (selected == "Toutes les priorités")
+                SelectedActivityFilter = selected switch
                 {
-                    SelectedPriorityFilter = null;
-                }
-                else
-                {
-                    var priorityChar = selected[0];
-                    if (char.IsDigit(priorityChar))
-                    {
-                        SelectedPriorityFilter = int.Parse(priorityChar.ToString());
-                    }
-                }
+                    "Toutes les activités" => null,
+                    "Activités sous-marines" => ActivityCategory.Activity,
+                    "Structures (clubs, centres)" => ActivityCategory.Structure,
+                    "Boutiques et magasins" => ActivityCategory.Shop,
+                    "Autres types" => ActivityCategory.Other,
+                    _ => null
+                };
 
                 await ApplyFiltersAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error showing priority filter");
+                _logger.LogError(ex, "Error showing activity filter");
             }
         }
 

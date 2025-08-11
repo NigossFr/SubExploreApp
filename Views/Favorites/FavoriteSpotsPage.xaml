@@ -12,144 +12,135 @@
     <ContentPage.Resources>
         <ResourceDictionary>
             <!-- Converters -->
-            <local:PriorityFilterConverter x:Key="PriorityFilterConverter" />
             <local:NotificationFilterConverter x:Key="NotificationFilterConverter" />
             <local:DifficultyToColorConverter x:Key="DifficultyToColorConverter" />
             <local:FavoriteCountConverter x:Key="FavoriteCountConverter" />
             <local:TimeSinceConverter x:Key="TimeSinceConverter" />
-            <local:PriorityToIndicatorConverter x:Key="PriorityToIndicatorConverter" />
-            <!-- Priority indicator styles -->
-            <Style x:Key="HighPriorityIndicator" TargetType="Border">
-                <Setter Property="BackgroundColor" Value="#FF4444" />
-                <Setter Property="StrokeThickness" Value="0" />
-                <Setter Property="HeightRequest" Value="3" />
-                <Setter Property="HorizontalOptions" Value="Fill" />
-            </Style>
-            
-            <Style x:Key="MediumPriorityIndicator" TargetType="Border">
-                <Setter Property="BackgroundColor" Value="#FFA500" />
-                <Setter Property="StrokeThickness" Value="0" />
-                <Setter Property="HeightRequest" Value="3" />
-                <Setter Property="HorizontalOptions" Value="Fill" />
-            </Style>
-            
-            <Style x:Key="LowPriorityIndicator" TargetType="Border">
-                <Setter Property="BackgroundColor" Value="#4CAF50" />
-                <Setter Property="StrokeThickness" Value="0" />
-                <Setter Property="HeightRequest" Value="3" />
-                <Setter Property="HorizontalOptions" Value="Fill" />
-            </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Grid RowDefinitions="Auto,*">
 
-        <!-- Header with stats and controls -->
-        <StackLayout Grid.Row="0" 
-                     Padding="16,8" 
-                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
-            
-            <!-- Stats panel -->
-            <Grid IsVisible="{Binding FavoriteStats, Converter={StaticResource IsNotNullConverter}}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+        <!-- Search and Filter Section -->
+        <Frame Grid.Row="0" 
+               Padding="15"
+               BackgroundColor="{StaticResource Background}"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15">
                 
-                <StackLayout Grid.Column="0" HorizontalOptions="Center">
-                    <Label Text="{Binding FavoriteStats.TotalFavorites}" 
-                           FontSize="24" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center" />
-                    <Label Text="Total" 
-                           FontSize="12" 
-                           HorizontalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
-                </StackLayout>
-                
-                <StackLayout Grid.Column="1" HorizontalOptions="Center">
-                    <Label Text="{Binding FavoriteStats.NotificationEnabled}" 
-                           FontSize="24" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center" />
-                    <Label Text="Notifications" 
-                           FontSize="12" 
-                           HorizontalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
-                </StackLayout>
-                
-                <StackLayout Grid.Column="2" HorizontalOptions="Center">
-                    <Label Text="{Binding FavoriteStats.HighPriorityFavorites}" 
-                           FontSize="24" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center" />
-                    <Label Text="Priorité haute" 
-                           FontSize="12" 
-                           HorizontalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
-                </StackLayout>
-            </Grid>
-            
-            <!-- Search Bar -->
-            <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 8"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
-                    Margin="0,8,0,0">
-                <Grid ColumnDefinitions="Auto,*,Auto" Padding="12,8">
-            
-                    <Entry Grid.Column="1"
-                           Text="{Binding SearchText}"
-                           Placeholder="Rechercher dans vos favoris..."
-                           BackgroundColor="Transparent"
-                           FontSize="14" />
-                    <Button Grid.Column="2"
-                            Text="Effacer"
-                            BackgroundColor="Transparent"
-                            FontSize="14"
-                            Command="{Binding ClearSearchCommand}"
-                            IsVisible="{Binding HasSearchText}"
-                            Padding="4" />
+                <!-- Statistics Cards -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10" IsVisible="{Binding FavoriteStats, Converter={StaticResource IsNotNullConverter}}">
+                    
+                    <!-- Total Favoris -->
+                    <Frame Grid.Column="0"
+                           BackgroundColor="{StaticResource Primary}"
+                           CornerRadius="12"
+                           HasShadow="False"
+                           Padding="12,8">
+                        <StackLayout Spacing="2">
+                            <Label Text="{Binding FavoriteStats.TotalFavorites}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Total"
+                                   FontSize="11"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Notifications -->
+                    <Frame Grid.Column="1"
+                           BackgroundColor="{StaticResource Secondary}"
+                           CornerRadius="12"
+                           HasShadow="False"
+                           Padding="12,8">
+                        <StackLayout Spacing="2">
+                            <Label Text="{Binding FavoriteStats.NotificationEnabled}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Notifiés"
+                                   FontSize="11"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Activités -->
+                    <Frame Grid.Column="2"
+                           BackgroundColor="#4CAF50"
+                           CornerRadius="12"
+                           HasShadow="False"
+                           Padding="12,8">
+                        <StackLayout Spacing="2">
+                            <Label Text="{Binding FavoriteStats.ActivityFavorites}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Activités"
+                                   FontSize="11"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
                 </Grid>
-            </Border>
-            
-            <!-- Filters -->
-            <ScrollView Orientation="Horizontal" Margin="0,8,0,0">
-                <StackLayout Orientation="Horizontal" Spacing="8">
-                    <Button Text="{Binding ShowByPriority, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='Par date|Par priorité'}"
-                            Command="{Binding ToggleSortingCommand}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            FontSize="12" />
-                    
-                    <Button Text="{Binding SelectedPriorityFilter, Converter={StaticResource PriorityFilterConverter}}"
-                            Command="{Binding ShowPriorityFilterCommand}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            FontSize="12" />
-                    
-                    <Button Text="{Binding NotificationFilter, Converter={StaticResource NotificationFilterConverter}}"
-                            Command="{Binding ToggleNotificationFilterCommand}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            FontSize="12" />
-                    
-                    <Button Text="Actualiser"
-                            Command="{Binding RefreshCommand}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            FontSize="12" />
-                    
-                    <Button Text="Explorer"
-                            Command="{Binding ExploreMapCommand}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            FontSize="12" />
-                </StackLayout>
-            </ScrollView>
-        </StackLayout>
 
-        <!-- Content area -->
+                <!-- Search and Filter Controls -->
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                    
+                    <!-- Search Entry -->
+                    <Frame Grid.Column="0"
+                           BackgroundColor="{StaticResource Surface}"
+                           BorderColor="{StaticResource BorderColor}"
+                           CornerRadius="8"
+                           Padding="0"
+                           HasShadow="False">
+                        <Entry Text="{Binding SearchText}"
+                               Placeholder="Rechercher dans vos favoris..."
+                               BackgroundColor="Transparent"
+                               TextColor="{StaticResource TextPrimary}"
+                               PlaceholderColor="{StaticResource TextSecondary}"
+                               FontSize="16"
+                               AutomationId="SearchEntry"
+                               SemanticProperties.Description="Rechercher parmi vos favoris"
+                               SemanticProperties.Hint="Tapez pour rechercher par nom, description ou type" />
+                    </Frame>
+                    
+                    <!-- Filter Button -->
+                    <Button Grid.Column="1"
+                            Text="⚙"
+                            FontSize="18"
+                            WidthRequest="50"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="White"
+                            Command="{Binding ShowActivityFilterCommand}"
+                            AutomationId="FilterButton"
+                            SemanticProperties.Description="Filtrer par type d'activité" />
+                    
+                    <!-- Clear Search Button -->
+                    <Button Grid.Column="2"
+                            Text="×"
+                            FontSize="20"
+                            WidthRequest="50"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            BackgroundColor="{StaticResource Secondary}"
+                            TextColor="White"
+                            Command="{Binding ClearSearchCommand}"
+                            AutomationId="ClearSearchButton"
+                            SemanticProperties.Description="Effacer la recherche"
+                            SemanticProperties.Hint="Appuyez pour effacer la recherche" />
+                </Grid>
+            </StackLayout>
+        </Frame>
+
+        <!-- Content Area -->
         <Grid Grid.Row="1">
             <!-- Loading indicator -->
             <ActivityIndicator IsVisible="{Binding IsLoading}"
@@ -270,10 +261,6 @@
                                             <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
 
-                                        <!-- Priority indicator -->
-                                        <Border Grid.Row="0"
-                                               Style="{Binding Priority, Converter={StaticResource PriorityToStyleConverter}}"
-                                               Margin="0,0,0,8" />
 
                                         <!-- Spot info -->
                                         <Grid Grid.Row="1">
@@ -283,23 +270,27 @@
                                             </Grid.ColumnDefinitions>
 
                                             <StackLayout Grid.Column="0">
-                                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                                    <Label Grid.Column="0"
-                                                           Text="{Binding Priority, Converter={StaticResource PriorityToIndicatorConverter}}" 
-                                                           FontSize="16" 
-                                                           VerticalOptions="Center"
-                                                           Margin="0,0,8,0" />
-                                                    <Label Grid.Column="1"
-                                                           Text="{Binding Spot.Name}" 
-                                                           FontSize="18" 
-                                                           FontAttributes="Bold" 
-                                                           VerticalOptions="Center" />
-                                                    <Label Grid.Column="2"
-                                                           Text="{Binding CreatedAt, Converter={StaticResource TimeSinceConverter}}" 
-                                                           FontSize="10" 
-                                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray500}}"
-                                                           VerticalOptions="Center" />
-                                                </Grid>
+                                            <!-- Spot title with activity indicator -->
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,0,0,8">
+                                                <Label Grid.Column="0"
+                                                       Text="📍" 
+                                                       FontSize="16" 
+                                                       VerticalOptions="Center" />
+                                                <Label Grid.Column="1"
+                                                       Text="{Binding Spot.Name}" 
+                                                       FontSize="18" 
+                                                       FontAttributes="Bold"
+                                                       TextColor="{StaticResource Primary}"
+                                                       LineBreakMode="WordWrap"
+                                                       MaxLines="2"
+                                                       VerticalOptions="Start" />
+                                            </Grid>
+                                            
+                                            <!-- Date added -->
+                                            <Label Text="{Binding CreatedAt, Converter={StaticResource TimeSinceConverter}}" 
+                                                   FontSize="10" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray500}}"
+                                                   Margin="0,0,0,8" />
                                                 
                                                 <Label Text="{Binding Spot.Type.Name}" 
                                                        FontSize="14"
@@ -335,7 +326,7 @@
                                                        TextColor="{StaticResource Primary}"
                                                        HorizontalTextAlignment="Center" />
                                                 
-                                                <Label Text="{Binding Priority, StringFormat='P{0}'}" 
+                                                <Label Text="{Binding Spot.Type.Category}" 
                                                        FontSize="10"
                                                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
                                                        HorizontalTextAlignment="Center" />
@@ -354,55 +345,62 @@
                                         <!-- Actions -->
                                         <Grid Grid.Row="3" Margin="0,12,0,0">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Priority indicator -->
-                                            <Label Grid.Column="0"
-                                                  Text="{Binding Priority, StringFormat='P{0}'}"
-                                                  FontSize="12"
-                                                  TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                                                  VerticalOptions="Center" />
-
-                                            <!-- Date added -->
-                                            <Label Grid.Column="1"
-                                                  Text="{Binding CreatedAt, StringFormat='{0:dd/MM/yyyy}'}"
-                                                  FontSize="12"
-                                                  TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                                                  HorizontalOptions="End"
-                                                  VerticalOptions="Center" />
+                                            <!-- Activity type and date info -->
+                                            <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalOptions="Center">
+                                                <Label Text="{Binding Spot.Type.Name}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                                                <Label Text="{Binding CreatedAt, StringFormat='{0:dd/MM/yyyy}'}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                                            </StackLayout>
 
                                             <!-- Notification toggle -->
-                                            <Button Grid.Column="2"
-                                                   Text="{Binding NotificationEnabled, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='Notifications off|Notifications on'}"
-                                                   Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=ToggleNotificationCommand}"
-                                                   CommandParameter="{Binding .}"
-                                                   Style="{StaticResource IconButtonStyle}"
-                                                   FontSize="16" />
+                                            <Button Grid.Column="1"
+                                                    Text="{Binding NotificationEnabled, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='🔔|🔕'}"
+                                                    FontSize="18"
+                                                    WidthRequest="40"
+                                                    HeightRequest="40"
+                                                    CornerRadius="20"
+                                                    BackgroundColor="{StaticResource Surface}"
+                                                    Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=ToggleNotificationCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    AutomationId="NotificationButton"
+                                                    SemanticProperties.Description="Activer/désactiver les notifications" />
 
                                             <!-- View details -->
-                                            <Button Grid.Column="3"
-                                                   Text="Voir"
-                                                   Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=ViewSpotDetailsCommand}"
-                                                   CommandParameter="{Binding .}"
-                                                   Style="{StaticResource IconButtonStyle}"
-                                                   FontSize="16"
-                                                   AutomationId="ViewDetailsButton"
-                                                   SemanticProperties.Description="Voir les détails du spot" />
+                                            <Button Grid.Column="2"
+                                                    Text="👁"
+                                                    FontSize="18"
+                                                    WidthRequest="40"
+                                                    HeightRequest="40"
+                                                    CornerRadius="20"
+                                                    BackgroundColor="{StaticResource Primary}"
+                                                    TextColor="White"
+                                                    Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=ViewSpotDetailsCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    AutomationId="ViewDetailsButton"
+                                                    SemanticProperties.Description="Voir les détails du spot" />
 
                                             <!-- Remove favorite -->
-                                            <Button Grid.Column="4"
-                                                   Text="Retirer"
-                                                   Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=RemoveFromFavoritesCommand}"
-                                                   CommandParameter="{Binding .}"
-                                                   Style="{StaticResource IconButtonStyle}"
-                                                   FontSize="16"
-                                                   AutomationId="RemoveFavoriteButton"
-                                                   SemanticProperties.Description="Retirer des favoris" />
+                                            <Button Grid.Column="3"
+                                                    Text="❤️"
+                                                    FontSize="18"
+                                                    WidthRequest="40"
+                                                    HeightRequest="40"
+                                                    CornerRadius="20"
+                                                    BackgroundColor="#FF4444"
+                                                    TextColor="White"
+                                                    Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=RemoveFromFavoritesCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    AutomationId="RemoveFavoriteButton"
+                                                    SemanticProperties.Description="Retirer des favoris" />
                                         </Grid>
                                     </Grid>
                                 </Border>
