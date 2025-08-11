@@ -106,6 +106,20 @@ namespace SubExplore.Services.Implementations
                 throw;
             }
         }
+
+        public async Task<IEnumerable<Spot>> GetSpotsByCategoryAsync(ActivityCategory category)
+        {
+            try
+            {
+                _logger.LogInformation("Getting spots by category {Category}", category);
+                return await _spotRepository.GetSpotsByCategoryAsync(category);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting spots by category {Category}", category);
+                throw;
+            }
+        }
         
         public async Task<IEnumerable<Spot>> GetRecommendedSpotsAsync(int userId, int limit = 10)
         {

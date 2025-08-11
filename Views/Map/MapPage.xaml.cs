@@ -87,16 +87,31 @@ namespace SubExplore.Views.Map
             {
                 UpdateCustomMarkers();
             }
+            else if (e.PropertyName == nameof(ViewModel.Pins))
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Pins changed - triggering UpdateCustomMarkers");
+                UpdateCustomMarkers();
+            }
         }
         
         private void UpdateCustomMarkers()
         {
             try
             {
-                if (MainMap?.MapElements == null || ViewModel?.Spots == null)
+                if (MainMap?.MapElements == null || ViewModel?.Pins == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers: Early return - MainMap.MapElements={MainMap?.MapElements != null}, ViewModel.Pins={ViewModel?.Pins != null}");
                     return;
+                }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers: Adding {ViewModel.Spots.Count} custom markers");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers: ViewModel.Pins.Count = {ViewModel.Pins.Count}");
+                
+                // Get spots from filtered pins instead of all spots
+                var filteredSpots = ViewModel.Pins.Where(p => p.BindingContext is Models.Domain.Spot).Select(p => p.BindingContext as Models.Domain.Spot).Where(s => s != null).ToList();
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers: filteredSpots extraction - {filteredSpots.Count} spots found from {ViewModel.Pins.Count} pins");
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers: Adding {filteredSpots.Count} custom markers (filtered)");
                 
                 // Calculate dynamic marker size based on current zoom level
                 var markerRadius = CalculateDynamicMarkerSize();
@@ -107,8 +122,8 @@ namespace SubExplore.Views.Map
                 // Clear existing markers
                 MainMap.MapElements.Clear();
                 
-                // Add custom circle markers for each spot
-                foreach (var spot in ViewModel.Spots)
+                // Add custom circle markers for each filtered spot
+                foreach (var spot in filteredSpots)
                 {
                     try
                     {
@@ -162,7 +177,7 @@ namespace SubExplore.Views.Map
                     }
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers completed: {MainMap.MapElements.Count} markers added");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers completed: {MainMap.MapElements.Count} filtered markers added");
             }
             catch (Exception ex)
             {

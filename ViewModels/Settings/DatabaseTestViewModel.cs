@@ -8,6 +8,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using SubExplore.Services.Interfaces;
+using SubExplore.Services.Implementations;
+using SubExplore.Migrations;
 using SubExplore.ViewModels.Base;
 
 namespace SubExplore.ViewModels.Settings
@@ -15,6 +17,10 @@ namespace SubExplore.ViewModels.Settings
     public partial class DatabaseTestViewModel : ViewModelBase
     {
         private readonly IDatabaseService _databaseService;
+        private readonly DatabaseDiagnosticService _diagnosticService;
+        private readonly SpotTypeMigrationService _migrationService;
+        private readonly UpdateActivityCategoryStructure _categoryMigrationService;
+        private readonly SpotTypeDiagnosticService _spotTypeDiagnosticService;
         private readonly ILogger<DatabaseTestViewModel> _logger;
 
         [ObservableProperty]
@@ -35,9 +41,22 @@ namespace SubExplore.ViewModels.Settings
         [ObservableProperty]
         private bool _isRealSpotsImported;
 
-        public DatabaseTestViewModel(IDatabaseService databaseService, ILogger<DatabaseTestViewModel> logger)
+        [ObservableProperty]
+        private bool _isCategoryMigrationExecuted;
+
+        [ObservableProperty]
+        private bool _isCategoryStructureMigrated;
+
+        [ObservableProperty]
+        private bool _isSpotTypesRepaired;
+
+        public DatabaseTestViewModel(IDatabaseService databaseService, DatabaseDiagnosticService diagnosticService, SpotTypeMigrationService migrationService, UpdateActivityCategoryStructure categoryMigrationService, SpotTypeDiagnosticService spotTypeDiagnosticService, ILogger<DatabaseTestViewModel> logger)
         {
             _databaseService = databaseService;
+            _diagnosticService = diagnosticService;
+            _migrationService = migrationService;
+            _categoryMigrationService = categoryMigrationService;
+            _spotTypeDiagnosticService = spotTypeDiagnosticService;
             _logger = logger;
             Title = "Test Base de Données";
         }
@@ -271,6 +290,306 @@ namespace SubExplore.ViewModels.Settings
                     LogMessages += $"Inner Exception: {ex.InnerException.Message}\n";
                 }
                 ShowError($"Erreur diagnostic: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task RunDetailedDatabaseDiagnosticAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🔍 Démarrage du diagnostic détaillé de la base de données...\n";
+
+                var diagnostics = await _diagnosticService.GetDetailedDatabaseStatusAsync();
+                LogMessages += diagnostics + "\n";
+                
+                LogMessages += "✅ Diagnostic détaillé terminé\n";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors du diagnostic détaillé");
+                LogMessages += $"❌ Erreur diagnostic détaillé: {ex.Message}\n";
+                ShowError($"Erreur diagnostic: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task ForceRecreateDataAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🔄 Démarrage de la recréation forcée des données...\n";
+                LogMessages += "⚠️ ATTENTION: Cette opération va supprimer TOUTES les données existantes!\n";
+
+                var result = await _diagnosticService.ForceDataRecreationAsync();
+                
+                if (result)
+                {
+                    LogMessages += "✅ Recréation forcée terminée avec succès\n";
+                    LogMessages += "🎯 La base de données contient maintenant les 8 nouveaux types de spots\n";
+                    
+                    // Refresh all the status flags
+                    await TestConnectionAsync();
+                    await SeedDatabaseAsync();
+                    await ShowDatabaseDiagnosticsAsync();
+                }
+                else
+                {
+                    LogMessages += "❌ Échec de la recréation forcée\n";
+                    ShowError("Échec de la recréation forcée des données");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la recréation forcée");
+                LogMessages += $"❌ Erreur recréation forcée: {ex.Message}\n";
+                ShowError($"Erreur recréation: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task ExecuteSpotTypeMigrationAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🚀 Démarrage de la migration EF Core vers la nouvelle structure...\n";
+
+                var result = await _migrationService.ExecuteMigrationAsync();
+                
+                if (result)
+                {
+                    LogMessages += "✅ Migration EF Core terminée avec succès!\n";
+                    LogMessages += "🎯 La base de données contient maintenant les 8 nouveaux types de spots\n";
+                    
+                    // Afficher le statut de la migration
+                    var status = await _migrationService.GetMigrationStatusAsync();
+                    LogMessages += status + "\n";
+                    
+                    // Refresh les autres indicateurs
+                    await TestConnectionAsync();
+                    await ShowDatabaseDiagnosticsAsync();
+                }
+                else
+                {
+                    LogMessages += "❌ Échec de la migration EF Core\n";
+                    ShowError("Échec de la migration EF Core");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la migration EF Core");
+                LogMessages += $"❌ Erreur migration EF Core: {ex.Message}\n";
+                ShowError($"Erreur migration: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task CheckMigrationStatusAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🔍 Vérification de l'état de la migration...\n";
+
+                var status = await _migrationService.GetMigrationStatusAsync();
+                LogMessages += status + "\n";
+                
+                LogMessages += "✅ Vérification terminée\n";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la vérification du statut");
+                LogMessages += $"❌ Erreur vérification: {ex.Message}\n";
+                ShowError($"Erreur vérification: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task ExecuteCategoryMappingMigrationAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🔧 Exécution de la migration FixSpotTypeCategoryMapping...\n";
+
+                IsCategoryMigrationExecuted = await _databaseService.ExecuteSpotTypeCategoryMappingMigrationAsync();
+
+                if (IsCategoryMigrationExecuted)
+                {
+                    LogMessages += "✅ Migration de catégories exécutée avec succès!\n";
+                    LogMessages += "🎯 Les catégories des types de spots ont été mises à jour\n";
+                    
+                    // Afficher les diagnostics après migration
+                    await ShowDatabaseDiagnosticsAsync();
+                }
+                else
+                {
+                    LogMessages += "❌ Échec de la migration de catégories\n";
+                    ShowError("Échec de la migration de catégories");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la migration de catégories");
+                LogMessages += $"❌ Erreur migration catégories: {ex.Message}\n";
+                ShowError($"Erreur migration: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task AnalyzeFilteringIssuesAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🔍 Analyse des problèmes de filtrage en cours...\n";
+
+                var analysis = await _databaseService.AnalyzeFilteringIssuesAsync();
+                LogMessages += analysis + "\n";
+
+                LogMessages += "✅ Analyse de filtrage terminée!\n";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de l'analyse de filtrage");
+                LogMessages += $"❌ Erreur analyse filtrage: {ex.Message}\n";
+                ShowError($"Erreur analyse: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task FixActivityCategoryStructureAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🔧 Correction de la structure ActivityCategory en cours...\n";
+                LogMessages += "⚠️ Cette opération va corriger le problème 'Boutiques dans Structures'\n";
+
+                await _categoryMigrationService.ExecuteAsync();
+                
+                LogMessages += "✅ Structure ActivityCategory corrigée avec succès!\n";
+                LogMessages += "🎯 Boutiques séparées des Structures - problème résolu\n";
+                
+                // Obtenir un rapport de statut
+                var report = await _categoryMigrationService.GetStatusReportAsync();
+                LogMessages += report + "\n";
+                
+                IsCategoryStructureMigrated = true;
+                
+                // Refresh les diagnostics
+                await ShowDatabaseDiagnosticsAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la correction de la structure ActivityCategory");
+                LogMessages += $"❌ Erreur correction structure: {ex.Message}\n";
+                ShowError($"Erreur correction: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task DiagnoseSpotTypesAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🔍 Diagnostic complet des types de spots...\n";
+
+                var diagnostic = await _spotTypeDiagnosticService.DiagnoseSpotTypesAsync();
+                LogMessages += diagnostic + "\n";
+                
+                LogMessages += "✅ Diagnostic terminé!\n";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors du diagnostic des types de spots");
+                LogMessages += $"❌ Erreur diagnostic: {ex.Message}\n";
+                ShowError($"Erreur diagnostic: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task RepairSpotTypesAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ClearError();
+                LogMessages += "🔧 Réparation des types de spots en cours...\n";
+                LogMessages += "⚠️ Cette opération va corriger les doublons et réparer les liens\n";
+
+                var success = await _spotTypeDiagnosticService.RepairSpotTypesAsync();
+                
+                if (success)
+                {
+                    LogMessages += "✅ Réparation terminée avec succès!\n";
+                    LogMessages += "🎯 Les doublons ont été supprimés et les spots réattribués\n";
+                    
+                    IsSpotTypesRepaired = true;
+                    
+                    // Refaire un diagnostic pour vérifier
+                    var diagnostic = await _spotTypeDiagnosticService.DiagnoseSpotTypesAsync();
+                    LogMessages += "\n" + diagnostic + "\n";
+                }
+                else
+                {
+                    LogMessages += "❌ Échec de la réparation\n";
+                    ShowError("Échec de la réparation des types de spots");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la réparation des types de spots");
+                LogMessages += $"❌ Erreur réparation: {ex.Message}\n";
+                ShowError($"Erreur réparation: {ex.Message}");
             }
             finally
             {

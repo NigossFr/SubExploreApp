@@ -45,17 +45,34 @@ namespace SubExplore.Services.Implementations
             {
                 _logger.LogInformation("Initialisation des données...");
 
-                // Vérifier si des données existent déjà
-                if (await _context.SpotTypes.AnyAsync() || await _context.Spots.AnyAsync())
+                // FORCER la suppression complète des données à chaque démarrage pour assurer la nouvelle structure
+                _logger.LogInformation("MIGRATION FORCÉE: Suppression complète de toutes les données existantes...");
+                
+                // Supprimer toutes les données dans l'ordre (relations d'abord)
+                var existingSpots = await _context.Spots.ToListAsync();
+                var existingSpotTypes = await _context.SpotTypes.ToListAsync();
+                var existingUsers = await _context.Users.ToListAsync();
+                
+                if (existingSpots.Any())
                 {
-                    _logger.LogInformation("Données déjà présentes, suppression pour réinitialisation...");
-                    
-                    // Supprimer les données existantes
-                    _context.Spots.RemoveRange(_context.Spots);
-                    _context.SpotTypes.RemoveRange(_context.SpotTypes);
-                    _context.Users.RemoveRange(_context.Users);
-                    await _context.SaveChangesAsync();
+                    _context.Spots.RemoveRange(existingSpots);
+                    _logger.LogInformation($"Supprimés: {existingSpots.Count} spots existants");
                 }
+                
+                if (existingSpotTypes.Any())
+                {
+                    _context.SpotTypes.RemoveRange(existingSpotTypes);
+                    _logger.LogInformation($"Supprimés: {existingSpotTypes.Count} types existants");
+                }
+                
+                if (existingUsers.Any())
+                {
+                    _context.Users.RemoveRange(existingUsers);
+                    _logger.LogInformation($"Supprimés: {existingUsers.Count} utilisateurs existants");
+                }
+                
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Suppression complète terminée - Base de données prête pour les nouvelles données");
 
                 // Créer l'utilisateur admin
                 var adminUser = new User
@@ -87,68 +104,134 @@ namespace SubExplore.Services.Implementations
                 _context.Users.Add(adminUser);
                 await _context.SaveChangesAsync();
 
-                // Créer les 5 types de spots requis
+                // Créer les nouveaux types de spots selon la nouvelle organisation
                 var spotTypes = new List<SpotType>
                 {
+                    // === ACTIVITÉS (variations de bleus) ===
+                    new SpotType
+                    {
+                        Name = "Plongée bouteille",
+                        IconPath = "marker_scuba.png", 
+                        ColorCode = "#0077BE", // Bleu principal
+                        Category = ActivityCategory.Activity,
+                        Description = "Sites de plongée avec bouteille (tous niveaux - récréative et technique)",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" },
+                            MaxDepthRange = new[] { 0, 200 }
+                        }),
+                        IsActive = true
+                    },
                     new SpotType
                     {
                         Name = "Apnée",
                         IconPath = "marker_freediving.png",
-                        ColorCode = "#00B4D8",
-                        Category = ActivityCategory.Freediving,
+                        ColorCode = "#4A90E2", // Bleu moyen
+                        Category = ActivityCategory.Activity,
                         Description = "Sites adaptés à la plongée en apnée",
                         RequiresExpertValidation = true,
-                        ValidationCriteria = JsonSerializer.Serialize(new { RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" } }),
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" },
+                            MaxDepthRange = new[] { 0, 30 }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Randonnée sous-marine",
+                        IconPath = "marker_snorkeling.png",
+                        ColorCode = "#87CEEB", // Bleu clair
+                        Category = ActivityCategory.Activity,
+                        Description = "Sites de surface accessibles pour la randonnée sous-marine",
+                        RequiresExpertValidation = false,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "DifficultyLevel", "SafetyNotes" },
+                            MaxDepthRange = new[] { 0, 5 }
+                        }),
                         IsActive = true
                     },
                     new SpotType
                     {
                         Name = "Photo sous-marine",
                         IconPath = "marker_photography.png",
-                        ColorCode = "#2EC4B6",
-                        Category = ActivityCategory.UnderwaterPhotography,
+                        ColorCode = "#5DADE2", // Bleu photo
+                        Category = ActivityCategory.Activity,
                         Description = "Sites d'intérêt pour la photographie sous-marine",
                         RequiresExpertValidation = false,
-                        ValidationCriteria = JsonSerializer.Serialize(new { RequiredFields = new[] { "DifficultyLevel" } }),
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "DifficultyLevel" }
+                        }),
                         IsActive = true
                     },
+
+                    // === STRUCTURES (variations de verts) ===
                     new SpotType
                     {
-                        Name = "Plongée récréative",
-                        IconPath = "marker_diving.png",
-                        ColorCode = "#006994",
-                        Category = ActivityCategory.Diving,
-                        Description = "Sites adaptés à la plongée avec bouteille",
-                        RequiresExpertValidation = true,
-                        ValidationCriteria = JsonSerializer.Serialize(new { RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" } }),
-                        IsActive = true
-                    },
-                    new SpotType
-                    {
-                        Name = "Plongée technique",
-                        IconPath = "marker_technical.png",
-                        ColorCode = "#FF9F1C",
-                        Category = ActivityCategory.Diving,
-                        Description = "Sites pour plongée technique (profondeur, épaves...)",
-                        RequiresExpertValidation = true,
-                        ValidationCriteria = JsonSerializer.Serialize(new { RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes", "RequiredEquipment" } }),
-                        IsActive = true
-                    },
-                    new SpotType
-                    {
-                        Name = "Randonnée sous marine",
-                        IconPath = "marker_snorkeling.png",
-                        ColorCode = "#48CAE4",
-                        Category = ActivityCategory.Snorkeling,
-                        Description = "Sites de surface accessibles pour la randonnée sous-marine",
+                        Name = "Clubs",
+                        IconPath = "marker_club.png",
+                        ColorCode = "#228B22", // Vert foncé
+                        Category = ActivityCategory.Structure,
+                        Description = "Clubs de plongée et associations",
                         RequiresExpertValidation = false,
-                        ValidationCriteria = JsonSerializer.Serialize(new { RequiredFields = new[] { "DifficultyLevel", "SafetyNotes" } }),
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "Description" }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Professionnels",
+                        IconPath = "marker_pro.png",
+                        ColorCode = "#32CD32", // Vert lime
+                        Category = ActivityCategory.Structure,
+                        Description = "Centres de plongée, instructeurs et guides professionnels",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "Description", "SafetyNotes" }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Bases fédérales",
+                        IconPath = "marker_federal.png",
+                        ColorCode = "#90EE90", // Vert clair
+                        Category = ActivityCategory.Structure,
+                        Description = "Bases fédérales et structures officielles",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "Description", "SafetyNotes" }
+                        }),
+                        IsActive = true
+                    },
+
+                    // === BOUTIQUES (tons oranges) ===
+                    new SpotType
+                    {
+                        Name = "Boutiques",
+                        IconPath = "marker_shop.png",
+                        ColorCode = "#FF8C00", // Orange principal
+                        Category = ActivityCategory.Shop,
+                        Description = "Magasins de matériel de plongée et équipements sous-marins",
+                        RequiresExpertValidation = false,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "Description" }
+                        }),
                         IsActive = true
                     }
                 };
 
                 _context.SpotTypes.AddRange(spotTypes);
                 await _context.SaveChangesAsync();
+
+                // Vérifier que tous les types ont bien été créés
+                var createdTypes = await _context.SpotTypes.Where(st => st.IsActive).ToListAsync();
+                _logger.LogInformation($"Types de spots créés: {string.Join(", ", createdTypes.Select(t => $"{t.Name} ({t.ColorCode})"))}");
+                
+                if (createdTypes.Count != 8)
+                {
+                    _logger.LogWarning($"Attention: Seulement {createdTypes.Count}/8 types créés");
+                }
 
                 // Créer les 5 spots de base
                 var spots = new List<Spot>
@@ -162,7 +245,7 @@ namespace SubExplore.Services.Implementations
                         MaxDepth = 25,
                         DifficultyLevel = DifficultyLevel.Intermediate,
                         ValidationStatus = SpotValidationStatus.Approved,
-                        TypeId = spotTypes[2].Id, // Plongée récréative
+                        TypeId = spotTypes[0].Id, // Plongée bouteille
                         CreatorId = adminUser.Id,
                         CreatedAt = DateTime.UtcNow,
                         CurrentStrength = CurrentStrength.Moderate,
@@ -179,7 +262,7 @@ namespace SubExplore.Services.Implementations
                         MaxDepth = 40,
                         DifficultyLevel = DifficultyLevel.Advanced,
                         ValidationStatus = SpotValidationStatus.Approved,
-                        TypeId = spotTypes[3].Id, // Plongée technique
+                        TypeId = spotTypes[0].Id, // Plongée bouteille
                         CreatorId = adminUser.Id,
                         CreatedAt = DateTime.UtcNow,
                         CurrentStrength = CurrentStrength.Strong,
@@ -196,7 +279,7 @@ namespace SubExplore.Services.Implementations
                         MaxDepth = 15,
                         DifficultyLevel = DifficultyLevel.Beginner,
                         ValidationStatus = SpotValidationStatus.Approved,
-                        TypeId = spotTypes[0].Id, // Apnée
+                        TypeId = spotTypes[1].Id, // Apnée
                         CreatorId = adminUser.Id,
                         CreatedAt = DateTime.UtcNow,
                         CurrentStrength = CurrentStrength.Weak,
@@ -213,7 +296,7 @@ namespace SubExplore.Services.Implementations
                         MaxDepth = 12,
                         DifficultyLevel = DifficultyLevel.Beginner,
                         ValidationStatus = SpotValidationStatus.Approved,
-                        TypeId = spotTypes[1].Id, // Photo sous-marine
+                        TypeId = spotTypes[3].Id, // Photo sous-marine
                         CreatorId = adminUser.Id,
                         CreatedAt = DateTime.UtcNow,
                         CurrentStrength = CurrentStrength.Weak,
@@ -230,7 +313,7 @@ namespace SubExplore.Services.Implementations
                         MaxDepth = 5,
                         DifficultyLevel = DifficultyLevel.Beginner,
                         ValidationStatus = SpotValidationStatus.Approved,
-                        TypeId = spotTypes[4].Id, // Randonnée sous marine
+                        TypeId = spotTypes[2].Id, // Randonnée sous-marine
                         CreatorId = adminUser.Id,
                         CreatedAt = DateTime.UtcNow,
                         CurrentStrength = CurrentStrength.None,
@@ -243,7 +326,7 @@ namespace SubExplore.Services.Implementations
                 _context.Spots.AddRange(spots);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Données initialisées avec succès : 1 utilisateur, 5 types de spots, 5 spots");
+                _logger.LogInformation("Données initialisées avec succès : 1 utilisateur, 8 types de spots, 5 spots");
                 return true;
             }
             catch (Exception ex)
@@ -273,14 +356,160 @@ namespace SubExplore.Services.Implementations
 
         public async Task<bool> CleanupSpotTypesAsync()
         {
-            // Pas besoin avec la nouvelle approche simplifiée
-            return true;
+            // Exécuter la migration vers la nouvelle structure hiérarchique
+            return await ExecuteSpotTypeMigrationAsync();
+        }
+
+        private async Task<bool> ExecuteSpotTypeMigrationAsync()
+        {
+            try
+            {
+                _logger.LogInformation("🚀 Début de la migration vers la structure hiérarchique des types de spots...");
+
+                // 1. SAUVEGARDER TEMPORAIREMENT LES SPOTS
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    CREATE TEMPORARY TABLE IF NOT EXISTS temp_spots_backup AS 
+                    SELECT s.*, st.Name as OldTypeName 
+                    FROM Spots s 
+                    JOIN SpotTypes st ON s.TypeId = st.Id;
+                ");
+
+                // 2. DÉSACTIVER LES ANCIENS TYPES
+                var oldTypesUpdated = await _context.Database.ExecuteSqlRawAsync(@"
+                    UPDATE SpotTypes 
+                    SET IsActive = 0 
+                    WHERE Name IN ('Plongée récréative', 'Plongée technique');
+                ");
+                _logger.LogInformation($"Anciens types désactivés: {oldTypesUpdated}");
+
+                // 3. SUPPRIMER LES NOUVEAUX TYPES S'ILS EXISTENT DÉJÀ
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    DELETE FROM SpotTypes WHERE Name IN (
+                        'Plongée bouteille', 'Apnée', 'Randonnée sous-marine', 'Photo sous-marine',
+                        'Clubs', 'Professionnels', 'Bases fédérales', 'Boutiques'
+                    );
+                ");
+
+                // 4. CRÉER LES NOUVEAUX TYPES DE SPOTS
+                
+                // ACTIVITÉS
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    INSERT INTO SpotTypes (Name, IconPath, ColorCode, Category, Description, RequiresExpertValidation, ValidationCriteria, IsActive) 
+                    VALUES 
+                    ('Plongée bouteille', 'marker_scuba.png', '#0077BE', 0, 'Sites de plongée avec bouteille (tous niveaux - récréative et technique)', 1, 
+                     '{""RequiredFields"":[""MaxDepth"",""DifficultyLevel"",""SafetyNotes""],""MaxDepthRange"":[0,200]}', 1);
+                ");
+
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    INSERT INTO SpotTypes (Name, IconPath, ColorCode, Category, Description, RequiresExpertValidation, ValidationCriteria, IsActive) 
+                    VALUES 
+                    ('Apnée', 'marker_freediving.png', '#4A90E2', 0, 'Sites adaptés à la plongée en apnée', 1, 
+                     '{""RequiredFields"":[""MaxDepth"",""DifficultyLevel"",""SafetyNotes""],""MaxDepthRange"":[0,30]}', 1);
+                ");
+
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    INSERT INTO SpotTypes (Name, IconPath, ColorCode, Category, Description, RequiresExpertValidation, ValidationCriteria, IsActive) 
+                    VALUES 
+                    ('Randonnée sous-marine', 'marker_snorkeling.png', '#87CEEB', 0, 'Sites de surface accessibles pour la randonnée sous-marine', 0, 
+                     '{""RequiredFields"":[""DifficultyLevel"",""SafetyNotes""],""MaxDepthRange"":[0,5]}', 1);
+                ");
+
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    INSERT INTO SpotTypes (Name, IconPath, ColorCode, Category, Description, RequiresExpertValidation, ValidationCriteria, IsActive) 
+                    VALUES 
+                    ('Photo sous-marine', 'marker_photography.png', '#5DADE2', 0, 'Sites d''intérêt pour la photographie sous-marine', 0, 
+                     '{""RequiredFields"":[""DifficultyLevel""]}', 1);
+                ");
+
+                // STRUCTURES
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    INSERT INTO SpotTypes (Name, IconPath, ColorCode, Category, Description, RequiresExpertValidation, ValidationCriteria, IsActive) 
+                    VALUES 
+                    ('Clubs', 'marker_club.png', '#228B22', 1, 'Clubs de plongée et associations', 0, 
+                     '{""RequiredFields"":[""Description""]}', 1);
+                ");
+
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    INSERT INTO SpotTypes (Name, IconPath, ColorCode, Category, Description, RequiresExpertValidation, ValidationCriteria, IsActive) 
+                    VALUES 
+                    ('Professionnels', 'marker_pro.png', '#32CD32', 1, 'Centres de plongée, instructeurs et guides professionnels', 1, 
+                     '{""RequiredFields"":[""Description"",""SafetyNotes""]}', 1);
+                ");
+
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    INSERT INTO SpotTypes (Name, IconPath, ColorCode, Category, Description, RequiresExpertValidation, ValidationCriteria, IsActive) 
+                    VALUES 
+                    ('Bases fédérales', 'marker_federal.png', '#90EE90', 1, 'Bases fédérales et structures officielles', 1, 
+                     '{""RequiredFields"":[""Description"",""SafetyNotes""]}', 1);
+                ");
+
+                // BOUTIQUES
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    INSERT INTO SpotTypes (Name, IconPath, ColorCode, Category, Description, RequiresExpertValidation, ValidationCriteria, IsActive) 
+                    VALUES 
+                    ('Boutiques', 'marker_shop.png', '#FF8C00', 2, 'Magasins de matériel de plongée et équipements sous-marins', 0, 
+                     '{""RequiredFields"":[""Description""]}', 1);
+                ");
+
+                // 5. MIGRER LES SPOTS EXISTANTS
+                var migratedSpots = await _context.Database.ExecuteSqlRawAsync(@"
+                    UPDATE Spots 
+                    SET TypeId = (SELECT Id FROM SpotTypes WHERE Name = 'Plongée bouteille' AND IsActive = 1 LIMIT 1)
+                    WHERE TypeId IN (
+                        SELECT Id FROM SpotTypes 
+                        WHERE Name IN ('Plongée récréative', 'Plongée technique') AND IsActive = 0
+                    );
+                ");
+                _logger.LogInformation($"Spots migrés vers 'Plongée bouteille': {migratedSpots}");
+
+                // 6. NETTOYAGE
+                await _context.Database.ExecuteSqlRawAsync("DROP TEMPORARY TABLE IF EXISTS temp_spots_backup;");
+
+                // 7. VÉRIFICATION FINALE
+                var newTypesCount = await _context.SpotTypes.Where(st => st.IsActive).CountAsync();
+                _logger.LogInformation($"✅ Migration terminée! {newTypesCount} types de spots actifs");
+
+                if (newTypesCount >= 8)
+                {
+                    _logger.LogInformation("🎉 Nouvelle structure hiérarchique installée avec succès!");
+                    return true;
+                }
+                else
+                {
+                    _logger.LogWarning($"⚠️ Seulement {newTypesCount}/8 types créés");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la migration des types de spots");
+                return false;
+            }
         }
 
         public async Task<bool> ImportRealSpotsAsync(string jsonFilePath = null)
         {
             // Pas besoin avec la nouvelle approche simplifiée
             return true;
+        }
+
+        public async Task<bool> ExecuteSpotTypeCategoryMappingMigrationAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Simple service does not support category mapping migration - this is handled in the main DatabaseService");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in simple service migration method");
+                return false;
+            }
+        }
+
+        public async Task<string> AnalyzeFilteringIssuesAsync()
+        {
+            return "Simple service does not support filtering analysis - use the main DatabaseService";
         }
 
         public async Task<string> GetDatabaseDiagnosticsAsync()

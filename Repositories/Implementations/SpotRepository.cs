@@ -61,59 +61,226 @@ namespace SubExplore.Repositories.Implementations
 
         /// <summary>
         /// High-performance method for getting spot list with minimal data loading
+        /// Optimized for map display and listing scenarios
+        /// Enhanced with better filtering and error handling
         /// </summary>
         public async Task<IEnumerable<Spot>> GetSpotsMinimalAsync(int limit = 100, CancellationToken cancellationToken = default)
         {
-            return await _context.Spots
-                .AsNoTracking() // Performance: No change tracking
-                .Select(s => new Spot
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] GetSpotsMinimalAsync called with limit: {limit}");
+                
+                var spots = await _context.Spots
+                    .AsNoTracking() // Performance: No change tracking
+                    .AsSplitQuery() // Performance: Optimize for complex queries
+                    .Include(s => s.Type) // Ensure Type is loaded
+                    .Where(s => s.ValidationStatus == SpotValidationStatus.Approved && 
+                               s.Type != null && s.Type.IsActive == true) // Critical: Only active types
+                    .Select(s => new Spot
+                    {
+                        Id = s.Id,
+                        Name = s.Name,
+                        Latitude = s.Latitude,
+                        Longitude = s.Longitude,
+                        MaxDepth = s.MaxDepth,
+                        DifficultyLevel = s.DifficultyLevel,
+                        ValidationStatus = s.ValidationStatus,
+                        TypeId = s.TypeId,
+                        CreatedAt = s.CreatedAt,
+                        CreatorId = s.CreatorId,
+                        Type = new SpotType 
+                        { 
+                            Id = s.Type.Id, 
+                            Name = s.Type.Name, 
+                            IconPath = s.Type.IconPath,
+                            ColorCode = s.Type.ColorCode,
+                            Category = s.Type.Category,
+                            IsActive = s.Type.IsActive
+                        }
+                    }) // Performance: Project only needed fields
+                    .OrderByDescending(s => s.CreatedAt)
+                    .Take(limit)
+                    .ToListAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                    
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] GetSpotsMinimalAsync returned {spots.Count()} spots");
+                
+                // Additional validation for debugging
+                if (!spots.Any())
                 {
-                    Id = s.Id,
-                    Name = s.Name,
-                    Latitude = s.Latitude,
-                    Longitude = s.Longitude,
-                    MaxDepth = s.MaxDepth,
-                    DifficultyLevel = s.DifficultyLevel,
-                    ValidationStatus = s.ValidationStatus,
-                    TypeId = s.TypeId,
-                    CreatedAt = s.CreatedAt,
-                    Type = new SpotType 
-                    { 
-                        Id = s.Type.Id, 
-                        Name = s.Type.Name, 
-                        IconPath = s.Type.IconPath,
-                        ColorCode = s.Type.ColorCode 
-                    }
-                }) // Performance: Project only needed fields
-                .Where(s => s.ValidationStatus == SpotValidationStatus.Approved)
-                .OrderByDescending(s => s.CreatedAt)
-                .Take(limit)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
+                    var totalSpots = await _context.Spots.CountAsync(cancellationToken);
+                    var approvedSpots = await _context.Spots.Where(s => s.ValidationStatus == SpotValidationStatus.Approved).CountAsync(cancellationToken);
+                    var activeTypes = await _context.SpotTypes.Where(t => t.IsActive).CountAsync(cancellationToken);
+                    
+                    System.Diagnostics.Debug.WriteLine($"[SpotRepository] No spots returned. Total: {totalSpots}, Approved: {approvedSpots}, Active types: {activeTypes}");
+                }
+                
+                return spots;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Error in GetSpotsMinimalAsync: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Stack trace: {ex.StackTrace}");
+                return new List<Spot>();
+            }
+        }
+
+        /// <summary>
+        /// Ultra-fast method for getting spots by multiple categories
+        /// Optimized for hierarchical filtering
+        /// </summary>
+        public async Task<IEnumerable<Spot>> GetSpotsByMultipleCategoriesAsync(ActivityCategory[] categories)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] GetSpotsByMultipleCategoriesAsync called for {categories.Length} categories");
+                
+                var spots = await _context.Spots
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(s => s.Type)
+                    .Where(s => categories.Contains(s.Type.Category) && 
+                               s.Type.IsActive &&
+                               s.ValidationStatus == SpotValidationStatus.Approved)
+                    .OrderByDescending(s => s.CreatedAt)
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+                    
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Found {spots.Count()} spots across {categories.Length} categories");
+                return spots;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Error in GetSpotsByMultipleCategoriesAsync: {ex.Message}");
+                return new List<Spot>();
+            }
+        }
+
+        /// <summary>
+        /// Cached method for getting spot counts by category
+        /// Useful for UI badges and statistics
+        /// </summary>
+        public async Task<Dictionary<ActivityCategory, int>> GetSpotCountsByCategoryAsync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[SpotRepository] GetSpotCountsByCategoryAsync called");
+                
+                var counts = await _context.Spots
+                    .AsNoTracking()
+                    .Where(s => s.ValidationStatus == SpotValidationStatus.Approved && s.Type.IsActive)
+                    .GroupBy(s => s.Type.Category)
+                    .Select(g => new { Category = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Category, x => x.Count)
+                    .ConfigureAwait(false);
+                    
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Category counts: {string.Join(", ", counts.Select(c => $"{c.Key}={c.Value}"))}");
+                return counts;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Error in GetSpotCountsByCategoryAsync: {ex.Message}");
+                return new Dictionary<ActivityCategory, int>();
+            }
         }
 
         public async Task<IEnumerable<Spot>> GetSpotsByTypeAsync(int typeId)
         {
-            return await _context.Spots
-                .AsNoTracking() // Performance: Disable change tracking for read-only queries
-                .Include(s => s.Type)
-                .Include(s => s.Media.Where(m => m.IsPrimary))
-                .Where(s => s.TypeId == typeId && s.ValidationStatus == SpotValidationStatus.Approved)
-                .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync()
-                .ConfigureAwait(false);
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] GetSpotsByTypeAsync called for typeId: {typeId}");
+                
+                var spots = await _context.Spots
+                    .AsNoTracking() // Performance: Disable change tracking for read-only queries
+                    .Include(s => s.Type)
+                    .Include(s => s.Media.Where(m => m.IsPrimary))
+                    .Where(s => s.TypeId == typeId && s.ValidationStatus == SpotValidationStatus.Approved)
+                    .OrderByDescending(s => s.CreatedAt)
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+                    
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Found {spots.Count()} spots for typeId {typeId}");
+                return spots;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Error in GetSpotsByTypeAsync: {ex.Message}");
+                return new List<Spot>();
+            }
+        }
+
+        public async Task<IEnumerable<Spot>> GetSpotsByCategoryAsync(ActivityCategory category)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] GetSpotsByCategoryAsync called for category: {category}");
+                
+                // First check if any SpotTypes exist for this category
+                var typeExists = await _context.SpotTypes
+                    .AsNoTracking()
+                    .AnyAsync(t => t.Category == category && t.IsActive)
+                    .ConfigureAwait(false);
+                    
+                if (!typeExists)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SpotRepository] No active SpotTypes found for category {category}");
+                    
+                    // Log all active types for debugging
+                    var allActiveTypes = await _context.SpotTypes
+                        .AsNoTracking()
+                        .Where(t => t.IsActive)
+                        .Select(t => new { t.Name, t.Category, t.IsActive })
+                        .ToListAsync();
+                        
+                    System.Diagnostics.Debug.WriteLine($"[SpotRepository] Active types: {string.Join(", ", allActiveTypes.Select(t => $"{t.Name}({t.Category})"))}");
+                }
+                
+                var spots = await _context.Spots
+                    .AsNoTracking()
+                    .Include(s => s.Type)
+                    .Include(s => s.Media.Where(m => m.IsPrimary))
+                    .Where(s => s.Type != null &&
+                               s.Type.Category == category && 
+                               s.Type.IsActive == true &&
+                               s.ValidationStatus == SpotValidationStatus.Approved)
+                    .OrderByDescending(s => s.CreatedAt)
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+                    
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Found {spots.Count()} spots for category {category}");
+                return spots;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Error in GetSpotsByCategoryAsync: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Stack trace: {ex.StackTrace}");
+                return new List<Spot>();
+            }
         }
 
         public async Task<IEnumerable<Spot>> GetSpotsByUserAsync(int userId)
         {
-            return await _context.Spots
-                .AsNoTracking() // Performance: Disable change tracking for read-only queries
-                .Include(s => s.Type)
-                .Include(s => s.Media.Where(m => m.IsPrimary))
-                .Where(s => s.CreatorId == userId)
-                .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync()
-                .ConfigureAwait(false);
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] GetSpotsByUserAsync called for userId: {userId}");
+                
+                var spots = await _context.Spots
+                    .AsNoTracking() // Performance: Disable change tracking for read-only queries
+                    .Include(s => s.Type)
+                    .Include(s => s.Media.Where(m => m.IsPrimary))
+                    .Where(s => s.CreatorId == userId)
+                    .OrderByDescending(s => s.CreatedAt)
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+                    
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Found {spots.Count()} spots for userId {userId}");
+                return spots;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotRepository] Error in GetSpotsByUserAsync: {ex.Message}");
+                return new List<Spot>();
+            }
         }
 
         public async Task<IEnumerable<Spot>> GetSpotsByValidationStatusAsync(SpotValidationStatus status)

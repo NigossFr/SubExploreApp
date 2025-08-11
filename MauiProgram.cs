@@ -7,6 +7,7 @@ using SubExplore.Repositories.Interfaces;
 using SubExplore.Repositories.Implementations;
 using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
+using SubExplore.Migrations;
 using SubExplore.Services.Validation;
 using SubExplore.Services.Caching;
 using SubExplore.Models.Validation;
@@ -204,8 +205,13 @@ public static class MauiProgram
         builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
         // Enregistrement des services
-        builder.Services.AddScoped<IDatabaseService, DatabaseServiceSimple>();
+        builder.Services.AddScoped<IDatabaseService, DatabaseService>();
         builder.Services.AddScoped<IDatabaseInitializationService, DatabaseInitializationService>();
+        builder.Services.AddScoped<DatabaseDiagnosticService>();
+        builder.Services.AddScoped<SpotTypeMigrationService>();
+        builder.Services.AddScoped<UpdateActivityCategoryStructure>();
+        builder.Services.AddScoped<SpotTypeDiagnosticService>();
+        builder.Services.AddScoped<ISpotTypeValidationService, SpotTypeValidationService>();
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddScoped<INavigationGuardService, NavigationGuardService>();

@@ -62,12 +62,22 @@ namespace SubExplore.ViewModels.Admin
             INavigationService navigationService) 
             : base(authorizationService, authenticationService)
         {
-            _spotValidationService = spotValidationService;
-            _authenticationService = authenticationService;
-            _dialogService = dialogService;
-            _navigationService = navigationService;
-            
-            Title = "Validation des Spots";
+            try
+            {
+                _spotValidationService = spotValidationService ?? throw new ArgumentNullException(nameof(spotValidationService));
+                _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
+                _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+                _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+                
+                Title = "Validation des Spots";
+                System.Diagnostics.Debug.WriteLine("[SpotValidationViewModel] Constructor completed successfully");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Constructor error: {ex.Message}");
+                Title = "Validation des Spots (Erreur)";
+                throw;
+            }
         }
 
         public override async Task InitializeAsync(object? parameter = null)

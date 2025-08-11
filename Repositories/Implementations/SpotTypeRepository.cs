@@ -19,74 +19,23 @@ namespace SubExplore.Repositories.Implementations
 
         public async Task<IEnumerable<SpotType>> GetActiveTypesAsync()
         {
-            // Utiliser le cache EF Core pour améliorer les performances
-            var cacheKey = "active_spot_types";
+            // NOUVELLE STRUCTURE HIÉRARCHIQUE : Retourner tous les types actifs (8 nouveaux types)
+            // Plus besoin de filtrer, la migration a créé la bonne structure
+            System.Diagnostics.Debug.WriteLine("[DEBUG] SpotTypeRepository: Loading all active spot types (hierarchical structure)");
             
-            // D'abord, désactiver tous les types non autorisés
-            var allowedTypes = new[]
-            {
-                "Apnée",
-                "Photo sous-marine", 
-                "Plongée récréative",
-                "Plongée technique",
-                "Randonnée sous marine"
-            };
-
-            // Optimisation: Une seule requête pour traiter tous les types
-            var allTypes = await _context.SpotTypes
-                .AsNoTracking() // Performance: pas de tracking pour lecture seule
+            var activeTypes = await _context.SpotTypes
+                .AsNoTracking()
                 .Where(t => t.IsActive)
+                .OrderBy(t => t.Name)
                 .ToListAsync();
 
-            var unwantedTypes = allTypes.Where(t => !allowedTypes.Contains(t.Name)).ToList();
-            var wantedTypeGroups = allTypes
-                .Where(t => allowedTypes.Contains(t.Name))
-                .GroupBy(t => t.Name)
-                .ToList();
-
-            // Si des modifications sont nécessaires, les faire en lot
-            bool hasChanges = false;
-            
-            if (unwantedTypes.Any())
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotTypeRepository: Found {activeTypes.Count} active types:");
+            foreach (var type in activeTypes)
             {
-                // Utiliser une requête bulk pour désactiver les types non autorisés
-                await _context.SpotTypes
-                    .Where(t => t.IsActive && !allowedTypes.Contains(t.Name))
-                    .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
-                hasChanges = true;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG]   - {type.Name} ({type.ColorCode}) - Category: {type.Category}");
             }
 
-            // Gérer les doublons : garder seulement le premier de chaque type autorisé
-            foreach (var group in wantedTypeGroups.Where(g => g.Count() > 1))
-            {
-                var duplicates = group.OrderBy(t => t.Id).Skip(1).ToList();
-                
-                if (duplicates.Any())
-                {
-                    var duplicateIds = duplicates.Select(d => d.Id).ToList();
-                    await _context.SpotTypes
-                        .Where(t => duplicateIds.Contains(t.Id))
-                        .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
-                    hasChanges = true;
-                }
-            }
-
-            // Si des modifications ont été faites, recharger depuis la base
-            if (hasChanges)
-            {
-                // Recharger les données depuis la base après modifications
-                return await _context.SpotTypes
-                    .AsNoTracking()
-                    .Where(t => t.IsActive && allowedTypes.Contains(t.Name))
-                    .OrderBy(t => t.Name)
-                    .ToListAsync();
-            }
-
-            // Sinon, utiliser les données déjà chargées (optimisation)
-            return wantedTypeGroups
-                .Select(g => g.First())
-                .OrderBy(t => t.Name)
-                .ToList();
+            return activeTypes;
         }
 
         public async Task<IEnumerable<SpotType>> GetByActivityCategoryAsync(ActivityCategory category)

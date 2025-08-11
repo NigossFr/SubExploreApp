@@ -14,6 +14,8 @@ namespace SubExplore.Services.Interfaces
         Task<bool> TestConnectionAsync();
         Task<bool> CleanupSpotTypesAsync();
         Task<bool> ImportRealSpotsAsync(string jsonFilePath = null);
+        Task<bool> ExecuteSpotTypeCategoryMappingMigrationAsync();
+        Task<string> AnalyzeFilteringIssuesAsync();
         Task<string> GetDatabaseDiagnosticsAsync();
     }
 }

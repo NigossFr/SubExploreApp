@@ -15,6 +15,7 @@ using SubExplore.ViewModels.Profile;
 using SubExplore.ViewModels.Spots;
 using SubExplore.ViewModels.Favorites;
 using SubExplore.Models.Menu;
+using SubExplore.Helpers.Extensions;
 using MenuItemModel = SubExplore.Models.Menu.MenuItem;
 
 namespace SubExplore.ViewModels.Map
@@ -104,6 +105,16 @@ namespace SubExplore.ViewModels.Map
         [ObservableProperty]
         private bool _areSuggestionsVisible;
 
+        // Nouvelles propriétés pour l'organisation hiérarchique des filtres
+        [ObservableProperty]
+        private string? _selectedCategory;
+
+        [ObservableProperty]
+        private bool _isSubFiltersVisible;
+
+        [ObservableProperty]
+        private ObservableCollection<SpotType> _currentSubFilters;
+
         // Initialization flag to prevent multiple initializations
         private bool _isInitialized = false;
         private bool _isInitializing = false;
@@ -138,6 +149,34 @@ namespace SubExplore.ViewModels.Map
 
         // Public property to expose PinSelectionService to the View for integration
         public IPinSelectionService PinSelectionService => _pinSelectionService;
+        
+        // Additional properties for UI feedback
+        public bool IsAnyFilterActive => !string.IsNullOrEmpty(SelectedCategory) || SelectedSpotType != null || !string.IsNullOrEmpty(SearchText);
+        
+        [ObservableProperty]
+        private int _filteredSpotsCount;
+        
+        // Property change notifications
+        partial void OnSelectedCategoryChanged(string? value)
+        {
+            OnPropertyChanged(nameof(IsAnyFilterActive));
+        }
+        
+        partial void OnSelectedSpotTypeChanged(SpotType? value) 
+        {
+            OnPropertyChanged(nameof(IsAnyFilterActive));
+        }
+        
+        partial void OnSearchTextChanged(string? value)
+        {
+            OnPropertyChanged(nameof(IsAnyFilterActive));
+        }
+        
+        partial void OnPinsChanged(ObservableCollection<Pin>? value)
+        {
+            FilteredSpotsCount = value?.Count ?? 0;
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] OnPinsChanged: FilteredSpotsCount updated to {FilteredSpotsCount}");
+        }
 
         public MapViewModel(
             ISpotRepository spotRepository,
@@ -172,6 +211,7 @@ namespace SubExplore.ViewModels.Map
             SpotTypes = new ObservableCollection<SpotType>();
             MenuSections = new ObservableCollection<MenuSection>();
             SearchSuggestions = new ObservableCollection<string>();
+            CurrentSubFilters = new ObservableCollection<SpotType>();
             
             // Subscribe to authentication state changes to update menu dynamically
             _authenticationService.StateChanged += OnAuthenticationStateChanged;
@@ -243,18 +283,16 @@ namespace SubExplore.ViewModels.Map
                         System.Diagnostics.Debug.WriteLine($"[SUCCESS] Loaded {SpotTypes.Count} spot types for filtering");
                     }
 
-                    // Step 3: Load spots data
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots data");
-                    await LoadSpotsOptimized();
-                    
-                    if (Spots?.Count == 0)
+                    // Step 3: Load spots data in background to improve startup performance
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Scheduling spots data loading in background");
+                    _ = Task.Run(async () =>
                     {
-                        System.Diagnostics.Debug.WriteLine("[WARNING] No spots loaded - map will be empty");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[SUCCESS] Loaded {Spots.Count} spots");
-                    }
+                        await Task.Delay(1000); // Allow UI to render first
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await LoadSpotsOptimized();
+                        });
+                    });
 
                     // Step 4: Update pins on UI thread
                     await MainThread.InvokeOnMainThreadAsync(() =>
@@ -622,39 +660,33 @@ namespace SubExplore.ViewModels.Map
                 IsBusy = true;
                 IsFiltering = true;
 
-                // Convertir le filterType en typeId
-                int typeId;
-                switch (filterType.ToLower())
-                {
-                    case "diving":
-                        typeId = 1; // Plongée
-                        break;
-                    case "freediving":
-                        typeId = 2; // Apnée
-                        break;
-                    case "snorkeling":
-                        typeId = 3; // Randonnée
-                        break;
-                    default:
-                        typeId = 0;
-                        break;
-                }
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] FilterSpots called with filterType: {filterType}");
 
-                if (typeId > 0)
+                // Use the new category-based filtering system
+                string categoryName = filterType.ToLower() switch
                 {
-                    var filteredSpots = await _spotRepository.GetSpotsByTypeAsync(typeId); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
+                    "activities" => "Activités",
+                    "activités" => "Activités",
+                    "structures" => "Structures", 
+                    "boutiques" => "Boutiques",
+                    "shops" => "Boutiques",
+                    _ => null // Show all
+                };
 
-                    RefreshSpotsList(filteredSpots);
-                    UpdatePins();
+                if (!string.IsNullOrEmpty(categoryName))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtering by category: {categoryName}");
+                    await ApplyCategoryFilter(categoryName);
                 }
                 else
                 {
-                    // Si pas de filtre valide, charger tous les spots
-                    await LoadSpotsCommand.ExecuteAsync(null); // ✅ FIXED: Removed ConfigureAwait(false) for ViewModel consistency
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] No specific category found for {filterType}, showing all spots");
+                    await ClearFilters();
                 }
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] FilterSpots failed: {ex.Message}");
                 await DialogService.ShowAlertAsync("Erreur", "Impossible de filtrer les spots. Veuillez réessayer plus tard.", "D'accord");
             }
             finally
@@ -1080,9 +1112,12 @@ namespace SubExplore.ViewModels.Map
             try
             {
                 SelectedSpotType = null;
+                SelectedCategory = null;
                 SearchText = string.Empty;
                 AreSuggestionsVisible = false;
                 SearchSuggestions.Clear();
+                IsSubFiltersVisible = false;
+                CurrentSubFilters.Clear();
                 IsFiltering = false;
                 IsSearching = false;
                 System.Diagnostics.Debug.WriteLine("[DEBUG] Clearing all filters");
@@ -1093,6 +1128,98 @@ namespace SubExplore.ViewModels.Map
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] ClearFilters failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Commande pour filtrer par catégorie principale
+        /// </summary>
+        [RelayCommand]
+        private async Task FilterByCategory(string categoryName)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtering by category: {categoryName}");
+
+                // Si on reclique sur la même catégorie, fermer le menu
+                if (SelectedCategory == categoryName)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Toggling off category: {categoryName}");
+                    IsSubFiltersVisible = false;
+                    CurrentSubFilters.Clear();
+                    SelectedCategory = null;
+                    SelectedSpotType = null;
+                    
+                    // Remettre tous les spots visibles
+                    UpdatePinsFromFilteredSpots(Spots ?? Enumerable.Empty<Models.Domain.Spot>());
+                    return;
+                }
+
+                SelectedCategory = categoryName;
+                SelectedSpotType = null;
+
+                // Remplir les sous-filtres pour cette catégorie
+                CurrentSubFilters.Clear();
+                var categorySpotTypes = SpotTypes.FilterByMainCategory(categoryName);
+                
+                foreach (var spotType in categorySpotTypes)
+                {
+                    CurrentSubFilters.Add(spotType);
+                }
+
+                // Afficher le menu des sous-filtres si on a des éléments
+                IsSubFiltersVisible = CurrentSubFilters.Count > 0;
+
+                // Appliquer le filtre de catégorie (afficher tous les spots de cette catégorie)
+                await ApplyCategoryFilter(categoryName);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] FilterByCategory failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Applique le filtre de catégorie aux spots
+        /// </summary>
+        private async Task ApplyCategoryFilter(string categoryName)
+        {
+            try
+            {
+                IsFiltering = true;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplyCategoryFilter started for category: '{categoryName}'");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Total spots available: {Spots?.Count ?? 0}");
+
+                // Debug log all spots and their types
+                if (Spots != null)
+                {
+                    foreach (var spot in Spots)
+                    {
+                        var typeName = spot.Type?.Name ?? "NULL_TYPE";
+                        var belongsToCategory = spot.Type?.BelongsToCategory(categoryName) ?? false;
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Spot '{spot.Name}' -> Type: '{typeName}' -> BelongsTo'{categoryName}': {belongsToCategory}");
+                    }
+                }
+                
+                var filteredSpots = Spots?.Where(s => s.Type != null && s.Type.BelongsToCategory(categoryName)) ?? Enumerable.Empty<Models.Domain.Spot>();
+                var filteredSpotsList = filteredSpots.ToList(); // Materialize to avoid multiple enumeration
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Category filter applied: {filteredSpotsList.Count} spots found for category '{categoryName}'");
+                
+                // Update the UI properties that show filter counts
+                SelectedCategory = categoryName;
+                
+                UpdatePinsFromFilteredSpots(filteredSpotsList);
+                UpdateEmptyState();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ApplyCategoryFilter failed: {ex.Message}");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible d'appliquer le filtre par catégorie", "OK");
+            }
+            finally
+            {
+                IsFiltering = false;
             }
         }
 
@@ -1547,6 +1674,10 @@ namespace SubExplore.ViewModels.Map
                     // ✅ FIXED: Atomic collection replacement instead of Clear/Add pattern
                     Pins = new ObservableCollection<Pin>(validPins);
                     
+                    // Mettre à jour le compteur FilteredSpotsCount
+                    FilteredSpotsCount = Pins.Count;
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] FilteredSpotsCount manually updated to {FilteredSpotsCount} in UpdatePins");
+                    
                     System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePins completed with atomic update. Total pins in collection: {Pins.Count}");
                 }
                 catch (Exception ex)
@@ -1798,14 +1929,19 @@ namespace SubExplore.ViewModels.Map
                 }
             }
             
-            // Clear and update pins collection
-            Pins.Clear();
-            foreach (var pin in validPins)
-            {
-                Pins.Add(pin);
-            }
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePinsFromFilteredSpotsCore: Creating new ObservableCollection with {validPins.Count} pins");
+            
+            // Replace the entire collection to trigger PropertyChanged
+            Pins = new ObservableCollection<Pin>(validPins);
             
             System.Diagnostics.Debug.WriteLine($"[DEBUG] Updated pins: {Pins.Count} pins from {filteredSpots.Count()} filtered spots");
+            
+            // Mettre à jour le compteur FilteredSpotsCount
+            FilteredSpotsCount = Pins.Count;
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] FilteredSpotsCount manually updated to {FilteredSpotsCount}");
+            
+            // Force property changed notification (should be automatic with [ObservableProperty] but let's be sure)
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Forcing PropertyChanged notification for Pins");
             OnPropertyChanged(nameof(Pins));
         }
         
@@ -1824,6 +1960,84 @@ namespace SubExplore.ViewModels.Map
                               !IsFiltering &&
                               string.IsNullOrEmpty(SearchText);
             });
+        }
+
+        /// <summary>
+        /// Handles the case when no spots are found - diagnoses the issue and provides appropriate feedback
+        /// </summary>
+        private async Task HandleEmptySpotState()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[DEBUG] 🔍 HandleEmptySpotState: Diagnosing empty spot state");
+                
+                // Check if this is a data integrity issue or a filtering issue
+                var totalSpots = await _spotRepository.GetAllAsync();
+                var totalCount = totalSpots.Count();
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Total spots in database: {totalCount}");
+                
+                if (totalCount == 0)
+                {
+                    // No spots in database at all
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        IsEmptyState = true;
+                        await DialogService.ShowAlertAsync(
+                            "Base de données vide", 
+                            "Aucun spot n'a été trouvé dans la base de données. Cela peut être dû à une migration récente. Veuillez contacter le support.", 
+                            "Compris");
+                    });
+                }
+                else
+                {
+                    // Spots exist but none are visible - check validation status and SpotType issues
+                    var approvedSpots = totalSpots.Where(s => s.ValidationStatus == SpotValidationStatus.Approved).Count();
+                    var spotsWithActiveTypes = totalSpots.Where(s => s.Type != null && s.Type.IsActive).Count();
+                    
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Approved spots: {approvedSpots}, Spots with active types: {spotsWithActiveTypes}");
+                    
+                    if (approvedSpots == 0)
+                    {
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            IsEmptyState = true;
+                            await DialogService.ShowAlertAsync(
+                                "Spots en attente", 
+                                $"Il y a {totalCount} spots dans la base de données mais aucun n'est encore approuvé. Ils sont en cours de validation.", 
+                                "Compris");
+                        });
+                    }
+                    else if (spotsWithActiveTypes == 0)
+                    {
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            IsEmptyState = true;
+                            await DialogService.ShowAlertAsync(
+                                "Problème de configuration", 
+                                "Des spots existent mais il y a un problème avec les types de spots. L'équipe technique a été notifiée.", 
+                                "Compris");
+                        });
+                    }
+                    else
+                    {
+                        // Some other filtering issue
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            IsEmptyState = true;
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] HandleEmptySpotState failed: {ex.Message}");
+                
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    IsEmptyState = true;
+                });
+            }
         }
         
         private void CheckNetworkConnectivity()
@@ -1899,27 +2113,91 @@ namespace SubExplore.ViewModels.Map
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotsOptimized started");
-
+                System.Diagnostics.Debug.WriteLine("[DEBUG] 🗺️ LoadSpotsOptimized started");
+                
+                // Reset error states
+                IsEmptyState = false;
+                IsNetworkError = false;
+                
                 // Use optimized method for better performance
                 var spots = await Task.Run(async () =>
                 {
                     return await _spotRepository.GetSpotsMinimalAsync(100);
                 });
-
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotsOptimized - Retrieved {spots?.Count() ?? 0} spots from repository");
+                
+                var spotsList = spots?.ToList() ?? new List<Models.Domain.Spot>();
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ LoadSpotsOptimized - Retrieved {spotsList.Count} spots from repository");
+                
+                // Handle empty state
+                if (!spotsList.Any())
+                {
+                    System.Diagnostics.Debug.WriteLine("[WARNING] 📭 No spots found - checking if this is a data issue or filter issue");
+                    await HandleEmptySpotState();
+                    return;
+                }
+                
+                // Analyser la répartition par catégorie pour debug
+                if (spotsList.Any())
+                {
+                    var categoryDistribution = spotsList
+                        .Where(s => s.Type != null)
+                        .GroupBy(s => s.Type.Category)
+                        .Select(g => new { Category = g.Key, Count = g.Count() })
+                        .OrderByDescending(x => x.Count)
+                        .ToList();
+                    
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] 📊 Spots distribution by category:");
+                    foreach (var cat in categoryDistribution)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG]   - {cat.Category}: {cat.Count} spots");
+                    }
+                    
+                    // Afficher quelques exemples de spots
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] 📍 First few spots:");
+                    foreach (var spot in spotsList.Take(5))
+                    {
+                        var typeInfo = spot.Type != null ? $"{spot.Type.Name} ({spot.Type.Category})" : "NO TYPE";
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG]   - {spot.Name}: {typeInfo}");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[WARNING] ⚠️ No spots retrieved from repository - this may indicate a data integrity issue!");
+                    await HandleEmptySpotState();
+                    return;
+                }
 
                 // Process spots in batches to maintain UI responsiveness
                 await ProcessSpotsInBatches(spots);
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotsOptimized completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ✅ LoadSpotsOptimized completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotsOptimized failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ❌ LoadSpotsOptimized failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                
+                // Set error state
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    IsNetworkError = true;
+                    IsEmptyState = false;
+                });
+                
+                // Show user-friendly error message
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    await DialogService.ShowAlertAsync("Erreur", "Impossible de charger les spots. Veuillez réessayer.", "D'accord");
+                    var retry = await DialogService.ShowConfirmationAsync(
+                        "Erreur de chargement", 
+                        "Impossible de charger les spots. Cela peut être dû à un problème de réseau ou de base de données. Voulez-vous réessayer?", 
+                        "Réessayer", 
+                        "Annuler");
+                        
+                    if (retry)
+                    {
+                        // Retry loading
+                        await LoadSpotsOptimized();
+                    }
                 });
             }
         }

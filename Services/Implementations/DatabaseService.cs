@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using System.IO;
 using System.Reflection;
+using SubExplore.Migrations;
 
 namespace SubExplore.Services.Implementations
 {
@@ -114,20 +115,40 @@ namespace SubExplore.Services.Implementations
                 {
                     await CleanupObsoleteSpotTypesAsync();
                 }
+                    
+                // Migrer vers la nouvelle organisation des types (toujours exécuter)
+                var migrationLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<SpotTypeDataMigrationService>.Instance;
+                var migrationService = new SpotTypeDataMigrationService(_context, migrationLogger);
+                await migrationService.MigrateSpotTypesAsync();
 
                 _logger.LogInformation("Initialisation des données de base...");
 
                 // Ajouter les types de spots seulement s'ils n'existent pas
                 if (!hasSpotTypes)
                 {
-                    // Types de spots conformes aux exigences : 5 types + filtre "Tous"
+                    // Nouvelle organisation : Activités, Structures, Boutiques
                     var spotTypes = new List<SpotType>
                 {
+                    // === ACTIVITÉS (variations de bleus) ===
+                    new SpotType
+                    {
+                        Name = "Plongée bouteille",
+                        IconPath = "marker_scuba.png", 
+                        ColorCode = "#0077BE", // Bleu principal
+                        Category = ActivityCategory.Diving,
+                        Description = "Sites de plongée avec bouteille (tous niveaux - récréative et technique)",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" },
+                            MaxDepthRange = new[] { 0, 200 }
+                        }),
+                        IsActive = true
+                    },
                     new SpotType
                     {
                         Name = "Apnée",
                         IconPath = "marker_freediving.png",
-                        ColorCode = "#00B4D8",
+                        ColorCode = "#4A90E2", // Bleu moyen
                         Category = ActivityCategory.Freediving,
                         Description = "Sites adaptés à la plongée en apnée",
                         RequiresExpertValidation = true,
@@ -139,9 +160,23 @@ namespace SubExplore.Services.Implementations
                     },
                     new SpotType
                     {
+                        Name = "Randonnée sous-marine",
+                        IconPath = "marker_snorkeling.png",
+                        ColorCode = "#87CEEB", // Bleu clair
+                        Category = ActivityCategory.Snorkeling,
+                        Description = "Sites de surface accessibles pour la randonnée sous-marine",
+                        RequiresExpertValidation = false,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "DifficultyLevel", "SafetyNotes" },
+                            MaxDepthRange = new[] { 0, 5 }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
                         Name = "Photo sous-marine",
                         IconPath = "marker_photography.png",
-                        ColorCode = "#2EC4B6",
+                        ColorCode = "#5DADE2", // Bleu photo
                         Category = ActivityCategory.UnderwaterPhotography,
                         Description = "Sites d'intérêt pour la photographie sous-marine",
                         RequiresExpertValidation = false,
@@ -150,46 +185,59 @@ namespace SubExplore.Services.Implementations
                         }),
                         IsActive = true
                     },
+
+                    // === STRUCTURES (variations de verts) ===
                     new SpotType
                     {
-                        Name = "Plongée récréative",
-                        IconPath = "marker_diving.png",
-                        ColorCode = "#006994",
-                        Category = ActivityCategory.Diving,
-                        Description = "Sites adaptés à la plongée avec bouteille",
-                        RequiresExpertValidation = true,
-                        ValidationCriteria = JsonSerializer.Serialize(new {
-                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" },
-                            MaxDepthRange = new[] { 0, 50 }
-                        }),
-                        IsActive = true
-                    },
-                    new SpotType
-                    {
-                        Name = "Plongée technique",
-                        IconPath = "marker_technical.png",
-                        ColorCode = "#FF9F1C",
-                        Category = ActivityCategory.Diving,
-                        Description = "Sites pour plongée technique (profondeur, épaves...)",
-                        RequiresExpertValidation = true,
-                        ValidationCriteria = JsonSerializer.Serialize(new {
-                            RequiredFields = new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes", "RequiredEquipment" },
-                            MaxDepthRange = new[] { 30, 200 },
-                            MinDifficultyLevel = 3
-                        }),
-                        IsActive = true
-                    },
-                    new SpotType
-                    {
-                        Name = "Randonnée sous marine",
-                        IconPath = "marker_snorkeling.png",
-                        ColorCode = "#48CAE4",
-                        Category = ActivityCategory.Snorkeling,
-                        Description = "Sites de surface accessibles pour la randonnée sous-marine",
+                        Name = "Clubs",
+                        IconPath = "marker_club.png",
+                        ColorCode = "#228B22", // Vert foncé
+                        Category = ActivityCategory.Other,
+                        Description = "Clubs de plongée et associations",
                         RequiresExpertValidation = false,
                         ValidationCriteria = JsonSerializer.Serialize(new {
-                            RequiredFields = new[] { "DifficultyLevel", "SafetyNotes" },
-                            MaxDepthRange = new[] { 0, 5 }
+                            RequiredFields = new[] { "Description" }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Professionnels",
+                        IconPath = "marker_pro.png",
+                        ColorCode = "#32CD32", // Vert lime
+                        Category = ActivityCategory.Other,
+                        Description = "Centres de plongée, instructeurs et guides professionnels",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "Description", "SafetyNotes" }
+                        }),
+                        IsActive = true
+                    },
+                    new SpotType
+                    {
+                        Name = "Bases fédérales",
+                        IconPath = "marker_federal.png",
+                        ColorCode = "#90EE90", // Vert clair
+                        Category = ActivityCategory.Other,
+                        Description = "Bases fédérales et structures officielles",
+                        RequiresExpertValidation = true,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "Description", "SafetyNotes" }
+                        }),
+                        IsActive = true
+                    },
+
+                    // === BOUTIQUES (tons oranges) ===
+                    new SpotType
+                    {
+                        Name = "Boutiques",
+                        IconPath = "marker_shop.png",
+                        ColorCode = "#FF8C00", // Orange principal
+                        Category = ActivityCategory.Shop,
+                        Description = "Magasins de matériel de plongée et équipements sous-marins",
+                        RequiresExpertValidation = false,
+                        ValidationCriteria = JsonSerializer.Serialize(new {
+                            RequiredFields = new[] { "Description" }
                         }),
                         IsActive = true
                     }
@@ -873,6 +921,51 @@ namespace SubExplore.Services.Implementations
                 "archivé" => Models.Enums.SpotValidationStatus.Archived,
                 _ => null
             };
+        }
+
+        /// <summary>
+        /// Executes the FixSpotTypeCategoryMapping migration
+        /// </summary>
+        /// <returns>True if migration executed successfully, false otherwise</returns>
+        public async Task<bool> ExecuteSpotTypeCategoryMappingMigrationAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Starting FixSpotTypeCategoryMapping migration execution...");
+
+                // Create a logger for the migration class using the logger factory
+                var loggerFactory = Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+                var migrationLogger = loggerFactory.CreateLogger<FixSpotTypeCategoryMapping>();
+                
+                var migration = new FixSpotTypeCategoryMapping(_context, migrationLogger);
+                await migration.ExecuteAsync();
+
+                _logger.LogInformation("FixSpotTypeCategoryMapping migration completed successfully");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to execute FixSpotTypeCategoryMapping migration: {Message}", ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Analyzes filtering issues after migration
+        /// </summary>
+        /// <returns>Detailed analysis report</returns>
+        public async Task<string> AnalyzeFilteringIssuesAsync()
+        {
+            try
+            {
+                var debugTool = new Helpers.FilterDebugTool(_context, Microsoft.Extensions.Logging.Abstractions.NullLogger<Helpers.FilterDebugTool>.Instance);
+                return await debugTool.AnalyzeFilteringIssuesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to analyze filtering issues: {Message}", ex.Message);
+                return $"❌ Analysis failed: {ex.Message}";
+            }
         }
 
         /// <summary>

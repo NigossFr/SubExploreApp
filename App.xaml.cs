@@ -75,57 +75,9 @@ namespace SubExplore
             {
                 Debug.WriteLine("[App.xaml.cs] Initializing database and authentication services");
                 
-                // Apply username migration first to fix unique constraint issues
-                try
-                {
-                    Debug.WriteLine("[App.xaml.cs] Applying username migration...");
-                    await SubExplore.Helpers.UsernameMigrationHelper.ApplyUsernameMigrationAsync();
-                    Debug.WriteLine("[App.xaml.cs] ✓ Username migration completed");
-                }
-                catch (Exception migrationEx)
-                {
-                    Debug.WriteLine($"[App.xaml.cs] ⚠️ Username migration warning: {migrationEx.Message}");
-                    // Continue anyway - migration might already be applied
-                }
-
-                // Apply role hierarchy migration second
-                try
-                {
-                    Debug.WriteLine("[App.xaml.cs] Applying role hierarchy migration...");
-                    await MigrationHelper.ApplyMigrationsAsync();
-                    Debug.WriteLine("[App.xaml.cs] ✓ Role hierarchy migration completed");
-                }
-                catch (Exception migrationEx)
-                {
-                    Debug.WriteLine($"[App.xaml.cs] ⚠️ Migration warning: {migrationEx.Message}");
-                    // Continue anyway - migration might already be applied
-                }
-
-                // Apply IsEmailConfirmed migration to fix login issue
-                try
-                {
-                    Debug.WriteLine("[App.xaml.cs] Applying IsEmailConfirmed migration...");
-                    await SubExplore.Helpers.IsEmailConfirmedMigrationHelper.ApplyIsEmailConfirmedMigrationAsync();
-                    Debug.WriteLine("[App.xaml.cs] ✓ IsEmailConfirmed migration completed");
-                }
-                catch (Exception migrationEx)
-                {
-                    Debug.WriteLine($"[App.xaml.cs] ⚠️ IsEmailConfirmed migration warning: {migrationEx.Message}");
-                    // Continue anyway - migration might already be applied
-                }
-
-                // Apply admin spot validation migration to fix existing admin spots
-                try
-                {
-                    Debug.WriteLine("[App.xaml.cs] Applying admin spot validation migration using AdminSpotMigrationHelper...");
-                    await SubExplore.Helpers.AdminSpotMigrationHelper.MigrateAdminSpotsToApprovedAsync();
-                    Debug.WriteLine("[App.xaml.cs] ✓ Admin spot validation migration completed successfully");
-                }
-                catch (Exception migrationEx)
-                {
-                    Debug.WriteLine($"[App.xaml.cs] ⚠️ Admin spot migration warning: {migrationEx.Message}");
-                    // Continue anyway - migration might already be applied
-                }
+                // Skip heavy migrations at startup for better performance
+                // These migrations only need to run once and are already applied
+                Debug.WriteLine("[App.xaml.cs] Skipping migrations at startup for improved performance");
 
                 // Initialize database first with enhanced error handling
                 var dbInitService = services.GetService<IDatabaseInitializationService>();
@@ -149,24 +101,39 @@ namespace SubExplore
                         // Database initialization and verification completed
                         Debug.WriteLine("[App.xaml.cs] ✅ Database initialization and verification completed successfully");
                         
-                        // Initialize test data for spot validation workflow
+                        // Run comprehensive spot system diagnostic to identify issues
                         try
                         {
-                            var testDataService = services.GetService<TestDataService>();
-                            if (testDataService != null)
+                            Debug.WriteLine("[App.xaml.cs] 🔍 Running spot system diagnostic...");
+                            var diagnostic = await SubExplore.Helpers.SpotSystemDiagnosticTool.RunFullDiagnosticAsync(services);
+                            
+                            if (!diagnostic.IsHealthy)
                             {
-                                await testDataService.CreateTestSpotsAsync();
-                                Debug.WriteLine("[App.xaml.cs] ✅ Test data initialization completed");
+                                Debug.WriteLine("[App.xaml.cs] 🚨 SPOT SYSTEM ISSUES DETECTED - Running automatic repair...");
+                                var repairSuccess = await SubExplore.Helpers.SpotSystemDiagnosticTool.RepairSpotDistributionAsync(services);
+                                
+                                if (repairSuccess)
+                                {
+                                    Debug.WriteLine("[App.xaml.cs] ✅ Spot system repair completed successfully");
+                                    
+                                    // Re-run diagnostic after repair
+                                    var postRepairDiagnostic = await SubExplore.Helpers.SpotSystemDiagnosticTool.RunFullDiagnosticAsync(services);
+                                    Debug.WriteLine($"[App.xaml.cs] 📊 Post-repair status: {(postRepairDiagnostic.IsHealthy ? "HEALTHY" : "STILL HAS ISSUES")}");
+                                }
+                                else
+                                {
+                                    Debug.WriteLine("[App.xaml.cs] ❌ Spot system repair failed");
+                                }
+                            }
+                            else
+                            {
+                                Debug.WriteLine("[App.xaml.cs] ✅ Spot system is healthy");
                             }
                         }
-                        catch (Exception testDataEx)
+                        catch (Exception diagEx)
                         {
-                            Debug.WriteLine($"[App.xaml.cs] ⚠️ Test data initialization warning: {testDataEx.Message}");
-                            // Continue anyway - not critical for app functionality
+                            Debug.WriteLine($"[App.xaml.cs] ⚠️ Diagnostic error: {diagEx.Message}");
                         }
-                        
-                        // Run ultra-deep database diagnostic
-                        await DatabaseDiagnostic.RunUltraDeepDatabaseTestAsync(services);
                     }
                     catch (Exception dbEx)
                     {

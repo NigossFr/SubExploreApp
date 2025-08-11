@@ -152,62 +152,180 @@
         <RefreshView Grid.Row="1" Command="{Binding LoadSpotsCommand}" IsRefreshing="{Binding IsBusy}">
             <Grid RowDefinitions="Auto,*,Auto">
                 
-                <!--  Barre de filtres intégrée  -->
-                <ScrollView 
-                    Grid.Row="0"
-                    Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
-                    HorizontalScrollBarVisibility="Never" 
-                    Orientation="Horizontal"
-                    AutomationId="FiltersScrollView"
-                    SemanticProperties.Description="Zone de filtres des spots - Balayez horizontalement pour voir plus d'options"
-                    SemanticProperties.Hint="Balayez vers la droite pour découvrir d'autres types de spots">
-                    <HorizontalStackLayout Spacing="6" Padding="8,8,24,8">
-                        <Button
-                            Command="{Binding ClearFiltersCommand}"
-                            Style="{StaticResource ButtonFilterStyle}"
-                            Text="Tous"
-                            FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                            CornerRadius="8"
-                            Padding="14,8"
-                            AutomationId="ClearFiltersButton"
-                            SemanticProperties.Description="Afficher tous les types de spots"
-                            SemanticProperties.Hint="Appuyez pour supprimer tous les filtres et afficher tous les spots">
+                <!-- Nouvelle organisation des filtres : 4 boutons principaux + sous-filtres -->
+                <StackLayout Grid.Row="0"
+                           Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}">
+                    
+                    <!-- Boutons de catégories principales (4 boutons sur toute la largeur) -->
+                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
+                        
+                        <!-- Bouton Tous -->
+                        <Button Grid.Column="0"
+                                Command="{Binding ClearFiltersCommand}"
+                                Style="{StaticResource ButtonFilterStyle}"
+                                Text="Tous"
+                                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.85'}"
+                                CornerRadius="8"
+                                Padding="8,8"
+                                AutomationId="ClearFiltersButton"
+                                SemanticProperties.Description="Afficher tous les types de spots">
                             <Button.Triggers>
-                                <DataTrigger TargetType="Button" Binding="{Binding SelectedSpotType}" Value="{x:Null}">
+                                <DataTrigger TargetType="Button" Binding="{Binding SelectedCategory}" Value="{x:Null}">
                                     <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
                                     <Setter Property="TextColor" Value="White" />
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
 
-                        <CollectionView
-                            ItemsSource="{Binding SpotTypes}"
-                            SelectionMode="None"
-                            AutomationId="SpotTypesFilter"
-                            SemanticProperties.Description="Filtrer les spots par type d'activité - Balayez pour voir plus d'options">
-                            <CollectionView.ItemsLayout>
-                                <LinearItemsLayout ItemSpacing="6" Orientation="Horizontal" />
-                            </CollectionView.ItemsLayout>
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="domain:SpotType">
-                                    <Button
-                                        BackgroundColor="{Binding ColorCode}"
-                                        Style="{StaticResource ButtonFilterStyle}"
-                                        Text="{Binding Name}"
-                                        TextColor="White"
-                                        FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.9'}"
-                                        CornerRadius="8"
-                                        Padding="14,8"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=FilterSpotsByTypeCommand}"
-                                        CommandParameter="{Binding .}"
-                                        AutomationId="{Binding Name, StringFormat='Filter{0}Button'}"
-                                        SemanticProperties.Description="{Binding Name, StringFormat='Filtrer par {0}'}"
-                                        SemanticProperties.Hint="{Binding Name, StringFormat='Appuyez pour afficher uniquement les spots de type {0}'}" />
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-                    </HorizontalStackLayout>
-                </ScrollView>
+                        <!-- Bouton Activités -->
+                        <Button Grid.Column="1"
+                                Command="{Binding FilterByCategoryCommand}"
+                                CommandParameter="Activités"
+                                Style="{StaticResource ButtonFilterStyle}"
+                                Text="Activités"
+                                BackgroundColor="#0077BE"
+                                TextColor="White"
+                                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.85'}"
+                                CornerRadius="8"
+                                Padding="8,8"
+                                AutomationId="ActivitiesFilterButton"
+                                SemanticProperties.Description="Filtrer par activités sous-marines">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding SelectedCategory}" Value="Activités">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                    <Setter Property="Opacity" Value="0.8" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+
+                        <!-- Bouton Structures -->
+                        <Button Grid.Column="2"
+                                Command="{Binding FilterByCategoryCommand}"
+                                CommandParameter="Structures"
+                                Style="{StaticResource ButtonFilterStyle}"
+                                Text="Structures"
+                                BackgroundColor="#228B22"
+                                TextColor="White"
+                                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.85'}"
+                                CornerRadius="8"
+                                Padding="8,8"
+                                AutomationId="StructuresFilterButton"
+                                SemanticProperties.Description="Filtrer par structures et organisations">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding SelectedCategory}" Value="Structures">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                    <Setter Property="Opacity" Value="0.8" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+
+                        <!-- Bouton Boutiques -->
+                        <Button Grid.Column="3"
+                                Command="{Binding FilterByCategoryCommand}"
+                                CommandParameter="Boutiques"
+                                Style="{StaticResource ButtonFilterStyle}"
+                                Text="Boutiques"
+                                BackgroundColor="#FF8C00"
+                                TextColor="White"
+                                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.85'}"
+                                CornerRadius="8"
+                                Padding="8,8"
+                                AutomationId="ShopsFilterButton"
+                                SemanticProperties.Description="Filtrer par boutiques et magasins">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding SelectedCategory}" Value="Boutiques">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                    <Setter Property="Opacity" Value="0.8" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </Grid>
+                    
+                    <!-- Indicateur de filtrage actif -->
+                    <Frame IsVisible="{Binding IsAnyFilterActive}"
+                           BackgroundColor="#E3F2FD"
+                           BorderColor="#2196F3"
+                           CornerRadius="8"
+                           Padding="12,8"
+                           HasShadow="False"
+                           Margin="0,8,0,4"
+                           AutomationId="FilterStatusFrame">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Label Grid.Column="0"
+                                   Text="🔍"
+                                   FontSize="16"
+                                   VerticalOptions="Center"
+                                   TextColor="#1976D2" />
+                            <Label Grid.Column="1"
+                                   FontSize="14"
+                                   VerticalOptions="Center"
+                                   TextColor="#1976D2"
+                                   FontAttributes="Bold"
+                                   Margin="8,0,0,0">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="{}{0} spot(s) affiché(s)">
+                                        <Binding Path="FilteredSpotsCount" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+                            <Button Grid.Column="2"
+                                    Text="Effacer"
+                                    FontSize="12"
+                                    BackgroundColor="#FF5722"
+                                    TextColor="White"
+                                    CornerRadius="4"
+                                    Padding="8,4"
+                                    Command="{Binding ClearFiltersCommand}"
+                                    AutomationId="ClearActiveFiltersButton" />
+                        </Grid>
+                    </Frame>
+                    
+                    <!-- Menu de sous-filtres (visible uniquement si une catégorie est sélectionnée) -->
+                    <Frame IsVisible="{Binding IsSubFiltersVisible}"
+                           BackgroundColor="{StaticResource Surface}"
+                           BorderColor="{StaticResource Gray200}"
+                           CornerRadius="12"
+                           Padding="8"
+                           HasShadow="True"
+                           Margin="0,4,0,0"
+                           AutomationId="SubFiltersFrame">
+                        
+                        <ScrollView HorizontalScrollBarVisibility="Never" Orientation="Horizontal">
+                            <CollectionView ItemsSource="{Binding CurrentSubFilters}"
+                                            SelectionMode="None"
+                                            AutomationId="SubFiltersList">
+                                <CollectionView.ItemsLayout>
+                                    <LinearItemsLayout ItemSpacing="8" Orientation="Horizontal" />
+                                </CollectionView.ItemsLayout>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="domain:SpotType">
+                                        <Button BackgroundColor="{Binding ColorCode}"
+                                                Style="{StaticResource ButtonFilterStyle}"
+                                                Text="{Binding Name}"
+                                                TextColor="White"
+                                                FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.8'}"
+                                                CornerRadius="8"
+                                                Padding="12,6"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=FilterSpotsByTypeCommand}"
+                                                CommandParameter="{Binding .}"
+                                                AutomationId="{Binding Name, StringFormat='SubFilter{0}Button'}"
+                                                SemanticProperties.Description="{Binding Name, StringFormat='Filtrer par {0}'}">
+                                            <Button.Triggers>
+                                                <!-- Visual feedback when this filter is active -->
+                                                <DataTrigger TargetType="Button" Binding="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=SelectedSpotType.Id}" Value="{Binding Id}">
+                                                    <Setter Property="BorderColor" Value="#FFDD00" />
+                                                    <Setter Property="BorderWidth" Value="3" />
+                                                    <Setter Property="Opacity" Value="1" />
+                                                    <Setter Property="Scale" Value="1.05" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+                                        </Button>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </ScrollView>
+                    </Frame>
+                </StackLayout>
 
         <!--  Carte responsive  -->
         <Grid Grid.Row="1">

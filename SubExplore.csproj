@@ -20,6 +20,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
+		<!-- Fix duplicate assembly attributes -->
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+
 		<!-- Performance Optimizations -->
 		<MauiEnableXamlCBinding>true</MauiEnableXamlCBinding>
 		<XamlCBindingMode>Release</XamlCBindingMode>

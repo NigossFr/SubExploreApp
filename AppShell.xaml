@@ -10,6 +10,7 @@
     xmlns:profile="clr-namespace:SubExplore.Views.Profile"
     xmlns:admin="clr-namespace:SubExplore.Views.Admin"
     xmlns:auth="clr-namespace:SubExplore.Views.Auth"
+    xmlns:settings="clr-namespace:SubExplore.Views.Settings"
     xmlns:controls="clr-namespace:SubExplore.Controls"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels"
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
@@ -212,6 +213,22 @@
                         AccessibilityDescription="Gérer et valider les spots soumis par les utilisateurs. 3 spots en attente de validation"
                         AccessibilityHint="Appuyez deux fois pour accéder à l'administration"
                         IconAccessibilityText="Icône de balance de justice" />
+
+                    <!-- Test Base de Données -->
+                    <controls:StagedMenuButton 
+                        Title="Test Base de Données"
+                        Description="Outils de diagnostic et migration"
+                        Icon=""
+                        Stage="Warning"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="False"
+                        Tapped="OnMenuButtonTapped"
+                        CommandParameter="///databasetest"
+                        AccessibilityName="Test Base de Données, outils de diagnostic"
+                        AccessibilityDescription="Accéder aux outils de test, diagnostic et migration de base de données"
+                        AccessibilityHint="Appuyez deux fois pour accéder aux outils de base de données"
+                        IconAccessibilityText="Icône de base de données" />
                     
                     <!-- Logout Button -->
                     <controls:StagedMenuButton 
@@ -280,6 +297,13 @@
         Title="Validation des Spots"
         ContentTemplate="{DataTemplate admin:SpotValidationPage}"
         Route="spotvalidation"
+        FlyoutItemIsVisible="False" />
+
+    <!-- Database Test route - Hidden -->
+    <ShellContent
+        Title="Test Base de Données"
+        ContentTemplate="{DataTemplate settings:DatabaseTestPage}"
+        Route="databasetest"
         FlyoutItemIsVisible="False" />
 
     <!-- Authentication routes - Hidden from flyout -->

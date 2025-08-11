@@ -13,6 +13,7 @@ namespace SubExplore.Services.Interfaces
         Task<Spot?> GetSpotWithFullDetailsAsync(int spotId);
         Task<IEnumerable<Spot>> GetSpotsWithinRadiusAsync(double latitude, double longitude, double radiusKm, SpotValidationStatus? status = null);
         Task<IEnumerable<Spot>> GetSpotsByDifficultyAsync(DifficultyLevel difficulty);
+        Task<IEnumerable<Spot>> GetSpotsByCategoryAsync(ActivityCategory category);
         Task<IEnumerable<Spot>> GetRecommendedSpotsAsync(int userId, int limit = 10);
         
         // Safety and Validation

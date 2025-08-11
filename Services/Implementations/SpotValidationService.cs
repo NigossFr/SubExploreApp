@@ -28,11 +28,11 @@ namespace SubExplore.Services.Implementations
             IValidationEventPublisher eventPublisher,
             ILogger<SpotValidationService> logger)
         {
-            _context = context;
-            _authorizationService = authorizationService;
-            _strategyFactory = strategyFactory;
-            _eventPublisher = eventPublisher;
-            _logger = logger;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+            _strategyFactory = strategyFactory ?? throw new ArgumentNullException(nameof(strategyFactory));
+            _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<ValidationResult<List<Spot>>> GetPendingValidationSpotsAsync(ValidationFilter? filter = null)
@@ -55,7 +55,8 @@ namespace SubExplore.Services.Implementations
                     .OrderBy(s => s.CreatedAt)
                     .Skip((filter?.Page - 1 ?? 0) * (filter?.PageSize ?? 20))
                     .Take(filter?.PageSize ?? 20)
-                    .ToListAsync();
+                    .ToListAsync()
+                    .ConfigureAwait(false);
 
                 _logger.LogInformation("Retrieved {Count} pending validation spots", spots.Count);
                 return ValidationResult<List<Spot>>.CreateSuccess(spots);
@@ -77,7 +78,8 @@ namespace SubExplore.Services.Implementations
                     .Include(s => s.Media)
                     .Where(s => s.ValidationStatus == SpotValidationStatus.UnderReview)
                     .OrderBy(s => s.CreatedAt)
-                    .ToListAsync();
+                    .ToListAsync()
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {
