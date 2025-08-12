@@ -268,12 +268,27 @@ namespace SubExplore.Repositories.Implementations
                     .AsNoTracking() // Performance: Disable change tracking for read-only queries
                     .Include(s => s.Type)
                     .Include(s => s.Media.Where(m => m.IsPrimary))
-                    .Where(s => s.CreatorId == userId)
+                    .Where(s => s.CreatorId == userId && 
+                               s.Type != null && s.Type.IsActive) // Add null-safe filter for active types
                     .OrderByDescending(s => s.CreatedAt)
                     .ToListAsync()
                     .ConfigureAwait(false);
                     
                 System.Diagnostics.Debug.WriteLine($"[SpotRepository] Found {spots.Count()} spots for userId {userId}");
+                
+                // Log any potential spots that were filtered out due to missing/inactive types
+                var allUserSpots = await _context.Spots
+                    .AsNoTracking()
+                    .Where(s => s.CreatorId == userId)
+                    .CountAsync()
+                    .ConfigureAwait(false);
+                
+                if (allUserSpots > spots.Count())
+                {
+                    var filteredCount = allUserSpots - spots.Count();
+                    System.Diagnostics.Debug.WriteLine($"[SpotRepository] WARNING: {filteredCount} spots filtered out due to missing/inactive types for userId {userId}");
+                }
+                
                 return spots;
             }
             catch (Exception ex)

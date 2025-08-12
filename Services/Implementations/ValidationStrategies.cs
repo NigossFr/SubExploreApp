@@ -331,7 +331,14 @@ namespace SubExplore.Services.Implementations
                 new SnorkelSpotValidationStrategy()
             };
 
-            _categoryStrategies = strategies.ToDictionary(s => GetCategoryForSpecialization(s.Specialization), s => s);
+            // Since all categories now map to Activity, use the first strategy as default
+            _categoryStrategies = new Dictionary<ActivityCategory, IValidationStrategy>
+            {
+                { ActivityCategory.Activity, strategies.First() },
+                { ActivityCategory.Structure, strategies.First() },
+                { ActivityCategory.Shop, strategies.First() },
+                { ActivityCategory.Other, strategies.First() }
+            };
             _specializationStrategies = strategies.ToDictionary(s => s.Specialization, s => s);
         }
 
@@ -358,12 +365,12 @@ namespace SubExplore.Services.Implementations
         {
             return specialization switch
             {
-                ModeratorSpecialization.DiveSpots => ActivityCategory.Diving,
-                ModeratorSpecialization.FreediveSpots => ActivityCategory.Freediving,
-                ModeratorSpecialization.SnorkelSpots => ActivityCategory.Snorkeling,
-                ModeratorSpecialization.UnderwaterPhotography => ActivityCategory.UnderwaterPhotography,
-                ModeratorSpecialization.TechnicalDiving => ActivityCategory.Diving,
-                _ => ActivityCategory.Diving
+                ModeratorSpecialization.DiveSpots => ActivityCategory.Activity,
+                ModeratorSpecialization.FreediveSpots => ActivityCategory.Activity,
+                ModeratorSpecialization.SnorkelSpots => ActivityCategory.Activity,
+                ModeratorSpecialization.UnderwaterPhotography => ActivityCategory.Activity,
+                ModeratorSpecialization.TechnicalDiving => ActivityCategory.Activity,
+                _ => ActivityCategory.Activity
             };
         }
     }

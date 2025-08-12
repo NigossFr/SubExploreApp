@@ -10,13 +10,18 @@ public partial class FlyoutMenuViewModel : ObservableObject
 {
     private readonly IAuthenticationService? _authenticationService;
     private readonly INavigationService _navigationService;
+    private readonly ISpotValidationService? _spotValidationService;
 
-    public FlyoutMenuViewModel(INavigationService navigationService, IAuthenticationService? authenticationService = null)
+    public FlyoutMenuViewModel(INavigationService navigationService, IAuthenticationService? authenticationService = null, ISpotValidationService? spotValidationService = null)
     {
         _navigationService = navigationService;
         _authenticationService = authenticationService;
+        _spotValidationService = spotValidationService;
         
         InitializeMenuItems();
+        
+        // Load validation badge count if service is available
+        _ = UpdateValidationBadgeAsync();
         
         // Subscribe to authentication state changes
         if (_authenticationService != null)
@@ -149,11 +154,54 @@ public partial class FlyoutMenuViewModel : ObservableObject
                 Icon = "⚖️",
                 Stage = MenuButtonStage.Warning,
                 ShowIcon = true,
-                ShowBadge = true,
-                BadgeText = "3",
+                ShowBadge = false, // Will be updated dynamically
+                BadgeText = "",
                 Route = "///spotvalidation"
             });
         }
+
+#if DEBUG
+        // Debug Section - Only visible in debug builds
+        MenuItems.Add(new MenuItemViewModel
+        {
+            Id = "debug_header",
+            Title = "🐛 Debug",
+            IsHeader = true
+        });
+
+        MenuItems.Add(new MenuItemViewModel
+        {
+            Id = "debug_validation",
+            Title = "🔧 Validation Page (Debug)",
+            Description = "Direct access to validation page",
+            Icon = "⚖️",
+            Stage = MenuButtonStage.Default,
+            ShowIcon = true,
+            Route = "///spotvalidation"
+        });
+
+        MenuItems.Add(new MenuItemViewModel
+        {
+            Id = "debug_auth_info",
+            Title = "🔍 Auth Debug Info",
+            Description = "Show current authentication status",
+            Icon = "📋",
+            Stage = MenuButtonStage.Default,
+            ShowIcon = true,
+            Route = "debug_auth"
+        });
+
+        MenuItems.Add(new MenuItemViewModel
+        {
+            Id = "debug_login_admin",
+            Title = "🔑 Login as Admin",
+            Description = "Quick login as admin user for testing",
+            Icon = "👑",
+            Stage = MenuButtonStage.Error,
+            ShowIcon = true,
+            Route = "debug_login_admin"
+        });
+#endif
 
         // Logout Button
         MenuItems.Add(new MenuItemViewModel
@@ -169,6 +217,65 @@ public partial class FlyoutMenuViewModel : ObservableObject
         });
     }
 
+    private async Task UpdateValidationBadgeAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[FlyoutMenuViewModel] === DEBUGGING BADGE UPDATE ===");
+            System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Service available: {_spotValidationService != null}");
+            System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] User is admin: {IsUserAdmin()}");
+            
+            // Only update if validation service is available and user is admin/moderator
+            if (_spotValidationService == null || !IsUserAdmin())
+            {
+                System.Diagnostics.Debug.WriteLine("[FlyoutMenuViewModel] Validation service not available or user not admin - skipping badge update");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine("[FlyoutMenuViewModel] Calling GetValidationStatsAsync...");
+            var statsResult = await _spotValidationService.GetValidationStatsAsync();
+            
+            System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Stats result - Success: {statsResult.Success}, Error: {statsResult.ErrorMessage}");
+            
+            if (statsResult.Success && statsResult.Data != null)
+            {
+                var pendingCount = statsResult.Data.PendingCount;
+                var totalSpots = statsResult.Data.TotalSpots;
+                
+                System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Stats data - PendingCount: {pendingCount}, TotalSpots: {totalSpots}");
+                
+                var validationItem = MenuItems.FirstOrDefault(m => m.Id == "validation");
+                System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Found validation menu item: {validationItem != null}");
+                
+                if (validationItem != null)
+                {
+                    if (pendingCount > 0)
+                    {
+                        validationItem.BadgeText = pendingCount.ToString();
+                        validationItem.ShowBadge = true;
+                        System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Updated validation badge: {pendingCount} pending spots");
+                    }
+                    else
+                    {
+                        validationItem.ShowBadge = false;
+                        validationItem.BadgeText = "";
+                        System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] No pending spots, hiding badge");
+                    }
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Failed to get stats or no data returned");
+            }
+            System.Diagnostics.Debug.WriteLine("[FlyoutMenuViewModel] === END BADGE DEBUG ===");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Error updating validation badge: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Stack trace: {ex.StackTrace}");
+        }
+    }
+
     [RelayCommand]
     private async Task NavigateToAsync(string route)
     {
@@ -176,6 +283,23 @@ public partial class FlyoutMenuViewModel : ObservableObject
         {
             if (string.IsNullOrEmpty(route))
                 return;
+
+#if DEBUG
+            // Handle debug routes
+            if (route == "debug_auth")
+            {
+                await ShowAuthDebugInfoAsync();
+                Shell.Current.FlyoutIsPresented = false;
+                return;
+            }
+            
+            if (route == "debug_login_admin")
+            {
+                await DebugLoginAsAdminAsync();
+                Shell.Current.FlyoutIsPresented = false;
+                return;
+            }
+#endif
 
             await Shell.Current.GoToAsync(route);
             Shell.Current.FlyoutIsPresented = false;
@@ -185,6 +309,102 @@ public partial class FlyoutMenuViewModel : ObservableObject
             System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Navigation error: {ex.Message}");
         }
     }
+
+#if DEBUG
+    private async Task ShowAuthDebugInfoAsync()
+    {
+        try
+        {
+            var currentUser = _authenticationService?.CurrentUser;
+            var isAuthenticated = currentUser != null;
+            var isAdmin = IsUserAdmin();
+
+            var debugInfo = $"""
+                🔍 Authentication Debug Info:
+                
+                📍 Service Status: {(_authenticationService != null ? "Available" : "NULL")}
+                🔐 Is Authenticated: {isAuthenticated}
+                👤 Current User: {currentUser?.Username ?? "None"}
+                🆔 User ID: {currentUser?.Id ?? 0}
+                🎭 Account Type: {currentUser?.AccountType ?? Models.Enums.AccountType.Standard}
+                ⚖️ Is Admin/Moderator: {isAdmin}
+                
+                📋 Full User Details:
+                {System.Text.Json.JsonSerializer.Serialize(currentUser, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })}
+                """;
+
+            System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] {debugInfo}");
+            
+            await Shell.Current.DisplayAlert("🐛 Auth Debug", 
+                $"User: {currentUser?.Username ?? "Not authenticated"}\n" +
+                $"Account Type: {currentUser?.AccountType ?? Models.Enums.AccountType.Standard}\n" +
+                $"Is Admin: {isAdmin}\n\n" +
+                "Check debug console for full details.", 
+                "OK");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] ShowAuthDebugInfoAsync error: {ex.Message}");
+            await Shell.Current.DisplayAlert("Debug Error", ex.Message, "OK");
+        }
+    }
+
+    private async Task DebugLoginAsAdminAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[FlyoutMenuViewModel] Debug: Attempting admin login...");
+
+            // Try to login with the default admin credentials
+            var result = await _authenticationService.LoginAsync("admin@subexplore.com", "AdminPassword123!");
+            
+            if (result.IsSuccess)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Debug: Admin login successful! User: {result.User?.Username}");
+                
+                // Refresh the menu to show admin items
+                InitializeMenuItems();
+                
+                await Shell.Current.DisplayAlert("🔑 Debug Login", 
+                    $"Successfully logged in as: {result.User?.Username}\n" +
+                    $"Account Type: {result.User?.AccountType}\n\n" +
+                    "Admin menu should now be visible!", 
+                    "OK");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Debug: Admin login failed: {result.ErrorMessage}");
+                
+                // Try alternative approach - create temp admin session
+                await CreateTempAdminSessionAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] DebugLoginAsAdminAsync error: {ex.Message}");
+            await Shell.Current.DisplayAlert("Debug Login Error", 
+                $"Login attempt failed: {ex.Message}\n\nTry using the direct Validation Page access instead.", 
+                "OK");
+        }
+    }
+
+    private async Task CreateTempAdminSessionAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[FlyoutMenuViewModel] Debug: Creating temporary admin session...");
+            
+            await Shell.Current.DisplayAlert("🔧 Debug Mode", 
+                "Login failed, but you can still access the Validation Page directly via the debug menu.\n\n" +
+                "This bypasses authentication for testing purposes only.", 
+                "OK");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] CreateTempAdminSessionAsync error: {ex.Message}");
+        }
+    }
+#endif
 
     [RelayCommand]
     private async Task LogoutAsync()
@@ -251,6 +471,7 @@ public partial class FlyoutMenuViewModel : ObservableObject
     {
         InitializeMenuItems();
         UpdateUserInfo();
+        _ = UpdateValidationBadgeAsync(); // Update badge asynchronously
     }
 
     private void OnAuthenticationStateChanged(object? sender, AuthenticationStateChangedEventArgs e)
@@ -291,11 +512,18 @@ public partial class FlyoutMenuViewModel : ObservableObject
     {
         // Check if current user is admin based on AccountType
         if (_authenticationService?.CurrentUser == null)
+        {
+            System.Diagnostics.Debug.WriteLine("[FlyoutMenuViewModel] IsUserAdmin: No current user authenticated");
             return false;
+        }
             
         var user = _authenticationService.CurrentUser;
-        return user.AccountType == Models.Enums.AccountType.Administrator || 
-               user.AccountType == Models.Enums.AccountType.ExpertModerator;
+        var isAdmin = user.AccountType == Models.Enums.AccountType.Administrator || 
+                      user.AccountType == Models.Enums.AccountType.ExpertModerator;
+        
+        System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] IsUserAdmin: User {user.Username} (ID:{user.Id}) AccountType:{user.AccountType} IsAdmin:{isAdmin}");
+        
+        return isAdmin;
     }
 }
 

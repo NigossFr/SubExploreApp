@@ -51,7 +51,10 @@ namespace SubExplore.ViewModels.Base
 
         protected AuthorizedViewModelBase(
             IAuthorizationService authorizationService,
-            IAuthenticationService authenticationService)
+            IAuthenticationService authenticationService,
+            IDialogService dialogService = null,
+            INavigationService navigationService = null)
+            : base(dialogService, navigationService)
         {
             _authorizationService = authorizationService;
             _authenticationService = authenticationService;

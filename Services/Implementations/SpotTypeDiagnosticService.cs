@@ -124,6 +124,19 @@ namespace SubExplore.Services.Implementations
                     report += "  ✅ Aucun problème détecté\n";
                 }
 
+                // 5. Recommandations
+                report += "\n💡 RECOMMANDATIONS:\n";
+                if (problems > 0)
+                {
+                    report += "  🔧 Exécuter SpotTypeMigrationService.ExecuteMigrationAsync()\n";
+                    report += "  🔧 Puis SpotTypeDiagnosticService.RepairSpotTypesAsync()\n";
+                    report += "  🔄 Redémarrer l'application après réparation\n";
+                }
+                else
+                {
+                    report += "  ✅ Système en bon état - aucune action requise\n";
+                }
+
                 report += "\n=== FIN DU DIAGNOSTIC ===";
                 return report;
             }
@@ -181,6 +194,72 @@ namespace SubExplore.Services.Implementations
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Erreur lors de la réparation des types de spots");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Validates the complete spot type ecosystem for MySpotsPage compatibility
+        /// </summary>
+        public async Task<bool> ValidateSpotTypeEcosystemAsync()
+        {
+            try
+            {
+                _logger.LogInformation("🔍 Validating complete spot type ecosystem...");
+                
+                // 1. Check if core spot types exist and are active
+                var requiredTypes = new[] { "Apnée", "Photo sous-marine", "Plongée bouteille", "Randonnée sous-marine" };
+                var activeTypes = await _context.SpotTypes
+                    .Where(st => st.IsActive && requiredTypes.Contains(st.Name))
+                    .Select(st => st.Name)
+                    .ToListAsync();
+
+                var missingTypes = requiredTypes.Except(activeTypes).ToList();
+                if (missingTypes.Any())
+                {
+                    _logger.LogError("❌ Missing required spot types: {MissingTypes}", string.Join(", ", missingTypes));
+                    return false;
+                }
+
+                // 2. Check for orphaned spots (spots with invalid TypeId)
+                var orphanedSpots = await _context.Spots
+                    .Where(s => !_context.SpotTypes.Any(st => st.Id == s.TypeId && st.IsActive))
+                    .CountAsync();
+
+                if (orphanedSpots > 0)
+                {
+                    _logger.LogWarning("⚠️ Found {OrphanedSpots} spots with invalid/inactive TypeId", orphanedSpots);
+                }
+
+                // 3. Check database constraints and foreign keys
+                var spotsWithNullType = await _context.Spots
+                    .Where(s => s.TypeId == 0 || s.TypeId == null)
+                    .CountAsync();
+
+                if (spotsWithNullType > 0)
+                {
+                    _logger.LogError("❌ Found {Count} spots with null TypeId", spotsWithNullType);
+                    return false;
+                }
+
+                // 4. Validate MySpotsPage can load properly
+                var testUserId = 1; // Admin user
+                var userSpots = await _context.Spots
+                    .Include(s => s.Type)
+                    .Where(s => s.CreatorId == testUserId && s.Type != null && s.Type.IsActive)
+                    .CountAsync();
+
+                _logger.LogInformation("✅ Spot type ecosystem validation complete:");
+                _logger.LogInformation("  - Required types present: {RequiredTypes}", string.Join(", ", activeTypes));
+                _logger.LogInformation("  - Orphaned spots: {OrphanedSpots}", orphanedSpots);
+                _logger.LogInformation("  - Spots with null types: {NullTypeSpots}", spotsWithNullType);
+                _logger.LogInformation("  - Test user spots loadable: {UserSpots}", userSpots);
+
+                return orphanedSpots == 0 && spotsWithNullType == 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error validating spot type ecosystem");
                 return false;
             }
         }

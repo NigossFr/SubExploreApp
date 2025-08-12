@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore;
 using SubExplore.Models.Domain;
 using SubExplore.Models.Enums;
 using SubExplore.Models.Validation;
@@ -60,7 +61,7 @@ namespace SubExplore.ViewModels.Admin
             IAuthenticationService authenticationService,
             IDialogService dialogService,
             INavigationService navigationService) 
-            : base(authorizationService, authenticationService)
+            : base(authorizationService, authenticationService, dialogService, navigationService)
         {
             try
             {
@@ -133,29 +134,41 @@ namespace SubExplore.ViewModels.Admin
                 IsLoading = true;
                 IsError = false;
 
-                // Charger les données en parallèle
-                var pendingTask = _spotValidationService.GetPendingValidationSpotsAsync();
-                var underReviewTask = _spotValidationService.GetSpotsUnderReviewAsync(CurrentUser?.Id ?? 0);
-                var safetyTask = _spotValidationService.GetSpotsFlaggedForSafetyAsync();
-                var statsTask = _spotValidationService.GetValidationStatsAsync();
+                // DEBUG: Let's add detailed debugging to understand the discrepancy
+                System.Diagnostics.Debug.WriteLine("[SpotValidationViewModel] === DEBUGGING DATA LOAD ===");
 
-                await Task.WhenAll(pendingTask, underReviewTask, safetyTask, statsTask);
-
-                var pendingResult = await pendingTask;
-                var underReviewResult = await underReviewTask;
-                var safetyResult = await safetyTask;
-                var statsResult = await statsTask;
+                // Load data sequentially to avoid DbContext concurrency issues
+                var pendingResult = await _spotValidationService.GetPendingValidationSpotsAsync();
+                var underReviewResult = await _spotValidationService.GetSpotsUnderReviewAsync(CurrentUser?.Id ?? 0);
+                var safetyResult = await _spotValidationService.GetSpotsFlaggedForSafetyAsync();
+                var statsResult = await _spotValidationService.GetValidationStatsAsync();
+                
+                // DEBUG: Log detailed results
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Pending Result - Success: {pendingResult.Success}, Error: {pendingResult.ErrorMessage}");
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Pending Data Count: {pendingResult.Data?.Count ?? 0}");
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Stats Result - Success: {statsResult.Success}, PendingCount: {statsResult.Data?.PendingCount ?? 0}");
+                
+                if (pendingResult.Data != null)
+                {
+                    foreach (var spot in pendingResult.Data)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Pending Spot: {spot.Id} - {spot.Name} (Status: {spot.ValidationStatus})");
+                    }
+                }
                 
                 PendingSpots = new ObservableCollection<Spot>(pendingResult.Success ? pendingResult.Data ?? new List<Spot>() : new List<Spot>());
                 SpotsUnderReview = new ObservableCollection<Spot>(underReviewResult.Success ? underReviewResult.Data ?? new List<Spot>() : new List<Spot>());
                 SafetyFlaggedSpots = new ObservableCollection<Spot>(safetyResult.Success ? safetyResult.Data ?? new List<Spot>() : new List<Spot>());
                 ValidationStats = statsResult.Success ? statsResult.Data : null;
 
-                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Loaded: {PendingSpots.Count} pending, {SpotsUnderReview.Count} under review, {SafetyFlaggedSpots.Count} safety flagged");
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Final Collections - Pending: {PendingSpots.Count}, UnderReview: {SpotsUnderReview.Count}, Safety: {SafetyFlaggedSpots.Count}");
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Stats Object - PendingCount: {ValidationStats?.PendingCount ?? -1}");
+                System.Diagnostics.Debug.WriteLine("[SpotValidationViewModel] === END DEBUG ===");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] LoadDataAsync error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Stack trace: {ex.StackTrace}");
                 IsError = true;
                 ErrorMessage = "Erreur lors du chargement des données de validation.";
             }
@@ -239,6 +252,9 @@ namespace SubExplore.ViewModels.Admin
                     await _dialogService.ShowAlertAsync("Succès", "Le spot a été assigné pour révision.", "D'accord");
                     await LoadDataAsync();
                     SelectedSpot = null;
+                    
+                    // Trigger flyout menu badge refresh
+                    await TriggerFlyoutBadgeRefreshAsync();
                 }
                 else
                 {
@@ -297,6 +313,9 @@ namespace SubExplore.ViewModels.Admin
                     await LoadDataAsync();
                     SelectedSpot = null;
                     ValidationNotes = string.Empty;
+                    
+                    // Trigger flyout menu badge refresh
+                    await TriggerFlyoutBadgeRefreshAsync();
                 }
                 else
                 {
@@ -362,6 +381,162 @@ namespace SubExplore.ViewModels.Admin
             }
         }
 
+#if DEBUG
+        [RelayCommand]
+        private async Task CreateTestDataAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                
+                // Create test validation data
+                await CreateValidationTestDataAsync();
+                
+                await _dialogService.ShowAlertAsync("Test Data", 
+                    "Données de test créées:\n" +
+                    "- 1 spot Pending\n" + 
+                    "- 1 spot UnderReview\n" +
+                    "- 1 spot SafetyReview\n\n" +
+                    "Rechargement des données...", "OK");
+                
+                // Reload data to show the new test spots
+                await LoadDataAsync();
+                
+                // Trigger flyout menu badge refresh
+                await TriggerFlyoutBadgeRefreshAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] CreateTestDataAsync error: {ex.Message}");
+                await _dialogService.ShowAlertAsync("Erreur", $"Erreur lors de la création des données de test: {ex.Message}", "D'accord");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+        
+        private async Task CreateValidationTestDataAsync()
+        {
+            // Direct database manipulation to create test spots with proper validation status
+            var connection = _spotValidationService.GetType().GetField("_context", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(_spotValidationService) as SubExplore.DataAccess.SubExploreDbContext;
+                
+            if (connection != null)
+            {
+                // Check if test spots already exist
+                var existingTestSpots = await connection.Spots
+                    .Where(s => s.Name.StartsWith("[VALIDATION-TEST]"))
+                    .ToListAsync();
+
+                if (existingTestSpots.Any())
+                {
+                    // Update existing test spots status
+                    var statuses = new[] 
+                    { 
+                        Models.Enums.SpotValidationStatus.Pending, 
+                        Models.Enums.SpotValidationStatus.UnderReview, 
+                        Models.Enums.SpotValidationStatus.SafetyReview 
+                    };
+                    
+                    for (int i = 0; i < existingTestSpots.Count && i < statuses.Length; i++)
+                    {
+                        existingTestSpots[i].ValidationStatus = statuses[i];
+                    }
+                }
+                else
+                {
+                    // Create new test spots
+                    var defaultUser = await connection.Users.FirstOrDefaultAsync();
+                    var defaultSpotType = await connection.SpotTypes.FirstOrDefaultAsync(st => st.IsActive);
+
+                    if (defaultUser != null && defaultSpotType != null)
+                    {
+                        var testSpots = new[]
+                        {
+                            new Models.Domain.Spot
+                            {
+                                Name = "[VALIDATION-TEST] Spot en attente",
+                                Description = "Spot de test - Pending",
+                                Latitude = 43.2965M,
+                                Longitude = 5.3698M,
+                                MaxDepth = 15,
+                                DifficultyLevel = Models.Enums.DifficultyLevel.Beginner,
+                                ValidationStatus = Models.Enums.SpotValidationStatus.Pending,
+                                CreatorId = defaultUser.Id,
+                                TypeId = defaultSpotType.Id,
+                                CreatedAt = DateTime.UtcNow.AddDays(-2)
+                            },
+                            new Models.Domain.Spot
+                            {
+                                Name = "[VALIDATION-TEST] Spot en cours",
+                                Description = "Spot de test - UnderReview",
+                                Latitude = 43.2089M,
+                                Longitude = 5.4236M,
+                                MaxDepth = 25,
+                                DifficultyLevel = Models.Enums.DifficultyLevel.Intermediate,
+                                ValidationStatus = Models.Enums.SpotValidationStatus.UnderReview,
+                                CreatorId = defaultUser.Id,
+                                TypeId = defaultSpotType.Id,
+                                CreatedAt = DateTime.UtcNow.AddDays(-1)
+                            },
+                            new Models.Domain.Spot
+                            {
+                                Name = "[VALIDATION-TEST] Spot sécurité",
+                                Description = "Spot de test - SafetyReview",
+                                Latitude = 43.0131M,
+                                Longitude = 6.3889M,
+                                MaxDepth = 40,
+                                DifficultyLevel = Models.Enums.DifficultyLevel.Advanced,
+                                ValidationStatus = Models.Enums.SpotValidationStatus.SafetyReview,
+                                CreatorId = defaultUser.Id,
+                                TypeId = defaultSpotType.Id,
+                                CreatedAt = DateTime.UtcNow.AddHours(-12)
+                            }
+                        };
+
+                        connection.Spots.AddRange(testSpots);
+                    }
+                }
+
+                await connection.SaveChangesAsync();
+            }
+        }
+#endif
+
+        private async Task TriggerFlyoutBadgeRefreshAsync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[SpotValidationViewModel] Triggering flyout badge refresh...");
+                
+                // Access the AppShell and trigger menu refresh
+                if (Shell.Current is AppShell appShell)
+                {
+                    // Force refresh the flyout menu which will update the validation badge
+                    var flyoutMenuViewModel = appShell.Resources["FlyoutMenuViewModel"] as FlyoutMenuViewModel;
+                    if (flyoutMenuViewModel != null)
+                    {
+                        flyoutMenuViewModel.RefreshMenu();
+                        System.Diagnostics.Debug.WriteLine("[SpotValidationViewModel] Successfully triggered flyout menu refresh");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[SpotValidationViewModel] FlyoutMenuViewModel not found in AppShell resources");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[SpotValidationViewModel] Shell.Current is not AppShell");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationViewModel] Error triggering flyout badge refresh: {ex.Message}");
+                // Don't throw - this is just a UI update, not critical
+            }
+        }
+
         private async Task ValidateSpotAsync(SpotValidationStatus status, string notes)
         {
             if (SelectedSpot == null || CurrentUser == null) return;
@@ -389,6 +564,9 @@ namespace SubExplore.ViewModels.Admin
                     await LoadDataAsync();
                     SelectedSpot = null;
                     ValidationNotes = string.Empty;
+                    
+                    // Trigger flyout menu badge refresh
+                    await TriggerFlyoutBadgeRefreshAsync();
                 }
                 else
                 {

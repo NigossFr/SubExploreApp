@@ -93,7 +93,7 @@ namespace SubExplore.ViewModels.Profile
             IThemeService themeService,
             IAuthorizationService authorizationService,
             IAuthenticationService authenticationService)
-            : base(authorizationService, authenticationService)
+            : base(authorizationService, authenticationService, dialogService, navigationService)
         {
             _userProfileService = userProfileService;
             _dialogService = dialogService;

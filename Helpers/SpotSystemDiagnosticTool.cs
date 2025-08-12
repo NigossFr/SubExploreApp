@@ -191,10 +191,16 @@ namespace SubExplore.Helpers
         {
             System.Diagnostics.Debug.WriteLine("🔎 [DIAGNOSTIC] Testing filtering queries...");
             
-            // Tester chaque catégorie d'activité
-            var categories = Enum.GetValues<ActivityCategory>();
+            // Tester chaque catégorie d'activité (éviter les doublons des enum obsolètes)
+            var uniqueCategories = new HashSet<ActivityCategory>
+            {
+                ActivityCategory.Activity,
+                ActivityCategory.Structure, 
+                ActivityCategory.Shop,
+                ActivityCategory.Other
+            };
             
-            foreach (var category in categories)
+            foreach (var category in uniqueCategories)
             {
                 try
                 {

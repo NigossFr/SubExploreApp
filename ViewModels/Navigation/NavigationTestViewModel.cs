@@ -2,7 +2,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels.Base;
-using SubExplore.ViewModels.Common;
 using SubExplore.Helpers;
 
 namespace SubExplore.ViewModels.Navigation
@@ -10,8 +9,7 @@ namespace SubExplore.ViewModels.Navigation
     public partial class NavigationTestViewModel : ViewModelBase
     {
         private readonly INavigationService _navigationService;
-        private readonly NavigationBarViewModel _navigationBarViewModel;
-        private int _breadcrumbCounter = 0;
+        private int _testCounter = 0;
 
         [ObservableProperty]
         private string navigationHistoryInfo = "Chargement...";
@@ -25,10 +23,15 @@ namespace SubExplore.ViewModels.Navigation
         [ObservableProperty]
         private int breadcrumbCount;
 
-        public NavigationTestViewModel(INavigationService navigationService, NavigationBarViewModel navigationBarViewModel)
+        [ObservableProperty]
+        private int transitionCount;
+
+        [ObservableProperty]
+        private int navigationCount;
+
+        public NavigationTestViewModel(INavigationService navigationService)
         {
             _navigationService = navigationService;
-            _navigationBarViewModel = navigationBarViewModel;
             Title = "Test de Navigation";
         }
 
@@ -38,11 +41,7 @@ namespace SubExplore.ViewModels.Navigation
             {
                 IsLoading = true;
                 
-                // Initialize navigation bar
-                _navigationBarViewModel.UpdatePageInfo("🧪 Test de Navigation", "Tests des fonctionnalités de navigation");
-                _navigationBarViewModel.AddBreadcrumb("Accueil", "map");
-                _navigationBarViewModel.AddBreadcrumb("Tests", "navigationtest", true);
-                
+                // Initialize navigation statistics
                 RefreshNavigationInfo();
                 
                 await Task.Delay(500); // Simulate loading
@@ -67,11 +66,8 @@ namespace SubExplore.ViewModels.Navigation
         [RelayCommand]
         private void AddBreadcrumb()
         {
-            _breadcrumbCounter++;
-            var breadcrumbTitle = $"Test {_breadcrumbCounter}";
-            var breadcrumbRoute = $"test{_breadcrumbCounter}";
-            
-            _navigationBarViewModel.AddBreadcrumb(breadcrumbTitle, breadcrumbRoute);
+            _testCounter++;
+            BreadcrumbCount = _testCounter;
             RefreshNavigationInfo();
         }
 
@@ -80,6 +76,8 @@ namespace SubExplore.ViewModels.Navigation
         {
             try
             {
+                TransitionCount++;
+                
                 // Simulate page transition effect
                 if (Application.Current?.MainPage is Page currentPage)
                 {
@@ -87,6 +85,8 @@ namespace SubExplore.ViewModels.Navigation
                     await Task.Delay(100);
                     await NavigationTransitions.ApplyScaleTransition(currentPage, true, 200);
                 }
+                
+                RefreshNavigationInfo();
             }
             catch (Exception ex)
             {
@@ -99,6 +99,8 @@ namespace SubExplore.ViewModels.Navigation
         {
             try
             {
+                NavigationCount++;
+                RefreshNavigationInfo();
                 await _navigationService.NavigateToAsync<ViewModels.Map.MapViewModel>();
             }
             catch (Exception ex)
@@ -113,6 +115,8 @@ namespace SubExplore.ViewModels.Navigation
         {
             try
             {
+                NavigationCount++;
+                RefreshNavigationInfo();
                 await _navigationService.NavigateToAsync<ViewModels.Favorites.FavoriteSpotsViewModel>();
             }
             catch (Exception ex)
@@ -127,6 +131,8 @@ namespace SubExplore.ViewModels.Navigation
         {
             try
             {
+                NavigationCount++;
+                RefreshNavigationInfo();
                 await _navigationService.NavigateToAsync<ViewModels.Profile.UserProfileViewModel>();
             }
             catch (Exception ex)
@@ -141,6 +147,8 @@ namespace SubExplore.ViewModels.Navigation
         {
             try
             {
+                NavigationCount++;
+                RefreshNavigationInfo();
                 await _navigationService.GoToHomeAsync();
             }
             catch (Exception ex)
@@ -156,11 +164,10 @@ namespace SubExplore.ViewModels.Navigation
             {
                 HistoryCount = _navigationService.GetNavigationHistoryCount();
                 CurrentPage = _navigationService.GetCurrentNavigationPath();
-                BreadcrumbCount = _navigationBarViewModel.BreadcrumbItems.Count;
                 
-                NavigationHistoryInfo = $"Historique: {HistoryCount} pages • Fil d'Ariane: {BreadcrumbCount} éléments";
+                NavigationHistoryInfo = $"Historique: {HistoryCount} pages • Tests: {TransitionCount} transitions • Navigations: {NavigationCount}";
                 
-                System.Diagnostics.Debug.WriteLine($"[NavigationTestViewModel] Navigation info refreshed - History: {HistoryCount}, Breadcrumbs: {BreadcrumbCount}");
+                System.Diagnostics.Debug.WriteLine($"[NavigationTestViewModel] Navigation info refreshed - History: {HistoryCount}, Tests: {TransitionCount}, Navigations: {NavigationCount}");
             }
             catch (Exception ex)
             {

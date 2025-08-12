@@ -272,7 +272,7 @@
                                     <!-- Type and Difficulty -->
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <Label Grid.Column="0"
-                                               Text="{Binding Type.Name}"
+                                               Text="{Binding Type.Name, FallbackValue='Type non défini'}"
                                                FontSize="14"
                                                FontAttributes="Bold"
                                                TextColor="{StaticResource Secondary}"
@@ -338,6 +338,38 @@
                 </CollectionView>
             </RefreshView>
         </Grid>
+
+        <!-- Debug/Diagnostic Buttons (visible in debug builds) -->
+        <StackLayout Grid.Row="1"
+                     HorizontalOptions="Start"
+                     VerticalOptions="End"
+                     Margin="20"
+                     Spacing="10">
+            
+            <!-- Quick Diagnosis Button -->
+            <Button Text="🔍"
+                    FontSize="16"
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    CornerRadius="25"
+                    BackgroundColor="{StaticResource Warning}"
+                    TextColor="White"
+                    Command="{Binding QuickDiagnoseSpotTypesCommand}"
+                    ToolTipProperties.Text="Diagnostic rapide des types de spots"
+                    AutomationId="QuickDiagnoseButton" />
+            
+            <!-- Full Repair Button -->
+            <Button Text="🔧"
+                    FontSize="16"
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    CornerRadius="25"
+                    BackgroundColor="{StaticResource Error}"
+                    TextColor="White"
+                    Command="{Binding DiagnoseAndRepairSpotTypesCommand}"
+                    ToolTipProperties.Text="Réparation complète des types de spots"
+                    AutomationId="RepairSpotTypesButton" />
+        </StackLayout>
 
         <!-- Floating Action Button -->
         <Button Grid.Row="1"

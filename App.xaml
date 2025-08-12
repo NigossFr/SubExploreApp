@@ -45,6 +45,7 @@
             <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
             <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
             <converters:BoolToObjectConverter x:Key="BoolToObjectConverter" />
+            <converters:IntToBoolConverter x:Key="IntToBoolConverter" />
             <converters:PriorityToStyleConverter x:Key="PriorityToStyleConverter" />
             <converters:WeatherIconConverter x:Key="WeatherIconConverter" />
             <converters:DifficultyLevelToFrenchConverter x:Key="DifficultyLevelToFrenchConverter" />

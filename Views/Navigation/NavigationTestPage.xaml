@@ -5,64 +5,151 @@
              xmlns:common="clr-namespace:SubExplore.Views.Common"
              xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Navigation"
              x:DataType="viewmodels:NavigationTestViewModel"
-             Title="Test de Navigation">
+             Title="{Binding Title}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}">
 
     <Grid RowDefinitions="Auto,*">
+
+        <!-- Header Section -->
+        <Frame Grid.Row="0" 
+               Padding="15"
+               BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15">
+                
+                <!-- Navigation Statistics Cards -->
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+                    
+                    <!-- History Count -->
+                    <Frame Grid.Column="0"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding HistoryCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Historique"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Breadcrumb Count -->
+                    <Frame Grid.Column="1"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding BreadcrumbCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Breadcrumbs"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Current Page -->
+                    <Frame Grid.Column="2"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="📍"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Page Actuelle"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Navigation Tests -->
+                    <Frame Grid.Column="3"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource Accent}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding TransitionCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Tests"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                </Grid>
+            </StackLayout>
+        </Frame>
         
-        <!-- Enhanced Navigation Bar -->
-        <common:NavigationBarView Grid.Row="0" />
-        
-        <!-- Test Content -->
-        <ScrollView Grid.Row="1" Padding="20">
+        <!-- Content -->
+        <ScrollView Grid.Row="1" Padding="15">
             <StackLayout Spacing="20">
                 
-                <Frame BackgroundColor="{StaticResource Primary}" 
-                       CornerRadius="10" 
-                       Padding="20"
-                       HasShadow="True">
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                       CornerRadius="12" 
+                       Padding="16"
+                       HasShadow="False">
                     <StackLayout>
-                        <Label Text="🧪 Test de Navigation Améliorée" 
-                               FontSize="24" 
+                        <Label Text="🧪 Test de Navigation" 
+                               FontSize="22" 
                                FontAttributes="Bold" 
                                TextColor="White" 
                                HorizontalOptions="Center" />
-                        <Label Text="Testez les nouvelles fonctionnalités de navigation"
+                        <Label Text="Testez les fonctionnalités de navigation"
                                FontSize="14"
                                TextColor="White"
-                               Opacity="0.8"
+                               Opacity="0.9"
                                HorizontalOptions="Center"
                                Margin="0,5,0,0" />
                     </StackLayout>
                 </Frame>
 
                 <!-- Navigation Tests -->
-                <Frame BackgroundColor="{StaticResource Surface}"
-                       BorderColor="{StaticResource Secondary}"
-                       CornerRadius="10"
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                       BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
+                       CornerRadius="12"
                        Padding="15"
-                       HasShadow="True">
+                       HasShadow="False">
                     
                     <StackLayout Spacing="15">
                         <Label Text="Tests de Navigation" 
                                FontSize="18" 
                                FontAttributes="Bold" 
-                               TextColor="{StaticResource TextPrimary}" />
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
 
                         <!-- Navigation History Test -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackLayout Grid.Column="0">
                                 <Label Text="Historique de Navigation"
                                        FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}" />
+                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Label Text="{Binding NavigationHistoryInfo}"
                                        FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}" />
+                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                             </StackLayout>
                             <Button Grid.Column="1"
                                     Text="📋"
                                     FontSize="16"
                                     Command="{Binding RefreshHistoryCommand}"
-                                    BackgroundColor="{StaticResource Secondary}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                     TextColor="White"
                                     WidthRequest="40"
                                     HeightRequest="40"
@@ -74,16 +161,16 @@
                             <StackLayout Grid.Column="0">
                                 <Label Text="Test des Breadcrumbs"
                                        FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}" />
+                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Label Text="Ajouter des éléments au fil d'Ariane"
                                        FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}" />
+                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                             </StackLayout>
                             <Button Grid.Column="1"
                                     Text="➕"
                                     FontSize="16"
                                     Command="{Binding AddBreadcrumbCommand}"
-                                    BackgroundColor="{StaticResource Primary}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                     TextColor="White"
                                     WidthRequest="40"
                                     HeightRequest="40"
@@ -95,16 +182,16 @@
                             <StackLayout Grid.Column="0">
                                 <Label Text="Test des Transitions"
                                        FontSize="16"
-                                       TextColor="{StaticResource TextPrimary}" />
+                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Label Text="Tester différents types de transitions"
                                        FontSize="12"
-                                       TextColor="{StaticResource TextSecondary}" />
+                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                             </StackLayout>
                             <Button Grid.Column="1"
                                     Text="✨"
                                     FontSize="16"
                                     Command="{Binding TestTransitionCommand}"
-                                    BackgroundColor="{StaticResource Accent}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource Accent}}"
                                     TextColor="White"
                                     WidthRequest="40"
                                     HeightRequest="40"
@@ -114,38 +201,38 @@
                 </Frame>
 
                 <!-- Quick Navigation Tests -->
-                <Frame BackgroundColor="{StaticResource Surface}"
-                       BorderColor="{StaticResource Secondary}"
-                       CornerRadius="10"
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                       BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
+                       CornerRadius="12"
                        Padding="15"
-                       HasShadow="True">
+                       HasShadow="False">
                     
                     <StackLayout Spacing="15">
                         <Label Text="Navigation Rapide" 
                                FontSize="18" 
                                FontAttributes="Bold" 
-                               TextColor="{StaticResource TextPrimary}" />
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
                             
                             <Button Grid.Row="0" Grid.Column="0"
                                     Text="Carte"
                                     Command="{Binding NavigateToMapCommand}"
-                                    BackgroundColor="{StaticResource Primary}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                     TextColor="White"
                                     CornerRadius="8" />
                                     
                             <Button Grid.Row="0" Grid.Column="1"
                                     Text="Favoris"
                                     Command="{Binding NavigateToFavoritesCommand}"
-                                    BackgroundColor="{StaticResource Secondary}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                                     TextColor="White"
                                     CornerRadius="8" />
                                     
                             <Button Grid.Row="1" Grid.Column="0"
                                     Text="Profil"
                                     Command="{Binding NavigateToProfileCommand}"
-                                    BackgroundColor="{StaticResource Accent}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource Accent}}"
                                     TextColor="White"
                                     CornerRadius="8" />
                                     
@@ -160,50 +247,60 @@
                 </Frame>
 
                 <!-- Navigation Stats -->
-                <Frame BackgroundColor="{StaticResource Surface}"
-                       BorderColor="{StaticResource Secondary}"
-                       CornerRadius="10"
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                       BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
+                       CornerRadius="12"
                        Padding="15"
-                       HasShadow="True">
+                       HasShadow="False">
                     
                     <StackLayout>
                         <Label Text="Statistiques de Navigation" 
                                FontSize="18" 
                                FontAttributes="Bold" 
-                               TextColor="{StaticResource TextPrimary}"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                Margin="0,0,0,10" />
 
-                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="5">
                             
                             <Label Grid.Row="0" Grid.Column="0"
                                    Text="Page Actuelle:"
                                    FontSize="14"
-                                   TextColor="{StaticResource TextSecondary}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                             <Label Grid.Row="0" Grid.Column="1"
                                    Text="{Binding CurrentPage}"
                                    FontSize="14"
                                    FontAttributes="Bold"
-                                   TextColor="{StaticResource TextPrimary}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                    
                             <Label Grid.Row="1" Grid.Column="0"
                                    Text="Historique:"
                                    FontSize="14"
-                                   TextColor="{StaticResource TextSecondary}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                             <Label Grid.Row="1" Grid.Column="1"
                                    Text="{Binding HistoryCount}"
                                    FontSize="14"
                                    FontAttributes="Bold"
-                                   TextColor="{StaticResource TextPrimary}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                    
                             <Label Grid.Row="2" Grid.Column="0"
                                    Text="Breadcrumbs:"
                                    FontSize="14"
-                                   TextColor="{StaticResource TextSecondary}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                             <Label Grid.Row="2" Grid.Column="1"
                                    Text="{Binding BreadcrumbCount}"
                                    FontSize="14"
                                    FontAttributes="Bold"
-                                   TextColor="{StaticResource TextPrimary}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                   
+                            <Label Grid.Row="3" Grid.Column="0"
+                                   Text="Navigations:"
+                                   FontSize="14"
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            <Label Grid.Row="3" Grid.Column="1"
+                                   Text="{Binding NavigationCount}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
                     </StackLayout>
                 </Frame>

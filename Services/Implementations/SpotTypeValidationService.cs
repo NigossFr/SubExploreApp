@@ -20,36 +20,32 @@ namespace SubExplore.Services.Implementations
         private static readonly Dictionary<ActivityCategory, List<SpotTypeTemplate>> ExpectedSpotTypes = new()
         {
             {
-                ActivityCategory.Diving, new List<SpotTypeTemplate>
+                ActivityCategory.Activity, new List<SpotTypeTemplate>
                 {
-                    new("Plongée bouteille", "marker_scuba.png", "#0077BE", true, "Sites de plongée avec bouteille")
-                }
-            },
-            {
-                ActivityCategory.Freediving, new List<SpotTypeTemplate>
-                {
-                    new("Apnée", "marker_freediving.png", "#4A90E2", true, "Sites adaptés à la plongée en apnée")
-                }
-            },
-            {
-                ActivityCategory.Snorkeling, new List<SpotTypeTemplate>
-                {
-                    new("Randonnée sous-marine", "marker_snorkeling.png", "#87CEEB", false, "Sites de randonnée sous-marine")
-                }
-            },
-            {
-                ActivityCategory.UnderwaterPhotography, new List<SpotTypeTemplate>
-                {
+                    new("Plongée bouteille", "marker_scuba.png", "#0077BE", true, "Sites de plongée avec bouteille"),
+                    new("Apnée", "marker_freediving.png", "#4A90E2", true, "Sites adaptés à la plongée en apnée"),
+                    new("Randonnée sous-marine", "marker_snorkeling.png", "#87CEEB", false, "Sites de randonnée sous-marine"),
                     new("Photo sous-marine", "marker_photography.png", "#5DADE2", false, "Sites pour la photographie sous-marine")
+                }
+            },
+            {
+                ActivityCategory.Structure, new List<SpotTypeTemplate>
+                {
+                    new("Clubs", "marker_club.png", "#228B22", false, "Clubs de plongée"),
+                    new("Professionnels", "marker_pro.png", "#32CD32", true, "Centres professionnels"),
+                    new("Bases fédérales", "marker_federal.png", "#90EE90", true, "Structures officielles")
+                }
+            },
+            {
+                ActivityCategory.Shop, new List<SpotTypeTemplate>
+                {
+                    new("Boutiques", "marker_shop.png", "#FF8C00", false, "Magasins d'équipement")
                 }
             },
             {
                 ActivityCategory.Other, new List<SpotTypeTemplate>
                 {
-                    new("Clubs", "marker_club.png", "#228B22", false, "Clubs de plongée"),
-                    new("Professionnels", "marker_pro.png", "#32CD32", true, "Centres professionnels"),
-                    new("Bases fédérales", "marker_federal.png", "#90EE90", true, "Structures officielles"),
-                    new("Boutiques", "marker_shop.png", "#FF8C00", false, "Magasins d'équipement")
+                    new("Autres activités", "marker_other.png", "#808080", false, "Autres types d'activités")
                 }
             }
         };
@@ -72,8 +68,16 @@ namespace SubExplore.Services.Implementations
                 result.TotalActiveTypes = allTypes.Count(t => t.IsActive);
                 result.TotalInactiveTypes = allTypes.Count(t => !t.IsActive);
                 
-                // Check each category
-                foreach (var category in Enum.GetValues<ActivityCategory>())
+                // Check each category (avoid duplicates from obsolete enum values)
+                var uniqueCategories = new HashSet<ActivityCategory>
+                {
+                    ActivityCategory.Activity,
+                    ActivityCategory.Structure, 
+                    ActivityCategory.Shop,
+                    ActivityCategory.Other
+                };
+                
+                foreach (var category in uniqueCategories)
                 {
                     var categoryTypes = allTypes.Where(t => t.Category == category && t.IsActive).ToList();
                     result.CategoryCounts[category] = categoryTypes.Count;
@@ -124,10 +128,17 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                var allCategories = Enum.GetValues<ActivityCategory>();
+                // Use only unique categories to avoid duplicates from obsolete enum values
+                var uniqueCategories = new HashSet<ActivityCategory>
+                {
+                    ActivityCategory.Activity,
+                    ActivityCategory.Structure, 
+                    ActivityCategory.Shop,
+                    ActivityCategory.Other
+                };
                 var activeTypeCounts = await GetActiveTypeCountsByCategoryAsync();
                 
-                foreach (var category in allCategories)
+                foreach (var category in uniqueCategories)
                 {
                     if (!activeTypeCounts.ContainsKey(category) || activeTypeCounts[category] == 0)
                     {
@@ -160,8 +171,16 @@ namespace SubExplore.Services.Implementations
                 diagnostics.ActiveSpotTypes = allTypes.Count(t => t.IsActive);
                 diagnostics.InactiveSpotTypes = allTypes.Count(t => !t.IsActive);
                 
-                // Group by category
-                foreach (var category in Enum.GetValues<ActivityCategory>())
+                // Group by category (avoid duplicates from obsolete enum values)
+                var uniqueCategories = new HashSet<ActivityCategory>
+                {
+                    ActivityCategory.Activity,
+                    ActivityCategory.Structure, 
+                    ActivityCategory.Shop,
+                    ActivityCategory.Other
+                };
+                
+                foreach (var category in uniqueCategories)
                 {
                     var categoryTypes = allTypes.Where(t => t.Category == category).ToList();
                     diagnostics.TypesByCategory[category] = categoryTypes;
@@ -331,8 +350,16 @@ namespace SubExplore.Services.Implementations
                     .Select(g => new { Category = g.Key, Count = g.Count() })
                     .ToDictionaryAsync(x => x.Category, x => x.Count);
                 
-                // Ensure all categories are represented
-                foreach (var category in Enum.GetValues<ActivityCategory>())
+                // Ensure all unique categories are represented (avoid duplicates from obsolete enum values)
+                var uniqueCategories = new HashSet<ActivityCategory>
+                {
+                    ActivityCategory.Activity,
+                    ActivityCategory.Structure, 
+                    ActivityCategory.Shop,
+                    ActivityCategory.Other
+                };
+                
+                foreach (var category in uniqueCategories)
                 {
                     if (!counts.ContainsKey(category))
                     {

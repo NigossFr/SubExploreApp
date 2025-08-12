@@ -39,13 +39,61 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("[SpotValidationService] === DEBUGGING PENDING SPOTS QUERY ===");
                 var query = _context.Spots
                     .Include(s => s.Creator)
                     .Include(s => s.Type)
                     .Include(s => s.Media)
                     .Where(s => s.ValidationStatus == SpotValidationStatus.Pending);
 
+                // Count before filters
+                var countBeforeFilter = await query.CountAsync();
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationService] Spots with Pending status: {countBeforeFilter}");
+
                 // Apply filters
+                if (filter != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SpotValidationService] Applying filter: Status={filter.Status}, Category={filter.ActivityCategory}, Page={filter.Page}, PageSize={filter.PageSize}");
+                    query = ApplyValidationFilter(query, filter);
+                    var countAfterFilter = await query.CountAsync();
+                    System.Diagnostics.Debug.WriteLine($"[SpotValidationService] Spots after filter: {countAfterFilter}");
+                }
+
+                var spots = await query
+                    .OrderBy(s => s.CreatedAt)
+                    .Skip((filter?.Page - 1 ?? 0) * (filter?.PageSize ?? 20))
+                    .Take(filter?.PageSize ?? 20)
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationService] Final spots returned: {spots.Count}");
+                foreach (var spot in spots)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SpotValidationService] - Spot {spot.Id}: {spot.Name} (Status: {spot.ValidationStatus})");
+                }
+
+                _logger.LogInformation("Retrieved {Count} pending validation spots", spots.Count);
+                return ValidationResult<List<Spot>>.CreateSuccess(spots);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationService] Error in GetPendingValidationSpotsAsync: {ex.Message}");
+                _logger.LogError(ex, "Error getting pending validation spots");
+                return ValidationResult<List<Spot>>.CreateError($"Failed to retrieve pending spots: {ex.Message}");
+            }
+        }
+
+        public async Task<ValidationResult<List<Spot>>> GetSpotsUnderReviewAsync(int moderatorId, ValidationFilter? filter = null)
+        {
+            try
+            {
+                var query = _context.Spots
+                    .Include(s => s.Creator)
+                    .Include(s => s.Type)
+                    .Include(s => s.Media)
+                    .Where(s => s.ValidationStatus == SpotValidationStatus.UnderReview);
+
+                // Apply filters if provided
                 if (filter != null)
                 {
                     query = ApplyValidationFilter(query, filter);
@@ -58,33 +106,13 @@ namespace SubExplore.Services.Implementations
                     .ToListAsync()
                     .ConfigureAwait(false);
 
-                _logger.LogInformation("Retrieved {Count} pending validation spots", spots.Count);
+                _logger.LogInformation("Retrieved {Count} spots under review for moderator {ModeratorId}", spots.Count, moderatorId);
                 return ValidationResult<List<Spot>>.CreateSuccess(spots);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting pending validation spots");
-                return ValidationResult<List<Spot>>.CreateError($"Failed to retrieve pending spots: {ex.Message}");
-            }
-        }
-
-        public async Task<List<Spot>> GetSpotsUnderReviewAsync(int moderatorId)
-        {
-            try
-            {
-                return await _context.Spots
-                    .Include(s => s.Creator)
-                    .Include(s => s.Type)
-                    .Include(s => s.Media)
-                    .Where(s => s.ValidationStatus == SpotValidationStatus.UnderReview)
-                    .OrderBy(s => s.CreatedAt)
-                    .ToListAsync()
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[SpotValidationService] Error getting spots under review: {ex.Message}");
-                return new List<Spot>();
+                _logger.LogError(ex, "Error getting spots under review for moderator {ModeratorId}", moderatorId);
+                return ValidationResult<List<Spot>>.CreateError($"Failed to retrieve spots under review: {ex.Message}");
             }
         }
 
@@ -180,25 +208,80 @@ namespace SubExplore.Services.Implementations
             }
         }
 
-        public async Task<List<Spot>> GetSpotsFlaggedForSafetyAsync()
+        public async Task<ValidationResult<List<Spot>>> GetSpotsFlaggedForSafetyAsync(ValidationFilter? filter = null)
         {
             try
             {
-                return await _context.Spots
+                var query = _context.Spots
                     .Include(s => s.Creator)
                     .Include(s => s.Type)
                     .Include(s => s.Media)
-                    .Where(s => s.ValidationStatus == SpotValidationStatus.SafetyReview)
+                    .Where(s => s.ValidationStatus == SpotValidationStatus.SafetyReview);
+
+                // Apply filters if provided
+                if (filter != null)
+                {
+                    query = ApplyValidationFilter(query, filter);
+                }
+
+                var spots = await query
                     .OrderBy(s => s.CreatedAt)
-                    .ToListAsync();
+                    .Skip((filter?.Page - 1 ?? 0) * (filter?.PageSize ?? 20))
+                    .Take(filter?.PageSize ?? 20)
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+
+                _logger.LogInformation("Retrieved {Count} spots flagged for safety review", spots.Count);
+                return ValidationResult<List<Spot>>.CreateSuccess(spots);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[SpotValidationService] Error getting safety flagged spots: {ex.Message}");
-                return new List<Spot>();
+                _logger.LogError(ex, "Error getting safety flagged spots");
+                return ValidationResult<List<Spot>>.CreateError($"Failed to retrieve safety flagged spots: {ex.Message}");
             }
         }
 
+        public async Task<ValidationResult> CompleteSafetyReviewAsync(int spotId, int reviewerId, SafetyReviewResult reviewResult)
+        {
+            try
+            {
+                var spot = await _context.Spots.FindAsync(spotId);
+                if (spot == null) 
+                    return ValidationResult.CreateError("Spot not found");
+
+                var reviewer = await _context.Users.FindAsync(reviewerId);
+                if (reviewer == null) 
+                    return ValidationResult.CreateError("Reviewer not found");
+
+                // Vérifier les permissions
+                if (!_authorizationService.CanPerformSpotAction(reviewer, spot, SpotAction.SafetyReview))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SpotValidationService] User {reviewerId} not authorized for safety review");
+                    return ValidationResult.CreateError("Not authorized to perform safety review");
+                }
+
+                spot.LastSafetyReview = DateTime.UtcNow;
+                spot.ValidationStatus = reviewResult.IsSafe ? SpotValidationStatus.Approved : SpotValidationStatus.Rejected;
+
+                // Mettre à jour les notes de sécurité
+                if (!string.IsNullOrEmpty(reviewResult.ReviewNotes))
+                {
+                    spot.SafetyNotes = $"{spot.SafetyNotes}\n[Revue de sécurité {DateTime.UtcNow:yyyy-MM-dd}]: {reviewResult.ReviewNotes}";
+                }
+
+                await _context.SaveChangesAsync();
+
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationService] Safety review completed for spot {spotId}: {(reviewResult.IsSafe ? "Safe" : "Unsafe")}");
+                return ValidationResult.CreateSuccess();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error completing safety review for spot {SpotId}", spotId);
+                return ValidationResult.CreateError($"Failed to complete safety review: {ex.Message}");
+            }
+        }
+
+        // Legacy method for backward compatibility
         public async Task<bool> CompleteSafetyReviewAsync(int spotId, int reviewerId, bool isSafe, string reviewNotes)
         {
             try
@@ -241,6 +324,7 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("[SpotValidationService] === DEBUGGING STATS QUERY ===");
                 var query = _context.Spots.AsQueryable();
                 
                 if (fromDate.HasValue)
@@ -254,6 +338,8 @@ namespace SubExplore.Services.Implementations
                 var approvedCount = await query.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Approved);
                 var rejectedCount = await query.CountAsync(s => s.ValidationStatus == SpotValidationStatus.Rejected);
                 var safetyFlaggedCount = await query.CountAsync(s => s.ValidationStatus == SpotValidationStatus.SafetyReview);
+
+                System.Diagnostics.Debug.WriteLine($"[SpotValidationService] Stats counts - Total: {totalSpots}, Pending: {pendingCount}, UnderReview: {underReviewCount}, Approved: {approvedCount}, Rejected: {rejectedCount}, Safety: {safetyFlaggedCount}");
 
                 var approvalRate = totalSpots > 0 ? (double)approvedCount / totalSpots * 100 : 0;
 

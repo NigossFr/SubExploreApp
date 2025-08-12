@@ -6,113 +6,128 @@
              xmlns:models="clr-namespace:SubExplore.Models.Domain"
              x:DataType="vm:SpotValidationViewModel"
              Title="{Binding Title}"
-             Shell.BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
+             BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}">
 
-    <Shell.TitleView>
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            
-            <!-- Back Button -->
-            <Button Grid.Column="0"
-                    Text="◀"
-                    FontSize="20"
-                    TextColor="White"
-                    BackgroundColor="Transparent"
-                    BorderColor="Transparent"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    Margin="5,0"
-                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=GoBackCommand}" />
-            
-            <!-- Title -->
-            <Label Grid.Column="1"
-                   Text="Validation des Spots" 
-                   FontSize="18" 
-                   FontAttributes="Bold" 
-                   TextColor="White" 
-                   VerticalOptions="Center"
-                   HorizontalOptions="Center" />
-            
-            <!-- Home Button -->
-            <Button Grid.Column="2"
-                    Text="🏠"
-                    FontSize="18"
-                    TextColor="White"
-                    BackgroundColor="Transparent"
-                    BorderColor="Transparent"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    Margin="5,0"
-                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=GoToHomeCommand}" />
-        </Grid>
-    </Shell.TitleView>
+    <Grid RowDefinitions="Auto,*">
 
-    <ScrollView>
-        <StackLayout Spacing="0">
-            <!-- Stats Header -->
-            <Frame BackgroundColor="{StaticResource Primary}" 
-                   Padding="20,15"
-                   CornerRadius="0"
-                   IsVisible="{Binding ValidationStats, Converter={StaticResource IsNotNullConverter}}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <StackLayout Grid.Column="0" HorizontalOptions="Center">
-                        <Label Text="{Binding ValidationStats.PendingCount}" 
-                               FontSize="28" 
+        <!-- Header Section -->
+        <Frame Grid.Row="0" 
+               Padding="15"
+               BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15">
+                
+                <!-- Page Title -->
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                       CornerRadius="12" 
+                       Padding="16"
+                       HasShadow="False">
+                    <StackLayout>
+                        <Label Text="🔍 Validation des Spots" 
+                               FontSize="22" 
                                FontAttributes="Bold" 
                                TextColor="White" 
                                HorizontalOptions="Center" />
-                        <Label Text="En attente" 
-                               FontSize="13" 
-                               TextColor="White" 
-                               HorizontalOptions="Center" />
+                        <Label Text="Gérer les demandes de spots en attente"
+                               FontSize="14"
+                               TextColor="White"
+                               Opacity="0.9"
+                               HorizontalOptions="Center"
+                               Margin="0,5,0,0" />
                     </StackLayout>
+                </Frame>
 
-                    <StackLayout Grid.Column="1" HorizontalOptions="Center">
-                        <Label Text="{Binding ValidationStats.UnderReviewCount}" 
-                               FontSize="28" 
-                               FontAttributes="Bold" 
-                               TextColor="White" 
-                               HorizontalOptions="Center" />
-                        <Label Text="En révision" 
-                               FontSize="13" 
-                               TextColor="White" 
-                               HorizontalOptions="Center" />
-                    </StackLayout>
-
-                    <StackLayout Grid.Column="2" HorizontalOptions="Center">
-                        <Label Text="{Binding ValidationStats.SafetyFlaggedCount}" 
-                               FontSize="28" 
-                               FontAttributes="Bold" 
-                               TextColor="White" 
-                               HorizontalOptions="Center" />
-                        <Label Text="Sécurité" 
-                               FontSize="13" 
-                               TextColor="White" 
-                               HorizontalOptions="Center" />
-                    </StackLayout>
+                <!-- Statistics Cards -->
+                <Grid ColumnDefinitions="*,*,*,Auto" ColumnSpacing="10">
+                    
+                    <!-- Pending Spots -->
+                    <Frame Grid.Column="0"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource Accent}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding ValidationStats.PendingCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="En attente"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Under Review -->
+                    <Frame Grid.Column="1"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding ValidationStats.UnderReviewCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="En révision"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Safety Flagged -->
+                    <Frame Grid.Column="2"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Error}, Dark={StaticResource Error}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding ValidationStats.SafetyFlaggedCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Sécurité"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Debug Test Button -->
+                    <Button Grid.Column="3"
+                            Text="🧪"
+                            FontSize="16"
+                            WidthRequest="50"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource Warning}}"
+                            TextColor="White"
+                            Command="{Binding CreateTestDataCommand}"
+                            ToolTipProperties.Text="Créer des données de test"
+                            AutomationId="CreateTestDataButton" />
                 </Grid>
-            </Frame>
+            </StackLayout>
+        </Frame>
+        
+        <!-- Content -->
+        <ScrollView Grid.Row="1">
+            <StackLayout Spacing="15" Padding="15">
 
             <!-- Section: Spots en attente de validation -->
             <StackLayout>
-                <Frame BackgroundColor="White" 
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}" 
+                       BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
                        Padding="0"
-                       CornerRadius="15"
-                       Margin="15,10">
+                       CornerRadius="12"
+                       HasShadow="False">
                     <StackLayout>
                         <!-- Header -->
-                        <Grid BackgroundColor="{StaticResource Primary}" 
-                              Padding="20,15">
+                        <Grid BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                              Padding="16">
                             <Label Text="Spots en attente de validation" 
                                    FontSize="18" 
                                    FontAttributes="Bold" 
@@ -456,7 +471,7 @@
                 </Frame>
             </StackLayout>
 
-        </StackLayout>
-    </ScrollView>
-
+            </StackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

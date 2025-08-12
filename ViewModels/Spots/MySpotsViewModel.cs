@@ -20,6 +20,7 @@ namespace SubExplore.ViewModels.Spots
         private readonly IAuthenticationService _authenticationService;
         private readonly IErrorHandlingService _errorHandlingService;
         private readonly ILogger<MySpotsViewModel> _logger;
+        private readonly IServiceProvider _serviceProvider;
 
         // Concurrency control
         private readonly SemaphoreSlim _loadingSemaphore = new(1, 1);
@@ -73,7 +74,8 @@ namespace SubExplore.ViewModels.Spots
             IErrorHandlingService errorHandlingService,
             ILogger<MySpotsViewModel> logger,
             IDialogService dialogService,
-            INavigationService navigationService)
+            INavigationService navigationService,
+            IServiceProvider serviceProvider)
             : base(dialogService, navigationService)
         {
             _spotRepository = spotRepository ?? throw new ArgumentNullException(nameof(spotRepository));
@@ -81,6 +83,7 @@ namespace SubExplore.ViewModels.Spots
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
             _errorHandlingService = errorHandlingService ?? throw new ArgumentNullException(nameof(errorHandlingService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
             Title = "Mes Spots";
             MySpots = new ObservableCollection<Spot>();
@@ -237,6 +240,9 @@ namespace SubExplore.ViewModels.Spots
 
                 _logger.LogInformation("Successfully loaded {Count} spots for user {Username}", 
                     MySpots.Count, _authenticationService.CurrentUser.Username);
+
+                // Auto-diagnose spot types for monitoring
+                await AutoDiagnoseSpotTypesAsync();
                     
                 // If we have no spots, this might be a new user
                 if (MySpots.Count == 0)
@@ -552,6 +558,201 @@ namespace SubExplore.ViewModels.Spots
             IsError = true;
             ErrorMessage = message;
             await ShowAlertAsync(title, message, "D'accord");
+        }
+
+        /// <summary>
+        /// Diagnose and repair spot type configuration issues
+        /// </summary>
+        [RelayCommand]
+        public async Task DiagnoseAndRepairSpotTypesAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                _logger.LogInformation("🔧 Starting spot type diagnosis and repair...");
+
+                // Get diagnostic services from DI container
+                var spotTypeDiagnostic = _serviceProvider.GetService<SubExplore.Services.Implementations.SpotTypeDiagnosticService>();
+                var migrationService = _serviceProvider.GetService<SubExplore.Services.Implementations.SpotTypeMigrationService>();
+
+                if (spotTypeDiagnostic == null || migrationService == null)
+                {
+                    _logger.LogError("Diagnostic or migration services not available");
+                    await ShowAlertAsync("Erreur", "Services de diagnostic non disponibles", "D'accord");
+                    return;
+                }
+
+                // Step 1: Run initial diagnosis
+                _logger.LogInformation("📊 Running initial spot type diagnosis...");
+                var initialReport = await spotTypeDiagnostic.DiagnoseSpotTypesAsync();
+                _logger.LogInformation("Initial Diagnostic Report:\n{Report}", initialReport);
+
+                // Step 2: Check migration status
+                _logger.LogInformation("📋 Checking migration status...");
+                var migrationStatus = await migrationService.GetMigrationStatusAsync();
+                _logger.LogInformation("Migration Status:\n{Status}", migrationStatus);
+
+                // Step 3: Execute migration if needed
+                if (migrationStatus.Contains("MIGRATION REQUISE") || migrationStatus.Contains("MIGRATION PARTIELLE"))
+                {
+                    _logger.LogInformation("🚀 Migration required - executing...");
+                    var migrationSuccess = await migrationService.ExecuteMigrationAsync();
+                    
+                    if (migrationSuccess)
+                    {
+                        _logger.LogInformation("✅ Migration completed successfully");
+                        await ShowToastAsync("Migration des types de spots réussie");
+                    }
+                    else
+                    {
+                        _logger.LogError("❌ Migration failed");
+                        await ShowAlertAsync("Erreur", "Échec de la migration des types de spots", "D'accord");
+                        return;
+                    }
+                }
+
+                // Step 4: Repair any remaining issues
+                _logger.LogInformation("🔧 Running spot type repair...");
+                var repairSuccess = await spotTypeDiagnostic.RepairSpotTypesAsync();
+                
+                if (repairSuccess)
+                {
+                    _logger.LogInformation("✅ Spot type repair completed successfully");
+                    await ShowToastAsync("Réparation des types de spots réussie");
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ Spot type repair had issues");
+                    await ShowAlertAsync("Avertissement", "Réparation partielle des types de spots", "D'accord");
+                }
+
+                // Step 5: Final diagnosis and ecosystem validation
+                _logger.LogInformation("📊 Running final diagnosis and ecosystem validation...");
+                var finalReport = await spotTypeDiagnostic.DiagnoseSpotTypesAsync();
+                _logger.LogInformation("Final Diagnostic Report:\n{Report}", finalReport);
+
+                var ecosystemValid = await spotTypeDiagnostic.ValidateSpotTypeEcosystemAsync();
+                _logger.LogInformation("Ecosystem validation result: {Valid}", ecosystemValid ? "VALID" : "ISSUES DETECTED");
+
+                // Step 6: Reload spots to reflect changes
+                await LoadMySpots();
+
+                await ShowAlertAsync("Réparation terminée", 
+                    "Diagnostic et réparation des types de spots terminés. Vérifiez les logs pour plus de détails.", 
+                    "D'accord");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during spot type diagnosis and repair");
+                await HandleErrorAsync("Erreur de réparation", 
+                    $"Erreur lors du diagnostic et de la réparation: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// Quick diagnosis of spot types without repair
+        /// </summary>
+        [RelayCommand]
+        public async Task QuickDiagnoseSpotTypesAsync()
+        {
+            try
+            {
+                _logger.LogInformation("🔍 Running quick spot type diagnosis...");
+                
+                // Simple diagnosis of current spots
+                var spotsWithMissingTypes = MySpots?.Where(s => s.Type == null).ToList() ?? new List<Spot>();
+                var spotsWithInactiveTypes = MySpots?.Where(s => s.Type != null && !s.Type.IsActive).ToList() ?? new List<Spot>();
+                
+                var report = $@"
+=== DIAGNOSTIC RAPIDE ===
+📊 Total spots: {MySpots?.Count ?? 0}
+📊 Spots avec types manquants: {spotsWithMissingTypes.Count}
+📊 Spots avec types inactifs: {spotsWithInactiveTypes.Count}
+📊 Spots valides: {MySpots?.Count(s => s.Type != null && s.Type.IsActive) ?? 0}
+
+Problèmes détectés: {(spotsWithMissingTypes.Any() || spotsWithInactiveTypes.Any() ? "OUI" : "NON")}
+=== FIN DIAGNOSTIC ===";
+
+                _logger.LogInformation("Quick Diagnostic:\n{Report}", report);
+                
+                if (spotsWithMissingTypes.Any() || spotsWithInactiveTypes.Any())
+                {
+                    await ShowAlertAsync("Problèmes détectés", 
+                        $"Spots avec problèmes: {spotsWithMissingTypes.Count + spotsWithInactiveTypes.Count}\n" +
+                        "Utilisez la réparation complète pour résoudre ces problèmes.", 
+                        "D'accord");
+                }
+                else
+                {
+                    await ShowToastAsync("Aucun problème détecté");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during quick diagnosis");
+                await HandleErrorAsync("Erreur de diagnostic", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Automatic silent diagnosis for monitoring (called during LoadMySpots)
+        /// </summary>
+        private async Task AutoDiagnoseSpotTypesAsync()
+        {
+            try
+            {
+                // Silent diagnosis without UI alerts - only logging
+                var spotsWithMissingTypes = MySpots?.Where(s => s.Type == null).ToList() ?? new List<Spot>();
+                var spotsWithInactiveTypes = MySpots?.Where(s => s.Type != null && !s.Type.IsActive).ToList() ?? new List<Spot>();
+                var validSpots = MySpots?.Where(s => s.Type != null && s.Type.IsActive).ToList() ?? new List<Spot>();
+
+                if (spotsWithMissingTypes.Any())
+                {
+                    _logger.LogWarning("🚨 Found {Count} spots with missing types: {SpotIds}", 
+                        spotsWithMissingTypes.Count, 
+                        string.Join(", ", spotsWithMissingTypes.Select(s => $"{s.Id}({s.Name})")));
+                }
+
+                if (spotsWithInactiveTypes.Any())
+                {
+                    _logger.LogWarning("⚠️ Found {Count} spots with inactive types: {SpotDetails}", 
+                        spotsWithInactiveTypes.Count, 
+                        string.Join(", ", spotsWithInactiveTypes.Select(s => $"{s.Id}({s.Name}->TypeId:{s.TypeId})")));
+                }
+
+                if (validSpots.Any())
+                {
+                    var typeStats = validSpots.GroupBy(s => s.Type.Name)
+                        .Select(g => $"{g.Key}:{g.Count()}")
+                        .ToList();
+                    
+                    _logger.LogInformation("✅ Valid spots by type: {TypeStats}", string.Join(", ", typeStats));
+                }
+
+                // Log summary for monitoring
+                var totalProblems = spotsWithMissingTypes.Count + spotsWithInactiveTypes.Count;
+                if (totalProblems > 0)
+                {
+                    _logger.LogWarning("📊 MySpotsPage Health: {ValidSpots} valid, {ProblemsCount} with issues", 
+                        validSpots.Count, totalProblems);
+                    
+                    // Suggest running repair if problems detected
+                    _logger.LogInformation("💡 Suggestion: Run spot type repair to resolve {ProblemsCount} issues", totalProblems);
+                }
+                else
+                {
+                    _logger.LogInformation("✅ MySpotsPage Health: All {Count} spots have valid types", validSpots.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during automatic spot type diagnosis");
+                // Don't throw - this is a monitoring function
+            }
         }
 
         protected override void Dispose(bool disposing)
