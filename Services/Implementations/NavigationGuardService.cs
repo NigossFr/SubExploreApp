@@ -26,13 +26,13 @@ namespace SubExplore.Services.Implementations
             // Standard user pages - require authentication only
             { typeof(UserProfileViewModel), new NavigationRequirement { RequireAuthentication = true } },
 
-            // Moderator pages - require moderator role
-            { typeof(DatabaseTestViewModel), new NavigationRequirement 
-                { 
-                    RequiredPermissions = UserPermissions.ValidateSpots,
-                    RequiredRole = AccountType.ExpertModerator
-                }
-            },
+            // 🚫 Moderator pages supprimées - utilisaient Entity Framework
+            // { typeof(DatabaseTestViewModel), new NavigationRequirement 
+            //     { 
+            //         RequiredPermissions = UserPermissions.ValidateSpots,
+            //         RequiredRole = AccountType.ExpertModerator
+            //     }
+            // },
 
             // Admin pages - require admin permissions
             { typeof(UserStatsViewModel), new NavigationRequirement 

@@ -91,5 +91,24 @@ namespace SubExplore.Services.Implementations
         {
             Preferences.Clear();
         }
+
+        /// <summary>
+        /// Implémentations asynchrones qui délèguent aux méthodes synchrones
+        /// car Preferences.NET est déjà thread-safe
+        /// </summary>
+        public async Task SetAsync<T>(string key, T value)
+        {
+            await Task.Run(() => Set(key, value));
+        }
+
+        public async Task<T> GetAsync<T>(string key, T defaultValue = default)
+        {
+            return await Task.Run(() => Get(key, defaultValue));
+        }
+
+        public async Task RemoveAsync(string key)
+        {
+            await Task.Run(() => Remove(key));
+        }
     }
 }

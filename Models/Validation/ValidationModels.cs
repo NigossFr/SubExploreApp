@@ -71,11 +71,11 @@ namespace SubExplore.Models.Validation
         public SafetyFlagType Type { get; init; }
         public SafetyFlagSeverity Severity { get; init; }
         public string Description { get; init; } = string.Empty;
-        public int ReportedByUserId { get; init; }
+        public Guid ReportedByUserId { get; init; }
         public DateTime ReportedAt { get; init; } = DateTime.UtcNow;
         public Dictionary<string, object> Metadata { get; init; } = new();
 
-        public static SafetyFlag Create(SafetyFlagType type, SafetyFlagSeverity severity, string description, int reporterId)
+        public static SafetyFlag Create(SafetyFlagType type, SafetyFlagSeverity severity, string description, Guid reporterId)
         {
             return new SafetyFlag
             {
@@ -147,7 +147,7 @@ namespace SubExplore.Models.Validation
     /// </summary>
     public class ModeratorPerformance
     {
-        public int ModeratorId { get; set; }
+        public Guid ModeratorId { get; set; }
         public string ModeratorName { get; set; } = string.Empty;
         public ModeratorSpecialization Specialization { get; set; }
         public int SpotsReviewed { get; set; }
@@ -246,9 +246,9 @@ namespace SubExplore.Models.Validation
     /// </summary>
     public class SpotValidationHistory
     {
-        public int Id { get; set; }
-        public int SpotId { get; set; }
-        public int ValidatorId { get; set; }
+        public Guid Id { get; set; }
+        public Guid SpotId { get; set; }
+        public Guid ValidatorId { get; set; }
         public string ValidatorName { get; set; } = string.Empty;
         public SpotValidationStatus Status { get; set; }
         public string ValidationNotes { get; set; } = string.Empty;

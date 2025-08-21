@@ -43,7 +43,7 @@ namespace SubExplore.Models.Navigation
     /// </summary>
     public class SpotNavigationParameter : INavigationParameter
     {
-        public int SpotId { get; set; }
+        public Guid SpotId { get; set; }
         public string SpotName { get; set; }
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
@@ -52,7 +52,7 @@ namespace SubExplore.Models.Navigation
         {
         }
 
-        public SpotNavigationParameter(int spotId, string spotName = null, decimal? latitude = null, decimal? longitude = null)
+        public SpotNavigationParameter(Guid spotId, string spotName = null, decimal? latitude = null, decimal? longitude = null)
         {
             SpotId = spotId;
             SpotName = spotName;
@@ -71,7 +71,7 @@ namespace SubExplore.Models.Navigation
     /// </summary>
     public class UserNavigationParameter : INavigationParameter
     {
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
 
@@ -79,7 +79,7 @@ namespace SubExplore.Models.Navigation
         {
         }
 
-        public UserNavigationParameter(int userId, string userName = null, string email = null)
+        public UserNavigationParameter(Guid userId, string userName = null, string email = null)
         {
             UserId = userId;
             UserName = userName;

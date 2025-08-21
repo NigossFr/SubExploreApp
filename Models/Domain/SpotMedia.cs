@@ -1,52 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+// Models/SpotMedia.cs
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using SubExplore.Models.Enums;
 
 namespace SubExplore.Models.Domain
 {
     public class SpotMedia
     {
-        [Key]
-        public int Id { get; set; }
-
-        [Required]
-        public int SpotId { get; set; }
-
-        [Required]
+        public Guid Id { get; set; }
+        
+        public Guid SpotId { get; set; }
+        
         public MediaType MediaType { get; set; }
-
+        
         [Required]
-        [MaxLength(500)]
-        [Url]
+        [StringLength(500)]
         public string MediaUrl { get; set; } = string.Empty;
-
-        [Required]
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        [Required]
+        
         public MediaStatus Status { get; set; } = MediaStatus.Pending;
-
+        
         public string? Caption { get; set; }
-
-        [Required]
-        public bool IsPrimary { get; set; }
-
+        
+        public bool IsPrimary { get; set; } = false;
+        
         public int? Width { get; set; }
-
+        
         public int? Height { get; set; }
-
-        [Range(0, 5242880)] // 5MB en bytes
+        
+        [Range(0, 5242880)] // Max 5MB
         public long? FileSize { get; set; }
-
+        
         public string? ContentType { get; set; }
-
-        // Navigation properties
-        [ForeignKey("SpotId")]
-        public virtual Spot? Spot { get; set; }
+        
+        // Relations
+        public Spot Spot { get; set; } = null!;
     }
 }

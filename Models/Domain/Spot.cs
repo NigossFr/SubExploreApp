@@ -1,84 +1,69 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+// Models/Spot.cs - Adapté pour PostGIS
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using SubExplore.Models.Enums;
+// 🚫 NetTopologySuite supprimé - Utilisation coordonnées décimales uniquement
 
 namespace SubExplore.Models.Domain
 {
     public class Spot
     {
-        [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
+        
+        public Guid CreatorId { get; set; }
 
         [Required]
-        public int CreatorId { get; set; }
-
-        [Required]
-        [MaxLength(100)]
-        public string Name { get; set; }
-
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+        
         [Required]
         public string Description { get; set; } = string.Empty;
-
+        
+        // 🚫 PostGIS supprimé - Utilisation coordonnées décimales uniquement
+        
         [Required]
         [Range(-90, 90)]
-        [Column(TypeName = "decimal(10,8)")]
         public decimal Latitude { get; set; }
-
+        
         [Required]
         [Range(-180, 180)]
-        [Column(TypeName = "decimal(11,8)")]
         public decimal Longitude { get; set; }
-
-        [Required]
+        
         public DifficultyLevel DifficultyLevel { get; set; }
-
-        [Required]
-        public int TypeId { get; set; }
+        
+        public Guid TypeId { get; set; }
 
         [Required]
         public string RequiredEquipment { get; set; } = string.Empty;
-
+        
         [Required]
         public string SafetyNotes { get; set; } = string.Empty;
-
+        
         [Required]
         public string BestConditions { get; set; } = string.Empty;
-
-        [Required]
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        [Required]
+        
         public SpotValidationStatus ValidationStatus { get; set; } = SpotValidationStatus.Pending;
-
+        
         public DateTime? LastSafetyReview { get; set; }
+        
+        // CHANGEMENT : JSON → JSONB
+        public Dictionary<string, object>? SafetyFlags { get; set; }
 
-        [Column(TypeName = "json")]
-        public string? SafetyFlags { get; set; }
-
-        // Caractéristiques spécifiques aux activités
         [Range(0, 200)]
         public int? MaxDepth { get; set; }
-
+        
         public CurrentStrength? CurrentStrength { get; set; }
-
+        
         public bool? HasMooring { get; set; }
-
-        [MaxLength(100)]
+        
+        [StringLength(100)]
         public string? BottomType { get; set; }
-
-        // Navigation properties
-        [ForeignKey("CreatorId")]
-        public virtual User? Creator { get; set; }
-
-        [ForeignKey("TypeId")]
-        public virtual SpotType? Type { get; set; }
-
-        public virtual ICollection<SpotMedia> Media { get; set; } = new List<SpotMedia>();
-        public virtual ICollection<UserFavoriteSpot> UserFavorites { get; set; } = new List<UserFavoriteSpot>();
+        
+        // Relations
+        public User Creator { get; set; } = null!;
+        public SpotType Type { get; set; } = null!;
+        public ICollection<SpotMedia> Media { get; set; } = new List<SpotMedia>();
     }
 }

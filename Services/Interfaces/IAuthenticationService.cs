@@ -17,7 +17,7 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Current user ID if authenticated
         /// </summary>
-        int? CurrentUserId { get; }
+        Guid? CurrentUserId { get; }
 
         /// <summary>
         /// Check if user is currently authenticated
@@ -87,7 +87,7 @@ namespace SubExplore.Services.Interfaces
         /// <param name="userId">User ID to elevate</param>
         /// <param name="specialization">Moderator specialization</param>
         /// <returns>True if elevation successful</returns>
-        Task<bool> ElevateToModeratorAsync(int userId, ModeratorSpecialization specialization);
+        Task<bool> ElevateToModeratorAsync(Guid userId, ModeratorSpecialization specialization);
 
         /// <summary>
         /// Update moderator status (for admin use)
@@ -95,7 +95,7 @@ namespace SubExplore.Services.Interfaces
         /// <param name="userId">User ID</param>
         /// <param name="status">New moderator status</param>
         /// <returns>True if update successful</returns>
-        Task<bool> UpdateModeratorStatusAsync(int userId, ModeratorStatus status);
+        Task<bool> UpdateModeratorStatusAsync(Guid userId, ModeratorStatus status);
 
         /// <summary>
         /// Verify professional account with organization
@@ -103,7 +103,7 @@ namespace SubExplore.Services.Interfaces
         /// <param name="userId">User ID</param>
         /// <param name="organizationId">Organization ID (future Organizations table)</param>
         /// <returns>True if verification successful</returns>
-        Task<bool> VerifyProfessionalAccountAsync(int userId, int? organizationId = null);
+        Task<bool> VerifyProfessionalAccountAsync(Guid userId, Guid? organizationId = null);
 
         /// <summary>
         /// Update user permissions (admin only)
@@ -111,7 +111,7 @@ namespace SubExplore.Services.Interfaces
         /// <param name="userId">User ID</param>
         /// <param name="permissions">New permissions</param>
         /// <returns>True if update successful</returns>
-        Task<bool> UpdateUserPermissionsAsync(int userId, UserPermissions permissions);
+        Task<bool> UpdateUserPermissionsAsync(Guid userId, UserPermissions permissions);
     }
 
     /// <summary>

@@ -56,7 +56,7 @@ namespace SubExplore.Services.Interfaces
         /// <param name="isPrimary">S'il s'agit de l'image principale</param>
         /// <param name="caption">Légende de l'image</param>
         /// <returns>L'objet SpotMedia créé</returns>
-        Task<SpotMedia> CreateSpotMediaAsync(int spotId, string filePath, bool isPrimary, string caption = null);
+        Task<SpotMedia> CreateSpotMediaAsync(Guid spotId, string filePath, bool isPrimary, string caption = null);
     }
 
     public class MediaMetadata

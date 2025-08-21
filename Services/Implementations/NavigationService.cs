@@ -442,7 +442,7 @@ namespace SubExplore.Services.Implementations
                         
                         // Shell Navigation has issues with complex parameters, so we use multiple simple parameters
                         // This ensures all parameters are preserved
-                        if (spotParam.SpotId > 0)
+                        if (spotParam.SpotId != Guid.Empty)
                         {
                             queryParams.Add($"spotid={spotParam.SpotId}");
                             queryParams.Add($"mode=edit");

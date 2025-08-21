@@ -16,7 +16,7 @@ namespace SubExplore.Services.Interfaces
         /// <param name="email">User email</param>
         /// <param name="claims">Additional claims to include</param>
         /// <returns>JWT access token</returns>
-        string GenerateAccessToken(int userId, string email, IEnumerable<Claim>? claims = null);
+        string GenerateAccessToken(Guid userId, string email, IEnumerable<Claim>? claims = null);
 
         /// <summary>
         /// Generate secure refresh token
@@ -36,7 +36,7 @@ namespace SubExplore.Services.Interfaces
         /// </summary>
         /// <param name="token">JWT token</param>
         /// <returns>User ID if valid token, null otherwise</returns>
-        int? GetUserIdFromToken(string token);
+        Guid? GetUserIdFromToken(string token);
 
         /// <summary>
         /// Extract email from JWT token
@@ -77,6 +77,6 @@ namespace SubExplore.Services.Interfaces
         /// </summary>
         /// <param name="userId">User ID</param>
         /// <param name="reason">Reason for revocation</param>
-        Task RevokeAllUserTokensAsync(int userId, string reason = RevocationReasons.PasswordChanged);
+        Task RevokeAllUserTokensAsync(Guid userId, string reason = RevocationReasons.PasswordChanged);
     }
 }

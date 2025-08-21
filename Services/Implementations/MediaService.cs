@@ -181,7 +181,7 @@ namespace SubExplore.Services.Implementations
             }
         }
 
-        public async Task<SpotMedia> CreateSpotMediaAsync(int spotId, string filePath, bool isPrimary, string caption = null)
+        public async Task<SpotMedia> CreateSpotMediaAsync(Guid spotId, string filePath, bool isPrimary, string caption = null)
         {
             try
             {

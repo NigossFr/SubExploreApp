@@ -99,7 +99,7 @@ namespace SubExplore.Services.Fixes
             try
             {
                 logger.LogDebug("Starting safe filter by type: {TypeName} (ID: {TypeId})", 
-                    spotType?.Name ?? "null", spotType?.Id ?? 0);
+                    spotType?.Name ?? "null", spotType?.Id ?? Guid.Empty);
 
                 // Validation checks
                 if (viewModel == null)

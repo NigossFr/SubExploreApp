@@ -17,7 +17,7 @@ namespace SubExplore.ViewModels.Profile
         private UserStatsDto? _userStats;
 
         [ObservableProperty]
-        private int _userId;
+        private Guid _userId;
 
         [ObservableProperty]
         private User? _currentUser;
@@ -34,7 +34,7 @@ namespace SubExplore.ViewModels.Profile
 
         public override async Task InitializeAsync(object? parameter = null)
         {
-            if (parameter is int userId)
+            if (parameter is Guid userId)
             {
                 UserId = userId;
             }
@@ -48,7 +48,7 @@ namespace SubExplore.ViewModels.Profile
                 }
             }
             
-            if (UserId > 0)
+            if (UserId != Guid.Empty)
             {
                 await LoadStatsAsync();
             }

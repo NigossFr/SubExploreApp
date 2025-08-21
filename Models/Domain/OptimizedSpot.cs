@@ -14,7 +14,7 @@ namespace SubExplore.Models.Domain
     {
         #region Core Properties
         
-        public readonly int Id;
+        public readonly Guid Id;
         public readonly string Name;
         public readonly string Description;
         public readonly SpotCoordinate Coordinate;
@@ -38,7 +38,7 @@ namespace SubExplore.Models.Domain
         
         [JsonConstructor]
         public OptimizedSpot(
-            int id, 
+            Guid id, 
             string name, 
             string description,
             SpotCoordinate coordinate,
@@ -320,7 +320,7 @@ namespace SubExplore.Models.Domain
         public static OptimizedSpot FromSerializableData(Dictionary<string, object?> data)
         {
             return new OptimizedSpot(
-                id: Convert.ToInt32(data["Id"]),
+                id: Guid.Parse(data["Id"]?.ToString() ?? Guid.Empty.ToString()),
                 name: data["Name"]?.ToString() ?? string.Empty,
                 description: data["Description"]?.ToString() ?? string.Empty,
                 coordinate: new SpotCoordinate(

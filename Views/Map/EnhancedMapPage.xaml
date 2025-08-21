@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Map.EnhancedMapPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
+             xmlns:vm="clr-namespace:SubExplore.ViewModels.Map"
+             x:DataType="vm:EnhancedMapViewModel"
+             Title="{Binding Title}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Barre de recherche et filtres -->
+        <Frame Grid.Row="0" 
+               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+               Padding="10"
+               HasShadow="True">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                
+                <!-- Recherche -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                    <SearchBar Grid.Column="0"
+                              Text="{Binding SearchText}"
+                              Placeholder="Rechercher des spots..."
+                              SearchCommand="{Binding SearchCommand}" />
+                    
+                    <Button Grid.Column="1"
+                            Text="🎯"
+                            Command="{Binding CenterOnUserLocationCommand}"
+                            WidthRequest="50"
+                            ToolTipProperties.Text="Me localiser" />
+                    
+                    <Button Grid.Column="2"
+                            Text="+"
+                            Command="{Binding AddSpotCommand}"
+                            WidthRequest="50"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="White"
+                            ToolTipProperties.Text="Ajouter un spot" />
+                </Grid>
+
+                <!-- Filtres -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="0,10,0,0">
+                    <Picker Grid.Column="0"
+                            Title="Type de spot"
+                            ItemsSource="{Binding AvailableSpotTypes}"
+                            ItemDisplayBinding="{Binding Name}"
+                            SelectedItem="{Binding SelectedSpotType}" />
+                    
+                    <CheckBox Grid.Column="1"
+                              IsChecked="{Binding ShowOnlyApproved}"
+                              VerticalOptions="Center" />
+                    <Label Grid.Column="1"
+                           Text="Approuvés"
+                           VerticalOptions="Center"
+                           Margin="30,0,0,0" />
+                </Grid>
+            </Grid>
+        </Frame>
+
+        <!-- Carte -->
+        <Grid Grid.Row="1">
+            <!-- Indicateur de chargement -->
+            <ActivityIndicator IsVisible="{Binding IsLoading}"
+                             IsRunning="{Binding IsLoading}"
+                             Color="{StaticResource Primary}"
+                             VerticalOptions="Center"
+                             HorizontalOptions="Center" />
+
+            <!-- État vide -->
+            <StackLayout IsVisible="{Binding IsEmptyState}"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Center"
+                       Padding="32">
+                <Label Text="🗺️" 
+                       FontSize="48" 
+                       HorizontalOptions="Center" />
+                <Label Text="{Binding EmptyStateMessage}"
+                       FontSize="16"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                <Button Text="Actualiser"
+                        Command="{Binding RefreshCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Margin="0,16,0,0" />
+            </StackLayout>
+
+            <!-- Carte avec refresh -->
+            <RefreshView IsRefreshing="{Binding IsRefreshing}"
+                        Command="{Binding RefreshCommand}"
+                        IsVisible="{Binding IsEmptyState, Converter={StaticResource InvertedBoolConverter}}">
+                
+                <maps:Map ItemsSource="{Binding MapPins}"
+                         MapType="Street"
+                         IsShowingUser="True"
+                         IsTrafficEnabled="False"
+                         IsScrollEnabled="True"
+                         IsZoomEnabled="True" />
+            </RefreshView>
+        </Grid>
+    </Grid>
+</ContentPage>

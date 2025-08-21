@@ -18,9 +18,9 @@ namespace SubExplore.Services.Implementations
         #region Fields & Constants
         
         private readonly ILogger<SpotOptimizationService> _logger;
-        private readonly ConcurrentDictionary<int, OptimizedSpot> _spotCache = new();
-        private readonly ConcurrentDictionary<int, Pin> _pinCache = new();
-        private readonly CacheStatistics _cacheStats = new();
+        private readonly ConcurrentDictionary<Guid, OptimizedSpot> _spotCache = new();
+        private readonly ConcurrentDictionary<Guid, Pin> _pinCache = new();
+        private readonly SpotOptimizationCacheStatistics _cacheStats = new();
         private readonly object _statsLock = new();
         
         private bool _cachingEnabled = true;
@@ -373,12 +373,13 @@ namespace SubExplore.Services.Implementations
                 _cacheStats.CacheHits = 0;
                 _cacheStats.CacheMisses = 0;
                 _cacheStats.MemoryUsageBytes = 0;
+                _cacheStats.AverageTransformTime = TimeSpan.Zero;
             }
             
             _logger.LogInformation("Cleared caches: {SpotCount} spots, {PinCount} pins", spotCount, pinCount);
         }
         
-        public CacheStatistics GetCacheStatistics()
+        public SpotOptimizationCacheStatistics GetCacheStatistics()
         {
             lock (_statsLock)
             {
@@ -386,7 +387,7 @@ namespace SubExplore.Services.Implementations
                 var spotMemory = _spotCache.Count * EstimateSpotMemoryUsage();
                 var pinMemory = _pinCache.Count * EstimatePinMemoryUsage();
                 
-                return new CacheStatistics
+                return new SpotOptimizationCacheStatistics
                 {
                     TotalRequests = _cacheStats.TotalRequests,
                     CacheHits = _cacheStats.CacheHits,
@@ -401,7 +402,7 @@ namespace SubExplore.Services.Implementations
         
         #region Private Methods
         
-        private void CacheSpot(int spotId, OptimizedSpot spot)
+        private void CacheSpot(Guid spotId, OptimizedSpot spot)
         {
             try
             {
@@ -419,7 +420,7 @@ namespace SubExplore.Services.Implementations
             }
         }
         
-        private void CachePin(int spotId, Pin pin)
+        private void CachePin(Guid spotId, Pin pin)
         {
             try
             {

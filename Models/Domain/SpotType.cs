@@ -1,48 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+// Models/SpotType.cs
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using SubExplore.Models.Enums;
 
 namespace SubExplore.Models.Domain
 {
     public class SpotType
     {
-        [Key]
-        public int Id { get; set; }
-
+        public Guid Id { get; set; }
+        
         [Required]
-        [MaxLength(50)]
+        [StringLength(50)]
         public string Name { get; set; } = string.Empty;
-
-        [MaxLength(200)]
+        
+        [StringLength(200)]
         public string? IconPath { get; set; }
-
-        [MaxLength(7)]
+        
         [RegularExpression(@"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")]
         public string? ColorCode { get; set; }
-
-        [Required]
-        public bool RequiresExpertValidation { get; set; }
-
-        [Column(TypeName = "json")]
-        public string? ValidationCriteria { get; set; }
-
-        [Required]
-        public ActivityCategory Category { get; set; }
-
+        
+        public bool RequiresExpertValidation { get; set; } = false;
+        
+        // CHANGEMENT : JSON → JSONB
+        public Dictionary<string, object>? ValidationCriteria { get; set; }
+        
+        public ActivityCategory Category { get; set; } = ActivityCategory.Activity;
+        
         public string? Description { get; set; }
-
-        [Required]
+        
         public bool IsActive { get; set; } = true;
-
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
         public DateTime? UpdatedAt { get; set; }
-
-        // Navigation properties
-        public virtual ICollection<Spot> Spots { get; set; } = new List<Spot>();
+        
+        // Relations
+        public ICollection<Spot> Spots { get; set; } = new List<Spot>();
     }
 }

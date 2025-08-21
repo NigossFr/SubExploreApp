@@ -45,7 +45,7 @@ namespace SubExplore.Services.Interfaces
         /// </summary>
         /// <param name="userId">User ID</param>
         /// <returns>Verification status details</returns>
-        Task<EmailVerificationStatus> GetVerificationStatusAsync(int userId);
+        Task<EmailVerificationStatus> GetVerificationStatusAsync(Guid userId);
 
         /// <summary>
         /// Clean up expired verification tokens

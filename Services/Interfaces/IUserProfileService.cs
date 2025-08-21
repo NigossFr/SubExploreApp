@@ -13,7 +13,7 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Get user profile by ID
         /// </summary>
-        Task<User?> GetUserByIdAsync(int userId);
+        Task<User?> GetUserByIdAsync(Guid userId);
 
         /// <summary>
         /// Update user profile information
@@ -33,7 +33,7 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Get user's diving statistics
         /// </summary>
-        Task<UserStatsDto> GetUserStatsAsync(int userId);
+        Task<UserStatsDto> GetUserStatsAsync(Guid userId);
 
         /// <summary>
         /// Validate user profile data
@@ -48,6 +48,6 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Get current user ID
         /// </summary>
-        int? CurrentUserId { get; }
+        Guid? CurrentUserId { get; }
     }
 }

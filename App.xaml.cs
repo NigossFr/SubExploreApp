@@ -73,118 +73,50 @@ namespace SubExplore
         {
             try
             {
-                Debug.WriteLine("[App.xaml.cs] Initializing database, theme, and authentication services");
+                Debug.WriteLine("[App.xaml.cs] 🚀 Initializing SubExplore with Supabase API");
                 
-                // Initialize theme service first to ensure proper theming throughout app lifecycle
+                // 1. Initialize Supabase API first
+                var appInitService = services.GetService<IAppInitializationService>();
+                if (appInitService != null)
+                {
+                    Debug.WriteLine("[App.xaml.cs] 📡 Starting Supabase API initialization...");
+                    var initSuccess = await appInitService.InitializeAsync();
+                    
+                    if (initSuccess)
+                    {
+                        Debug.WriteLine("[App.xaml.cs] ✅ Supabase API initialized successfully");
+                        Debug.WriteLine($"[App.xaml.cs] Status: {appInitService.GetInitializationStatus()}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("[App.xaml.cs] ❌ Supabase API initialization failed");
+                        Debug.WriteLine($"[App.xaml.cs] Status: {appInitService.GetInitializationStatus()}");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("[App.xaml.cs] ❌ AppInitializationService not found!");
+                }
+                
+                // 2. Initialize theme service (if available)
                 var themeService = services.GetService<IThemeService>();
                 if (themeService != null)
                 {
-                    // Load and apply user's saved theme preference
-                    var userProfileService = services.GetService<IUserProfileService>();
-                    if (userProfileService != null)
-                    {
-                        try
-                        {
-                            var currentUser = await userProfileService.GetCurrentUserAsync();
-                            if (currentUser?.Preferences?.Theme != null)
-                            {
-                                var appTheme = currentUser.Preferences.Theme switch
-                                {
-                                    "light" => AppTheme.Light,
-                                    "dark" => AppTheme.Dark,
-                                    "auto" => AppTheme.Unspecified,
-                                    _ => AppTheme.Light
-                                };
-                                await themeService.SetThemeAsync(appTheme);
-                                Debug.WriteLine($"[App.xaml.cs] ✓ Applied user theme preference: {currentUser.Preferences.Theme}");
-                            }
-                        }
-                        catch (Exception themeEx)
-                        {
-                            Debug.WriteLine($"[App.xaml.cs] ⚠️ Could not load user theme preference: {themeEx.Message}");
-                            // Continue with default theme
-                        }
-                    }
-                    Debug.WriteLine("[App.xaml.cs] ✓ Theme service initialized");
+                    Debug.WriteLine("[App.xaml.cs] ✅ Theme service initialized");
                 }
                 else
                 {
                     Debug.WriteLine("[App.xaml.cs] ⚠️ Theme service not found");
                 }
                 
-                // Skip heavy migrations at startup for better performance
-                // These migrations only need to run once and are already applied
-                Debug.WriteLine("[App.xaml.cs] Skipping migrations at startup for improved performance");
-
-                // Initialize database first with enhanced error handling
-                var dbInitService = services.GetService<IDatabaseInitializationService>();
-                if (dbInitService != null)
-                {
-                    try
-                    {
-                        await dbInitService.InitializeDatabaseAsync();
-                        Debug.WriteLine("[App.xaml.cs] Database initialization completed");
-                        
-                        // Verify critical tables exist
-                        var isInitialized = await dbInitService.IsDatabaseInitializedAsync();
-                        Debug.WriteLine($"[App.xaml.cs] Database verification: {(isInitialized ? "✓ READY" : "✗ FAILED")}");
-                        
-                        if (!isInitialized)
-                        {
-                            Debug.WriteLine("[App.xaml.cs] 🚨 CRITICAL: Database not properly initialized - forcing table creation");
-                            await dbInitService.EnsureUserFavoriteSpotsTableAsync();
-                        }
-                        
-                        // Database initialization and verification completed
-                        Debug.WriteLine("[App.xaml.cs] ✅ Database initialization and verification completed successfully");
-                        
-                        // Run comprehensive spot system diagnostic to identify issues
-                        try
-                        {
-                            Debug.WriteLine("[App.xaml.cs] 🔍 Running spot system diagnostic...");
-                            var diagnostic = await SubExplore.Helpers.SpotSystemDiagnosticTool.RunFullDiagnosticAsync(services);
-                            
-                            if (!diagnostic.IsHealthy)
-                            {
-                                Debug.WriteLine("[App.xaml.cs] 🚨 SPOT SYSTEM ISSUES DETECTED - Running automatic repair...");
-                                var repairSuccess = await SubExplore.Helpers.SpotSystemDiagnosticTool.RepairSpotDistributionAsync(services);
-                                
-                                if (repairSuccess)
-                                {
-                                    Debug.WriteLine("[App.xaml.cs] ✅ Spot system repair completed successfully");
-                                    
-                                    // Re-run diagnostic after repair
-                                    var postRepairDiagnostic = await SubExplore.Helpers.SpotSystemDiagnosticTool.RunFullDiagnosticAsync(services);
-                                    Debug.WriteLine($"[App.xaml.cs] 📊 Post-repair status: {(postRepairDiagnostic.IsHealthy ? "HEALTHY" : "STILL HAS ISSUES")}");
-                                }
-                                else
-                                {
-                                    Debug.WriteLine("[App.xaml.cs] ❌ Spot system repair failed");
-                                }
-                            }
-                            else
-                            {
-                                Debug.WriteLine("[App.xaml.cs] ✅ Spot system is healthy");
-                            }
-                        }
-                        catch (Exception diagEx)
-                        {
-                            Debug.WriteLine($"[App.xaml.cs] ⚠️ Diagnostic error: {diagEx.Message}");
-                        }
-                    }
-                    catch (Exception dbEx)
-                    {
-                        Debug.WriteLine($"[App.xaml.cs] 🚨 DATABASE INITIALIZATION FAILED: {dbEx.Message}");
-                        Debug.WriteLine($"[App.xaml.cs] Database Stack Trace: {dbEx.StackTrace}");
-                        // Continue anyway - some functionality might still work
-                    }
-                }
+                // 3. Initialize Simple Authentication Service - 100% API Supabase UNIQUEMENT
+                Debug.WriteLine("[App.xaml.cs] 🔐 Initializing Simple Authentication Service - 100% API Supabase");
                 
-                var authService = services.GetService<IAuthenticationService>();
+                var authService = services.GetService<ISimpleAuthenticationService>();
                 if (authService != null)
                 {
                     await authService.InitializeAsync();
-                    Debug.WriteLine($"[App.xaml.cs] Authentication service initialized. IsAuthenticated: {authService.IsAuthenticated}");
+                    Debug.WriteLine($"[App.xaml.cs] Simple Authentication service initialized. IsAuthenticated: {authService.IsAuthenticated}");
                     
                     // Determine initial page based on authentication status
                     if (authService.IsAuthenticated)
@@ -195,15 +127,15 @@ namespace SubExplore
                     }
                     else
                     {
-                        Debug.WriteLine("[App.xaml.cs] User not authenticated, showing LoginPage");
-                        ShowLoginPage(services);
+                        Debug.WriteLine("[App.xaml.cs] User not authenticated, showing Supabase API LoginPage");
+                        ShowSupabaseApiLoginPage(services);
                     }
                 }
                 else
                 {
-                    Debug.WriteLine("[App.xaml.cs] ERROR: Authentication service not found, showing LoginPage");
-                    // If authentication service is not available, show login page
-                    ShowLoginPage(services);
+                    Debug.WriteLine("[App.xaml.cs] ERROR: Simple Authentication service not found, showing Supabase API login page");
+                    // If authentication service is not available, show Supabase API login page
+                    ShowSupabaseApiLoginPage(services);
                 }
             }
             catch (Exception ex)
@@ -211,9 +143,9 @@ namespace SubExplore
                 Debug.WriteLine($"[App.xaml.cs] ERROR: Failed to initialize authentication and navigation: {ex.Message}");
                 Debug.WriteLine($"[App.xaml.cs] Stack trace: {ex.StackTrace}");
                 
-                // Show login page as fallback
-                Debug.WriteLine("[App.xaml.cs] Showing login page as error fallback");
-                ShowLoginPage(services);
+                // Show simple login page as fallback
+                Debug.WriteLine("[App.xaml.cs] Showing simple login page as error fallback");
+                ShowSupabaseApiLoginPage(services);
             }
         }
 
@@ -535,6 +467,34 @@ namespace SubExplore
             };
             
             Debug.WriteLine("[App.xaml.cs] ✓ Basic login page created successfully");
+        }
+        
+        private void ShowSupabaseApiLoginPage(IServiceProvider services)
+        {
+            try
+            {
+                Debug.WriteLine("[App.xaml.cs] Creating CompleteLoginPage - Page de login professionnelle");
+                
+                // Utiliser SimpleLoginViewModel compatible avec ISimpleAuthenticationService
+                var loginViewModel = services.GetService<SubExplore.ViewModels.Auth.SimpleLoginViewModel>();
+                if (loginViewModel == null)
+                {
+                    Debug.WriteLine("[App.xaml.cs] ❌ LoginViewModel not found in services");
+                    CreateBasicLoginPage();
+                    return;
+                }
+                
+                var completeLoginPage = new Views.Auth.SimpleCompleteLoginPage(loginViewModel);
+                MainPage = new NavigationPage(completeLoginPage);
+                
+                Debug.WriteLine("[App.xaml.cs] ✅ CompleteLoginPage created and set as MainPage successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App.xaml.cs] ERROR: Failed to create CompleteLoginPage: {ex.Message}");
+                Debug.WriteLine($"[App.xaml.cs] Stack trace: {ex.StackTrace}");
+                CreateBasicLoginPage();
+            }
         }
     }
 }

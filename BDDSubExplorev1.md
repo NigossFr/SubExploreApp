@@ -15,7 +15,7 @@ Table centrale contenant les informations des utilisateurs de l'application.
 | `Id` | int | PK, AUTO_INCREMENT | Identifiant unique |
 | `Email` | varchar | REQUIRED, UNIQUE, EmailAddress | Email de l'utilisateur |
 | `PasswordHash` | varchar | REQUIRED | Hash du mot de passe (BCrypt) |
-| `Username` | varchar(30) | REQUIRED, UNIQUE, MinLength(3), Regex(^[a-zA-Z0-9_-]+$) | Nom d'utilisateur |
+| `Username` | varchar(30) | NULLABLE, UNIQUE, MinLength(3), Regex(^[a-zA-Z0-9_-]+$) | Nom d'utilisateur |
 | `FirstName` | varchar(50) | REQUIRED | Prénom |
 | `LastName` | varchar(50) | REQUIRED | Nom de famille |
 | `AvatarUrl` | varchar | NULLABLE, URL | URL de l'avatar |
@@ -26,6 +26,12 @@ Table centrale contenant les informations des utilisateurs de l'application.
 | `CreatedAt` | datetime | REQUIRED, DEFAULT(NOW) | Date de création |
 | `UpdatedAt` | datetime | NULLABLE | Date de mise à jour |
 | `LastLogin` | datetime | NULLABLE | Dernière connexion |
+| `IsEmailConfirmed` | boolean | DEFAULT(false) | Email confirmé |
+| `ModeratorSpecialization` | enum | DEFAULT(None) | Spécialisation modérateur |
+| `ModeratorStatus` | enum | DEFAULT(None) | Statut modérateur |
+| `Permissions` | enum | DEFAULT(CreateSpots) | Permissions utilisateur |
+| `ModeratorSince` | datetime | NULLABLE | Date nomination modérateur |
+| `OrganizationId` | int | NULLABLE | ID organisation |
 
 **Index :**
 - `IX_Users_Email_Unique` (Email) - UNIQUE
@@ -184,7 +190,71 @@ Table de liaison pour les spots favoris des utilisateurs.
 - Many-to-One avec `Users`
 - Many-to-One avec `Spots`
 
-### 7. RevokedTokens (Tokens Révoqués)
+### 7. EmailVerificationTokens (Tokens de Vérification Email)
+
+Gestion des tokens de vérification d'adresse email.
+
+| Colonne | Type | Contraintes | Description |
+|---------|------|-------------|-------------|
+| `Id` | int | PK, AUTO_INCREMENT | Identifiant unique |
+| `UserId` | int | FK, REQUIRED | Référence vers Users |
+| `TokenHash` | varchar(500) | REQUIRED | Hash du token de vérification |
+| `Email` | varchar(255) | REQUIRED, EmailAddress | Email à vérifier |
+| `ExpiresAt` | datetime | REQUIRED | Date d'expiration |
+| `IsUsed` | boolean | DEFAULT(false) | Token utilisé |
+| `UsedAt` | datetime | NULLABLE | Date d'utilisation |
+| `CreatedFromIP` | varchar(45) | NULLABLE | IP de création |
+| `UsedFromIP` | varchar(45) | NULLABLE | IP d'utilisation |
+| `CreatedAt` | datetime | REQUIRED, DEFAULT(NOW) | Date de création |
+| `AttemptCount` | int | DEFAULT(0) | Nombre de tentatives |
+| `MaxAttempts` | int | DEFAULT(5) | Tentatives maximales |
+
+**Index :**
+- `IX_EmailVerificationTokens_TokenHash_Unique` (TokenHash) - UNIQUE
+- `IX_EmailVerificationTokens_UserId` (UserId)
+- `IX_EmailVerificationTokens_Email` (Email)
+- `IX_EmailVerificationTokens_ExpiresAt` (ExpiresAt)
+- `IX_EmailVerificationTokens_CreatedAt` (CreatedAt)
+- `IX_EmailVerificationTokens_User_Date` (UserId, CreatedAt)
+- `IX_EmailVerificationTokens_Used_Expires` (IsUsed, ExpiresAt)
+
+**Relations :**
+- Many-to-One avec `Users` (OnDelete: Cascade)
+
+### 8. PasswordResetTokens (Tokens de Réinitialisation)
+
+Gestion des tokens de réinitialisation de mot de passe.
+
+| Colonne | Type | Contraintes | Description |
+|---------|------|-------------|-------------|
+| `Id` | int | PK, AUTO_INCREMENT | Identifiant unique |
+| `UserId` | int | FK, REQUIRED | Référence vers Users |
+| `TokenHash` | varchar(500) | REQUIRED | Hash du token de reset |
+| `Email` | varchar(255) | REQUIRED, EmailAddress | Email du reset |
+| `ExpiresAt` | datetime | REQUIRED | Date d'expiration |
+| `IsUsed` | boolean | DEFAULT(false) | Token utilisé |
+| `UsedAt` | datetime | NULLABLE | Date d'utilisation |
+| `CreatedFromIP` | varchar(45) | NULLABLE | IP de création |
+| `UsedFromIP` | varchar(45) | NULLABLE | IP d'utilisation |
+| `CreatedAt` | datetime | REQUIRED, DEFAULT(NOW) | Date de création |
+| `AttemptCount` | int | DEFAULT(0) | Nombre de tentatives |
+| `MaxAttempts` | int | DEFAULT(3) | Tentatives maximales |
+| `ResetReason` | varchar(200) | NULLABLE | Raison du reset |
+
+**Index :**
+- `IX_PasswordResetTokens_TokenHash_Unique` (TokenHash) - UNIQUE
+- `IX_PasswordResetTokens_UserId` (UserId)
+- `IX_PasswordResetTokens_Email` (Email)
+- `IX_PasswordResetTokens_ExpiresAt` (ExpiresAt)
+- `IX_PasswordResetTokens_CreatedAt` (CreatedAt)
+- `IX_PasswordResetTokens_User_Date` (UserId, CreatedAt)
+- `IX_PasswordResetTokens_Email_Date` (Email, CreatedAt)
+- `IX_PasswordResetTokens_Used_Expires` (IsUsed, ExpiresAt)
+
+**Relations :**
+- Many-to-One avec `Users` (OnDelete: Cascade)
+
+### 9. RevokedTokens (Tokens Révoqués)
 
 Gestion des tokens JWT révoqués pour la sécurité.
 
@@ -208,13 +278,50 @@ Gestion des tokens JWT révoqués pour la sécurité.
 **Relations :**
 - Many-to-One avec `Users` (OnDelete: SetNull)
 
+## Énumérations Supplémentaires
+
+### ModeratorSpecialization (Spécialisation Modérateur)
+- `None` (0) : Aucune spécialisation
+- `RecreationalDiving` (1) : Plongée récréative
+- `TechnicalDiving` (2) : Plongée technique
+- `Freediving` (3) : Apnée
+- `SnorkelingHiking` (4) : Randonnée aquatique
+- `UnderwaterPhotography` (5) : Photographie sous-marine
+- `DiveSpots` (6) : Sites de plongée
+- `FreediveSpots` (7) : Sites d'apnée
+- `SnorkelSpots` (8) : Sites de randonnée
+- `SafetyAndRegulations` (9) : Sécurité et réglementation
+- `MarineConservation` (10) : Conservation marine
+- `CommunityManagement` (11) : Gestion communautaire
+
+### ModeratorStatus (Statut Modérateur)
+- `None` (0) : N'est pas modérateur
+- `Probationary` (1) : Période probatoire
+- `Active` (2) : Actif
+- `Suspended` (3) : Suspendu
+- `Retired` (4) : Retraité
+
+### UserPermissions (Permissions Utilisateur)
+Système de flags binaires pour contrôle granulaire :
+- `None` (0) : Aucune permission
+- `CreateSpots` (1) : Créer des spots
+- `ValidateSpots` (2) : Valider les spots
+- `ModerateContent` (4) : Modérer le contenu
+- `ManageOrganization` (8) : Gérer l'organisation
+- `ProfessionalFeatures` (16) : Fonctionnalités professionnelles
+- `NominateModerators` (32) : Nommer des modérateurs
+- `AdminAccess` (64) : Accès administration
+- `ManageUsers` (128) : Gérer les utilisateurs
+- `ViewModerationLogs` (256) : Voir les logs de modération
+- `ViewAnalytics` (512) : Accès aux analytiques
+
 ## Énumérations
 
 ### AccountType (Type de Compte)
-- `Standard` : Utilisateur standard
-- `Moderator` : Modérateur
-- `Professional` : Professionnel
-- `Administrator` : Administrateur
+- `Standard` (0) : Utilisateur standard
+- `ExpertModerator` (1) : Modérateur expert
+- `VerifiedProfessional` (2) : Professionnel vérifié
+- `Administrator` (3) : Administrateur
 
 ### SubscriptionStatus (Statut d'Abonnement)
 - `Free` : Gratuit
@@ -239,24 +346,27 @@ Gestion des tokens JWT révoqués pour la sécurité.
 ### SpotValidationStatus (Statut de Validation)
 - `Draft` : Brouillon
 - `Pending` : En attente
+- `UnderReview` : En cours de révision
 - `NeedsRevision` : Nécessite révision
+- `SafetyReview` : Révision sécurité
 - `Approved` : Approuvé
 - `Rejected` : Rejeté
 - `Archived` : Archivé
 
 ### CurrentStrength (Force du Courant)
 - `None` : Aucun
-- `Light` : Léger
+- `Weak` : Faible
 - `Moderate` : Modéré
 - `Strong` : Fort
 - `Extreme` : Extrême
 
 ### ActivityCategory (Catégorie d'Activité)
-- `Diving` : Plongée bouteille
-- `Freediving` : Apnée
-- `Snorkeling` : Randonnée sous-marine
-- `UnderwaterPhotography` : Photographie sous-marine
-- `Other` : Autre
+- `Activity` : Toutes les activités sous-marines
+- `Structure` : Clubs, centres, bases fédérales
+- `Shop` : Boutiques et magasins
+- `Other` : Autres types
+
+**Notes** : Les anciennes valeurs `Diving`, `Freediving`, `Snorkeling`, `UnderwaterPhotography` sont obsolètes et remplacées par `Activity`.
 
 ### MediaType (Type de Média)
 - `Photo` : Photo
@@ -280,13 +390,16 @@ Gestion des tokens JWT révoqués pour la sécurité.
 - **Type :** Administrator
 - **Abonnement :** Premium
 - **Expertise :** Professional
+- **EmailConfirmé :** true
+- **Permissions :** Toutes les permissions (1023)
+- **Mot de passe par défaut :** Admin123!
 
 ### Types de Spots Préconfigurés
-1. **Apnée** - Bleu (#00B4D8) - Validation experte requise
-2. **Photo sous-marine** - Turquoise (#2EC4B6) - Validation simple
-3. **Plongée récréative** - Bleu foncé (#006994) - Validation experte requise
-4. **Plongée technique** - Orange (#FF9F1C) - Validation experte requise
-5. **Randonnée sous marine** - Bleu clair (#48CAE4) - Validation simple
+1. **Apnée** - Bleu (#00B4D8) - Catégorie: Activity - Validation experte requise
+2. **Photo sous-marine** - Turquoise (#2EC4B6) - Catégorie: Activity - Validation simple
+3. **Plongée récréative** - Bleu foncé (#006994) - Catégorie: Activity - Validation experte requise
+4. **Plongée technique** - Orange (#FF9F1C) - Catégorie: Activity - Validation experte requise
+5. **Randonnée sous marine** - Bleu clair (#48CAE4) - Catégorie: Activity - Validation simple
 
 ### Spots d'Exemple
 1. **Calanque de Sormiou** - Plongée récréative (25m, Intermédiaire)
@@ -299,9 +412,11 @@ Gestion des tokens JWT révoqués pour la sécurité.
 
 ### Base de Données
 - **Moteur :** MySQL 8.0+
-- **Provider :** Pomelo.EntityFrameworkCore.MySql
+- **Provider :** Pomelo.EntityFrameworkCore.MySql 8.0.0
 - **Charset :** utf8mb4
 - **Collation :** utf8mb4_unicode_ci
+- **Connection Pooling :** Activé (Min: 1, Max: 10)
+- **Timeout :** 30 secondes
 
 ### Optimisations
 - Index géospatiaux pour les recherches de proximité
@@ -313,9 +428,13 @@ Gestion des tokens JWT révoqués pour la sécurité.
 ### Sécurité
 - Hash des mots de passe avec BCrypt
 - Gestion des tokens révoqués
+- Tokens de vérification email sécurisés
+- Tokens de réinitialisation mot de passe
 - Contraintes de validation strictes
 - Audit trail sur les actions sensibles
 - Protection contre l'injection SQL via EF Core
+- Limitation des tentatives (rate limiting)
+- Traçabilité IP pour audit sécurisé
 
 ### Performance
 - Index optimisés pour les requêtes géographiques
@@ -328,6 +447,16 @@ Gestion des tokens JWT révoqués pour la sécurité.
 
 La base de données utilise Entity Framework Core Migrations pour le versioning et les mises à jour de schéma. Les migrations sont stockées dans le dossier `Migrations/` et permettent un déploiement incrémental des changements de structure.
 
+### Migrations Actuelles
+1. **AddIsEmailConfirmedMigration** : Ajout du champ `IsEmailConfirmed`
+2. **AddPerformanceIndexesMigration** : Indexes de performance
+3. **AddUserFavoriteSpotMigration** : Système de favoris
+4. **AddUserRoleHierarchyMigration** : Hiérarchie des rôles utilisateur
+5. **FixSpotTypeCategoryMapping** : Correction mapping catégories
+6. **FixSpotTypeDataConsistency** : Cohérence des données
+7. **MigrateToNewSpotTypeStructure** : Nouvelle structure SpotType
+8. **UpdateActivityCategoryStructure** : Mise à jour catégories activités
+
 ### Commandes Utiles
 ```bash
 # Ajouter une migration
@@ -338,4 +467,34 @@ dotnet ef database update
 
 # Supprimer la dernière migration
 dotnet ef migrations remove
+
+# Générer un script SQL pour la production
+dotnet ef migrations script --environment Production
+
+# Appliquer les migrations en production
+dotnet ef database update --environment Production
 ```
+
+## Tables de Sécurité Avancée
+
+### EmailVerificationTokens & PasswordResetTokens
+Ces tables implémentent un système de sécurité avancé avec :
+- **Hash des tokens** : Stockage sécurisé des tokens
+- **Limitation des tentatives** : Protection contre le brute-force
+- **Traçabilité IP** : Logging des adresses IP pour audit
+- **Expiration automatique** : Tokens avec durée de vie limitée
+- **Usage unique** : Prévention de la réutilisation
+
+### Optimisations de Performance
+- **Plus de 30 indexes** optimisés pour les requêtes fréquentes
+- **Indexes géospatiaux** pour les recherches de proximité
+- **Indexes composites** pour les filtres complexes
+- **Connection pooling** configuré pour MySQL
+- **Query splitting** pour les requêtes complexes
+
+### Conformité RGPD
+- **Champ IsEmailConfirmed** : Consentement explicite
+- **Tokens de vérification** : Double opt-in
+- **Traçabilité des accès** : Logs d'audit
+- **Droit à l'oubli** : Possibilité de suppression
+- **Permissions granulaires** : Contrôle d'accès fin

@@ -7,8 +7,8 @@ namespace SubExplore.Models.Validation
     /// </summary>
     public interface IValidationEvent
     {
-        int SpotId { get; }
-        int UserId { get; }
+        Guid SpotId { get; }
+        Guid UserId { get; }
         DateTime Timestamp { get; }
         string EventType { get; }
         Dictionary<string, object> Metadata { get; }
@@ -19,8 +19,8 @@ namespace SubExplore.Models.Validation
     /// </summary>
     public abstract class ValidationEventBase : IValidationEvent
     {
-        public int SpotId { get; init; }
-        public int UserId { get; init; }
+        public Guid SpotId { get; init; }
+        public Guid UserId { get; init; }
         public DateTime Timestamp { get; init; } = DateTime.UtcNow;
         public abstract string EventType { get; }
         public Dictionary<string, object> Metadata { get; init; } = new();
@@ -34,7 +34,7 @@ namespace SubExplore.Models.Validation
     public class SpotApprovedEvent : ValidationEventBase
     {
         public override string EventType => "SpotApproved";
-        public int ValidatorId { get; init; }
+        public Guid ValidatorId { get; init; }
         public bool AutoApproved { get; init; }
         public TimeSpan ReviewDuration { get; init; }
     }
@@ -45,7 +45,7 @@ namespace SubExplore.Models.Validation
     public class SpotRejectedEvent : ValidationEventBase
     {
         public override string EventType => "SpotRejected";
-        public int ValidatorId { get; init; }
+        public Guid ValidatorId { get; init; }
         public List<string> RejectionReasons { get; init; } = new();
         public bool CanResubmit { get; init; } = true;
     }
@@ -56,7 +56,7 @@ namespace SubExplore.Models.Validation
     public class SpotAssignedForReviewEvent : ValidationEventBase
     {
         public override string EventType => "SpotAssignedForReview";
-        public int ModeratorId { get; init; }
+        public Guid ModeratorId { get; init; }
         public ModeratorSpecialization ModeratorSpecialization { get; init; }
         public DateTime ExpectedCompletionDate { get; init; }
     }
@@ -67,7 +67,7 @@ namespace SubExplore.Models.Validation
     public class SpotFlaggedForSafetyEvent : ValidationEventBase
     {
         public override string EventType => "SpotFlaggedForSafety";
-        public int ReporterId { get; init; }
+        public Guid ReporterId { get; init; }
         public SafetyFlag SafetyFlag { get; init; } = new();
         public bool RequiresImmediateAttention { get; init; }
     }
@@ -110,8 +110,8 @@ namespace SubExplore.Models.Validation
     /// </summary>
     public class ValidationMetricThresholdEvent : IValidationEvent
     {
-        public int SpotId => 0; // Not applicable for metric events
-        public int UserId => 0; // System generated
+        public Guid SpotId => Guid.Empty; // Not applicable for metric events
+        public Guid UserId => Guid.Empty; // System generated
         public DateTime Timestamp { get; init; } = DateTime.UtcNow;
         public string EventType => "ValidationMetricThreshold";
         public Dictionary<string, object> Metadata { get; init; } = new();
@@ -128,8 +128,8 @@ namespace SubExplore.Models.Validation
     /// </summary>
     public class ModeratorPerformanceEvent : IValidationEvent
     {
-        public int SpotId => 0; // Not applicable
-        public int UserId { get; init; } // Moderator ID
+        public Guid SpotId => Guid.Empty; // Not applicable
+        public Guid UserId { get; init; } // Moderator ID
         public DateTime Timestamp { get; init; } = DateTime.UtcNow;
         public string EventType => "ModeratorPerformance";
         public Dictionary<string, object> Metadata { get; init; } = new();

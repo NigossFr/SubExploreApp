@@ -139,15 +139,15 @@ namespace SubExplore.Services.Interfaces
         /// Get cache statistics for monitoring
         /// </summary>
         /// <returns>Cache performance statistics</returns>
-        CacheStatistics GetCacheStatistics();
+        SpotOptimizationCacheStatistics GetCacheStatistics();
         
         #endregion
     }
     
     /// <summary>
-    /// Cache performance statistics
+    /// Spot optimization cache performance statistics
     /// </summary>
-    public class CacheStatistics
+    public class SpotOptimizationCacheStatistics
     {
         public int TotalRequests { get; set; }
         public int CacheHits { get; set; }

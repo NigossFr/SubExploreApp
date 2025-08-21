@@ -31,7 +31,7 @@ namespace SubExplore.Services.Caching
             _logger = logger;
         }
 
-        public async Task<Spot> GetSpotAsync(int spotId)
+        public async Task<Spot> GetSpotAsync(Guid spotId)
         {
             var key = GetSpotKey(spotId);
             var spot = await _cacheService.GetAsync<Spot>(key);
@@ -59,7 +59,7 @@ namespace SubExplore.Services.Caching
             _logger.LogTrace("Spot cached for ID: {SpotId}, expires in: {Expiration}", spot.Id, exp);
         }
 
-        public async Task RemoveSpotAsync(int spotId)
+        public async Task RemoveSpotAsync(Guid spotId)
         {
             var key = GetSpotKey(spotId);
             await _cacheService.RemoveAsync(key);
@@ -110,7 +110,7 @@ namespace SubExplore.Services.Caching
             }
         }
 
-        public async Task<IEnumerable<SpotMedia>> GetSpotMediaAsync(int spotId)
+        public async Task<IEnumerable<SpotMedia>> GetSpotMediaAsync(Guid spotId)
         {
             var key = GetMediaKey(spotId);
             var media = await _cacheService.GetAsync<IEnumerable<SpotMedia>>(key);
@@ -127,7 +127,7 @@ namespace SubExplore.Services.Caching
             return media ?? Enumerable.Empty<SpotMedia>();
         }
 
-        public async Task SetSpotMediaAsync(int spotId, IEnumerable<SpotMedia> media, TimeSpan? expiration = null)
+        public async Task SetSpotMediaAsync(Guid spotId, IEnumerable<SpotMedia> media, TimeSpan? expiration = null)
         {
             if (media == null) return;
 
@@ -140,14 +140,14 @@ namespace SubExplore.Services.Caching
                 spotId, mediaList.Count, exp);
         }
 
-        public async Task RemoveSpotMediaAsync(int spotId)
+        public async Task RemoveSpotMediaAsync(Guid spotId)
         {
             var key = GetMediaKey(spotId);
             await _cacheService.RemoveAsync(key);
             _logger.LogTrace("Media cache removed for spot ID: {SpotId}", spotId);
         }
 
-        public async Task InvalidateSpotCache(int spotId)
+        public async Task InvalidateSpotCache(Guid spotId)
         {
             await RemoveSpotAsync(spotId);
             await RemoveSpotMediaAsync(spotId);
@@ -163,9 +163,9 @@ namespace SubExplore.Services.Caching
         }
 
         // Private helper methods
-        private static string GetSpotKey(int spotId) => $"{SpotKeyPrefix}{spotId}";
+        private static string GetSpotKey(Guid spotId) => $"{SpotKeyPrefix}{spotId}";
         
-        private static string GetMediaKey(int spotId) => $"{MediaKeyPrefix}{spotId}";
+        private static string GetMediaKey(Guid spotId) => $"{MediaKeyPrefix}{spotId}";
         
         private static string GetAreaKey(decimal latitude, decimal longitude, decimal radiusKm)
         {

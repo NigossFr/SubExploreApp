@@ -207,7 +207,7 @@ namespace SubExplore.Services.Validation
             {
                 spots.Add(new Spot
                 {
-                    Id = i + 1,
+                    Id = Guid.NewGuid(),
                     Name = $"Spot de test {i + 1}",
                     Description = $"Description du spot {i + 1}",
                     Latitude = (decimal)(43.0 + random.NextDouble() * 1.0), // Around Marseille area
@@ -216,8 +216,8 @@ namespace SubExplore.Services.Validation
                     DifficultyLevel = (DifficultyLevel)(random.Next(1, 4)),
                     ValidationStatus = SpotValidationStatus.Approved,
                     CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 365)),
-                    CreatorId = 1,
-                    TypeId = 1,
+                    CreatorId = Guid.NewGuid(),
+                    TypeId = Guid.NewGuid(),
                     RequiredEquipment = "Masque, tuba",
                     SafetyNotes = "Notes de sécurité",
                     BestConditions = "Conditions optimales"

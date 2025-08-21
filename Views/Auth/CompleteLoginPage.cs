@@ -2,7 +2,7 @@ using SubExplore.ViewModels.Auth;
 
 namespace SubExplore.Views.Auth;
 
-public class CompleteLoginPage : ContentPage
+public partial class CompleteLoginPage : ContentPage
 {
     private readonly LoginViewModel _viewModel;
     
@@ -26,6 +26,8 @@ public class CompleteLoginPage : ContentPage
         try
         {
             System.Diagnostics.Debug.WriteLine("[CompleteLoginPage] === CRÉATION PAGE DE CONNEXION COMPLÈTE ===");
+            
+            InitializeComponent(); // Initialize XAML
             
             _viewModel = viewModel;
             BindingContext = viewModel;

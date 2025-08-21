@@ -57,10 +57,10 @@ namespace SubExplore.Helpers.Extensions
             {
                 "Activités" => spotType.Category == Models.Enums.ActivityCategory.Activity ||
                                // Support pour l'ancienne structure (compatibilité temporaire)
-                               spotType.Category == Models.Enums.ActivityCategory.Diving ||
-                               spotType.Category == Models.Enums.ActivityCategory.Freediving ||
-                               spotType.Category == Models.Enums.ActivityCategory.Snorkeling ||
-                               spotType.Category == Models.Enums.ActivityCategory.UnderwaterPhotography,
+                               spotType.Category == Models.Enums.ActivityCategory.Activity ||
+                               spotType.Category == Models.Enums.ActivityCategory.Activity ||
+                               spotType.Category == Models.Enums.ActivityCategory.Activity ||
+                               spotType.Category == Models.Enums.ActivityCategory.Activity,
                 "Structures" => spotType.Category == Models.Enums.ActivityCategory.Structure,
                 "Boutiques" => spotType.Category == Models.Enums.ActivityCategory.Shop,
                 _ => spotType.Category == Models.Enums.ActivityCategory.Other

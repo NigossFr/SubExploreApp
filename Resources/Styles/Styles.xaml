@@ -9,6 +9,11 @@
     <converters:ResponsiveColumnsConverter x:Key="ResponsiveColumnsConverter" />
     <converters:OrientationBasedConverter x:Key="OrientationBasedConverter" />
 
+    <!--  Value Converters for Supabase Test Page  -->
+    <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+    <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
     </Style>

@@ -325,7 +325,7 @@ public partial class FlyoutMenuViewModel : ObservableObject
                 📍 Service Status: {(_authenticationService != null ? "Available" : "NULL")}
                 🔐 Is Authenticated: {isAuthenticated}
                 👤 Current User: {currentUser?.Username ?? "None"}
-                🆔 User ID: {currentUser?.Id ?? 0}
+                🆔 User ID: {currentUser?.Id ?? Guid.Empty}
                 🎭 Account Type: {currentUser?.AccountType ?? Models.Enums.AccountType.Standard}
                 ⚖️ Is Admin/Moderator: {isAdmin}
                 

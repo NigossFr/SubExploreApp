@@ -88,7 +88,7 @@ namespace SubExplore.Services.Implementations
             var errors = ValidateBasicSpotInfo(spot);
 
             // Diving-specific validations
-            if (spot.Type?.Category != ActivityCategory.Diving)
+            if (spot.Type?.Category != ActivityCategory.Activity)
             {
                 errors.Add("Spot type must be diving category for dive spot validation");
             }
@@ -173,7 +173,7 @@ namespace SubExplore.Services.Implementations
         {
             var errors = ValidateBasicSpotInfo(spot);
 
-            if (spot.Type?.Category != ActivityCategory.Freediving)
+            if (spot.Type?.Category != ActivityCategory.Activity)
             {
                 errors.Add("Spot type must be freediving category");
             }
@@ -245,7 +245,7 @@ namespace SubExplore.Services.Implementations
         {
             var errors = ValidateBasicSpotInfo(spot);
 
-            if (spot.Type?.Category != ActivityCategory.Snorkeling)
+            if (spot.Type?.Category != ActivityCategory.Activity)
             {
                 errors.Add("Spot type must be snorkeling category");
             }

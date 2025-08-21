@@ -276,18 +276,18 @@
         ContentTemplate="{DataTemplate map:MapPage}"
         Route="map" />
 
-    <!-- Hidden routes for navigation -->
-    <ShellContent
+    <!-- 🚫 Hidden routes for navigation - supprimées car utilisaient Entity Framework -->
+    <!-- <ShellContent
         Title="Mes Spots"
         ContentTemplate="{DataTemplate spots:MySpotsPage}"
         Route="myspots"
-        FlyoutItemIsVisible="False" />
+        FlyoutItemIsVisible="False" /> -->
 
-    <ShellContent
+    <!-- <ShellContent
         Title="Favoris"
         ContentTemplate="{DataTemplate favorites:FavoriteSpotsPage}"
         Route="favorites"
-        FlyoutItemIsVisible="False" />
+        FlyoutItemIsVisible="False" /> -->
 
     <ShellContent
         Title="Profil"
@@ -303,31 +303,39 @@
         FlyoutItemIsVisible="False" />
 
     <!-- Modal Pages - Outside main navigation -->
-    <!-- Add Spot Page Route -->
+    <!-- Add Spot Page Route - TEMPORAIREMENT DÉSACTIVÉ (ViewModels Entity Framework supprimés) -->
+    <!--
     <ShellContent
         Title="Ajouter un Spot"
         ContentTemplate="{DataTemplate spots:AddSpotPage}"
         Route="addspot" />
+    -->
 
-    <!-- Spot Details Page Route -->
+    <!-- Spot Details Page Route - TEMPORAIREMENT DÉSACTIVÉ (ViewModels Entity Framework supprimés) -->
+    <!--
     <ShellContent
         Title="Détails du Spot"
         ContentTemplate="{DataTemplate spots:SpotDetailsPage}"
         Route="spotdetails" />
+    -->
 
-    <!-- Admin route - Hidden -->
+    <!-- Admin route - Hidden - TEMPORAIREMENT DÉSACTIVÉ (ViewModels Entity Framework supprimés) -->
+    <!--
     <ShellContent
         Title="Validation des Spots"
         ContentTemplate="{DataTemplate admin:SpotValidationPage}"
         Route="spotvalidation"
         FlyoutItemIsVisible="False" />
+    -->
 
-    <!-- Database Test route - Hidden -->
+    <!-- Database Test route - Hidden - TEMPORAIREMENT DÉSACTIVÉ (ViewModels Entity Framework supprimés) -->
+    <!--
     <ShellContent
         Title="Test Base de Données"
         ContentTemplate="{DataTemplate settings:DatabaseTestPage}"
         Route="databasetest"
         FlyoutItemIsVisible="False" />
+    -->
 
     <!-- About route - Hidden -->
     <ShellContent
@@ -339,7 +347,7 @@
     <!-- Authentication routes - Hidden from flyout -->
     <ShellContent
         Title="Connexion"
-        ContentTemplate="{DataTemplate auth:ProductionLoginPage}"
+        ContentTemplate="{DataTemplate auth:CompleteLoginPage}"
         Route="login"
         FlyoutItemIsVisible="False" />
 

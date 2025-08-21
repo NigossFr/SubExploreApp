@@ -10,48 +10,48 @@ namespace SubExplore.Services.Interfaces
     public interface ISpotService
     {
         // Core Business Operations
-        Task<Spot?> GetSpotWithFullDetailsAsync(int spotId);
+        Task<Spot?> GetSpotWithFullDetailsAsync(Guid spotId);
         Task<IEnumerable<Spot>> GetSpotsWithinRadiusAsync(double latitude, double longitude, double radiusKm, SpotValidationStatus? status = null);
         Task<IEnumerable<Spot>> GetSpotsByDifficultyAsync(DifficultyLevel difficulty);
         Task<IEnumerable<Spot>> GetSpotsByCategoryAsync(ActivityCategory category);
-        Task<IEnumerable<Spot>> GetRecommendedSpotsAsync(int userId, int limit = 10);
+        Task<IEnumerable<Spot>> GetRecommendedSpotsAsync(Guid userId, int limit = 10);
         
         // Safety and Validation
-        Task<bool> ValidateSpotSafetyAsync(int spotId);
-        Task<SpotSafetyReport> GenerateSafetyReportAsync(int spotId);
-        Task<bool> IsSpotSafeForUserLevelAsync(int spotId, DifficultyLevel userLevel);
-        Task UpdateSpotSafetyReviewAsync(int spotId, string reviewNotes, int reviewerId);
+        Task<bool> ValidateSpotSafetyAsync(Guid spotId);
+        Task<SpotSafetyReport> GenerateSafetyReportAsync(Guid spotId);
+        Task<bool> IsSpotSafeForUserLevelAsync(Guid spotId, DifficultyLevel userLevel);
+        Task UpdateSpotSafetyReviewAsync(Guid spotId, string reviewNotes, Guid reviewerId);
         
         // Visit Tracking and Analytics
-        Task RecordSpotVisitAsync(int spotId, int userId);
-        Task<SpotStatistics> GetSpotStatisticsAsync(int spotId);
+        Task RecordSpotVisitAsync(Guid spotId, Guid userId);
+        Task<SpotStatistics> GetSpotStatisticsAsync(Guid spotId);
         Task<IEnumerable<Spot>> GetMostPopularSpotsAsync(int limit = 10, TimeSpan? period = null);
         Task<IEnumerable<Spot>> GetRecentlyAddedSpotsAsync(int limit = 10);
         
         // Rating and Reviews
-        Task<double> GetSpotAverageRatingAsync(int spotId);
-        Task<int> GetSpotReviewCountAsync(int spotId);
-        Task<bool> HasUserVisitedSpotAsync(int spotId, int userId);
+        Task<double> GetSpotAverageRatingAsync(Guid spotId);
+        Task<int> GetSpotReviewCountAsync(Guid spotId);
+        Task<bool> HasUserVisitedSpotAsync(Guid spotId, Guid userId);
         
         // Search and Discovery
         Task<IEnumerable<Spot>> SearchSpotsAsync(string searchTerm, double? userLat = null, double? userLon = null);
-        Task<IEnumerable<Spot>> GetSimilarSpotsAsync(int spotId, int limit = 5);
-        Task<IEnumerable<Spot>> GetSpotsNearUserAsync(int userId, double radiusKm = 50);
+        Task<IEnumerable<Spot>> GetSimilarSpotsAsync(Guid spotId, int limit = 5);
+        Task<IEnumerable<Spot>> GetSpotsNearUserAsync(Guid userId, double radiusKm = 50);
         
         // Favorites and Collections
-        Task<bool> ToggleFavoriteSpotAsync(int spotId, int userId);
-        Task<bool> IsSpotFavoriteAsync(int spotId, int userId);
-        Task<IEnumerable<Spot>> GetUserFavoriteSpotsAsync(int userId);
+        Task<bool> ToggleFavoriteSpotAsync(Guid spotId, Guid userId);
+        Task<bool> IsSpotFavoriteAsync(Guid spotId, Guid userId);
+        Task<IEnumerable<Spot>> GetUserFavoriteSpotsAsync(Guid userId);
         
         // Data Enrichment
-        Task<Models.Domain.WeatherInfo?> GetSpotCurrentWeatherAsync(int spotId);
-        Task<TideInfo?> GetSpotTideInfoAsync(int spotId);
+        Task<Models.Domain.WeatherInfo?> GetSpotCurrentWeatherAsync(Guid spotId);
+        Task<TideInfo?> GetSpotTideInfoAsync(Guid spotId);
         Task<IEnumerable<Spot>> GetSpotsWithGoodConditionsAsync();
         
         // Quality Assurance
-        Task<SpotQualityScore> CalculateSpotQualityScoreAsync(int spotId);
-        Task<bool> RequiresExpertValidationAsync(int spotId);
-        Task FlagSpotForReviewAsync(int spotId, string reason, int reporterId);
+        Task<SpotQualityScore> CalculateSpotQualityScoreAsync(Guid spotId);
+        Task<bool> RequiresExpertValidationAsync(Guid spotId);
+        Task FlagSpotForReviewAsync(Guid spotId, string reason, Guid reporterId);
     }
     
     /// <summary>
@@ -59,7 +59,7 @@ namespace SubExplore.Services.Interfaces
     /// </summary>
     public class SpotSafetyReport
     {
-        public int SpotId { get; set; }
+        public Guid SpotId { get; set; }
         public string SpotName { get; set; } = string.Empty;
         public int SafetyScore { get; set; } // 0-100
         public DateTime LastReviewDate { get; set; }
@@ -78,7 +78,7 @@ namespace SubExplore.Services.Interfaces
     /// </summary>
     public class SpotStatistics
     {
-        public int SpotId { get; set; }
+        public Guid SpotId { get; set; }
         public int TotalVisits { get; set; }
         public int UniqueVisitors { get; set; }
         public int VisitsThisMonth { get; set; }
@@ -97,7 +97,7 @@ namespace SubExplore.Services.Interfaces
     /// </summary>
     public class SpotQualityScore
     {
-        public int SpotId { get; set; }
+        public Guid SpotId { get; set; }
         public int OverallScore { get; set; } // 0-100
         public int DataCompletenessScore { get; set; }
         public int SafetyInformationScore { get; set; }

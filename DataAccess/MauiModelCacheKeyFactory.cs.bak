@@ -1,0 +1,22 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+
+namespace SubExplore.DataAccess
+{
+    /// <summary>
+    /// Model cache key factory optimized for MAUI applications to improve startup performance
+    /// by caching compiled models across DbContext instances
+    /// </summary>
+    public class MauiModelCacheKeyFactory : IModelCacheKeyFactory
+    {
+        private static readonly MauiModelCacheKeyFactory _instance = new();
+        public static MauiModelCacheKeyFactory Instance => _instance;
+
+        public object Create(DbContext context, bool designTime)
+        {
+            // Use the context type as the cache key for consistent model caching
+            // This ensures all instances of the same DbContext type share the same compiled model
+            return new { Type = context.GetType(), DesignTime = designTime };
+        }
+    }
+}

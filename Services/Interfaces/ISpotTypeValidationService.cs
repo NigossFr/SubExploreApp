@@ -38,6 +38,12 @@ namespace SubExplore.Services.Interfaces
         /// Gets the count of active SpotTypes per category
         /// </summary>
         Task<Dictionary<ActivityCategory, int>> GetActiveTypeCountsByCategoryAsync();
+        
+        /// <summary>
+        /// Gets a comprehensive diagnostic report as a formatted string
+        /// Replaces SpotTypeDiagnosticService.DiagnoseSpotTypesAsync()
+        /// </summary>
+        Task<string> GetDiagnosticReportAsync();
     }
     
     /// <summary>

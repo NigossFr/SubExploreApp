@@ -88,16 +88,7 @@
 		<PackageReference Include="CommunityToolkit.Maui" Version="9.1.1" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="DotNetEnv" Version="3.1.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.15">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.15" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.15">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
+		<!-- 🚫 Entity Framework supprimé - Utilisation API Supabase uniquement -->
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.4" />
@@ -106,9 +97,10 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.4" />
 		<PackageReference Include="Microsoft.Maui.Controls.Maps" Version="8.0.100" />
 		<PackageReference Include="Microsoft.Maui.Maps" Version="8.0.100" />
-		<PackageReference Include="MySqlConnector" Version="2.4.0" />
-		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.4" />
+		<!-- 🚫 PostgreSQL et NetTopologySuite supprimés - Utilisation API Supabase uniquement -->
+		<PackageReference Include="supabase-csharp" Version="0.16.2" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
 	</ItemGroup>
 
@@ -119,6 +111,13 @@
 	  <Folder Include="ViewModels\Auth\" />
 	  <Folder Include="Views\Auth\" />
 	  <Folder Include="Views\Controls\" />
+	</ItemGroup>
+
+	<!-- 🚫 Exclusion des fichiers Entity Framework - sauvegardés mais non compilés -->
+	<ItemGroup>
+		<Compile Remove="EntityFramework_Backup/**" />
+		<MauiXaml Remove="EntityFramework_Backup/**" />
+		<None Include="EntityFramework_Backup/**" />
 	</ItemGroup>
 
 	      
@@ -151,6 +150,9 @@
 		<Generator>MSBuild:Compile</Generator>
 	</MauiXaml>
 	<MauiXaml Update="Views\Spots\SpotDetailsPage.xaml">
+		<Generator>MSBuild:Compile</Generator>
+	</MauiXaml>
+	<MauiXaml Update="Views\Auth\CompleteLoginPage.xaml">
 		<Generator>MSBuild:Compile</Generator>
 	</MauiXaml>
   <!-- Ajoutez ici d'autres fichiers XAML (Pages, Vues, Dictionnaires de Ressources) si vous en avez -->

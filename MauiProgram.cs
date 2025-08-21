@@ -1,13 +1,14 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
+// ========================================
+// MauiProgram ALTERNATIF SANS ENUM MAPPING
+// ========================================
+// Cette version utilise des converters personnalisés au lieu 
+// du mapping enum direct pour éviter les erreurs PostgreSQL
+
 using Microsoft.Extensions.Logging;
-using SubExplore.DataAccess; // Pour SubExploreDbContext
-using SubExplore.Repositories.Interfaces;
-using SubExplore.Repositories.Implementations;
+// 🚫 Entity Framework et Npgsql supprimés - API Supabase uniquement
 using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
-using SubExplore.Migrations;
+// 🚫 Repositories Entity Framework supprimés - API Supabase uniquement
 using SubExplore.Services.Validation;
 using SubExplore.Services.Caching;
 using SubExplore.Models.Validation;
@@ -16,24 +17,22 @@ using SubExplore.ViewModels.Map;
 using SubExplore.Constants;
 using SubExplore.ViewModels.Spots;
 using SubExplore.ViewModels.Profile;
-using SubExplore.ViewModels.Menu;
+// 🚫 ViewModels.Menu supprimé
+// using SubExplore.ViewModels.Menu;
 using SubExplore.ViewModels.Auth;
+using SubExplore.ViewModels;
 using SubExplore.Views.Spots.Components;
 using SubExplore.Views.Settings;
 using SubExplore.Views.Map;
 using SubExplore.Views.Spots;
 using SubExplore.Views.Profile;
 using SubExplore.Views.Auth;
-using System.Reflection;
+using SubExplore.Views;
 using CommunityToolkit.Maui;
 using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
-using Microsoft.Maui.Devices; // Ajouté pour DeviceInfo
-using DotNetEnv; // Pour charger les variables d'environnement
-using Microsoft.Maui.Handlers;
-#if WINDOWS
-using SubExplore.Platforms.Windows;
-#endif
+using System.Diagnostics;
+using SubExplore.Helpers;
 
 namespace SubExplore;
 
@@ -41,18 +40,6 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
-        // Load environment variables from .env file
-        try
-        {
-            Env.Load();
-            // Environment variables loaded successfully
-        }
-        catch (Exception ex)
-        {
-            // Continue without .env file - environment variables can still be set manually
-            // Continue without .env file - environment variables can still be set manually
-        }
-
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
@@ -60,158 +47,45 @@ public static class MauiProgram
             .UseMauiMaps()
             .ConfigureFonts(fonts =>
             {
-                // Temporarily commented out to fix font loading issues
-                // fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                // fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-            })
-;
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+            });
 
-#if ANDROID
-        // Additional Android-specific Google Maps configuration will be handled by the platform-specific code
-#endif
+        // 🚀 CONFIGURATION 100% API SUPABASE - PLUS D'ENTITY FRAMEWORK
+        // L'application utilise UNIQUEMENT l'API Supabase via supabase-csharp
+        Debug.WriteLine("🚀 Configuration 100% API Supabase - Plus d'Entity Framework");
+        
+        // Enregistrer le service client Supabase
+        builder.Services.AddSingleton<ISupabaseClientService, SupabaseClientService>();
 
-        // Charger la configuration depuis appsettings.json
-        var assembly = Assembly.GetExecutingAssembly();
-        var appSettingsResourceName = "SubExplore.appsettings.json"; // Assurez-vous que cela correspond
-        using var stream = assembly.GetManifestResourceStream(appSettingsResourceName);
+        // 🔐 SECURE CONFIGURATION SERVICE - Managed conditionally below
 
-        IConfiguration configuration;
+        // 🛡️ RESILIENCE SERVICES - Retry policies, circuit breakers, health monitoring
+        builder.Services.AddSingleton<IRetryPolicyService, RetryPolicyService>();
+        builder.Services.AddSingleton<ICircuitBreakerService, CircuitBreakerService>();
+        // 🚫 ConnectionHealthService supprimé - utilisait Entity Framework
+        builder.Services.AddSingleton<IErrorCategorizationService, ErrorCategorizationService>();
+        builder.Services.AddSingleton<IAutoReconnectService, AutoReconnectService>();
+        builder.Services.AddSingleton<IFallbackDataService, FallbackDataService>();
 
-        if (stream != null)
-        {
-            configuration = new ConfigurationBuilder()
-                .AddJsonStream(stream)
-                .Build();
+        // 🚫 SupabaseService supprimé - utilisait Entity Framework
+        
+        // 🚀 SERVICES SUPABASE NATIFS - Solution 100% API
+        builder.Services.AddScoped<ISupabaseApiService, SupabaseApiService>();
+        builder.Services.AddSingleton<ISimpleSupabaseService, SimpleSupabaseService>();
+        
+        // ✅ NOUVEAUX SERVICES SUPABASE NATIFS
+        builder.Services.AddScoped<ISupabaseSpotService, SupabaseSpotService>();
+        builder.Services.AddScoped<ISupabaseSpotTypeService, SupabaseSpotTypeService>();
+        builder.Services.AddScoped<ISupabaseUserService, SupabaseUserService>();
+        
+        // 🔐 SERVICE D'AUTHENTIFICATION AVANCÉ
+        builder.Services.AddSingleton<IEnhancedAuthenticationService, EnhancedAuthenticationService>();
 
-            // Ajouter la configuration au builder pour qu'elle soit accessible via builder.Configuration ailleurs si besoin
-            builder.Configuration.AddConfiguration(configuration);
-        }
-        else
-        {
-            // Gestion de secours - peut-être lancer une exception ou utiliser des valeurs par défaut codées en dur.
-            // For development, throwing an exception is often preferable to not hide a problem.
-            // Configuration file could not be loaded - using empty configuration
-            // Créer une configuration vide pour éviter les NullReferenceException plus tard, ou lancer une exception
-            configuration = new ConfigurationBuilder().Build();
-            // throw new FileNotFoundException($"Le fichier de configuration '{appSettingsResourceName}' est introuvable en tant que ressource incorporée.");
-        }
-
-        // Rendre IConfiguration disponible via DI
-        builder.Services.AddSingleton(configuration);
-
-        // Register the performance interceptor factory
-        builder.Services.AddSingleton<DataAccess.PerformanceInterceptor>();
-
-        // Configuration de la base de données with scoped lifetime to prevent connection conflicts
-        builder.Services.AddDbContext<SubExploreDbContext>((serviceProvider, options) =>
-        {
-            string? connectionString = null;
-            string connectionStringKey = "DefaultConnection"; // Clé par défaut
-
-#if ANDROID
-            if (DeviceInfo.Current.DeviceType == DeviceType.Virtual)
-            {
-                // Detection: Android Emulator
-                connectionStringKey = "AndroidEmulatorConnection";
-            }
-            else
-            {
-                // Detection: Physical Android Device
-                connectionStringKey = "AndroidDeviceConnection";
-            }
-#elif IOS
-            if (DeviceInfo.Current.DeviceType == DeviceType.Virtual) // Simulateur iOS
-            {
-                // Detection: iOS Simulator
-                connectionStringKey = "iOSSimulatorConnection";
-            }
-            else // Appareil iOS réel
-            {
-                // Detection: Physical iOS Device
-                connectionStringKey = "iOSDeviceConnection";
-            }
-#elif WINDOWS
-            // Detection: Windows Platform
-            connectionStringKey = "DefaultConnection"; // Ou une clé spécifique pour Windows si nécessaire
-#else
-            // Pour d'autres plateformes ou si aucune directive n'est active
-            // Detection: Unknown or unhandled platform, using DefaultConnection
-#endif
-
-            connectionString = configuration.GetConnectionString(connectionStringKey);
-            // Connection string key selected: {connectionStringKey}
-
-            // Fallback au DefaultConnection si la chaîne spécifique n'est pas trouvée
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                // Warning: '{connectionStringKey}' not found, attempting with 'DefaultConnection'
-                connectionString = configuration.GetConnectionString("DefaultConnection");
-            }
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                var errorMessage = "La chaîne de connexion à la base de données n'est pas configurée ou introuvable.";
-                // Critical: Database connection string not configured
-                throw new InvalidOperationException(errorMessage);
-            }
-
-            // Connection string configured successfully (password masked for security)
-
-            try
-            {
-                // Test de la connexion avant de continuer
-                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), 
-                    mySqlOptions =>
-                    {
-                        // Fix MySQL connection concurrency issues
-                        mySqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 3,
-                            maxRetryDelay: TimeSpan.FromSeconds(30),
-                            errorNumbersToAdd: null);
-                    });
-                
-                // Additional EF Core options for better concurrency handling
-                options.EnableSensitiveDataLogging(false);
-                options.EnableServiceProviderCaching(true);
-                options.EnableDetailedErrors(false);
-                
-                // Configure for better concurrency handling
-                options.ConfigureWarnings(warnings => 
-                {
-                    warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ContextDisposed);
-                    warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored);
-                });
-                
-                // Add performance monitoring interceptor
-                var performanceInterceptor = serviceProvider.GetRequiredService<DataAccess.PerformanceInterceptor>();
-                options.AddInterceptors(performanceInterceptor);
-            }
-            catch (Exception ex)
-            {
-                // Database connection test failed during configuration
-                throw new InvalidOperationException($"Database connection failed: {ex.Message}", ex);
-            }
-        }, ServiceLifetime.Scoped); // Explicit scoped lifetime to prevent concurrency issues
-
-        // Enregistrement des repositories
-        builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-        builder.Services.AddScoped<ISpotRepository, SpotRepository>();
-        builder.Services.AddScoped<ISpotTypeRepository, SpotTypeRepository>();
-        builder.Services.AddScoped<ISpotMediaRepository, SpotMediaRepository>();
-        builder.Services.AddScoped<IUserRepository, UserRepository>();
-        builder.Services.AddScoped<IRevokedTokenRepository, RevokedTokenRepository>();
-        builder.Services.AddScoped<IUserFavoriteSpotRepository, UserFavoriteSpotRepository>();
-        builder.Services.AddScoped<IEmailVerificationTokenRepository, EmailVerificationTokenRepository>();
-        builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
-
-        // Enregistrement des services
-        builder.Services.AddScoped<IDatabaseService, DatabaseService>();
-        builder.Services.AddScoped<IDatabaseInitializationService, DatabaseInitializationService>();
-        builder.Services.AddScoped<DatabaseDiagnosticService>();
-        builder.Services.AddScoped<SpotTypeMigrationService>();
-        builder.Services.AddScoped<UpdateActivityCategoryStructure>();
-        builder.Services.AddScoped<SpotTypeDiagnosticService>();
-        builder.Services.AddScoped<ISpotTypeValidationService, SpotTypeValidationService>();
+        Debug.WriteLine("✅ Services Supabase natifs configurés");
+        
+        // ✅ SERVICE D'INITIALISATION DE L'APPLICATION
+        builder.Services.AddSingleton<IAppInitializationService, AppInitializationService>();
+        
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddScoped<INavigationGuardService, NavigationGuardService>();
@@ -224,11 +98,12 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPlatformMapService, PlatformMapService>();
         builder.Services.AddSingleton<IMenuService, MenuService>();
         builder.Services.AddSingleton<IThemeService, ThemeService>();
-        builder.Services.AddScoped<IUserProfileService, UserProfileService>();
-        builder.Services.AddScoped<ISpotService, SpotService>();
-        builder.Services.AddScoped<IFavoriteSpotService, FavoriteSpotService>();
+        // 🚫 UserProfileService supprimé - utilisait Entity Framework
+        // 🚫 Services supprimés - utilisaient des repositories
+        // builder.Services.AddScoped<ISpotService, SpotService>();
+        // builder.Services.AddScoped<IFavoriteSpotService, FavoriteSpotService>();
         builder.Services.AddSingleton<IFavoriteSpotCacheService, FavoriteSpotCacheService>();
-        builder.Services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
+        // 🚫 ErrorHandlingService supprimé - utilisait Entity Framework
         
         // Weather services
         builder.Services.AddSingleton<IWeatherCacheService, WeatherCacheService>();
@@ -238,7 +113,34 @@ public static class MauiProgram
         // Performance monitoring services
         builder.Services.AddSingleton<IPerformanceProfilingService, PerformanceProfilingService>();
         builder.Services.AddSingleton<IApplicationPerformanceService, ApplicationPerformanceService>();
-        builder.Services.AddScoped<IPerformanceValidationService, PerformanceValidationService>();
+        builder.Services.AddSingleton<IPerformanceOptimizationService, PerformanceOptimizationService>();
+        
+        // Add memory cache for improved performance
+        builder.Services.AddMemoryCache(options =>
+        {
+            options.SizeLimit = 1000;
+            options.CompactionPercentage = 0.25;
+        });
+        
+        // Add high-performance response caching service
+        builder.Services.AddSingleton<IResponseCacheService, ResponseCacheService>();
+        
+        // Add specialized query result caching service
+        builder.Services.AddScoped<IQueryCacheService, QueryCacheService>();
+        
+        // Add high-performance batch operation service
+        builder.Services.AddSingleton<IBatchOperationService, BatchOperationService>();
+        
+        // Add response compression service
+        builder.Services.AddSingleton<ICompressionService, CompressionService>();
+        
+        // Add request deduplication service
+        builder.Services.AddSingleton<IRequestDeduplicationService, RequestDeduplicationService>();
+        
+        // Add HTTP client factory for better performance
+        builder.Services.AddHttpClient();
+        // 🚫 PerformanceValidationService supprimé - utilisait des repositories
+        // builder.Services.AddScoped<IPerformanceValidationService, PerformanceValidationService>();
         
         // Pin management optimization services
         builder.Services.AddSingleton<PinManagementConfig>();
@@ -256,29 +158,43 @@ public static class MauiProgram
             var baseSettings = provider.GetRequiredService<ISettingsService>();
             return new SecureSettingsService(baseSettings);
         });
+#if DEBUG
+        // ✅ Supabase configuré avec les vraies clés API (Janvier 2025)
+        builder.Services.AddSingleton<ISupabaseConfigurationService, DevelopmentConfigurationService>();
+        System.Diagnostics.Debug.WriteLine("[DEBUG] Using DevelopmentConfigurationService - SUPABASE RÉEL ACTIVÉ");
+        // Mode offline disponible avec: OfflineTestConfigurationService
+#else
+        builder.Services.AddSingleton<ISupabaseConfigurationService, SupabaseConfigurationService>();
+        System.Diagnostics.Debug.WriteLine("[RELEASE] Using SupabaseConfigurationService for Supabase configuration");
+#endif
         builder.Services.AddSingleton<ISecureConfigurationService, SecureConfigurationService>();
-        builder.Services.AddScoped<ITokenService, TokenService>();
-        builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+        // 🚫 TokenService supprimé - utilisait des repositories
+        // builder.Services.AddScoped<ITokenService, TokenService>();
+        
+        // 🔐 AUTHENTIFICATION 100% API SUPABASE
+        builder.Services.AddSingleton<ISimpleAuthenticationService, SimpleAuthenticationService>();
+        // 🚫 IAuthenticationService trop complexe - modifier LoginViewModel pour utiliser ISimpleAuthenticationService
         builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
         
         // Email services
         builder.Services.AddSingleton<IEmailService, EmailService>();
-        builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
-        builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+        // 🚫 Services email supprimés - utilisaient des repositories
+        // builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+        // builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
         
-        // Spot validation services
-        builder.Services.AddScoped<ISpotValidationService, SpotValidationService>();
-        builder.Services.AddScoped<TestDataService>();
-        builder.Services.AddScoped<SpotMigrationService>();
+        // 🚫 Validation services supprimés - utilisaient Entity Framework
+        // builder.Services.AddScoped<ISpotValidationService, SpotValidationService>();
+        // builder.Services.AddScoped<TestDataService>();
+        // builder.Services.AddScoped<SpotMigrationService>();
         
         // Validation strategy services
         builder.Services.AddScoped<IValidationStrategyFactory, ValidationStrategyFactory>();
         builder.Services.AddScoped<IValidationEventPublisher, ValidationEventPublisher>();
         
         // Validation event handlers
-        builder.Services.AddScoped<IValidationEventHandler<SpotApprovedEvent>, NotificationEventHandler>();
-        builder.Services.AddScoped<IValidationEventHandler<SpotRejectedEvent>, NotificationEventHandler>();
-        builder.Services.AddScoped<IValidationEventHandler<SpotFlaggedForSafetyEvent>, NotificationEventHandler>();
+        builder.Services.AddScoped<IValidationEventHandler<SpotApprovedEvent>, SubExplore.Services.Implementations.NotificationEventHandler>();
+        builder.Services.AddScoped<IValidationEventHandler<SpotRejectedEvent>, SubExplore.Services.Implementations.NotificationEventHandler>();
+        builder.Services.AddScoped<IValidationEventHandler<SpotFlaggedForSafetyEvent>, SubExplore.Services.Implementations.NotificationEventHandler>();
         builder.Services.AddScoped<IValidationEventHandler<SpotApprovedEvent>, AnalyticsEventHandler>();
         builder.Services.AddScoped<IValidationEventHandler<SpotRejectedEvent>, AnalyticsEventHandler>();
         builder.Services.AddScoped<IValidationEventHandler<ValidationStatusChangedEvent>, AnalyticsEventHandler>();
@@ -299,38 +215,41 @@ public static class MauiProgram
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.Add("User-Agent", "SubExplore/1.0");
         });
-        
-        // Note: EmailService doesn't require HttpClient in constructor, so we don't need to configure it specifically
 
         // Enregistrement des ViewModels
-        // Pour les ViewModels, AddTransient est souvent un bon choix, mais AddScoped peut aussi être pertinent
-        // si le ViewModel est lié à la durée de vie d'une page et que vous utilisez la navigation avec DI.
-        builder.Services.AddTransient<DatabaseTestViewModel>();
+        // 🚫 DatabaseTestViewModel supprimé - utilisait des services Entity Framework
+        // builder.Services.AddTransient<DatabaseTestViewModel>();
+        builder.Services.AddTransient<SimpleApiAddSpotViewModel>();
         builder.Services.AddTransient<MapViewModel>();
         builder.Services.AddTransient<OptimizedMapViewModel>();
-        builder.Services.AddTransient<SpotManagementViewModel>();
-        builder.Services.AddTransient<AddSpotViewModel>();
-        builder.Services.AddTransient<SpotDetailsViewModel>();
-        builder.Services.AddTransient<MySpotsViewModel>();
+        // ✅ NOUVEAU VIEWMODEL AVANCÉ 100% SUPABASE
+        builder.Services.AddTransient<EnhancedMapViewModel>();
+        // 🚫 ViewModels supprimés - utilisaient des repositories
+        // builder.Services.AddTransient<SpotManagementViewModel>();
+        // builder.Services.AddTransient<AddSpotViewModel>();
+        // builder.Services.AddTransient<SpotDetailsViewModel>();
+        // builder.Services.AddTransient<MySpotsViewModel>();
         builder.Services.AddTransient<SpotLocationViewModel>();
-        builder.Services.AddTransient<SpotCharacteristicsViewModel>();
+        // builder.Services.AddTransient<SpotCharacteristicsViewModel>();
         builder.Services.AddTransient<SpotPhotosViewModel>();
         builder.Services.AddTransient<UserProfileViewModel>();
         builder.Services.AddTransient<UserStatsViewModel>();
-        builder.Services.AddTransient<MenuViewModel>();
+        // 🚫 MenuViewModel supprimé - utilisait des repositories
+        // builder.Services.AddTransient<MenuViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.FlyoutMenuViewModel>();
         
-        // Favorites ViewModels
-        builder.Services.AddTransient<SubExplore.ViewModels.Favorites.FavoriteSpotsViewModel>();
+        // 🚫 Favorites ViewModels supprimés - utilisaient des repositories
+        // builder.Services.AddTransient<SubExplore.ViewModels.Favorites.FavoriteSpotsViewModel>();
         
         // Authentication ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.LoginViewModel>();
+        builder.Services.AddTransient<SubExplore.ViewModels.Auth.SimpleLoginViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.RegistrationViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.EmailTestViewModel>();
         
-        // Admin ViewModels
-        builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotValidationViewModel>();
-        builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotDiagnosticViewModel>();
+        // 🚫 Admin ViewModels supprimés - utilisaient des repositories
+        // builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotValidationViewModel>();
+        // builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotDiagnosticViewModel>();
         
         // Navigation ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Common.NavigationBarViewModel>();
@@ -339,21 +258,23 @@ public static class MauiProgram
         builder.Services.AddTransient<AboutViewModel>();
 
         // Enregistrement des vues (Pages et Views)
-        // Pour les Pages et Views, AddTransient est généralement correct.
-        builder.Services.AddTransient<DatabaseTestPage>();
+        // 🚫 Pages supprimées - utilisaient Entity Framework
+        // builder.Services.AddTransient<DatabaseTestPage>();
         builder.Services.AddTransient<MapPage>();
-        builder.Services.AddTransient<AddSpotPage>();
-        builder.Services.AddTransient<SpotDetailsPage>();
-        builder.Services.AddTransient<MySpotsPage>();
-        builder.Services.AddTransient<SpotLocationView>(); // Si c'est une ContentView, c'est bien
-        builder.Services.AddTransient<SpotCharacteristicsView>(); // Idem
-        builder.Services.AddTransient<SpotPhotosView>(); // Idem
+        // ✅ NOUVELLE PAGE AVANCÉE 100% SUPABASE
+        builder.Services.AddTransient<EnhancedMapPage>();
+        // builder.Services.AddTransient<AddSpotPage>();
+        // builder.Services.AddTransient<SpotDetailsPage>();
+        // builder.Services.AddTransient<MySpotsPage>();
+        // 🚫 Vues supprimées - utilisaient Entity Framework
+        // builder.Services.AddTransient<SpotLocationView>();
+        // builder.Services.AddTransient<SpotCharacteristicsView>();
+        builder.Services.AddTransient<SpotPhotosView>();
         builder.Services.AddTransient<UserProfilePage>();
         builder.Services.AddTransient<UserStatsPage>();
         
-        // Favorites Pages
-        builder.Services.AddTransient<SubExplore.Views.Favorites.FavoriteSpotsPage>();
-        builder.Services.AddTransient<SubExplore.Views.Favorites.TestFavoritesPage>();
+        // 🚫 Favorites Pages supprimées - utilisaient des ViewModels Entity Framework
+        // builder.Services.AddTransient<SubExplore.Views.Favorites.FavoriteSpotsPage>();
         
         // Authentication Pages
         builder.Services.AddTransient<SubExplore.Views.Auth.LoginPage>();
@@ -365,15 +286,15 @@ public static class MauiProgram
         builder.Services.AddTransient<SubExplore.Views.Auth.UltraSimpleLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.DebugLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.BasicTestPage>();
-        builder.Services.AddTransient<SubExplore.Views.Auth.CodeOnlyTestPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.CodeOnlyLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.CompleteLoginPage>();
+        builder.Services.AddTransient<SubExplore.Views.Auth.SimpleCompleteLoginPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.CompleteRegistrationPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.RegistrationPage>();
         
-        // Admin Pages
-        builder.Services.AddTransient<SubExplore.Views.Admin.SpotValidationPage>();
-        builder.Services.AddTransient<SubExplore.Views.Admin.SpotDiagnosticPage>();
+        // 🚫 Admin Pages supprimées - utilisaient Entity Framework
+        // builder.Services.AddTransient<SubExplore.Views.Admin.SpotValidationPage>();
+        // builder.Services.AddTransient<SubExplore.Views.Admin.SpotDiagnosticPage>();
         
         // Common Views
         builder.Services.AddTransient<SubExplore.Views.Common.NavigationBarView>();
@@ -381,8 +302,6 @@ public static class MauiProgram
         // Settings Pages
         builder.Services.AddTransient<AboutPage>();
         
-        // Test Pages
-        builder.Services.AddTransient<SubExplore.Views.TestPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();
@@ -392,9 +311,7 @@ public static class MauiProgram
         AppDomain.CurrentDomain.UnhandledException += (sender, e) => {
             var exception = e.ExceptionObject as Exception;
             // Log fatal exception through proper logging when app is running
-            // For now, system will handle the exception appropriately
         };
-
 
         return builder.Build();
     }

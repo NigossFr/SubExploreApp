@@ -195,7 +195,7 @@ namespace SubExplore.ViewModels.Profile
                     Email = Email,
                     AvatarUrl = AvatarUrl,
                     ExpertiseLevel = ExpertiseLevel,
-                    Certifications = Certifications,
+                    Certifications = string.IsNullOrEmpty(Certifications) ? new Dictionary<string, object>() : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(Certifications) ?? new Dictionary<string, object>(),
                     CreatedAt = CurrentUser.CreatedAt
                 };
 
@@ -311,7 +311,7 @@ namespace SubExplore.ViewModels.Profile
                         Theme = "light",
                         DisplayNamePreference = "username",
                         Language = "fr",
-                        NotificationSettings = "{}"
+                        NotificationSettings = new Dictionary<string, object>()
                     };
                     PopulatePreferencesFields();
                 }
@@ -339,14 +339,14 @@ namespace SubExplore.ViewModels.Profile
                 CurrentPreferences.Theme = selectedTheme;
                 CurrentPreferences.DisplayNamePreference = _displayNameOptions[SelectedDisplayNameIndex];
                 CurrentPreferences.Language = _languageOptions[SelectedLanguageIndex];
-                CurrentPreferences.NotificationSettings = JsonSerializer.Serialize(new
+                CurrentPreferences.NotificationSettings = new Dictionary<string, object>
                 {
-                    push_notifications = PushNotifications,
-                    email_notifications = EmailNotifications,
-                    spots_nearby = SpotsNearby,
-                    community_updates = CommunityUpdates,
-                    safety_alerts = SafetyAlerts
-                });
+                    ["push_notifications"] = PushNotifications,
+                    ["email_notifications"] = EmailNotifications,
+                    ["spots_nearby"] = SpotsNearby,
+                    ["community_updates"] = CommunityUpdates,
+                    ["safety_alerts"] = SafetyAlerts
+                };
 
                 var success = await _userProfileService.UpdateUserPreferencesAsync(CurrentPreferences);
 
@@ -460,7 +460,7 @@ namespace SubExplore.ViewModels.Profile
             Email = CurrentUser.Email ?? string.Empty;
             AvatarUrl = CurrentUser.AvatarUrl ?? string.Empty;
             ExpertiseLevel = CurrentUser.ExpertiseLevel ?? ExpertiseLevel.Beginner;
-            Certifications = CurrentUser.Certifications ?? string.Empty;
+            Certifications = System.Text.Json.JsonSerializer.Serialize(CurrentUser.Certifications ?? new Dictionary<string, object>());
             
             LoadCertifications();
         }
@@ -486,18 +486,18 @@ namespace SubExplore.ViewModels.Profile
             if (SelectedLanguageIndex < 0) SelectedLanguageIndex = 0;
 
             // Parse notification settings
-            if (!string.IsNullOrEmpty(CurrentPreferences.NotificationSettings))
+            if (CurrentPreferences.NotificationSettings != null && CurrentPreferences.NotificationSettings.Any())
             {
                 try
                 {
-                    var settings = JsonSerializer.Deserialize<Dictionary<string, bool>>(CurrentPreferences.NotificationSettings);
+                    var settings = CurrentPreferences.NotificationSettings;
                     if (settings != null)
                     {
-                        PushNotifications = settings.GetValueOrDefault("push_notifications", true);
-                        EmailNotifications = settings.GetValueOrDefault("email_notifications", true);
-                        SpotsNearby = settings.GetValueOrDefault("spots_nearby", true);
-                        CommunityUpdates = settings.GetValueOrDefault("community_updates", true);
-                        SafetyAlerts = settings.GetValueOrDefault("safety_alerts", true);
+                        PushNotifications = settings.TryGetValue("push_notifications", out var pushValue) ? Convert.ToBoolean(pushValue) : true;
+                        EmailNotifications = settings.TryGetValue("email_notifications", out var emailValue) ? Convert.ToBoolean(emailValue) : true;
+                        SpotsNearby = settings.TryGetValue("spots_nearby", out var nearbyValue) ? Convert.ToBoolean(nearbyValue) : true;
+                        CommunityUpdates = settings.TryGetValue("community_updates", out var communityValue) ? Convert.ToBoolean(communityValue) : true;
+                        SafetyAlerts = settings.TryGetValue("safety_alerts", out var safetyValue) ? Convert.ToBoolean(safetyValue) : true;
                     }
                 }
                 catch (Exception ex)
@@ -525,12 +525,14 @@ namespace SubExplore.ViewModels.Profile
         {
             CertificationsList.Clear();
             
-            if (string.IsNullOrEmpty(CurrentUser?.Certifications))
+            if (CurrentUser?.Certifications == null || !CurrentUser.Certifications.Any())
                 return;
 
             try
             {
-                var certifications = JsonSerializer.Deserialize<List<CertificationItem>>(CurrentUser.Certifications);
+                // Convert Dictionary<string,object> to JSON string, then deserialize to CertificationItem list
+                var certificationsJson = JsonSerializer.Serialize(CurrentUser.Certifications);
+                var certifications = JsonSerializer.Deserialize<List<CertificationItem>>(certificationsJson);
                 if (certifications != null)
                 {
                     foreach (var cert in certifications)

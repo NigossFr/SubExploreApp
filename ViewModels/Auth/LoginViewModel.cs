@@ -11,7 +11,7 @@ namespace SubExplore.ViewModels.Auth
 {
     public partial class LoginViewModel : ObservableValidator
     {
-        private readonly IAuthenticationService _authenticationService;
+        private readonly ISimpleAuthenticationService _simpleAuthenticationService;
         private readonly ILogger<LoginViewModel> _logger;
 
         [ObservableProperty]
@@ -60,14 +60,14 @@ namespace SubExplore.ViewModels.Auth
         public string Title { get; set; } = "Connexion";
 
         public LoginViewModel(
-            IAuthenticationService authenticationService,
+            ISimpleAuthenticationService authenticationService,
             ILogger<LoginViewModel> logger,
             IDialogService dialogService,
             INavigationService navigationService,
             IPasswordResetService passwordResetService,
             ISecureSettingsService secureSettings)
         {
-            _authenticationService = authenticationService;
+            _simpleAuthenticationService = authenticationService;
             _logger = logger;
             _dialogService = dialogService;
             _navigationService = navigationService;
@@ -100,12 +100,12 @@ namespace SubExplore.ViewModels.Auth
                 await Task.Delay(300);
 
                 // Perform login
-                var result = await _authenticationService.LoginAsync(Email, Password);
+                var result = await _simpleAuthenticationService.LoginAsync(Email, Password);
                 LoginProgress = 0.8;
 
-                if (result.IsSuccess)
+                if (result)
                 {
-                    _logger.LogInformation("Login successful for user: {UserId}", result.User?.Id);
+                    _logger.LogInformation("Login successful for user: {Email}", Email);
                     LoginProgress = 1.0;
                     
                     // Save credentials if "Remember Me" is checked
@@ -129,15 +129,8 @@ namespace SubExplore.ViewModels.Auth
                 }
                 else
                 {
-                    _logger.LogWarning("Login failed: {ErrorMessage}", result.ErrorMessage);
-                    ShowLoginError(result.ErrorMessage ?? "Erreur de connexion inconnue");
-
-                    // Show validation errors if any
-                    if (result.ValidationErrors?.Any() == true)
-                    {
-                        var errors = string.Join("\n", result.ValidationErrors);
-                        await _dialogService.ShowAlertAsync("Erreurs de validation", errors, "D'accord");
-                    }
+                    _logger.LogWarning("Login failed for user: {Email}", Email);
+                    ShowLoginError("Email ou mot de passe incorrect");
                 }
             }
             catch (Exception ex)

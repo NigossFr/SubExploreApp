@@ -19,12 +19,12 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Get spots under review by specific moderator
         /// </summary>
-        Task<ValidationResult<List<Spot>>> GetSpotsUnderReviewAsync(int moderatorId, ValidationFilter? filter = null);
+        Task<ValidationResult<List<Spot>>> GetSpotsUnderReviewAsync(Guid moderatorId, ValidationFilter? filter = null);
 
         /// <summary>
         /// Get validation history for a spot with pagination
         /// </summary>
-        Task<ValidationResult<List<SpotValidationHistory>>> GetSpotValidationHistoryAsync(int spotId, int page = 1, int pageSize = 20);
+        Task<ValidationResult<List<SpotValidationHistory>>> GetSpotValidationHistoryAsync(Guid spotId, int page = 1, int pageSize = 20);
 
         /// <summary>
         /// Execute validation command with proper error handling and events
@@ -34,12 +34,12 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Assign spot for review using assignment strategy
         /// </summary>
-        Task<ValidationResult> AssignSpotForReviewAsync(int spotId, int moderatorId);
+        Task<ValidationResult> AssignSpotForReviewAsync(Guid spotId, Guid moderatorId);
 
         /// <summary>
         /// Flag a spot for safety review with structured safety flags
         /// </summary>
-        Task<ValidationResult> FlagSpotForSafetyReviewAsync(int spotId, int reporterId, SafetyFlag safetyFlag);
+        Task<ValidationResult> FlagSpotForSafetyReviewAsync(Guid spotId, Guid reporterId, SafetyFlag safetyFlag);
 
         /// <summary>
         /// Get spots flagged for safety review with filtering
@@ -49,7 +49,7 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Complete safety review with detailed result tracking
         /// </summary>
-        Task<ValidationResult> CompleteSafetyReviewAsync(int spotId, int reviewerId, SafetyReviewResult reviewResult);
+        Task<ValidationResult> CompleteSafetyReviewAsync(Guid spotId, Guid reviewerId, SafetyReviewResult reviewResult);
 
         /// <summary>
         /// Get comprehensive validation statistics for dashboard
@@ -64,7 +64,7 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Get available validation actions for a spot and user
         /// </summary>
-        Task<ValidationResult<List<ValidationAction>>> GetAvailableActionsAsync(int spotId, int userId);
+        Task<ValidationResult<List<ValidationAction>>> GetAvailableActionsAsync(Guid spotId, Guid userId);
     }
 
     // Note: Classes moved to Models.Validation namespace for better organization

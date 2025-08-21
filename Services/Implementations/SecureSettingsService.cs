@@ -49,6 +49,21 @@ namespace SubExplore.Services.Implementations
             _baseSettingsService.Clear();
         }
 
+        public async Task SetAsync<T>(string key, T value)
+        {
+            await _baseSettingsService.SetAsync(key, value);
+        }
+
+        public async Task<T> GetAsync<T>(string key, T defaultValue = default)
+        {
+            return await _baseSettingsService.GetAsync(key, defaultValue);
+        }
+
+        public async Task RemoveAsync(string key)
+        {
+            await _baseSettingsService.RemoveAsync(key);
+        }
+
         #endregion
 
         #region Secure Storage Implementation

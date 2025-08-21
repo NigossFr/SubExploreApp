@@ -3,59 +3,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SubExplore.Models.Domain
 {
-    /// <summary>
-    /// Entity for tracking revoked JWT tokens
-    /// </summary>
-    [Table("RevokedTokens")]
     public class RevokedToken
     {
-        [Key]
-        public int Id { get; set; }
-
-        /// <summary>
-        /// The revoked token (hashed for security)
-        /// </summary>
-        [Required]
-        [MaxLength(500)]
+        public Guid Id { get; set; }
         public string TokenHash { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Token type (refresh_token, access_token)
-        /// </summary>
-        [Required]
-        [MaxLength(50)]
         public string TokenType { get; set; } = string.Empty;
-
-        /// <summary>
-        /// User ID who owned the token
-        /// </summary>
-        public int? UserId { get; set; }
-
-        /// <summary>
-        /// When the token was revoked
-        /// </summary>
-        [Required]
+        public Guid? UserId { get; set; }
         public DateTime RevokedAt { get; set; } = DateTime.UtcNow;
-
-        /// <summary>
-        /// When the token expires (for cleanup)
-        /// </summary>
         public DateTime? ExpiresAt { get; set; }
-
-        /// <summary>
-        /// Reason for revocation
-        /// </summary>
-        [MaxLength(200)]
         public string? RevocationReason { get; set; }
-
-        /// <summary>
-        /// IP address from which revocation was requested
-        /// </summary>
-        [MaxLength(45)]
+        
+        [NotMapped]
         public string? RevocationIpAddress { get; set; }
-
-        // Navigation property
-        public virtual User? User { get; set; }
+        
+        public User? User { get; set; }
     }
 
     /// <summary>

@@ -1,0 +1,335 @@
+// ========================================
+// DbContext ALTERNATIF SANS ENUM MAPPING
+// ========================================
+// Cette version utilise des converters personnalisés pour éviter
+// les problèmes de mapping enum PostgreSQL
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using SubExplore.Models.Domain;
+using SubExplore.Models.Enums;
+
+namespace SubExplore.DataAccess
+{
+    public class SubExploreDbContext : DbContext
+    {
+        public SubExploreDbContext(DbContextOptions<SubExploreDbContext> options)
+            : base(options)
+        {
+        }
+
+        // DbSets - Tables principales
+        public DbSet<User> Users { get; set; }
+        public DbSet<UserPreferences> UserPreferences { get; set; }
+        public DbSet<Spot> Spots { get; set; }
+        public DbSet<SpotType> SpotTypes { get; set; }
+        public DbSet<SpotMedia> SpotMedia { get; set; }
+        public DbSet<UserFavoriteSpot> UserFavoriteSpots { get; set; }
+        public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+        public DbSet<RevokedToken> RevokedTokens { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // 🔧 SOLUTION: Utilise des converters personnalisés au lieu d'enum mapping
+            ConfigureEnumConverters(modelBuilder);
+
+            // ===== CONFIGURATION USERS =====
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("users");
+                
+                // Conversion des noms de colonnes en snake_case
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Email).HasColumnName("email");
+                entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
+                entity.Property(e => e.Username).HasColumnName("username");
+                entity.Property(e => e.FirstName).HasColumnName("first_name");
+                entity.Property(e => e.LastName).HasColumnName("last_name");
+                entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
+                
+                // Les enum properties sont maintenant configurées avec des converters
+                entity.Property(e => e.AccountType).HasColumnName("account_type");
+                entity.Property(e => e.SubscriptionStatus).HasColumnName("subscription_status");
+                entity.Property(e => e.ExpertiseLevel).HasColumnName("expertise_level");
+                
+                entity.Property(e => e.Certifications).HasColumnName("certifications")
+                      .HasColumnType("jsonb");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                entity.Property(e => e.LastLogin).HasColumnName("last_login");
+                entity.Property(e => e.IsEmailConfirmed).HasColumnName("is_email_confirmed");
+                entity.Property(e => e.ModeratorSpecialization).HasColumnName("moderator_specialization");
+                entity.Property(e => e.ModeratorStatus).HasColumnName("moderator_status");
+                entity.Property(e => e.Permissions).HasColumnName("permissions");
+                entity.Property(e => e.ModeratorSince).HasColumnName("moderator_since");
+                entity.Property(e => e.OrganizationId).HasColumnName("organization_id");
+
+                // Index et contraintes
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.Username).IsUnique();
+                
+                // Relations
+                entity.HasOne(e => e.Preferences)
+                      .WithOne(e => e.User)
+                      .HasForeignKey<UserPreferences>(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ===== CONFIGURATION USER_PREFERENCES =====
+            modelBuilder.Entity<UserPreferences>(entity =>
+            {
+                entity.ToTable("user_preferences");
+                
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.Theme).HasColumnName("theme");
+                entity.Property(e => e.DisplayNamePreference).HasColumnName("display_name_preference");
+                entity.Property(e => e.NotificationSettings).HasColumnName("notification_settings")
+                      .HasColumnType("jsonb");
+                entity.Property(e => e.Language).HasColumnName("language");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            });
+
+            // ===== CONFIGURATION SPOT_TYPES =====
+            modelBuilder.Entity<SpotType>(entity =>
+            {
+                entity.ToTable("spot_types");
+                
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Name).HasColumnName("name");
+                entity.Property(e => e.IconPath).HasColumnName("icon_path");
+                entity.Property(e => e.ColorCode).HasColumnName("color_code");
+                entity.Property(e => e.RequiresExpertValidation).HasColumnName("requires_expert_validation");
+                entity.Property(e => e.ValidationCriteria).HasColumnName("validation_criteria")
+                      .HasColumnType("jsonb");
+                
+                // Category utilise maintenant un converter
+                entity.Property(e => e.Category).HasColumnName("category");
+                
+                entity.Property(e => e.Description).HasColumnName("description");
+                entity.Property(e => e.IsActive).HasColumnName("is_active");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            });
+
+            // ===== CONFIGURATION SPOTS =====
+            modelBuilder.Entity<Spot>(entity =>
+            {
+                entity.ToTable("spots");
+                
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.CreatorId).HasColumnName("creator_id");
+                entity.Property(e => e.Name).HasColumnName("name");
+                entity.Property(e => e.Description).HasColumnName("description");
+                      
+                entity.Property(e => e.Latitude).HasColumnName("latitude")
+                      .HasPrecision(10, 8);
+                entity.Property(e => e.Longitude).HasColumnName("longitude")
+                      .HasPrecision(11, 8);
+                      
+                entity.Property(e => e.DifficultyLevel).HasColumnName("difficulty_level");
+                entity.Property(e => e.TypeId).HasColumnName("type_id");
+                entity.Property(e => e.RequiredEquipment).HasColumnName("required_equipment");
+                entity.Property(e => e.SafetyNotes).HasColumnName("safety_notes");
+                entity.Property(e => e.BestConditions).HasColumnName("best_conditions");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.ValidationStatus).HasColumnName("validation_status");
+                entity.Property(e => e.LastSafetyReview).HasColumnName("last_safety_review");
+                entity.Property(e => e.SafetyFlags).HasColumnName("safety_flags")
+                      .HasColumnType("jsonb");
+                entity.Property(e => e.MaxDepth).HasColumnName("max_depth");
+                entity.Property(e => e.CurrentStrength).HasColumnName("current_strength");
+                entity.Property(e => e.HasMooring).HasColumnName("has_mooring");
+                entity.Property(e => e.BottomType).HasColumnName("bottom_type");
+
+                // Relations
+                entity.HasOne(e => e.Creator)
+                      .WithMany(e => e.Spots)
+                      .HasForeignKey(e => e.CreatorId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Type)
+                      .WithMany(e => e.Spots)
+                      .HasForeignKey(e => e.TypeId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ===== CONFIGURATION SPOT_MEDIA =====
+            modelBuilder.Entity<SpotMedia>(entity =>
+            {
+                entity.ToTable("spot_media");
+                
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.SpotId).HasColumnName("spot_id");
+                entity.Property(e => e.MediaType).HasColumnName("media_type");
+                entity.Property(e => e.MediaUrl).HasColumnName("media_url");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.Status).HasColumnName("status");
+                entity.Property(e => e.Caption).HasColumnName("caption");
+                entity.Property(e => e.IsPrimary).HasColumnName("is_primary");
+                entity.Property(e => e.Width).HasColumnName("width");
+                entity.Property(e => e.Height).HasColumnName("height");
+                entity.Property(e => e.FileSize).HasColumnName("file_size");
+                entity.Property(e => e.ContentType).HasColumnName("content_type");
+
+                // Relations
+                entity.HasOne(e => e.Spot)
+                      .WithMany(e => e.Media)
+                      .HasForeignKey(e => e.SpotId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ===== CONFIGURATION USER_FAVORITE_SPOTS =====
+            modelBuilder.Entity<UserFavoriteSpot>(entity =>
+            {
+                entity.ToTable("user_favorite_spots");
+                
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.SpotId).HasColumnName("spot_id");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                entity.Property(e => e.Notes).HasColumnName("notes");
+                entity.Property(e => e.Priority).HasColumnName("priority");
+                entity.Property(e => e.NotificationEnabled).HasColumnName("notification_enabled");
+
+                // Contrainte d'unicité
+                entity.HasIndex(e => new { e.UserId, e.SpotId }).IsUnique();
+
+                // Relations
+                entity.HasOne(e => e.User)
+                      .WithMany(e => e.FavoriteSpots)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Spot)
+                      .WithMany()
+                      .HasForeignKey(e => e.SpotId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ===== CONFIGURATION TOKENS DE SÉCURITÉ =====
+            
+            // Email Verification Tokens
+            modelBuilder.Entity<EmailVerificationToken>(entity =>
+            {
+                entity.ToTable("email_verification_tokens");
+                
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.TokenHash).HasColumnName("token_hash");
+                entity.Property(e => e.Email).HasColumnName("email");
+                entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+                entity.Property(e => e.IsUsed).HasColumnName("is_used");
+                entity.Property(e => e.UsedAt).HasColumnName("used_at");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.AttemptCount).HasColumnName("attempt_count");
+                entity.Property(e => e.MaxAttempts).HasColumnName("max_attempts");
+
+                entity.HasIndex(e => e.TokenHash).IsUnique();
+                
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Password Reset Tokens
+            modelBuilder.Entity<PasswordResetToken>(entity =>
+            {
+                entity.ToTable("password_reset_tokens");
+                
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.TokenHash).HasColumnName("token_hash");
+                entity.Property(e => e.Email).HasColumnName("email");
+                entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+                entity.Property(e => e.IsUsed).HasColumnName("is_used");
+                entity.Property(e => e.UsedAt).HasColumnName("used_at");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.AttemptCount).HasColumnName("attempt_count");
+                entity.Property(e => e.MaxAttempts).HasColumnName("max_attempts");
+                entity.Property(e => e.ResetReason).HasColumnName("reset_reason");
+
+                entity.HasIndex(e => e.TokenHash).IsUnique();
+                
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Revoked Tokens
+            modelBuilder.Entity<RevokedToken>(entity =>
+            {
+                entity.ToTable("revoked_tokens");
+                
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.TokenHash).HasColumnName("token_hash");
+                entity.Property(e => e.TokenType).HasColumnName("token_type");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.RevokedAt).HasColumnName("revoked_at");
+                entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+                entity.Property(e => e.RevocationReason).HasColumnName("revocation_reason");
+
+                entity.HasIndex(e => e.TokenHash).IsUnique();
+                
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+        }
+
+        /// <summary>
+        /// Configure les converters personnalisés pour les enums
+        /// </summary>
+        private void ConfigureEnumConverters(ModelBuilder modelBuilder)
+        {
+            // Converter pour AccountType
+            var accountTypeConverter = new ValueConverter<AccountType, string>(
+                v => v.ToString(),
+                v => Enum.Parse<AccountType>(v));
+
+            // Converter pour SubscriptionStatus
+            var subscriptionStatusConverter = new ValueConverter<SubscriptionStatus, string>(
+                v => v.ToString(),
+                v => Enum.Parse<SubscriptionStatus>(v));
+
+            // Converter pour ExpertiseLevel (nullable)
+            var expertiseLevelConverter = new ValueConverter<ExpertiseLevel?, string>(
+                v => v.HasValue ? v.Value.ToString() : null,
+                v => string.IsNullOrEmpty(v) ? null : Enum.Parse<ExpertiseLevel>(v));
+
+            // Converter pour ActivityCategory
+            var activityCategoryConverter = new ValueConverter<ActivityCategory, string>(
+                v => v.ToString(),
+                v => Enum.Parse<ActivityCategory>(v));
+
+            // Application des converters
+            modelBuilder.Entity<User>()
+                .Property(e => e.AccountType)
+                .HasConversion(accountTypeConverter)
+                .HasColumnType("varchar(50)");
+
+            modelBuilder.Entity<User>()
+                .Property(e => e.SubscriptionStatus)
+                .HasConversion(subscriptionStatusConverter)
+                .HasColumnType("varchar(50)");
+
+            modelBuilder.Entity<User>()
+                .Property(e => e.ExpertiseLevel)
+                .HasConversion(expertiseLevelConverter)
+                .HasColumnType("varchar(50)");
+
+            modelBuilder.Entity<SpotType>()
+                .Property(e => e.Category)
+                .HasConversion(activityCategoryConverter)
+                .HasColumnType("varchar(50)");
+        }
+    }
+}

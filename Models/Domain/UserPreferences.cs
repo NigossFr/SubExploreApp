@@ -1,36 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+// Models/UserPreferences.cs
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SubExplore.Models.Domain
 {
     public class UserPreferences
     {
-        [Key]
-        public int Id { get; set; }
-
-        [Required]
-        public int UserId { get; set; }
-
+        public Guid Id { get; set; }
+        
+        public Guid UserId { get; set; }
+        
+        [StringLength(20)]
         public string Theme { get; set; } = "light";
-
+        
+        [StringLength(20)]
         public string DisplayNamePreference { get; set; } = "username";
-
-        [Column(TypeName = "json")]
-        public string NotificationSettings { get; set; } = "{}";
-
+        
+        // CHANGEMENT : JSON → JSONB
+        public Dictionary<string, object> NotificationSettings { get; set; } = new();
+        
+        [StringLength(5)]
         public string Language { get; set; } = "fr";
-
-        [Required]
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
+        
         public DateTime? UpdatedAt { get; set; }
-
-        [ForeignKey("UserId")]
-        public virtual User? User { get; set; }
+        
+        // Relations
+        public User User { get; set; } = null!;
     }
 }

@@ -7,13 +7,15 @@ using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
 using SubExplore.Models.Domain;
 using SubExplore.Models.Enums;
-using SubExplore.Repositories.Interfaces;
+// 🚫 Repositories supprimés - Version temporaire sans accès base de données
+// using SubExplore.Repositories.Interfaces;
 using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
 using SubExplore.ViewModels.Base;
 using SubExplore.ViewModels.Profile;
 using SubExplore.ViewModels.Spots;
-using SubExplore.ViewModels.Favorites;
+// 🚫 ViewModels.Favorites supprimé
+// using SubExplore.ViewModels.Favorites;
 using SubExplore.Models.Menu;
 using SubExplore.Helpers.Extensions;
 using MenuItemModel = SubExplore.Models.Menu.MenuItem;
@@ -22,9 +24,11 @@ namespace SubExplore.ViewModels.Map
 {
     public partial class MapViewModel : ViewModelBase, IDisposable
     {
-        private readonly ISpotRepository _spotRepository;
+        // 🚫 Repository temporairement désactivé
+        // private readonly ISpotRepository _spotRepository;
         private readonly ILocationService _locationService;
-        private readonly ISpotTypeRepository _spotTypeRepository;
+        // 🚫 Repository temporairement désactivé
+        // private readonly ISpotTypeRepository _spotTypeRepository;
         private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
         private readonly IPlatformMapService _platformMapService;
         private readonly IApplicationPerformanceService _performanceService;
@@ -142,10 +146,12 @@ namespace SubExplore.ViewModels.Map
         [ObservableProperty]
         private Models.Domain.Spot _selectedSpot;
 
-        private readonly IDatabaseService _databaseService;
-        private readonly IUserRepository _userRepository;
+        // 🚫 Service temporairement désactivé
+        // private readonly IDatabaseService _databaseService;
+        // 🚫 Repository temporairement désactivé
+        // private readonly IUserRepository _userRepository;
         private readonly ISettingsService _settingsService;
-        private readonly IAuthenticationService _authenticationService;
+        private readonly ISimpleAuthenticationService _authenticationService;
 
         // Public property to expose PinSelectionService to the View for integration
         public IPinSelectionService PinSelectionService => _pinSelectionService;
@@ -179,26 +185,28 @@ namespace SubExplore.ViewModels.Map
         }
 
         public MapViewModel(
-            ISpotRepository spotRepository,
+            // 🚫 Repositories supprimés temporairement
+            // ISpotRepository spotRepository,
             ILocationService locationService,
-            ISpotTypeRepository spotTypeRepository,
+            // ISpotTypeRepository spotTypeRepository,
             Microsoft.Extensions.Configuration.IConfiguration configuration,
             IPlatformMapService platformMapService,
-            IDatabaseService databaseService,
-            IUserRepository userRepository,
+            // IDatabaseService databaseService,
+            // IUserRepository userRepository,
             IDialogService dialogService,
             INavigationService navigationService,
             ISettingsService settingsService,
-            IAuthenticationService authenticationService,
+            ISimpleAuthenticationService authenticationService,
             IApplicationPerformanceService performanceService,
             IPinSelectionService pinSelectionService)
             : base(dialogService, navigationService)
         {
-            _spotRepository = spotRepository;
+            // 🚫 Repositories temporairement désactivés
+            // _spotRepository = spotRepository;
             _locationService = locationService;
-            _spotTypeRepository = spotTypeRepository;
-            _databaseService = databaseService;
-            _userRepository = userRepository;
+            // _spotTypeRepository = spotTypeRepository;
+            // _databaseService = databaseService;
+            // _userRepository = userRepository;
             _settingsService = settingsService;
             _authenticationService = authenticationService;
             _performanceService = performanceService;
@@ -214,7 +222,8 @@ namespace SubExplore.ViewModels.Map
             CurrentSubFilters = new ObservableCollection<SpotType>();
             
             // Subscribe to authentication state changes to update menu dynamically
-            _authenticationService.StateChanged += OnAuthenticationStateChanged;
+            // 🚫 StateChanged event temporairement désactivé
+            // _authenticationService.StateChanged += OnAuthenticationStateChanged;
 
             // Valeurs par défaut pour Paris, seront remplacées par la géolocalisation si disponible
             double defaultLat = _configuration.GetValue<double>("AppSettings:DefaultLatitude", 48.8566);
@@ -285,14 +294,7 @@ namespace SubExplore.ViewModels.Map
 
                     // Step 3: Load spots data in background to improve startup performance
                     System.Diagnostics.Debug.WriteLine("[DEBUG] Scheduling spots data loading in background");
-                    _ = Task.Run(async () =>
-                    {
-                        await Task.Delay(1000); // Allow UI to render first
-                        await MainThread.InvokeOnMainThreadAsync(async () =>
-                        {
-                            await LoadSpotsOptimized();
-                        });
-                    });
+                    _ = LoadSpotsInBackgroundAsync();
 
                     // Step 4: Update pins on UI thread
                     await MainThread.InvokeOnMainThreadAsync(() =>
@@ -472,9 +474,11 @@ namespace SubExplore.ViewModels.Map
 
                 // TEMPORAIRE : Force le chargement de tous les spots approuvés pour diagnostic
                 System.Diagnostics.Debug.WriteLine("[DEBUG] FORCE: Loading all approved spots for debugging");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Repository instance: {_spotRepository?.GetType().Name ?? "null"}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Repository instance: null (temporairement désactivé)");
                 
-                spots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
+                // 🚫 Repository temporairement désactivé
+                // spots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
+                spots = new List<Spot>(); // Liste vide temporaire
                 
                 // Log de diagnostic supplémentaire
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] Query completed. Raw result count: {spots?.Count() ?? 0}");
@@ -502,7 +506,8 @@ namespace SubExplore.ViewModels.Map
                     try
                     {
                         // Test database connectivity
-                        await _databaseService.TestConnectionAsync();
+                        // 🚫 DatabaseService temporairement désactivé
+                        // await _databaseService.TestConnectionAsync();
                         System.Diagnostics.Debug.WriteLine("[DEBUG] ✓ Database connection test passed");
                     }
                     catch (Exception dbEx)
@@ -566,7 +571,9 @@ namespace SubExplore.ViewModels.Map
                 IsBusy = true;
 
                 // Le repository ne retourne maintenant que les 5 types autorisés
-                var types = await _spotTypeRepository.GetActiveTypesAsync();
+                // 🚫 Repository temporairement désactivé
+                // var types = await _spotTypeRepository.GetActiveTypesAsync();
+                var types = new List<SpotType>(); // Liste vide temporaire
 
                 RefreshSpotTypesList(types);
             }
@@ -817,12 +824,14 @@ namespace SubExplore.ViewModels.Map
                 }
                 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Final pre-navigation check - SpotId: {spotId}, NavigationService: {NavigationService.GetType().Name}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: About to navigate to {typeof(ViewModels.Spots.SpotDetailsViewModel).FullName}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: About to navigate to SpotDetailsViewModel (temporairement désactivé)");
                 
                 // Navigate to full details with isolated try-catch
                 try
                 {
-                    await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spotId);
+                    // 🚫 SpotDetailsViewModel temporairement désactivé
+                    // await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spotId);
+                    await DialogService.ShowToastAsync("🚧 SpotDetails temporairement désactivé");
                     System.Diagnostics.Debug.WriteLine("[DEBUG] ViewSpotDetails: Navigation call completed successfully");
                 }
                 catch (Exception navEx)
@@ -860,14 +869,14 @@ namespace SubExplore.ViewModels.Map
             // Create a test spot to verify mini window functionality
             var testSpot = new Models.Domain.Spot
             {
-                Id = 999,
+                Id = Guid.NewGuid(),
                 Name = "DEBUG TEST SPOT",
                 DifficultyLevel = DifficultyLevel.Beginner,
                 Latitude = 43.2965m,
                 Longitude = 5.3698m,
                 Type = new SpotType
                 {
-                    Id = 1,
+                    Id = Guid.NewGuid(),
                     Name = "Test Plongée",
                     ColorCode = "#FF0000"
                 }
@@ -914,7 +923,9 @@ namespace SubExplore.ViewModels.Map
                 }
 
                 // Navigate to AddSpot with location parameters
-                await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
+                // 🚫 AddSpotViewModel temporairement désactivé
+                // await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter);
+                await DialogService.ShowToastAsync("🚧 AddSpot temporairement désactivé");
             }
             catch (Exception ex)
             {
@@ -935,7 +946,7 @@ namespace SubExplore.ViewModels.Map
                 // Immediate suggestions for responsive UI
                 if (!string.IsNullOrWhiteSpace(SearchText) && SearchText.Length >= 1)
                 {
-                    _ = Task.Run(async () => await GenerateSearchSuggestions(), _searchCancellationToken.Token);
+                    _ = GenerateSearchSuggestionsAsync(_searchCancellationToken.Token);
                 }
                 else
                 {
@@ -946,8 +957,8 @@ namespace SubExplore.ViewModels.Map
                     });
                 }
 
-                // Debounce actual search - wait 500ms after user stops typing
-                await Task.Delay(500, _searchCancellationToken.Token).ConfigureAwait(false);
+                // Debounce actual search - wait 300ms after user stops typing (reduced for better UX)
+                await Task.Delay(300, _searchCancellationToken.Token).ConfigureAwait(false);
                 
                 if (!string.IsNullOrWhiteSpace(SearchText) && SearchText.Length >= 2)
                 {
@@ -986,7 +997,9 @@ namespace SubExplore.ViewModels.Map
                 await Task.Delay(100);
 
                 // Use standard search without geographic limitations to find spots anywhere
-                var searchResults = await _spotRepository.SearchSpotsAsync(SearchText);
+                // 🚫 Repository temporairement désactivé
+                // var searchResults = await _spotRepository.SearchSpotsAsync(SearchText);
+                var searchResults = new List<Spot>(); // Liste vide temporaire
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] Global search performed for '{SearchText}' - no geographic restrictions");
 
                 RefreshSpotsList(searchResults);
@@ -1018,14 +1031,14 @@ namespace SubExplore.ViewModels.Map
         }
 
         /// <summary>
-        /// Generate search suggestions based on current search text
+        /// Generate search suggestions based on current search text with cancellation support
         /// </summary>
-        private async Task GenerateSearchSuggestions()
+        private async Task GenerateSearchSuggestionsAsync(CancellationToken cancellationToken)
         {
             try
             {
                 // Check for cancellation
-                if (_searchCancellationToken?.Token.IsCancellationRequested == true)
+                if (cancellationToken.IsCancellationRequested)
                     return;
 
                 if (string.IsNullOrWhiteSpace(SearchText) || SearchText.Length < 1)
@@ -1039,10 +1052,12 @@ namespace SubExplore.ViewModels.Map
                 }
 
                 // Get optimized suggestions from repository with cancellation support
-                var databaseSuggestions = await _spotRepository.GetSearchSuggestionsAsync(SearchText, 3);
+                // 🚫 Repository temporairement désactivé
+                // var databaseSuggestions = await _spotRepository.GetSearchSuggestionsAsync(SearchText, 3).ConfigureAwait(false);
+                var databaseSuggestions = new List<string>(); // Liste vide temporaire
                 
                 // Check for cancellation again after database call
-                if (_searchCancellationToken?.Token.IsCancellationRequested == true)
+                if (cancellationToken.IsCancellationRequested)
                     return;
 
                 var suggestions = new List<string>(databaseSuggestions);
@@ -1061,7 +1076,7 @@ namespace SubExplore.ViewModels.Map
                     suggestions.Add("Spots avancés");
 
                 // Final cancellation check before UI update
-                if (_searchCancellationToken?.Token.IsCancellationRequested == true)
+                if (cancellationToken.IsCancellationRequested)
                     return;
 
                 await MainThread.InvokeOnMainThreadAsync(() =>
@@ -1259,7 +1274,9 @@ namespace SubExplore.ViewModels.Map
                             LocationParameter = $"Map Click ({clickedLocation.Latitude:F6}, {clickedLocation.Longitude:F6})"
                         };
                         
-                        await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter); // ✅ FIXED: Removed ConfigureAwait(false) for UI service
+                        // 🚫 AddSpotViewModel temporairement désactivé
+                        // await NavigationService.NavigateToAsync<ViewModels.Spots.AddSpotViewModel>(locationParameter);
+                        await DialogService.ShowToastAsync("🚧 AddSpot temporairement désactivé");
                     }
                 }
             }
@@ -1288,7 +1305,9 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private async Task NavigateToMySpots()
         {
-            await NavigationService.NavigateToAsync<MySpotsViewModel>();
+            // 🚫 MySpotsViewModel temporairement désactivé
+            // await NavigationService.NavigateToAsync<MySpotsViewModel>();
+            await DialogService.ShowToastAsync("🚧 MySpots temporairement désactivé");
             IsMenuOpen = false;
         }
 
@@ -1302,7 +1321,9 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private async Task NavigateToFavorites()
         {
-            await NavigationService.NavigateToAsync<FavoriteSpotsViewModel>();
+            // 🚫 FavoriteSpotsViewModel temporairement désactivé
+            // await NavigationService.NavigateToAsync<FavoriteSpotsViewModel>();
+            await DialogService.ShowToastAsync("🚧 Favorites temporairement désactivé");
             IsMenuOpen = false;
         }
 
@@ -1326,7 +1347,9 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private async Task NavigateToSpotValidation()
         {
-            await NavigateToAsync<ViewModels.Admin.SpotValidationViewModel>();
+            // 🚫 SpotValidationViewModel temporairement désactivé
+            // await NavigateToAsync<ViewModels.Admin.SpotValidationViewModel>();
+            await DialogService.ShowToastAsync("🚧 SpotValidation temporairement désactivé");
             IsMenuOpen = false;
         }
 
@@ -1972,7 +1995,9 @@ namespace SubExplore.ViewModels.Map
                 System.Diagnostics.Debug.WriteLine("[DEBUG] 🔍 HandleEmptySpotState: Diagnosing empty spot state");
                 
                 // Check if this is a data integrity issue or a filtering issue
-                var totalSpots = await _spotRepository.GetAllAsync();
+                // 🚫 Repository temporairement désactivé
+                // var totalSpots = await _spotRepository.GetAllAsync();
+                var totalSpots = new List<Spot>(); // Liste vide temporaire
                 var totalCount = totalSpots.Count();
                 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] Total spots in database: {totalCount}");
@@ -2089,7 +2114,9 @@ namespace SubExplore.ViewModels.Map
                     return;
                 }
 
-                var spotTypes = await _spotTypeRepository.GetActiveSpotTypesAsync();
+                // 🚫 Repository temporairement désactivé
+                // var spotTypes = await _spotTypeRepository.GetActiveSpotTypesAsync();
+                var spotTypes = new List<SpotType>(); // Liste vide temporaire
                 
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
@@ -2107,6 +2134,25 @@ namespace SubExplore.ViewModels.Map
         }
 
         /// <summary>
+        /// Optimized background loading with proper cancellation support
+        /// </summary>
+        private async Task LoadSpotsInBackgroundAsync()
+        {
+            try
+            {
+                await Task.Delay(1000, CancellationToken.None).ConfigureAwait(false); // Allow UI to render first
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await LoadSpotsOptimized().ConfigureAwait(false);
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Background spots loading failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Version optimisée du chargement des Spots avec traitement par batch
         /// </summary>
         private async Task LoadSpotsOptimized()
@@ -2119,11 +2165,10 @@ namespace SubExplore.ViewModels.Map
                 IsEmptyState = false;
                 IsNetworkError = false;
                 
-                // Use optimized method for better performance
-                var spots = await Task.Run(async () =>
-                {
-                    return await _spotRepository.GetSpotsMinimalAsync(100);
-                });
+                // Use optimized method for better performance with ConfigureAwait
+                // 🚫 Repository temporairement désactivé
+                // var spots = await _spotRepository.GetSpotsMinimalAsync(100).ConfigureAwait(false);
+                var spots = new List<Spot>(); // Liste vide temporaire
                 
                 var spotsList = spots?.ToList() ?? new List<Models.Domain.Spot>();
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ LoadSpotsOptimized - Retrieved {spotsList.Count} spots from repository");
@@ -2282,7 +2327,8 @@ namespace SubExplore.ViewModels.Map
                 // Unsubscribe from authentication state changes
                 try
                 {
-                    _authenticationService.StateChanged -= OnAuthenticationStateChanged;
+                    // 🚫 StateChanged event temporairement désactivé
+                    // _authenticationService.StateChanged -= OnAuthenticationStateChanged;
                     System.Diagnostics.Debug.WriteLine("[MapViewModel] Disposed and unsubscribed from authentication events");
                 }
                 catch (Exception ex)

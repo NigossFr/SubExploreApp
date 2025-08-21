@@ -31,11 +31,12 @@ namespace SubExplore.Helpers.Converters
                         longitude = spotLocationVm.Longitude;
                         System.Diagnostics.Debug.WriteLine($"CoordinatesToPositionConverter: Using SpotLocationViewModel coordinates: {latitude}, {longitude}");
                         break;
-                    case AddSpotViewModel addSpotVm:
-                        latitude = addSpotVm.Latitude;
-                        longitude = addSpotVm.Longitude;
-                        System.Diagnostics.Debug.WriteLine($"CoordinatesToPositionConverter: Using AddSpotViewModel coordinates: {latitude}, {longitude}");
-                        break;
+                    // 🚫 AddSpotViewModel temporairement désactivé
+                    // case AddSpotViewModel addSpotVm:
+                    //     latitude = addSpotVm.Latitude;
+                    //     longitude = addSpotVm.Longitude;
+                    //     System.Diagnostics.Debug.WriteLine($"CoordinatesToPositionConverter: Using AddSpotViewModel coordinates: {latitude}, {longitude}");
+                    //     break;
                     default:
                         System.Diagnostics.Debug.WriteLine($"CoordinatesToPositionConverter: Unsupported value type: {value?.GetType().Name}");
                         return GetDefaultLocation();

@@ -32,5 +32,20 @@ namespace SubExplore.Services.Interfaces
         /// Efface tous les paramètres
         /// </summary>
         void Clear();
+
+        /// <summary>
+        /// Stocke une valeur dans les paramètres de l'application (asynchrone)
+        /// </summary>
+        Task SetAsync<T>(string key, T value);
+
+        /// <summary>
+        /// Récupère une valeur depuis les paramètres de l'application (asynchrone)
+        /// </summary>
+        Task<T> GetAsync<T>(string key, T defaultValue = default);
+
+        /// <summary>
+        /// Supprime une clé des paramètres (asynchrone)
+        /// </summary>
+        Task RemoveAsync(string key);
     }
 }

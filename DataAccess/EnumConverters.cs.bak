@@ -1,0 +1,88 @@
+// ========================================
+// SOLUTION DE CONTOURNEMENT POUR ENUMS
+// ========================================
+// Cette solution évite les problèmes de mapping direct en utilisant
+// des converters personnalisés pour les enums
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using SubExplore.Models.Enums;
+
+namespace SubExplore.DataAccess
+{
+    /// <summary>
+    /// Converters personnalisés pour éviter les problèmes de mapping enum
+    /// </summary>
+    public static class EnumConverters
+    {
+        /// <summary>
+        /// Converter pour AccountType qui mappe directement avec les strings PostgreSQL
+        /// </summary>
+        public static ValueConverter<AccountType, string> AccountTypeConverter => 
+            new ValueConverter<AccountType, string>(
+                v => v.ToString(),
+                v => Enum.Parse<AccountType>(v)
+            );
+
+        /// <summary>
+        /// Converter pour SubscriptionStatus
+        /// </summary>
+        public static ValueConverter<SubscriptionStatus, string> SubscriptionStatusConverter =>
+            new ValueConverter<SubscriptionStatus, string>(
+                v => v.ToString(),
+                v => Enum.Parse<SubscriptionStatus>(v)
+            );
+
+        /// <summary>
+        /// Converter pour ExpertiseLevel
+        /// </summary>
+        public static ValueConverter<ExpertiseLevel?, string> ExpertiseLevelConverter =>
+            new ValueConverter<ExpertiseLevel?, string>(
+                v => v.HasValue ? v.Value.ToString() : null,
+                v => string.IsNullOrEmpty(v) ? null : Enum.Parse<ExpertiseLevel>(v)
+            );
+
+        /// <summary>
+        /// Converter pour ActivityCategory
+        /// </summary>
+        public static ValueConverter<ActivityCategory, string> ActivityCategoryConverter =>
+            new ValueConverter<ActivityCategory, string>(
+                v => v.ToString(),
+                v => Enum.Parse<ActivityCategory>(v)
+            );
+    }
+
+    /// <summary>
+    /// Extensions pour simplifier l'application des converters
+    /// </summary>
+    public static class ModelBuilderExtensions
+    {
+        /// <summary>
+        /// Configure tous les enum converters
+        /// </summary>
+        public static void ConfigureEnumConverters(this ModelBuilder modelBuilder)
+        {
+            // Configuration pour User
+            modelBuilder.Entity<SubExplore.Models.Domain.User>()
+                .Property(e => e.AccountType)
+                .HasConversion(EnumConverters.AccountTypeConverter)
+                .HasColumnType("varchar(50)");  // Utilise VARCHAR au lieu d'enum
+
+            modelBuilder.Entity<SubExplore.Models.Domain.User>()
+                .Property(e => e.SubscriptionStatus)
+                .HasConversion(EnumConverters.SubscriptionStatusConverter)
+                .HasColumnType("varchar(50)");
+
+            modelBuilder.Entity<SubExplore.Models.Domain.User>()
+                .Property(e => e.ExpertiseLevel)
+                .HasConversion(EnumConverters.ExpertiseLevelConverter)
+                .HasColumnType("varchar(50)");
+
+            // Configuration pour SpotType
+            modelBuilder.Entity<SubExplore.Models.Domain.SpotType>()
+                .Property(e => e.Category)
+                .HasConversion(EnumConverters.ActivityCategoryConverter)
+                .HasColumnType("varchar(50)");
+        }
+    }
+}

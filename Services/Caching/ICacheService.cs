@@ -22,19 +22,19 @@ namespace SubExplore.Services.Caching
     /// </summary>
     public interface ISpotCacheService
     {
-        Task<Models.Domain.Spot> GetSpotAsync(int spotId);
+        Task<Models.Domain.Spot> GetSpotAsync(Guid spotId);
         Task SetSpotAsync(Models.Domain.Spot spot, TimeSpan? expiration = null);
-        Task RemoveSpotAsync(int spotId);
+        Task RemoveSpotAsync(Guid spotId);
         Task ClearSpotsAsync();
         
         Task<IEnumerable<Models.Domain.Spot>> GetSpotsInAreaAsync(decimal latitude, decimal longitude, decimal radiusKm);
         Task SetSpotsInAreaAsync(decimal latitude, decimal longitude, decimal radiusKm, IEnumerable<Models.Domain.Spot> spots, TimeSpan? expiration = null);
         
-        Task<IEnumerable<Models.Domain.SpotMedia>> GetSpotMediaAsync(int spotId);
-        Task SetSpotMediaAsync(int spotId, IEnumerable<Models.Domain.SpotMedia> media, TimeSpan? expiration = null);
-        Task RemoveSpotMediaAsync(int spotId);
+        Task<IEnumerable<Models.Domain.SpotMedia>> GetSpotMediaAsync(Guid spotId);
+        Task SetSpotMediaAsync(Guid spotId, IEnumerable<Models.Domain.SpotMedia> media, TimeSpan? expiration = null);
+        Task RemoveSpotMediaAsync(Guid spotId);
         
-        Task InvalidateSpotCache(int spotId);
+        Task InvalidateSpotCache(Guid spotId);
         Task InvalidateAreaCache(decimal latitude, decimal longitude, decimal radiusKm);
     }
 }
