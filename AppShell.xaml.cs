@@ -1,7 +1,7 @@
 ﻿using SubExplore.Views.Map;
 using SubExplore.Views.Spots;
-// 🚫 Favorites et Admin supprimés - utilisaient Entity Framework  
-// using SubExplore.Views.Favorites;
+// ✅ Favorites réactivé avec pages simples compatibles API Supabase  
+using SubExplore.Views.Favorites;
 using SubExplore.Views.Profile;
 // using SubExplore.Views.Admin;
 using SubExplore.Services.Interfaces;

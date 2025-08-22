@@ -48,6 +48,11 @@ namespace SubExplore.Services.Interfaces
         Task<List<SupabaseSpot>> GetSpotsByLocationAsync(decimal latitude, decimal longitude, double radiusKm);
         
         /// <summary>
+        /// Diagnostic: Récupère TOUS les spots sans filtre
+        /// </summary>
+        Task<List<SupabaseSpot>> GetAllSpotsForDiagnosticAsync();
+        
+        /// <summary>
         /// Récupère les spots d'un utilisateur
         /// </summary>
         Task<List<SupabaseSpot>> GetUserSpotsAsync(Guid userId);

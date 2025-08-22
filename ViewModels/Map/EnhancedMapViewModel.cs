@@ -179,10 +179,9 @@ namespace SubExplore.ViewModels.Map
             {
                 System.Diagnostics.Debug.WriteLine("📍 Chargement des spots...");
 
-                // Récupérer les spots approuvés si le filtre est activé
-                var supabaseSpots = ShowOnlyApproved 
-                    ? await _spotService.GetApprovedSpotsAsync()
-                    : await _spotService.GetSpotsByLocationAsync(Convert.ToDecimal(MapLatitude), Convert.ToDecimal(MapLongitude), DEFAULT_SEARCH_RADIUS_KM);
+                // DIAGNOSTIC: Récupérer TOUS les spots pour diagnostiquer le problème
+                System.Diagnostics.Debug.WriteLine("🔍 [DIAGNOSTIC] Utilisation de GetAllSpotsForDiagnosticAsync");
+                var supabaseSpots = await _spotService.GetAllSpotsForDiagnosticAsync();
 
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {

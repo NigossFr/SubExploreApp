@@ -19,6 +19,7 @@ using SubExplore.ViewModels.Spots;
 using SubExplore.Models.Menu;
 using SubExplore.Helpers.Extensions;
 using MenuItemModel = SubExplore.Models.Menu.MenuItem;
+using SubExplore.Models.Supabase;
 
 namespace SubExplore.ViewModels.Map
 {
@@ -29,6 +30,7 @@ namespace SubExplore.ViewModels.Map
         private readonly ILocationService _locationService;
         // 🚫 Repository temporairement désactivé
         // private readonly ISpotTypeRepository _spotTypeRepository;
+        private readonly ISupabaseApiService _supabaseApiService;
         private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
         private readonly IPlatformMapService _platformMapService;
         private readonly IApplicationPerformanceService _performanceService;
@@ -198,13 +200,15 @@ namespace SubExplore.ViewModels.Map
             ISettingsService settingsService,
             ISimpleAuthenticationService authenticationService,
             IApplicationPerformanceService performanceService,
-            IPinSelectionService pinSelectionService)
+            IPinSelectionService pinSelectionService,
+            ISupabaseApiService supabaseApiService)
             : base(dialogService, navigationService)
         {
             // 🚫 Repositories temporairement désactivés
             // _spotRepository = spotRepository;
             _locationService = locationService;
             // _spotTypeRepository = spotTypeRepository;
+            _supabaseApiService = supabaseApiService;
             // _databaseService = databaseService;
             // _userRepository = userRepository;
             _settingsService = settingsService;
@@ -1995,9 +1999,9 @@ namespace SubExplore.ViewModels.Map
                 System.Diagnostics.Debug.WriteLine("[DEBUG] 🔍 HandleEmptySpotState: Diagnosing empty spot state");
                 
                 // Check if this is a data integrity issue or a filtering issue
-                // 🚫 Repository temporairement désactivé
-                // var totalSpots = await _spotRepository.GetAllAsync();
-                var totalSpots = new List<Spot>(); // Liste vide temporaire
+                // ✅ Utilisation du service Supabase API
+                var supabaseSpots = await _supabaseApiService.GetSpotsAsync();
+                var totalSpots = supabaseSpots?.Select(ConvertToDomainSpot).Where(s => s != null).ToList() ?? new List<Spot>();
                 var totalCount = totalSpots.Count();
                 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] Total spots in database: {totalCount}");
@@ -2114,9 +2118,9 @@ namespace SubExplore.ViewModels.Map
                     return;
                 }
 
-                // 🚫 Repository temporairement désactivé
-                // var spotTypes = await _spotTypeRepository.GetActiveSpotTypesAsync();
-                var spotTypes = new List<SpotType>(); // Liste vide temporaire
+                // ✅ Utilisation du service Supabase API
+                var supabaseSpotTypes = await _supabaseApiService.GetSpotTypesAsync();
+                var spotTypes = supabaseSpotTypes?.Select(ConvertToDomainSpotType).Where(s => s != null).ToList() ?? new List<SpotType>();
                 
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
@@ -2166,11 +2170,10 @@ namespace SubExplore.ViewModels.Map
                 IsNetworkError = false;
                 
                 // Use optimized method for better performance with ConfigureAwait
-                // 🚫 Repository temporairement désactivé
-                // var spots = await _spotRepository.GetSpotsMinimalAsync(100).ConfigureAwait(false);
-                var spots = new List<Spot>(); // Liste vide temporaire
+                // ✅ Utilisation du service Supabase API
+                var supabaseSpots = await _supabaseApiService.GetSpotsAsync().ConfigureAwait(false);
                 
-                var spotsList = spots?.ToList() ?? new List<Models.Domain.Spot>();
+                var spotsList = supabaseSpots?.Select(ConvertToDomainSpot).Where(s => s != null).ToList() ?? new List<Models.Domain.Spot>();
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ LoadSpotsOptimized - Retrieved {spotsList.Count} spots from repository");
                 
                 // Handle empty state
@@ -2213,7 +2216,7 @@ namespace SubExplore.ViewModels.Map
                 }
 
                 // Process spots in batches to maintain UI responsiveness
-                await ProcessSpotsInBatches(spots);
+                await ProcessSpotsInBatches(spotsList);
                 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] ✅ LoadSpotsOptimized completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
             }
@@ -2315,6 +2318,63 @@ namespace SubExplore.ViewModels.Map
             return spot?.Latitude != null && spot.Longitude != null &&
                    spot.Latitude != 0 && spot.Longitude != 0 &&
                    Math.Abs((double)spot.Latitude) <= 90 && Math.Abs((double)spot.Longitude) <= 180;
+        }
+
+        /// <summary>
+        /// Convert SupabaseSpot to Domain Spot
+        /// </summary>
+        private Spot? ConvertToDomainSpot(SupabaseSpot supabaseSpot)
+        {
+            if (supabaseSpot == null) return null;
+
+            try
+            {
+                return new Spot
+                {
+                    Id = supabaseSpot.Id,
+                    Name = supabaseSpot.Name ?? string.Empty,
+                    Description = supabaseSpot.Description ?? string.Empty,
+                    Latitude = supabaseSpot.Latitude,
+                    Longitude = supabaseSpot.Longitude,
+                    CreatedAt = supabaseSpot.CreatedAt,
+                    ValidationStatus = SpotValidationStatus.Approved, // Default for now
+                    CreatorId = supabaseSpot.CreatorId,
+                    // Add more fields as needed
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to convert SupabaseSpot to Spot: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Convert SupabaseSpotType to Domain SpotType
+        /// </summary>
+        private SpotType? ConvertToDomainSpotType(SupabaseSpotType supabaseSpotType)
+        {
+            if (supabaseSpotType == null) return null;
+
+            try
+            {
+                return new SpotType
+                {
+                    Id = supabaseSpotType.Id,
+                    Name = supabaseSpotType.Name ?? string.Empty,
+                    Description = supabaseSpotType.Description ?? string.Empty,
+                    Category = ActivityCategory.Activity, // Default for now
+                    CreatedAt = supabaseSpotType.CreatedAt,
+                    UpdatedAt = supabaseSpotType.UpdatedAt,
+                    IsActive = supabaseSpotType.IsActive == true
+                    // Add more fields as needed
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to convert SupabaseSpotType to SpotType: {ex.Message}");
+                return null;
+            }
         }
         
         protected override void Dispose(bool disposing)

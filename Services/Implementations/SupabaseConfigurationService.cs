@@ -33,14 +33,23 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Gets the Supabase API URL from secure configuration
         /// Priority: Environment Variable > Configuration File > Default
+        /// Includes automatic Android emulator network fix
         /// </summary>
         public async Task<string> GetSupabaseUrlAsync()
         {
-            return await GetSecureConfigValueAsync(
+            var url = await GetSecureConfigValueAsync(
                 environmentKey: "SUPABASE_URL",
                 configKey: "Supabase:Url",
                 defaultValue: string.Empty,
                 isSecret: false);
+            
+            // 🔧 Correctif automatique pour émulateur Android
+            if (!string.IsNullOrEmpty(url))
+            {
+                url = EmulatorNetworkFix.GetSupabaseUrlWithEmulatorFix(url);
+            }
+            
+            return url;
         }
 
         /// <summary>

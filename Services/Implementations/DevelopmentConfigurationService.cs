@@ -61,6 +61,11 @@ namespace SubExplore.Services.Implementations
                 throw new InvalidOperationException(errorMsg);
             }
             
+            // 🔧 CORRECTIF AUTOMATIQUE POUR ÉMULATEUR ANDROID
+            _logger.LogInformation("URL AVANT correctif: {Url}", url);
+            url = EmulatorNetworkFix.GetSupabaseUrlWithEmulatorFix(url);
+            _logger.LogInformation("URL APRÈS correctif: {Url}", url);
+            
             _logger.LogInformation("Using Supabase URL: {Url}", MaskUrl(url));
             return url;
         }

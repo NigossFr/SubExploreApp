@@ -177,6 +177,45 @@ namespace SubExplore.Services.Implementations
             }
         }
 
+        public async Task<List<SupabaseSpot>> GetAllSpotsForDiagnosticAsync()
+        {
+            try
+            {
+                _logger.LogInformation("🔍 [DIAGNOSTIC] Récupération de TOUS les spots sans filtre...");
+                
+                var client = await _supabaseClient.GetClientAsync();
+                if (client == null)
+                {
+                    _logger.LogError("❌ [DIAGNOSTIC] Client Supabase non disponible");
+                    return new List<SupabaseSpot>();
+                }
+
+                var result = await client
+                    .From<SupabaseSpot>()
+                    .Get(); // AUCUN FILTRE
+
+                _logger.LogInformation($"🔍 [DIAGNOSTIC] Trouvé {result.Models.Count} spots au total dans la base");
+                
+                // Log détails des spots trouvés
+                foreach (var spot in result.Models.Take(5)) // Premier 5 pour éviter trop de logs
+                {
+                    _logger.LogInformation($"🔍 [DIAGNOSTIC] Spot: {spot.Name} | Status: {spot.ValidationStatus} | CreatedAt: {spot.CreatedAt}");
+                }
+                
+                if (result.Models.Count > 5)
+                {
+                    _logger.LogInformation($"🔍 [DIAGNOSTIC] ... et {result.Models.Count - 5} autres spots");
+                }
+
+                return result.Models;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [DIAGNOSTIC] Erreur lors de la récupération des spots");
+                return new List<SupabaseSpot>();
+            }
+        }
+
         public async Task<List<SupabaseSpot>> GetSpotsByLocationAsync(decimal latitude, decimal longitude, double radiusKm)
         {
             try

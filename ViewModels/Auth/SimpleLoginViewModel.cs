@@ -74,7 +74,7 @@ namespace SubExplore.ViewModels.Auth
                 }
 
                 // Connexion via Supabase
-                var result = await _authenticationService.LoginAsync(Email, Password);
+                var result = await _authenticationService.LoginSimpleAsync(Email, Password);
 
                 if (result)
                 {

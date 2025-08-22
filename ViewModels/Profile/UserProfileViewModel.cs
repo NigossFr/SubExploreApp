@@ -92,7 +92,7 @@ namespace SubExplore.ViewModels.Profile
             IMediaService mediaService,
             IThemeService themeService,
             IAuthorizationService authorizationService,
-            IAuthenticationService authenticationService)
+            ISimpleAuthenticationService authenticationService)
             : base(authorizationService, authenticationService, dialogService, navigationService)
         {
             _userProfileService = userProfileService;

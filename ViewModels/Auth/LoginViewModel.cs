@@ -100,7 +100,7 @@ namespace SubExplore.ViewModels.Auth
                 await Task.Delay(300);
 
                 // Perform login
-                var result = await _simpleAuthenticationService.LoginAsync(Email, Password);
+                var result = await _simpleAuthenticationService.LoginSimpleAsync(Email, Password);
                 LoginProgress = 0.8;
 
                 if (result)

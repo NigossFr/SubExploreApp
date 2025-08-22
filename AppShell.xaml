@@ -18,7 +18,7 @@
     Shell.BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource OffBlack}}" 
     Shell.ForegroundColor="{AppThemeBinding Light=Black, Dark=White}"
     Shell.TitleColor="{AppThemeBinding Light=Black, Dark=White}"
-    FlyoutIcon="hamburger.svg"
+    FlyoutIcon="hamburger_menu.svg"
     FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
     FlyoutHeaderBehavior="CollapseOnScroll"
     Title="SubExplore"
@@ -49,7 +49,7 @@
                            WidthRequest="60"
                            HeightRequest="60"
                            HasShadow="False">
-                        <Image Source="icone_subexplore.svg"
+                        <Image Source="dotnet_bot.png"
                                WidthRequest="50"
                                HeightRequest="50"
                                HorizontalOptions="Center"
@@ -79,7 +79,7 @@
                            WidthRequest="60"
                            HeightRequest="60"
                            HasShadow="False">
-                        <Image Source="user_avatar_placeholder.png"
+                        <Image Source="dotnet_bot.png"
                                WidthRequest="30"
                                HeightRequest="30"
                                HorizontalOptions="Center"
@@ -276,18 +276,18 @@
         ContentTemplate="{DataTemplate map:MapPage}"
         Route="map" />
 
-    <!-- 🚫 Hidden routes for navigation - supprimées car utilisaient Entity Framework -->
-    <!-- <ShellContent
+    <!-- ✅ Routes activées avec pages placeholder simples -->
+    <ShellContent
         Title="Mes Spots"
         ContentTemplate="{DataTemplate spots:MySpotsPage}"
         Route="myspots"
-        FlyoutItemIsVisible="False" /> -->
+        FlyoutItemIsVisible="False" />
 
-    <!-- <ShellContent
+    <ShellContent
         Title="Favoris"
-        ContentTemplate="{DataTemplate favorites:FavoriteSpotsPage}"
+        ContentTemplate="{DataTemplate favorites:FavoritesPage}"
         Route="favorites"
-        FlyoutItemIsVisible="False" /> -->
+        FlyoutItemIsVisible="False" />
 
     <ShellContent
         Title="Profil"
@@ -319,23 +319,19 @@
         Route="spotdetails" />
     -->
 
-    <!-- Admin route - Hidden - TEMPORAIREMENT DÉSACTIVÉ (ViewModels Entity Framework supprimés) -->
-    <!--
+    <!-- Admin route - Hidden - Placeholder page for navigation -->
     <ShellContent
         Title="Validation des Spots"
-        ContentTemplate="{DataTemplate admin:SpotValidationPage}"
+        ContentTemplate="{DataTemplate spots:MySpotsPage}"
         Route="spotvalidation"
         FlyoutItemIsVisible="False" />
-    -->
 
-    <!-- Database Test route - Hidden - TEMPORAIREMENT DÉSACTIVÉ (ViewModels Entity Framework supprimés) -->
-    <!--
+    <!-- Database Test route - Hidden - Placeholder page for navigation -->
     <ShellContent
         Title="Test Base de Données"
-        ContentTemplate="{DataTemplate settings:DatabaseTestPage}"
+        ContentTemplate="{DataTemplate spots:MySpotsPage}"
         Route="databasetest"
         FlyoutItemIsVisible="False" />
-    -->
 
     <!-- About route - Hidden -->
     <ShellContent

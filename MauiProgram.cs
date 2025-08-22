@@ -54,10 +54,23 @@ public static class MauiProgram
         // L'application utilise UNIQUEMENT l'API Supabase via supabase-csharp
         Debug.WriteLine("🚀 Configuration 100% API Supabase - Plus d'Entity Framework");
         
-        // Enregistrer le service client Supabase
+        // 🔧 CORRECTIF RESEAU EMULATEUR ANDROID
+        EmulatorNetworkFix.ApplyEmulatorDnsFixIfNeeded();
+        Debug.WriteLine(EmulatorNetworkFix.GetNetworkDiagnosticInfo());
+        
+        // 🔐 CONFIGURATION SERVICE - DOIT ÊTRE ENREGISTRÉ EN PREMIER
+#if DEBUG
+        // ✅ Supabase configuré avec les vraies clés API (Janvier 2025)
+        builder.Services.AddSingleton<ISupabaseConfigurationService, DevelopmentConfigurationService>();
+        System.Diagnostics.Debug.WriteLine("[DEBUG] Using DevelopmentConfigurationService - SUPABASE RÉEL ACTIVÉ");
+        // Mode offline disponible avec: OfflineTestConfigurationService
+#else
+        builder.Services.AddSingleton<ISupabaseConfigurationService, SupabaseConfigurationService>();
+        System.Diagnostics.Debug.WriteLine("[RELEASE] Using SupabaseConfigurationService for Supabase configuration");
+#endif
+        
+        // Enregistrer le service client Supabase (APRÈS le service de configuration)
         builder.Services.AddSingleton<ISupabaseClientService, SupabaseClientService>();
-
-        // 🔐 SECURE CONFIGURATION SERVICE - Managed conditionally below
 
         // 🛡️ RESILIENCE SERVICES - Retry policies, circuit breakers, health monitoring
         builder.Services.AddSingleton<IRetryPolicyService, RetryPolicyService>();
@@ -98,7 +111,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPlatformMapService, PlatformMapService>();
         builder.Services.AddSingleton<IMenuService, MenuService>();
         builder.Services.AddSingleton<IThemeService, ThemeService>();
-        // 🚫 UserProfileService supprimé - utilisait Entity Framework
+        // ✅ SimpleUserProfileService compatible Supabase API
+        builder.Services.AddScoped<IUserProfileService, SimpleUserProfileService>();
         // 🚫 Services supprimés - utilisaient des repositories
         // builder.Services.AddScoped<ISpotService, SpotService>();
         // builder.Services.AddScoped<IFavoriteSpotService, FavoriteSpotService>();
@@ -139,6 +153,46 @@ public static class MauiProgram
         
         // Add HTTP client factory for better performance
         builder.Services.AddHttpClient();
+        
+        // Configuration HttpClient spécifique pour l'émulateur Android et Supabase
+        builder.Services.AddHttpClient("SupabaseClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        }).ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            var handler = new HttpClientHandler();
+            
+#if ANDROID
+            // Configuration spéciale pour l'émulateur Android
+            try 
+            {
+                if (EmulatorNetworkFix.IsRunningOnAndroidEmulator())
+                {
+                    System.Diagnostics.Debug.WriteLine("🔧 Configuration HttpClient pour émulateur Android");
+                    
+                    // Validation SSL permissive pour Supabase en émulateur
+                    handler.ServerCertificateCustomValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+                    {
+                        if (sender is HttpRequestMessage request)
+                        {
+                            var host = request.RequestUri?.Host;
+                            if (host?.Contains("supabase.co") == true)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"🔐 SSL validation bypassed for emulator: {host}");
+                                return true;
+                            }
+                        }
+                        return sslPolicyErrors == System.Net.Security.SslPolicyErrors.None;
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur configuration émulateur: {ex.Message}");
+            }
+#endif
+            return handler;
+        });
         // 🚫 PerformanceValidationService supprimé - utilisait des repositories
         // builder.Services.AddScoped<IPerformanceValidationService, PerformanceValidationService>();
         
@@ -158,22 +212,13 @@ public static class MauiProgram
             var baseSettings = provider.GetRequiredService<ISettingsService>();
             return new SecureSettingsService(baseSettings);
         });
-#if DEBUG
-        // ✅ Supabase configuré avec les vraies clés API (Janvier 2025)
-        builder.Services.AddSingleton<ISupabaseConfigurationService, DevelopmentConfigurationService>();
-        System.Diagnostics.Debug.WriteLine("[DEBUG] Using DevelopmentConfigurationService - SUPABASE RÉEL ACTIVÉ");
-        // Mode offline disponible avec: OfflineTestConfigurationService
-#else
-        builder.Services.AddSingleton<ISupabaseConfigurationService, SupabaseConfigurationService>();
-        System.Diagnostics.Debug.WriteLine("[RELEASE] Using SupabaseConfigurationService for Supabase configuration");
-#endif
+        // 🔐 CONFIGURATION SERVICE DÉJÀ ENREGISTRÉ AU DÉBUT
         builder.Services.AddSingleton<ISecureConfigurationService, SecureConfigurationService>();
         // 🚫 TokenService supprimé - utilisait des repositories
         // builder.Services.AddScoped<ITokenService, TokenService>();
         
         // 🔐 AUTHENTIFICATION 100% API SUPABASE
         builder.Services.AddSingleton<ISimpleAuthenticationService, SimpleAuthenticationService>();
-        // 🚫 IAuthenticationService trop complexe - modifier LoginViewModel pour utiliser ISimpleAuthenticationService
         builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
         
         // Email services

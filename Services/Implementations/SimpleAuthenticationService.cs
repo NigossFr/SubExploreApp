@@ -6,6 +6,8 @@
 using Microsoft.Extensions.Logging;
 using SubExplore.Services.Interfaces;
 using SubExplore.Models.Domain;
+using SubExplore.Models.DTOs;
+using SubExplore.Models.Enums;
 
 namespace SubExplore.Services.Implementations
 {
@@ -22,6 +24,7 @@ namespace SubExplore.Services.Implementations
         
         public bool IsAuthenticated => _isInitialized && _currentUser != null;
         public User? CurrentUser => _currentUser;
+        
         
         public SimpleAuthenticationService(
             ISupabaseClientService supabaseClient,
@@ -83,7 +86,7 @@ namespace SubExplore.Services.Implementations
             }
         }
         
-        public async Task<bool> LoginAsync(string email, string password)
+        public async Task<bool> LoginSimpleAsync(string email, string password)
         {
             try
             {
@@ -140,7 +143,7 @@ namespace SubExplore.Services.Implementations
             }
         }
         
-        public async Task<bool> RegisterAsync(string email, string password, string firstName, string lastName)
+        public async Task<bool> RegisterSimpleAsync(string email, string password, string firstName, string lastName)
         {
             try
             {

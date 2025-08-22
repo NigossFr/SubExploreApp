@@ -29,7 +29,7 @@ namespace SubExplore.Services.Interfaces
         /// <param name="email">Email de l'utilisateur</param>
         /// <param name="password">Mot de passe</param>
         /// <returns>True si la connexion réussit</returns>
-        Task<bool> LoginAsync(string email, string password);
+        Task<bool> LoginSimpleAsync(string email, string password);
         
         /// <summary>
         /// Inscription d'un nouvel utilisateur
@@ -39,7 +39,7 @@ namespace SubExplore.Services.Interfaces
         /// <param name="firstName">Prénom</param>
         /// <param name="lastName">Nom</param>
         /// <returns>True si l'inscription réussit</returns>
-        Task<bool> RegisterAsync(string email, string password, string firstName, string lastName);
+        Task<bool> RegisterSimpleAsync(string email, string password, string firstName, string lastName);
         
         /// <summary>
         /// Déconnexion de l'utilisateur actuel

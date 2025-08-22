@@ -11,11 +11,11 @@ namespace SubExplore.Services.Implementations
     /// </summary>
     public class AuthorizationService : IAuthorizationService
     {
-        private readonly IAuthenticationService _authenticationService;
+        private readonly ISimpleAuthenticationService _authenticationService;
         private readonly ILogger<AuthorizationService> _logger;
 
         public AuthorizationService(
-            IAuthenticationService authenticationService,
+            ISimpleAuthenticationService authenticationService,
             ILogger<AuthorizationService> logger)
         {
             _authenticationService = authenticationService;

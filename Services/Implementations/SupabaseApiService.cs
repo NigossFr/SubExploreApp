@@ -16,45 +16,38 @@ namespace SubExplore.Services.Implementations
     public class SupabaseApiService : ISupabaseApiService
     {
         private readonly ILogger<SupabaseApiService> _logger;
+        private readonly ISupabaseClientService _supabaseClientService;
         private readonly IRetryPolicyService? _retryPolicyService;
         private readonly ICircuitBreakerService? _circuitBreakerService;
-        private Client? _client;
 
         public SupabaseApiService(
             ILogger<SupabaseApiService> logger,
+            ISupabaseClientService supabaseClientService,
             IRetryPolicyService? retryPolicyService = null,
             ICircuitBreakerService? circuitBreakerService = null)
         {
             _logger = logger;
+            _supabaseClientService = supabaseClientService;
             _retryPolicyService = retryPolicyService;
             _circuitBreakerService = circuitBreakerService;
         }
 
         /// <summary>
-        /// Initialise le client Supabase
+        /// Obtient le client Supabase partagé et vérifie qu'il est initialisé
         /// </summary>
-        public async Task InitializeAsync(string url, string key)
+        private async Task<Client> GetClientAsync()
         {
-            try
+            if (!_supabaseClientService.IsReady)
             {
-                _logger.LogInformation("🔧 Initialisation du client Supabase API...");
-                
-                var options = new SupabaseOptions
+                _logger.LogInformation("🔧 Initialisation du client Supabase en cours...");
+                var initialized = await _supabaseClientService.InitializeAsync();
+                if (!initialized)
                 {
-                    AutoRefreshToken = true,
-                    AutoConnectRealtime = false, // Désactivé pour commencer
-                };
+                    throw new InvalidOperationException("Impossible d'initialiser le client Supabase");
+                }
+            }
 
-                _client = new Client(url, key, options);
-                await _client.InitializeAsync();
-                
-                _logger.LogInformation("✅ Client Supabase API initialisé avec succès");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Erreur lors de l'initialisation du client Supabase API");
-                throw;
-            }
+            return await _supabaseClientService.GetClientAsync();
         }
 
         /// <summary>
@@ -66,14 +59,10 @@ namespace SubExplore.Services.Implementations
             {
                 _logger.LogInformation("🔍 Test de connexion Supabase API...");
                 
-                if (_client == null)
-                {
-                    _logger.LogWarning("⚠️ Client Supabase non initialisé");
-                    return false;
-                }
+                var client = await GetClientAsync();
 
                 // Test simple : compter les utilisateurs
-                var result = await _client.From<SupabaseUser>()
+                var result = await client.From<SupabaseUser>()
                     .Select("id")
                     .Limit(1)
                     .Get();
@@ -90,11 +79,10 @@ namespace SubExplore.Services.Implementations
         {
             return await ExecuteWithResilienceAsync(async (cancellationToken) =>
             {
-                if (_client == null)
-                    throw new InvalidOperationException("Client Supabase non initialisé");
+                var client = await GetClientAsync();
 
                 _logger.LogInformation("📥 Récupération des utilisateurs...");
-                var result = await _client.From<SupabaseUser>().Get();
+                var result = await client.From<SupabaseUser>().Get();
                 
                 _logger.LogInformation($"✅ {result.Models.Count} utilisateur(s) récupéré(s)");
                 return result.Models;
@@ -108,12 +96,11 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                if (_client == null)
-                    throw new InvalidOperationException("Client Supabase non initialisé");
+                var client = await GetClientAsync();
 
                 _logger.LogInformation("🔍 Recherche de l'utilisateur avec email: {Email}", email);
                 
-                var result = await _client.From<SupabaseUser>()
+                var result = await client.From<SupabaseUser>()
                     .Where(u => u.Email == email)
                     .Single();
 
@@ -142,12 +129,11 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                if (_client == null)
-                    throw new InvalidOperationException("Client Supabase non initialisé");
+                var client = await GetClientAsync();
 
                 _logger.LogInformation("📥 Récupération des types de spots...");
                 
-                var result = await _client.From<SupabaseSpotType>()
+                var result = await client.From<SupabaseSpotType>()
                     .Where(st => st.IsActive == true)
                     .Order("name", Postgrest.Constants.Ordering.Ascending)
                     .Get();
@@ -169,12 +155,11 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                if (_client == null)
-                    throw new InvalidOperationException("Client Supabase non initialisé");
+                var client = await GetClientAsync();
 
                 _logger.LogInformation("📥 Récupération des spots...");
                 
-                var result = await _client.From<SupabaseSpot>()
+                var result = await client.From<SupabaseSpot>()
                     .Order("created_at", Postgrest.Constants.Ordering.Descending)
                     .Limit(100) // Limiter pour le test
                     .Get();
@@ -196,12 +181,11 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                if (_client == null)
-                    throw new InvalidOperationException("Client Supabase non initialisé");
+                var client = await GetClientAsync();
 
                 _logger.LogInformation("➕ Création d'un nouvel utilisateur: {Email}", user.Email);
                 
-                var result = await _client.From<SupabaseUser>()
+                var result = await client.From<SupabaseUser>()
                     .Insert(user);
 
                 _logger.LogInformation("✅ Utilisateur créé avec succès: {Id}", result.Model.Id);
@@ -221,12 +205,11 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                if (_client == null)
-                    throw new InvalidOperationException("Client Supabase non initialisé");
+                var client = await GetClientAsync();
 
                 _logger.LogInformation("✏️ Mise à jour de l'utilisateur: {Id}", user.Id);
                 
-                var result = await _client.From<SupabaseUser>()
+                var result = await client.From<SupabaseUser>()
                     .Where(u => u.Id == user.Id)
                     .Update(user);
 
@@ -247,12 +230,11 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                if (_client == null)
-                    throw new InvalidOperationException("Client Supabase non initialisé");
+                var client = await GetClientAsync();
 
                 _logger.LogInformation("🗑️ Suppression de l'utilisateur: {Id}", userId);
                 
-                await _client.From<SupabaseUser>()
+                await client.From<SupabaseUser>()
                     .Where(u => u.Id == userId)
                     .Delete();
 

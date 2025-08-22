@@ -88,10 +88,7 @@ namespace SubExplore.ViewModels.Spots
             {
                 _logger.LogInformation("🚀 Initialisation API Supabase...");
                 
-                const string url = "https://iguvwnyehojvxkyqzaoi.supabase.co";
-                const string key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndXZ3bnllaG9qdnhreXF6YW9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNDgyNDcsImV4cCI6MjA3MDgyNDI0N30.LTBCWoGhEh83g_2HPyXAyIvOgt2CQ_103GtKVbbiuuc";
-                
-                await _apiService.InitializeAsync(url, key);
+                // L'initialisation est maintenant automatique via ISupabaseClientService
                 IsApiReady = await _apiService.TestConnectionAsync();
                 
                 if (IsApiReady)

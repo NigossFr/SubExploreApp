@@ -100,7 +100,12 @@
       "Bash(\"/d/Developpement/SubExploreApp/SubExplore/ViewModels/Spots/MySpotsViewModel.cs\" )",
       "Bash(\"/d/Developpement/SubExploreApp/SubExplore/ViewModels/Spots/SpotCharacteristicsViewModel.cs\" )",
       "Bash(\"/d/Developpement/SubExploreApp/SubExplore/ViewModels/Spots/SpotDetailsViewModel.cs\")",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(ping:*)",
+      "Bash(nslookup:*)",
+      "Bash(adb:*)",
+      "Bash(fix-emulator-network.bat)",
+      "Bash(.fix-emulator-network.bat)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

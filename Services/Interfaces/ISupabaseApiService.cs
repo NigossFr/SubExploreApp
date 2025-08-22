@@ -9,11 +9,6 @@ namespace SubExplore.Services.Interfaces
     public interface ISupabaseApiService
     {
         /// <summary>
-        /// Initialise le client Supabase avec l'URL et la clé
-        /// </summary>
-        Task InitializeAsync(string url, string key);
-
-        /// <summary>
         /// Test simple de connexion
         /// </summary>
         Task<bool> TestConnectionAsync();

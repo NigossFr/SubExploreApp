@@ -68,10 +68,7 @@ namespace SubExplore.Services.Implementations
                 }
 
                 // Get secure configuration
-                var url = await _configService.GetSupabaseUrlAsync();
-                var key = await _configService.GetSupabaseAnonKeyAsync();
-                
-                await _apiService.InitializeAsync(url, key);
+                // L'initialisation est maintenant automatique via ISupabaseClientService
                 var connectionTest = await _apiService.TestConnectionAsync();
                 
                 if (connectionTest)

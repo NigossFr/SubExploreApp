@@ -47,7 +47,7 @@ namespace SubExplore.Services.Implementations
                 
                 var options = new SupabaseOptions
                 {
-                    AutoConnectRealtime = true,
+                    AutoConnectRealtime = false, // Désactiver temporairement en émulateur
                     AutoRefreshToken = true
                 };
                 

@@ -11,7 +11,7 @@ namespace SubExplore.ViewModels.Base
     public abstract partial class AuthorizedViewModelBase : ViewModelBase
     {
         protected readonly IAuthorizationService _authorizationService;
-        protected readonly IAuthenticationService _authenticationService;
+        protected readonly ISimpleAuthenticationService _authenticationService;
 
         [ObservableProperty]
         private bool _canCreateSpots;
@@ -51,7 +51,7 @@ namespace SubExplore.ViewModels.Base
 
         protected AuthorizedViewModelBase(
             IAuthorizationService authorizationService,
-            IAuthenticationService authenticationService,
+            ISimpleAuthenticationService authenticationService,
             IDialogService dialogService = null,
             INavigationService navigationService = null)
             : base(dialogService, navigationService)
@@ -60,7 +60,7 @@ namespace SubExplore.ViewModels.Base
             _authenticationService = authenticationService;
 
             // Subscribe to authentication state changes
-            _authenticationService.StateChanged += OnAuthenticationStateChanged;
+            // _authenticationService.StateChanged += OnAuthenticationStateChanged;
         }
 
         /// <summary>
@@ -192,7 +192,7 @@ namespace SubExplore.ViewModels.Base
         {
             if (disposing)
             {
-                _authenticationService.StateChanged -= OnAuthenticationStateChanged;
+                // _authenticationService.StateChanged -= OnAuthenticationStateChanged;
             }
             base.Dispose(disposing);
         }
