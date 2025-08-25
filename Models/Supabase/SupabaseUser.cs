@@ -182,4 +182,35 @@ namespace SubExplore.Models.Supabase
         [Column("bottom_type")]
         public string? BottomType { get; set; }
     }
+
+    /// <summary>
+    /// Modèle UserFavoriteSpot pour l'API Supabase
+    /// </summary>
+    [Table("user_favorite_spots")]
+    public class SupabaseUserFavoriteSpot : BaseModel
+    {
+        [PrimaryKey("id")]
+        public Guid Id { get; set; }
+
+        [Column("user_id")]
+        public Guid UserId { get; set; }
+
+        [Column("spot_id")]
+        public Guid SpotId { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; }
+
+        [Column("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
+
+        [Column("notes")]
+        public string? Notes { get; set; }
+
+        [Column("priority")]
+        public int Priority { get; set; } = 5;
+
+        [Column("notification_enabled")]
+        public bool NotificationEnabled { get; set; } = true;
+    }
 }

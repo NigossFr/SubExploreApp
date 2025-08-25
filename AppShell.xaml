@@ -311,13 +311,12 @@
         Route="addspot" />
     -->
 
-    <!-- Spot Details Page Route - TEMPORAIREMENT DÉSACTIVÉ (ViewModels Entity Framework supprimés) -->
-    <!--
+    <!-- Spot Details Page Route -->
     <ShellContent
         Title="Détails du Spot"
         ContentTemplate="{DataTemplate spots:SpotDetailsPage}"
-        Route="spotdetails" />
-    -->
+        Route="spotdetails" 
+        FlyoutItemIsVisible="False" />
 
     <!-- Admin route - Hidden - Placeholder page for navigation -->
     <ShellContent

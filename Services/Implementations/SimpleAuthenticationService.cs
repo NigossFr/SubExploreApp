@@ -63,11 +63,10 @@ namespace SubExplore.Services.Implementations
                 if (client.Auth.CurrentSession != null)
                 {
                     _logger.LogInformation("✅ Session utilisateur existante trouvée");
-                    // TODO: Récupérer les informations utilisateur depuis Supabase
-                    // Pour le moment, on crée un utilisateur temporaire
+                    // ✅ UTILISATION DE L'ID UTILISATEUR SUPABASE RÉEL
                     _currentUser = new User
                     {
-                        Id = Guid.NewGuid(),
+                        Id = Guid.Parse(client.Auth.CurrentUser.Id),
                         Email = client.Auth.CurrentUser?.Email ?? "unknown@supabase.com",
                         FirstName = "Supabase",
                         LastName = "User",
@@ -99,10 +98,10 @@ namespace SubExplore.Services.Implementations
                 {
                     _logger.LogInformation("✅ Connexion réussie pour: {Email}", email);
                     
-                    // Créer un utilisateur temporaire basé sur la session Supabase
+                    // ✅ UTILISATION DE L'ID UTILISATEUR SUPABASE RÉEL
                     _currentUser = new User
                     {
-                        Id = Guid.NewGuid(), // TODO: Obtenir l'ID réel depuis Supabase
+                        Id = Guid.Parse(session.User.Id),
                         Email = session.User.Email ?? email,
                         FirstName = "Supabase",
                         LastName = "User",
@@ -140,6 +139,30 @@ namespace SubExplore.Services.Implementations
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Erreur lors de la déconnexion");
+            }
+        }
+        
+        /// <summary>
+        /// Obtient l'utilisateur actuel de manière asynchrone
+        /// </summary>
+        /// <returns>L'utilisateur connecté ou null si non connecté</returns>
+        public async Task<User?> GetCurrentUserAsync()
+        {
+            try
+            {
+                // S'assurer que le service est initialisé
+                if (!_isInitialized)
+                {
+                    await InitializeAsync();
+                }
+                
+                // Retourner l'utilisateur actuel
+                return _currentUser;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la récupération de l'utilisateur actuel");
+                return null;
             }
         }
         

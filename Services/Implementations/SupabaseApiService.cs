@@ -360,5 +360,206 @@ namespace SubExplore.Services.Implementations
         }
 
         #endregion
+
+        // ========================================
+        // FAVORITES MANAGEMENT IMPLEMENTATION
+        // ========================================
+
+        /// <summary>
+        /// Récupère tous les favoris d'un utilisateur avec resilience
+        /// </summary>
+        public async Task<List<SupabaseUserFavoriteSpot>> GetUserFavoritesAsync(Guid userId)
+        {
+            return await ExecuteWithResilienceAsync(async (cancellationToken) =>
+            {
+                var client = await GetClientAsync();
+                _logger.LogInformation("📥 Récupération des favoris pour l'utilisateur: {UserId}", userId);
+                
+                var result = await client.From<SupabaseUserFavoriteSpot>()
+                    .Where(f => f.UserId == userId)
+                    .Order("priority", Postgrest.Constants.Ordering.Descending)
+                    .Order("created_at", Postgrest.Constants.Ordering.Descending)
+                    .Get();
+                
+                _logger.LogInformation("✅ {Count} favoris récupéré(s)", result.Models.Count);
+                return result.Models;
+            });
+        }
+
+        /// <summary>
+        /// Vérifie si un spot est en favoris pour un utilisateur
+        /// </summary>
+        public async Task<bool> IsSpotFavoriteAsync(Guid userId, Guid spotId)
+        {
+            return await ExecuteWithResilienceAsync(async (cancellationToken) =>
+            {
+                var client = await GetClientAsync();
+                _logger.LogDebug("🔍 Vérification favori: utilisateur {UserId}, spot {SpotId}", userId, spotId);
+                
+                var result = await client.From<SupabaseUserFavoriteSpot>()
+                    .Where(f => f.UserId == userId && f.SpotId == spotId)
+                    .Limit(1)
+                    .Get();
+                
+                bool isFavorite = result.Models.Count > 0;
+                _logger.LogDebug("🔍 Résultat favori: {IsFavorite}", isFavorite);
+                return isFavorite;
+            });
+        }
+
+        /// <summary>
+        /// Ajoute un spot aux favoris d'un utilisateur
+        /// </summary>
+        public async Task<SupabaseUserFavoriteSpot> AddToFavoritesAsync(Guid userId, Guid spotId, int priority = 5, string? notes = null, bool notificationEnabled = true)
+        {
+            return await ExecuteWithResilienceAsync(async (cancellationToken) =>
+            {
+                var client = await GetClientAsync();
+                _logger.LogInformation("⭐ Ajout aux favoris: utilisateur {UserId}, spot {SpotId}", userId, spotId);
+                
+                // Vérifier si déjà en favoris
+                if (await IsSpotFavoriteAsync(userId, spotId))
+                {
+                    throw new InvalidOperationException("Ce spot est déjà en favoris");
+                }
+                
+                var favorite = new SupabaseUserFavoriteSpot
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    SpotId = spotId,
+                    Priority = priority,
+                    Notes = notes,
+                    NotificationEnabled = notificationEnabled,
+                    CreatedAt = DateTime.UtcNow
+                };
+                
+                var result = await client.From<SupabaseUserFavoriteSpot>()
+                    .Insert(favorite);
+                
+                _logger.LogInformation("✅ Spot ajouté aux favoris avec succès");
+                return result.Model;
+            });
+        }
+
+        /// <summary>
+        /// Retire un spot des favoris d'un utilisateur
+        /// </summary>
+        public async Task<bool> RemoveFromFavoritesAsync(Guid userId, Guid spotId)
+        {
+            return await ExecuteWithResilienceAsync(async (cancellationToken) =>
+            {
+                var client = await GetClientAsync();
+                _logger.LogInformation("❌ Suppression des favoris: utilisateur {UserId}, spot {SpotId}", userId, spotId);
+                
+                await client.From<SupabaseUserFavoriteSpot>()
+                    .Where(f => f.UserId == userId && f.SpotId == spotId)
+                    .Delete();
+                
+                // Vérifier si le spot était effectivement en favoris avant suppression
+                bool removed = true; // On assume le succès si aucune exception
+                _logger.LogInformation(removed ? "✅ Spot retiré des favoris" : "⚠️ Spot n'était pas en favoris");
+                return removed;
+            });
+        }
+
+        /// <summary>
+        /// Met à jour les notes d'un favori
+        /// </summary>
+        public async Task<bool> UpdateFavoriteNotesAsync(Guid userId, Guid spotId, string? notes)
+        {
+            return await ExecuteWithResilienceAsync(async (cancellationToken) =>
+            {
+                var client = await GetClientAsync();
+                _logger.LogInformation("📝 Mise à jour notes favori: utilisateur {UserId}, spot {SpotId}", userId, spotId);
+                
+                var updateData = new SupabaseUserFavoriteSpot
+                {
+                    Notes = notes,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                
+                var result = await client.From<SupabaseUserFavoriteSpot>()
+                    .Where(f => f.UserId == userId && f.SpotId == spotId)
+                    .Update(updateData);
+                
+                bool updated = result.Models.Count > 0;
+                _logger.LogInformation(updated ? "✅ Notes mises à jour" : "⚠️ Favori non trouvé");
+                return updated;
+            });
+        }
+
+        /// <summary>
+        /// Met à jour la priorité d'un favori
+        /// </summary>
+        public async Task<bool> UpdateFavoritePriorityAsync(Guid userId, Guid spotId, int priority)
+        {
+            return await ExecuteWithResilienceAsync(async (cancellationToken) =>
+            {
+                var client = await GetClientAsync();
+                _logger.LogInformation("🎯 Mise à jour priorité favori: utilisateur {UserId}, spot {SpotId}, priorité {Priority}", userId, spotId, priority);
+                
+                var updateData = new SupabaseUserFavoriteSpot
+                {
+                    Priority = priority,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                
+                var result = await client.From<SupabaseUserFavoriteSpot>()
+                    .Where(f => f.UserId == userId && f.SpotId == spotId)
+                    .Update(updateData);
+                
+                bool updated = result.Models.Count > 0;
+                _logger.LogInformation(updated ? "✅ Priorité mise à jour" : "⚠️ Favori non trouvé");
+                return updated;
+            });
+        }
+
+        /// <summary>
+        /// Met à jour les notifications d'un favori
+        /// </summary>
+        public async Task<bool> UpdateFavoriteNotificationAsync(Guid userId, Guid spotId, bool enabled)
+        {
+            return await ExecuteWithResilienceAsync(async (cancellationToken) =>
+            {
+                var client = await GetClientAsync();
+                _logger.LogInformation("🔔 Mise à jour notifications favori: utilisateur {UserId}, spot {SpotId}, activé {Enabled}", userId, spotId, enabled);
+                
+                var updateData = new SupabaseUserFavoriteSpot
+                {
+                    NotificationEnabled = enabled,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                
+                var result = await client.From<SupabaseUserFavoriteSpot>()
+                    .Where(f => f.UserId == userId && f.SpotId == spotId)
+                    .Update(updateData);
+                
+                bool updated = result.Models.Count > 0;
+                _logger.LogInformation(updated ? "✅ Notifications mises à jour" : "⚠️ Favori non trouvé");
+                return updated;
+            });
+        }
+
+        /// <summary>
+        /// Compte le nombre de favoris pour un spot
+        /// </summary>
+        public async Task<int> GetSpotFavoritesCountAsync(Guid spotId)
+        {
+            return await ExecuteWithResilienceAsync(async (cancellationToken) =>
+            {
+                var client = await GetClientAsync();
+                _logger.LogDebug("📊 Comptage favoris pour spot: {SpotId}", spotId);
+                
+                var result = await client.From<SupabaseUserFavoriteSpot>()
+                    .Where(f => f.SpotId == spotId)
+                    .Select("id")
+                    .Get();
+                
+                int count = result.Models.Count;
+                _logger.LogDebug("📊 Spot {SpotId} a {Count} favoris", spotId, count);
+                return count;
+            });
+        }
     }
 }

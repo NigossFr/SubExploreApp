@@ -5,6 +5,7 @@
 // du mapping enum direct pour éviter les erreurs PostgreSQL
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 // 🚫 Entity Framework et Npgsql supprimés - API Supabase uniquement
 using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
@@ -49,6 +50,18 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
             });
+
+        // 📋 CONFIGURATION DES PARAMÈTRES DE L'APPLICATION AVEC RESSOURCE EMBARQUÉE
+        var assembly = typeof(MauiProgram).Assembly;
+        using var stream = assembly.GetManifestResourceStream("SubExplore.appsettings.json");
+        if (stream != null)
+        {
+            builder.Configuration.AddJsonStream(stream);
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("[WARNING] appsettings.json not found as embedded resource");
+        }
 
         // 🚀 CONFIGURATION 100% API SUPABASE - PLUS D'ENTITY FRAMEWORK
         // L'application utilise UNIQUEMENT l'API Supabase via supabase-csharp
@@ -115,9 +128,11 @@ public static class MauiProgram
         builder.Services.AddScoped<IUserProfileService, SimpleUserProfileService>();
         // 🚫 Services supprimés - utilisaient des repositories
         // builder.Services.AddScoped<ISpotService, SpotService>();
-        // builder.Services.AddScoped<IFavoriteSpotService, FavoriteSpotService>();
+        // ✅ SERVICE DE FAVORIS 100% SUPABASE
+        builder.Services.AddScoped<IFavoriteSpotService, SupabaseFavoriteSpotService>();
         builder.Services.AddSingleton<IFavoriteSpotCacheService, FavoriteSpotCacheService>();
-        // 🚫 ErrorHandlingService supprimé - utilisait Entity Framework
+        // ✅ ErrorHandlingService restauré pour WeatherService
+        builder.Services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
         
         // Weather services
         builder.Services.AddSingleton<IWeatherCacheService, WeatherCacheService>();
@@ -219,6 +234,7 @@ public static class MauiProgram
         
         // 🔐 AUTHENTIFICATION 100% API SUPABASE
         builder.Services.AddSingleton<ISimpleAuthenticationService, SimpleAuthenticationService>();
+        // ✅ NavigationGuardService now handles null IAuthenticationService gracefully
         builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
         
         // Email services
@@ -272,7 +288,7 @@ public static class MauiProgram
         // 🚫 ViewModels supprimés - utilisaient des repositories
         // builder.Services.AddTransient<SpotManagementViewModel>();
         // builder.Services.AddTransient<AddSpotViewModel>();
-        // builder.Services.AddTransient<SpotDetailsViewModel>();
+        builder.Services.AddTransient<SpotDetailsViewModel>();
         // builder.Services.AddTransient<MySpotsViewModel>();
         builder.Services.AddTransient<SpotLocationViewModel>();
         // builder.Services.AddTransient<SpotCharacteristicsViewModel>();
@@ -309,8 +325,8 @@ public static class MauiProgram
         // ✅ NOUVELLE PAGE AVANCÉE 100% SUPABASE
         builder.Services.AddTransient<EnhancedMapPage>();
         // builder.Services.AddTransient<AddSpotPage>();
-        // builder.Services.AddTransient<SpotDetailsPage>();
-        // builder.Services.AddTransient<MySpotsPage>();
+        builder.Services.AddTransient<SpotDetailsPage>();
+        builder.Services.AddTransient<MySpotsPage>();
         // 🚫 Vues supprimées - utilisaient Entity Framework
         // builder.Services.AddTransient<SpotLocationView>();
         // builder.Services.AddTransient<SpotCharacteristicsView>();
@@ -320,6 +336,7 @@ public static class MauiProgram
         
         // 🚫 Favorites Pages supprimées - utilisaient des ViewModels Entity Framework
         // builder.Services.AddTransient<SubExplore.Views.Favorites.FavoriteSpotsPage>();
+        builder.Services.AddTransient<SubExplore.Views.Favorites.FavoritesPage>();
         
         // Authentication Pages
         builder.Services.AddTransient<SubExplore.Views.Auth.LoginPage>();

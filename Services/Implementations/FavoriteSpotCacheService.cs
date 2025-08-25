@@ -40,7 +40,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Get cached user favorites
         /// </summary>
-        public async Task<IEnumerable<UserFavoriteSpot>?> GetCachedUserFavoritesAsync(int userId, bool byPriority = false, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<UserFavoriteSpot>?> GetCachedUserFavoritesAsync(Guid userId, bool byPriority = false, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -66,7 +66,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Cache user favorites
         /// </summary>
-        public async Task SetUserFavoritesCacheAsync(int userId, IEnumerable<UserFavoriteSpot> favorites, bool byPriority = false, CancellationToken cancellationToken = default)
+        public async Task SetUserFavoritesCacheAsync(Guid userId, IEnumerable<UserFavoriteSpot> favorites, bool byPriority = false, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -87,7 +87,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Get cached favorite status for a spot
         /// </summary>
-        public async Task<bool?> GetCachedFavoriteStatusAsync(int userId, int spotId, CancellationToken cancellationToken = default)
+        public async Task<bool?> GetCachedFavoriteStatusAsync(Guid userId, Guid spotId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -113,7 +113,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Cache favorite status for a spot
         /// </summary>
-        public async Task SetFavoriteStatusCacheAsync(int userId, int spotId, bool isFavorite, CancellationToken cancellationToken = default)
+        public async Task SetFavoriteStatusCacheAsync(Guid userId, Guid spotId, bool isFavorite, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -132,7 +132,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Get cached favorite stats for a user
         /// </summary>
-        public async Task<FavoriteSpotStats?> GetCachedFavoriteStatsAsync(int userId, CancellationToken cancellationToken = default)
+        public async Task<FavoriteSpotStats?> GetCachedFavoriteStatsAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -158,7 +158,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Cache favorite stats for a user
         /// </summary>
-        public async Task SetFavoriteStatsCacheAsync(int userId, FavoriteSpotStats stats, CancellationToken cancellationToken = default)
+        public async Task SetFavoriteStatsCacheAsync(Guid userId, FavoriteSpotStats stats, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -177,7 +177,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Invalidate user's favorite cache
         /// </summary>
-        public async Task InvalidateUserFavoritesCacheAsync(int userId, CancellationToken cancellationToken = default)
+        public async Task InvalidateUserFavoritesCacheAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -201,7 +201,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Invalidate spot's favorite cache
         /// </summary>
-        public async Task InvalidateSpotFavoritesCacheAsync(int spotId, CancellationToken cancellationToken = default)
+        public async Task InvalidateSpotFavoritesCacheAsync(Guid spotId, CancellationToken cancellationToken = default)
         {
             try
             {

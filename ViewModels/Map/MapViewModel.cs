@@ -828,14 +828,13 @@ namespace SubExplore.ViewModels.Map
                 }
                 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Final pre-navigation check - SpotId: {spotId}, NavigationService: {NavigationService.GetType().Name}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: About to navigate to SpotDetailsViewModel (temporairement désactivé)");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: About to navigate to SpotDetailsViewModel");
                 
                 // Navigate to full details with isolated try-catch
                 try
                 {
-                    // 🚫 SpotDetailsViewModel temporairement désactivé
-                    // await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spotId);
-                    await DialogService.ShowToastAsync("🚧 SpotDetails temporairement désactivé");
+                    // ✅ CORRECTION: Réactiver la navigation vers SpotDetailsViewModel
+                    await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spotId);
                     System.Diagnostics.Debug.WriteLine("[DEBUG] ViewSpotDetails: Navigation call completed successfully");
                 }
                 catch (Exception navEx)
@@ -2329,6 +2328,17 @@ namespace SubExplore.ViewModels.Map
 
             try
             {
+                // 🔧 CORRECTION CRITIQUE: Lookup the spot type by TypeId
+                SpotType? spotType = null;
+                if (SpotTypes?.Any() == true)
+                {
+                    spotType = SpotTypes.FirstOrDefault(t => t.Id == supabaseSpot.TypeId);
+                }
+                
+                // Log for debugging
+                var spotTypeName = spotType?.Name ?? "NULL_TYPE";
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Spot '{supabaseSpot.Name}' -> Type: '{spotTypeName}' -> TypeId: {supabaseSpot.TypeId}");
+
                 return new Spot
                 {
                     Id = supabaseSpot.Id,
@@ -2339,7 +2349,16 @@ namespace SubExplore.ViewModels.Map
                     CreatedAt = supabaseSpot.CreatedAt,
                     ValidationStatus = SpotValidationStatus.Approved, // Default for now
                     CreatorId = supabaseSpot.CreatorId,
-                    // Add more fields as needed
+                    TypeId = supabaseSpot.TypeId,
+                    Type = spotType, // 🎯 CORRECTION: Assign the actual SpotType object
+                    // Add more missing fields
+                    DifficultyLevel = (DifficultyLevel)(supabaseSpot.DifficultyLevel ?? 0),
+                    RequiredEquipment = supabaseSpot.RequiredEquipment ?? string.Empty,
+                    SafetyNotes = supabaseSpot.SafetyNotes ?? string.Empty,
+                    BestConditions = supabaseSpot.BestConditions ?? string.Empty,
+                    MaxDepth = (int?)supabaseSpot.MaxDepth,
+                    LastSafetyReview = supabaseSpot.LastSafetyReview,
+                    SafetyFlags = supabaseSpot.SafetyFlags as Dictionary<string, object>,
                 };
             }
             catch (Exception ex)
@@ -2358,16 +2377,31 @@ namespace SubExplore.ViewModels.Map
 
             try
             {
+                // 🔧 CORRECTION: Parse category from Supabase string
+                ActivityCategory category = ActivityCategory.Activity; // Default
+                if (!string.IsNullOrEmpty(supabaseSpotType.Category))
+                {
+                    if (Enum.TryParse<ActivityCategory>(supabaseSpotType.Category, ignoreCase: true, out var parsedCategory))
+                    {
+                        category = parsedCategory;
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotType '{supabaseSpotType.Name}' -> Category: {category} (from '{supabaseSpotType.Category}')");
+
                 return new SpotType
                 {
                     Id = supabaseSpotType.Id,
                     Name = supabaseSpotType.Name ?? string.Empty,
                     Description = supabaseSpotType.Description ?? string.Empty,
-                    Category = ActivityCategory.Activity, // Default for now
+                    Category = category, // 🎯 CORRECTION: Use parsed category
                     CreatedAt = supabaseSpotType.CreatedAt,
                     UpdatedAt = supabaseSpotType.UpdatedAt,
-                    IsActive = supabaseSpotType.IsActive == true
-                    // Add more fields as needed
+                    IsActive = supabaseSpotType.IsActive == true,
+                    IconPath = supabaseSpotType.IconPath ?? string.Empty,
+                    ColorCode = supabaseSpotType.ColorCode ?? string.Empty,
+                    RequiresExpertValidation = supabaseSpotType.RequiresExpertValidation,
+                    ValidationCriteria = supabaseSpotType.ValidationCriteria as Dictionary<string, object>
                 };
             }
             catch (Exception ex)

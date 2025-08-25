@@ -12,7 +12,7 @@ namespace SubExplore.Services.Implementations
     /// </summary>
     public class NavigationGuardService : INavigationGuardService
     {
-        private readonly IAuthenticationService _authenticationService;
+        private readonly ISimpleAuthenticationService? _simpleAuthenticationService;
         private readonly IAuthorizationService _authorizationService;
         private readonly ILogger<NavigationGuardService> _logger;
 
@@ -44,11 +44,11 @@ namespace SubExplore.Services.Implementations
         };
 
         public NavigationGuardService(
-            IAuthenticationService authenticationService,
+            ISimpleAuthenticationService? simpleAuthenticationService,
             IAuthorizationService authorizationService,
             ILogger<NavigationGuardService> logger)
         {
-            _authenticationService = authenticationService;
+            _simpleAuthenticationService = simpleAuthenticationService;
             _authorizationService = authorizationService;
             _logger = logger;
         }
@@ -60,8 +60,8 @@ namespace SubExplore.Services.Implementations
                 // Check if page has specific requirements
                 if (!_pageRequirements.TryGetValue(pageType, out var requirements))
                 {
-                    // Default: allow navigation if authenticated
-                    return _authenticationService.IsAuthenticated;
+                    // Default: allow navigation if authenticated (or if auth service unavailable)
+                    return _simpleAuthenticationService?.IsAuthenticated ?? true;
                 }
 
                 // Check if unauthenticated access is allowed
@@ -71,18 +71,14 @@ namespace SubExplore.Services.Implementations
                 }
 
                 // Check authentication requirement
-                if (requirements.RequireAuthentication && !_authenticationService.IsAuthenticated)
+                if (requirements.RequireAuthentication && !(_simpleAuthenticationService?.IsAuthenticated ?? false))
                 {
                     _logger.LogWarning("Navigation denied to {PageType}: User not authenticated", pageType.Name);
                     return false;
                 }
 
-                // Validate authentication state
-                if (!await _authenticationService.ValidateAuthenticationAsync())
-                {
-                    _logger.LogWarning("Navigation denied to {PageType}: Authentication validation failed", pageType.Name);
-                    return false;
-                }
+                // Note: ISimpleAuthenticationService utilise IsAuthenticated pour la validation
+                // Pas besoin de ValidateAuthenticationAsync() séparément
 
                 // Check role requirement
                 if (requirements.RequiredRole.HasValue && 
@@ -105,7 +101,7 @@ namespace SubExplore.Services.Implementations
                 // Check hierarchy level requirement
                 if (requirements.MinimumHierarchyLevel.HasValue)
                 {
-                    var currentUser = _authenticationService.CurrentUser;
+                    var currentUser = _simpleAuthenticationService?.CurrentUser;
                     if (currentUser == null || 
                         _authorizationService.GetAccountHierarchyLevel(currentUser.AccountType) < requirements.MinimumHierarchyLevel.Value)
                     {
@@ -141,7 +137,7 @@ namespace SubExplore.Services.Implementations
 
         public bool HasMinimumHierarchyLevel(int minimumLevel)
         {
-            var currentUser = _authenticationService.CurrentUser;
+            var currentUser = _simpleAuthenticationService?.CurrentUser;
             if (currentUser == null) return false;
 
             return _authorizationService.GetAccountHierarchyLevel(currentUser.AccountType) >= minimumLevel;
@@ -154,7 +150,7 @@ namespace SubExplore.Services.Implementations
                 return "You do not have permission to access this page.";
             }
 
-            if (requirements.RequireAuthentication && !_authenticationService.IsAuthenticated)
+            if (requirements.RequireAuthentication && !(_simpleAuthenticationService?.IsAuthenticated ?? false))
             {
                 return "Please log in to access this page.";
             }
@@ -179,7 +175,7 @@ namespace SubExplore.Services.Implementations
 
         public Type? GetRoleBasedRedirect()
         {
-            var currentUser = _authenticationService.CurrentUser;
+            var currentUser = _simpleAuthenticationService?.CurrentUser;
             if (currentUser == null)
             {
                 return typeof(LoginViewModel);

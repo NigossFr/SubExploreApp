@@ -47,10 +47,12 @@ namespace SubExplore.Services.Implementations
             if (_apiKey == "demo_api_key")
             {
                 _logger.LogWarning("Using demo API key for weather service. Configure 'WeatherService:ApiKey' for production use.");
+                System.Diagnostics.Debug.WriteLine("[WEATHER] ⚠️ Using demo API key - weather functionality limited");
             }
             else
             {
                 _logger.LogInformation("Weather service initialized with configured API key");
+                System.Diagnostics.Debug.WriteLine($"[WEATHER] ✅ Weather service initialized with API key: {_apiKey.Substring(0, 8)}...");
             }
 
             ConfigureHttpClient();

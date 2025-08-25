@@ -24,7 +24,13 @@ namespace SubExplore.Services.Interfaces
         User? CurrentUser { get; }
         
         /// <summary>
-        /// Connexion avec email et mot de passe
+        /// Obtient l'utilisateur actuel de manière asynchrone
+        /// </summary>
+        /// <returns>L'utilisateur connecté ou null si non connecté</returns>
+        Task<User?> GetCurrentUserAsync();
+        
+        /// <summary>
+        /// Connexion avec email et mot de passe - version simplifiée
         /// </summary>
         /// <param name="email">Email de l'utilisateur</param>
         /// <param name="password">Mot de passe</param>
@@ -32,7 +38,7 @@ namespace SubExplore.Services.Interfaces
         Task<bool> LoginSimpleAsync(string email, string password);
         
         /// <summary>
-        /// Inscription d'un nouvel utilisateur
+        /// Inscription d'un nouvel utilisateur - version simplifiée
         /// </summary>
         /// <param name="email">Email</param>
         /// <param name="password">Mot de passe</param>

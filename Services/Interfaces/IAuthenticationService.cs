@@ -1,6 +1,7 @@
 using SubExplore.Models.Domain;
 using SubExplore.Models.DTOs;
 using SubExplore.Models.Enums;
+using AuthenticationResult = SubExplore.Models.DTOs.AuthenticationResult;
 
 namespace SubExplore.Services.Interfaces
 {

@@ -663,4 +663,92 @@ namespace SubExplore.Helpers.Converters
         }
     }
 
+    /// <summary>
+    /// Converter for collection count - shows element if count is not zero
+    /// </summary>
+    public class IsNotZeroConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int count)
+                return count != 0;
+            if (value is System.Collections.ICollection collection)
+                return collection.Count != 0;
+            return false;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter for favorite button text based on favorite status
+    /// </summary>
+    public class FavoriteTextConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isFavorite)
+            {
+                return isFavorite ? "❤️ En favoris" : "🤍 Ajouter aux favoris";
+            }
+            return "🤍 Ajouter aux favoris";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter for favorite button text with loading state support
+    /// </summary>
+    public class FavoriteLoadingTextConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values != null && values.Length >= 2)
+            {
+                bool isFavorite = values[0] is bool fav && fav;
+                bool isLoading = values[1] is bool loading && loading;
+                
+                if (isLoading)
+                {
+                    return isFavorite ? "⏳ Suppression..." : "⏳ Ajout...";
+                }
+                
+                return isFavorite ? "❤️ En favoris" : "🤍 Ajouter aux favoris";
+            }
+            return "🤍 Ajouter aux favoris";
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter for opacity based on boolean value (true = 0.6, false = 1.0)
+    /// </summary>
+    public class BoolToOpacityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue ? 0.6 : 1.0;
+            }
+            return 1.0;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
 }
