@@ -241,7 +241,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IEmailService, EmailService>();
         // 🚫 Services email supprimés - utilisaient des repositories
         // builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
-        // builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+        // ✅ PASSWORD RESET SERVICE - 100% SUPABASE
+        builder.Services.AddScoped<IPasswordResetService, SupabasePasswordResetService>();
         
         // 🚫 Validation services supprimés - utilisaient Entity Framework
         // builder.Services.AddScoped<ISpotValidationService, SpotValidationService>();

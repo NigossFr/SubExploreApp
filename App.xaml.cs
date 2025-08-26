@@ -118,24 +118,34 @@ namespace SubExplore
                     await authService.InitializeAsync();
                     Debug.WriteLine($"[App.xaml.cs] Simple Authentication service initialized. IsAuthenticated: {authService.IsAuthenticated}");
                     
-                    // Determine initial page based on authentication status
+                    // ✅ SOLUTION: Always use Shell for consistent hamburger icon
+                    Debug.WriteLine("[App.xaml.cs] Setting AppShell as MainPage for consistent navigation");
+                    MainPage = new AppShell();
+                    Debug.WriteLine("[App.xaml.cs] ✓ AppShell set as MainPage - Shell navigation enabled");
+                    
+                    // Navigate to appropriate page based on authentication status
                     if (authService.IsAuthenticated)
                     {
-                        Debug.WriteLine("[App.xaml.cs] User is authenticated, setting AppShell as MainPage");
-                        MainPage = new AppShell();
-                        Debug.WriteLine("[App.xaml.cs] ✓ AppShell set as MainPage - Shell navigation enabled");
+                        Debug.WriteLine("[App.xaml.cs] User is authenticated, staying on main page");
                     }
                     else
                     {
-                        Debug.WriteLine("[App.xaml.cs] User not authenticated, showing Supabase API LoginPage");
-                        ShowSupabaseApiLoginPage(services);
+                        Debug.WriteLine("[App.xaml.cs] User not authenticated, navigating to login page via Shell");
+                        Device.BeginInvokeOnMainThread(async () =>
+                        {
+                            await Shell.Current.GoToAsync("///login");
+                        });
                     }
                 }
                 else
                 {
-                    Debug.WriteLine("[App.xaml.cs] ERROR: Simple Authentication service not found, showing Supabase API login page");
-                    // If authentication service is not available, show Supabase API login page
-                    ShowSupabaseApiLoginPage(services);
+                    Debug.WriteLine("[App.xaml.cs] ERROR: Simple Authentication service not found, using Shell navigation");
+                    // Always use Shell for consistent navigation
+                    MainPage = new AppShell();
+                    Device.BeginInvokeOnMainThread(async () =>
+                    {
+                        await Shell.Current.GoToAsync("///login");
+                    });
                 }
             }
             catch (Exception ex)
@@ -143,13 +153,19 @@ namespace SubExplore
                 Debug.WriteLine($"[App.xaml.cs] ERROR: Failed to initialize authentication and navigation: {ex.Message}");
                 Debug.WriteLine($"[App.xaml.cs] Stack trace: {ex.StackTrace}");
                 
-                // Show simple login page as fallback
-                Debug.WriteLine("[App.xaml.cs] Showing simple login page as error fallback");
-                ShowSupabaseApiLoginPage(services);
+                // Always use Shell for consistent navigation
+                Debug.WriteLine("[App.xaml.cs] Using Shell navigation as error fallback");
+                MainPage = new AppShell();
+                Device.BeginInvokeOnMainThread(async () =>
+                {
+                    await Shell.Current.GoToAsync("///login");
+                });
             }
         }
 
-        private void ShowLoginPage(IServiceProvider services)
+        // ❌ DEPRECATED: Cette méthode utilisait NavigationPage qui cause des conflits avec Shell
+        // ✅ SOLUTION: Utiliser exclusivement Shell.Current.GoToAsync("///login") pour la navigation
+        private void ShowLoginPage_DEPRECATED_DO_NOT_USE(IServiceProvider services)
         {
             try
             {
@@ -469,32 +485,5 @@ namespace SubExplore
             Debug.WriteLine("[App.xaml.cs] ✓ Basic login page created successfully");
         }
         
-        private void ShowSupabaseApiLoginPage(IServiceProvider services)
-        {
-            try
-            {
-                Debug.WriteLine("[App.xaml.cs] Creating CompleteLoginPage - Page de login professionnelle");
-                
-                // Utiliser SimpleLoginViewModel compatible avec ISimpleAuthenticationService
-                var loginViewModel = services.GetService<SubExplore.ViewModels.Auth.SimpleLoginViewModel>();
-                if (loginViewModel == null)
-                {
-                    Debug.WriteLine("[App.xaml.cs] ❌ LoginViewModel not found in services");
-                    CreateBasicLoginPage();
-                    return;
-                }
-                
-                var completeLoginPage = new Views.Auth.SimpleCompleteLoginPage(loginViewModel);
-                MainPage = new NavigationPage(completeLoginPage);
-                
-                Debug.WriteLine("[App.xaml.cs] ✅ CompleteLoginPage created and set as MainPage successfully");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[App.xaml.cs] ERROR: Failed to create CompleteLoginPage: {ex.Message}");
-                Debug.WriteLine($"[App.xaml.cs] Stack trace: {ex.StackTrace}");
-                CreateBasicLoginPage();
-            }
-        }
     }
 }

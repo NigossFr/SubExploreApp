@@ -110,7 +110,8 @@
     "deny": [],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
-      "D:\\Developpement\\SubExploreApp"
+      "D:\\Developpement\\SubExploreApp",
+      "D:\\d\\Developpement\\SubExploreApp"
     ]
   }
 }

@@ -18,7 +18,7 @@
     Shell.BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource OffBlack}}" 
     Shell.ForegroundColor="{AppThemeBinding Light=Black, Dark=White}"
     Shell.TitleColor="{AppThemeBinding Light=Black, Dark=White}"
-    FlyoutIcon="hamburger_menu.svg"
+    FlyoutIcon="{FontImageSource Glyph='☰', Color={AppThemeBinding Light=Black, Dark=White}, Size=24}"
     FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
     FlyoutHeaderBehavior="CollapseOnScroll"
     Title="SubExplore"
