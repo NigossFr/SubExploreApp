@@ -18,7 +18,7 @@
     Shell.BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource OffBlack}}" 
     Shell.ForegroundColor="{AppThemeBinding Light=Black, Dark=White}"
     Shell.TitleColor="{AppThemeBinding Light=Black, Dark=White}"
-    FlyoutIcon="{FontImageSource Glyph='☰', Color={AppThemeBinding Light=Black, Dark=White}, Size=24}"
+    FlyoutIcon="dotnet_bot.png"
     FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
     FlyoutHeaderBehavior="CollapseOnScroll"
     Title="SubExplore"
@@ -28,6 +28,11 @@
         <ResourceDictionary>
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:BooleanMultiValueConverter x:Key="BooleanMultiValueConverter" />
+            <!-- Hamburger Icon Resource -->
+            <FontImageSource x:Key="HamburgerIcon"
+                           Glyph="&#x2630;"
+                           Color="{AppThemeBinding Light=Black, Dark=White}"
+                           Size="24" />
         </ResourceDictionary>
     </Shell.Resources>
 
@@ -270,11 +275,14 @@
         </DataTemplate>
     </Shell.FlyoutContentTemplate>
 
-    <!-- Main Navigation Content - Hidden FlyoutItems for routing -->
-    <ShellContent
-        Title="Carte"
-        ContentTemplate="{DataTemplate map:MapPage}"
-        Route="map" />
+    <!-- Main Navigation Content - Correct Structure for Hamburger Menu -->
+    <FlyoutItem Title="Carte" Route="map">
+        <Tab Title="Carte">
+            <ShellContent
+                Title="Carte"
+                ContentTemplate="{DataTemplate map:MapPage}" />
+        </Tab>
+    </FlyoutItem>
 
     <!-- ✅ Routes activées avec pages placeholder simples -->
     <ShellContent
