@@ -28,287 +28,35 @@
         <ResourceDictionary>
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:BooleanMultiValueConverter x:Key="BooleanMultiValueConverter" />
-            <!-- Hamburger Icon Resource -->
-            <FontImageSource x:Key="HamburgerIcon"
-                           Glyph="&#x2630;"
-                           Color="{AppThemeBinding Light=Black, Dark=White}"
-                           Size="24" />
         </ResourceDictionary>
     </Shell.Resources>
 
-    <!-- Navigation Header Template - Style du menu de la carte -->
-    <Shell.FlyoutHeaderTemplate>
-        <DataTemplate>
-            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                   Padding="20"
-                   CornerRadius="0"
-                   HasShadow="False"
-                   Margin="0">
-                <Grid ColumnDefinitions="Auto,*,60">
+    <!-- TEMPLATES FLYOUT TEMPORARILY DISABLED TO TEST HAMBURGER ICON -->
+    <!--
+    Shell.FlyoutHeaderTemplate and Shell.FlyoutContentTemplate removed temporarily
+    to test if hamburger icon appears with default Shell flyout behavior
+    -->
 
-                    <!-- App Logo/Icon -->
-                    <Frame Grid.Column="0"
-                           BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}"
-                           CornerRadius="30"
-                           Padding="5"
-                           WidthRequest="60"
-                           HeightRequest="60"
-                           HasShadow="False">
-                        <Image Source="dotnet_bot.png"
-                               WidthRequest="50"
-                               HeightRequest="50"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center" />
-                    </Frame>
-
-                    <!-- User Info -->
-                    <StackLayout Grid.Column="1"
-                               Margin="15,0,15,0"
-                               VerticalOptions="Center">
-                        <Label x:Name="UserNameLabel"
-                               Text="Utilisateur SubExplore"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
-                        <Label Text="Explorez les profondeurs"
-                               FontSize="14"
-                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource SecondaryDarkText}}"
-                               Opacity="0.8" />
-                    </StackLayout>
-
-                    <!-- User Avatar -->
-                    <Frame Grid.Column="2"
-                           BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}"
-                           CornerRadius="30"
-                           Padding="0"
-                           WidthRequest="60"
-                           HeightRequest="60"
-                           HasShadow="False">
-                        <Image Source="dotnet_bot.png"
-                               WidthRequest="30"
-                               HeightRequest="30"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center"
-                               Aspect="AspectFit" />
-                    </Frame>
-                </Grid>
-            </Frame>
-        </DataTemplate>
-    </Shell.FlyoutHeaderTemplate>
-
-    <Shell.FlyoutContentTemplate>
-        <DataTemplate>
-            <ScrollView BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}">
-                <StackLayout Spacing="0" x:Name="FlyoutMenuContainer">
-                    
-                    <!-- Navigation Section -->
-                    <Label Text="Navigation"
-                           FontSize="14"
-                           FontAttributes="Bold"
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                           Margin="15,15,15,5" />
-                    
-                    <!-- Carte -->
-                    <controls:StagedMenuButton 
-                        Title="Carte"
-                        Description="Explorer les spots de plongée"
-                        Icon=""
-                        Stage="Default"
-                        ShowIcon="True"
-                        ShowDescription="True"
-                        ShowBadge="False"
-                        Tapped="OnMenuButtonTapped"
-                        CommandParameter="///map"
-                        AccessibilityName="Carte, explorer les spots de plongée"
-                        AccessibilityDescription="Afficher la carte avec tous les spots de plongée disponibles"
-                        AccessibilityHint="Appuyez deux fois pour ouvrir la carte"
-                        IconAccessibilityText="Icône de carte" />
-                    
-                    <!-- Mes Spots Section -->
-                    <Label Text="Mes Spots"
-                           FontSize="14"
-                           FontAttributes="Bold"
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                           Margin="15,15,15,5" />
-                    
-                    <!-- Mes Spots -->
-                    <controls:StagedMenuButton 
-                        Title="Mes Spots"
-                        Description="Spots que vous avez créés"
-                        Icon=""
-                        Stage="Default"
-                        ShowIcon="True"
-                        ShowDescription="True"
-                        ShowBadge="False"
-                        Tapped="OnMenuButtonTapped"
-                        CommandParameter="///myspots"
-                        AccessibilityName="Mes Spots, voir vos spots créés"
-                        AccessibilityDescription="Afficher la liste des spots de plongée que vous avez ajoutés"
-                        AccessibilityHint="Appuyez deux fois pour voir vos spots"
-                        IconAccessibilityText="Icône de localisation" />
-                    
-                    <!-- Favoris -->
-                    <controls:StagedMenuButton 
-                        Title="Favoris"
-                        Description="Vos spots préférés"
-                        Icon=""
-                        Stage="Default"
-                        ShowIcon="True"
-                        ShowDescription="True"
-                        ShowBadge="False"
-                        Tapped="OnMenuButtonTapped"
-                        CommandParameter="///favorites"
-                        AccessibilityName="Favoris, vos spots préférés"
-                        AccessibilityDescription="Afficher vos spots de plongée favoris sauvegardés"
-                        AccessibilityHint="Appuyez deux fois pour voir vos favoris"
-                        IconAccessibilityText="Icône d'étoile" />
-                    
-                    <!-- Profil Section -->
-                    <Label Text="Profil"
-                           FontSize="14"
-                           FontAttributes="Bold"
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                           Margin="15,15,15,5" />
-                    
-                    <!-- Profil -->
-                    <controls:StagedMenuButton 
-                        Title="Profil"
-                        Description="Votre profil utilisateur"
-                        Icon=""
-                        Stage="Default"
-                        ShowIcon="True"
-                        ShowDescription="True"
-                        ShowBadge="False"
-                        Tapped="OnMenuButtonTapped"
-                        CommandParameter="///userprofile" />
-                    
-                    
-                    <!-- Statistiques -->
-                    <controls:StagedMenuButton 
-                        Title="Statistiques"
-                        Description="Vos statistiques de plongée"
-                        Icon=""
-                        Stage="Default"
-                        ShowIcon="True"
-                        ShowDescription="True"
-                        ShowBadge="False"
-                        Tapped="OnMenuButtonTapped"
-                        CommandParameter="///userstats" />
-                    
-                    <!-- Administration Section -->
-                    <Label Text="Administration"
-                           FontSize="14"
-                           FontAttributes="Bold"
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                           Margin="15,15,15,5" />
-                    
-                    <!-- Validation des Spots -->
-                    <controls:StagedMenuButton 
-                        Title="Validation des Spots"
-                        Description="Administration des spots"
-                        Icon=""
-                        Stage="Warning"
-                        ShowIcon="True"
-                        ShowDescription="True"
-                        ShowBadge="True"
-                        BadgeText="3"
-                        Tapped="OnMenuButtonTapped"
-                        CommandParameter="///spotvalidation"
-                        AccessibilityName="Validation des Spots, administration, attention requise"
-                        AccessibilityDescription="Gérer et valider les spots soumis par les utilisateurs. 3 spots en attente de validation"
-                        AccessibilityHint="Appuyez deux fois pour accéder à l'administration"
-                        IconAccessibilityText="Icône de balance de justice" />
-
-                    <!-- Test Base de Données -->
-                    <controls:StagedMenuButton 
-                        Title="Test Base de Données"
-                        Description="Outils de diagnostic et migration"
-                        Icon=""
-                        Stage="Warning"
-                        ShowIcon="True"
-                        ShowDescription="True"
-                        ShowBadge="False"
-                        Tapped="OnMenuButtonTapped"
-                        CommandParameter="///databasetest"
-                        AccessibilityName="Test Base de Données, outils de diagnostic"
-                        AccessibilityDescription="Accéder aux outils de test, diagnostic et migration de base de données"
-                        AccessibilityHint="Appuyez deux fois pour accéder aux outils de base de données"
-                        IconAccessibilityText="Icône de base de données" />
-                    
-                    <!-- Information Section -->
-                    <Label Text="Informations"
-                           FontSize="14"
-                           FontAttributes="Bold"
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                           Margin="15,15,15,5" />
-                    
-                    <!-- À Propos -->
-                    <controls:StagedMenuButton 
-                        Title="À Propos"
-                        Description="Informations sur l'application"
-                        Icon=""
-                        Stage="Default"
-                        ShowIcon="True"
-                        ShowDescription="True"
-                        ShowBadge="False"
-                        Tapped="OnMenuButtonTapped"
-                        CommandParameter="///about"
-                        AccessibilityName="À Propos, informations sur l'application"
-                        AccessibilityDescription="Voir les informations détaillées sur l'application SubExplore"
-                        AccessibilityHint="Appuyez deux fois pour voir les informations de l'application"
-                        IconAccessibilityText="Icône d'information" />
-                    
-                    <!-- Logout Button -->
-                    <controls:StagedMenuButton 
-                        Title="Déconnexion"
-                        Description=""
-                        Icon=""
-                        Stage="Error"
-                        ShowIcon="True"
-                        ShowDescription="False"
-                        ShowBadge="False"
-                        Tapped="OnLogoutButtonTapped"
-                        Margin="15,20,15,15" />
-                    
-                </StackLayout>
-            </ScrollView>
-        </DataTemplate>
-    </Shell.FlyoutContentTemplate>
-
-    <!-- Main Navigation Content - Correct Structure for Hamburger Menu -->
-    <FlyoutItem Title="Carte" Route="map">
-        <Tab Title="Carte">
-            <ShellContent
-                Title="Carte"
-                ContentTemplate="{DataTemplate map:MapPage}" />
-        </Tab>
+    <!-- Navigation Items with Standard FlyoutItem Structure -->
+    <FlyoutItem Title="Carte" Icon="dotnet_bot.png">
+        <ShellContent Route="map" ContentTemplate="{DataTemplate map:MapPage}" />
     </FlyoutItem>
 
-    <!-- ✅ Routes activées avec pages placeholder simples -->
-    <ShellContent
-        Title="Mes Spots"
-        ContentTemplate="{DataTemplate spots:MySpotsPage}"
-        Route="myspots"
-        FlyoutItemIsVisible="False" />
+    <FlyoutItem Title="Mes Spots" Icon="dotnet_bot.png">
+        <ShellContent Route="myspots" ContentTemplate="{DataTemplate spots:MySpotsPage}" />
+    </FlyoutItem>
 
-    <ShellContent
-        Title="Favoris"
-        ContentTemplate="{DataTemplate favorites:FavoritesPage}"
-        Route="favorites"
-        FlyoutItemIsVisible="False" />
+    <FlyoutItem Title="Favoris" Icon="dotnet_bot.png">
+        <ShellContent Route="favorites" ContentTemplate="{DataTemplate favorites:FavoritesPage}" />
+    </FlyoutItem>
 
-    <ShellContent
-        Title="Profil"
-        ContentTemplate="{DataTemplate profile:UserProfilePage}"
-        Route="userprofile"
-        FlyoutItemIsVisible="False" />
+    <FlyoutItem Title="Profil" Icon="dotnet_bot.png">
+        <ShellContent Route="userprofile" ContentTemplate="{DataTemplate profile:UserProfilePage}" />
+    </FlyoutItem>
 
-
-    <ShellContent
-        Title="Statistiques"
-        ContentTemplate="{DataTemplate profile:UserStatsPage}"
-        Route="userstats"
-        FlyoutItemIsVisible="False" />
+    <FlyoutItem Title="Statistiques" Icon="dotnet_bot.png">
+        <ShellContent Route="userstats" ContentTemplate="{DataTemplate profile:UserStatsPage}" />
+    </FlyoutItem>
 
     <!-- Modal Pages - Outside main navigation -->
     <!-- Add Spot Page Route - TEMPORAIREMENT DÉSACTIVÉ (ViewModels Entity Framework supprimés) -->
