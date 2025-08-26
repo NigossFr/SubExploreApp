@@ -427,7 +427,14 @@ namespace SubExplore.Services.Implementations
                 var parameterType = parameter.GetType();
 
                 // Handle simple value types (int, string, etc.) by treating them as "id" parameter
-                if (parameterType.IsPrimitive || parameterType == typeof(string) || parameterType == typeof(decimal))
+                // Special case for Guid: use "spotId" parameter name for SpotDetailsViewModel compatibility
+                if (parameterType == typeof(Guid))
+                {
+                    var encodedValue = System.Web.HttpUtility.UrlEncode(parameter.ToString());
+                    queryParams.Add($"spotId={encodedValue}");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BuildQueryParameters: Guid type -> spotId={encodedValue}");
+                }
+                else if (parameterType.IsPrimitive || parameterType == typeof(string) || parameterType == typeof(decimal))
                 {
                     var encodedValue = System.Web.HttpUtility.UrlEncode(parameter.ToString());
                     queryParams.Add($"id={encodedValue}");

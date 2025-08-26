@@ -7,10 +7,11 @@ using System.ComponentModel;
 
 namespace SubExplore.Views.Spots;
 
-public partial class SpotDetailsPage : ContentPage
+public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 {
 	private readonly SpotDetailsViewModel _viewModel;
 	private bool _hasInitialized = false;
+	private string _spotIdFromQuery = null;
 
 	public SpotDetailsPage(SpotDetailsViewModel viewModel)
 	{
@@ -24,89 +25,148 @@ public partial class SpotDetailsPage : ContentPage
 		Debug.WriteLine("[DEBUG] SpotDetailsPage constructor completed");
 	}
 
+	protected override void OnDisappearing()
+	{
+		base.OnDisappearing();
+		
+		// Nettoyer les événements pour éviter les fuites mémoire
+		if (_viewModel != null)
+		{
+			_viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+		}
+	}
+
 	protected override void OnAppearing()
 	{
 		base.OnAppearing();
 		
 		Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing - HasInitialized: {_hasInitialized}");
 		
-		// Only initialize once per page instance
-		if (!_hasInitialized && _viewModel != null)
+		// ✅ CORRECTION CRITIQUE: Toujours vérifier si on a un nouveau spotId
+		if (_viewModel != null)
 		{
-			_hasInitialized = true;
+			// Si c'est la première fois ou qu'on n'a pas encore initialisé
+			if (!_hasInitialized)
+			{
+				_hasInitialized = true;
+				
+				// ✅ CORRECTION SÉQUENCE: Attendre que ApplyQueryAttributes soit appelé
+				_ = Task.Run(async () =>
+				{
+					// Attendre un court délai pour permettre à ApplyQueryAttributes de s'exécuter
+					await Task.Delay(100);
+					
+					await InitializeWithNewSpotId();
+				});
+			}
+			else
+			{
+				// ✅ NOUVEAU: Page déjà initialisée, vérifier si on a un nouveau spotId
+				Debug.WriteLine("[DEBUG] Page already initialized, checking for new spotId...");
+				_ = Task.Run(async () =>
+				{
+					// Attendre un délai pour permettre à ApplyQueryAttributes de s'exécuter
+					await Task.Delay(50);
+					
+					await InitializeWithNewSpotId();
+				});
+			}
+		}
+	}
+	
+	/// <summary>
+	/// Méthode commune pour initialiser avec un nouveau spotId
+	/// </summary>
+	private async Task InitializeWithNewSpotId()
+	{
+		try
+		{
+			// Extract SpotId from query parameters with enhanced methods
+			object parameter = null;
 			
-			// ✅ FIX: Use Task.Run to avoid async void
-			_ = Task.Run(async () =>
+			// ✅ PRIORITY METHOD: Use IQueryAttributable parameter if available
+			if (!string.IsNullOrEmpty(_spotIdFromQuery))
+			{
+				if (Guid.TryParse(_spotIdFromQuery, out var querySpotId))
+				{
+					parameter = querySpotId;
+					System.Diagnostics.Debug.WriteLine($"[SUCCESS] Priority method: Using IQueryAttributable SpotId: {querySpotId}");
+				}
+				else
+				{
+					System.Diagnostics.Debug.WriteLine($"[ERROR] Invalid SpotId from IQueryAttributable: {_spotIdFromQuery}");
+				}
+			}
+			
+			// ✅ FALLBACK METHOD: Try to get parameter from URI if priority method failed
+			if (parameter == null)
 			{
 				try
 				{
-					// Extract SpotId from query parameters
-					object parameter = null;
-					
-					try
+					var uri = Shell.Current?.CurrentState?.Location;
+					if (uri != null)
 					{
-						var uri = Shell.Current.CurrentState.Location;
-						Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing - Current URI: {uri}");
+						string query = null;
 						
-						// ✅ FIX: Handle relative URI properly
-						if (uri != null && !string.IsNullOrEmpty(uri.Query))
+						if (!string.IsNullOrEmpty(uri.Query))
 						{
-							var query = uri.Query.TrimStart('?');
+							query = uri.Query.TrimStart('?');
+						}
+						else if (!uri.IsAbsoluteUri)
+						{
+							var originalString = uri.OriginalString;
+							var queryIndex = originalString.IndexOf('?');
+							if (queryIndex >= 0 && queryIndex < originalString.Length - 1)
+							{
+								query = originalString.Substring(queryIndex + 1);
+							}
+						}
+						
+						if (!string.IsNullOrEmpty(query))
+						{
 							var queryParams = System.Web.HttpUtility.ParseQueryString(query);
 							var spotIdString = queryParams["spotId"];
-							
-							Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing - SpotId from query: {spotIdString}");
 							
 							if (!string.IsNullOrEmpty(spotIdString) && Guid.TryParse(spotIdString, out var spotId))
 							{
 								parameter = spotId;
-								Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing - Parsed SpotId: {spotId}");
-							}
-							else
-							{
-								Debug.WriteLine($"[ERROR] SpotDetailsPage.OnAppearing - Invalid SpotId format: {spotIdString}");
+								Debug.WriteLine($"[SUCCESS] Fallback method: Parsed SpotId: {spotId}");
 							}
 						}
-						else
-						{
-							Debug.WriteLine("[WARNING] SpotDetailsPage.OnAppearing - No query parameters found");
-						}
 					}
-					catch (Exception uriEx)
-					{
-						Debug.WriteLine($"[ERROR] SpotDetailsPage.OnAppearing - URI parsing error: {uriEx.Message}");
-						
-						// ✅ FIX: Try alternative approach using navigation parameters
-						// For now, we'll continue without parameters and let ViewModel handle the error
-						Debug.WriteLine("[INFO] SpotDetailsPage.OnAppearing - Continuing without URI parameters");
-					}
-					
-					// ✅ FIX: Only navigate back if we have a clear parameter issue, not URI parsing issues
-					if (parameter == null)
-					{
-						Debug.WriteLine("[WARNING] SpotDetailsPage.OnAppearing - No valid SpotId parameter found");
-						// Let ViewModel handle the error gracefully instead of immediately going back
-					}
-					
-					// Initialize ViewModel with parameter
-					Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing - Calling InitializeAsync with parameter: {parameter}");
-					await _viewModel.InitializeAsync(parameter);
-					Debug.WriteLine("[DEBUG] SpotDetailsPage.OnAppearing - ViewModel initialization completed");
-					
-					// ✅ La carte sera configurée automatiquement via l'événement PropertyChanged
 				}
 				catch (Exception ex)
 				{
-					Debug.WriteLine($"[ERROR] SpotDetailsPage.OnAppearing - Initialization failed: {ex.Message}");
-					Debug.WriteLine($"[ERROR] Exception: {ex}");
-					
-					// ✅ FIX: Ensure loading state is reset and navigate back on error
-					await MainThread.InvokeOnMainThreadAsync(async () =>
-					{
-						_viewModel.IsLoading = false;
-						await Shell.Current.GoToAsync("..");
-					});
+					Debug.WriteLine($"[DEBUG] URI parsing failed: {ex.Message}");
 				}
+			}
+			
+			// ✅ FIX: Only navigate back if we have a clear parameter issue
+			if (parameter == null)
+			{
+				Debug.WriteLine("[WARNING] SpotDetailsPage - No valid SpotId parameter found");
+				// Let ViewModel handle the error gracefully
+			}
+			
+			// ✅ Initialize ViewModel with parameter
+			Debug.WriteLine($"[DEBUG] SpotDetailsPage - Calling InitializeAsync with parameter: {parameter}");
+			await _viewModel.InitializeAsync(parameter);
+			Debug.WriteLine("[DEBUG] SpotDetailsPage - ViewModel initialization completed");
+			
+			// ✅ Configure map after delay
+			await Task.Delay(1000);
+			await MainThread.InvokeOnMainThreadAsync(ConfigureMap);
+		}
+		catch (Exception ex)
+		{
+			Debug.WriteLine($"[ERROR] SpotDetailsPage - Initialization failed: {ex.Message}");
+			Debug.WriteLine($"[ERROR] Exception: {ex}");
+			
+			// ✅ Reset loading state and navigate back on error
+			await MainThread.InvokeOnMainThreadAsync(async () =>
+			{
+				_viewModel.IsLoading = false;
+				await Shell.Current.GoToAsync("..");
 			});
 		}
 	}
@@ -116,10 +176,20 @@ public partial class SpotDetailsPage : ContentPage
 	/// </summary>
 	private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 	{
+		Debug.WriteLine($"[DEBUG] PropertyChanged: {e.PropertyName}");
+		
+		// Écouter les changements de IsLoading et Spot
 		if (e.PropertyName == nameof(SpotDetailsViewModel.IsLoading) && !_viewModel.IsLoading)
 		{
-			// Le chargement est terminé, configurer la carte
 			Debug.WriteLine("[DEBUG] Loading finished, configuring map...");
+			MainThread.BeginInvokeOnMainThread(() =>
+			{
+				ConfigureMap();
+			});
+		}
+		else if (e.PropertyName == nameof(SpotDetailsViewModel.Spot) && _viewModel.Spot != null)
+		{
+			Debug.WriteLine("[DEBUG] Spot data loaded, configuring map...");
 			MainThread.BeginInvokeOnMainThread(() =>
 			{
 				ConfigureMap();
@@ -132,40 +202,179 @@ public partial class SpotDetailsPage : ContentPage
 	/// </summary>
 	private void ConfigureMap()
 	{
-		try
+		_ = ConfigureMapAsync();
+	}
+
+	/// <summary>
+	/// Configuration asynchrone de la carte avec tentatives répétées
+	/// </summary>
+	private async Task ConfigureMapAsync()
+	{
+		const int MAX_RETRIES = 8;
+		
+		for (int attempt = 1; attempt <= MAX_RETRIES; attempt++)
 		{
-			if (_viewModel?.Spot == null)
+			try
 			{
-				Debug.WriteLine("[DEBUG] ConfigureMap: No spot data available");
-				return;
+				Debug.WriteLine($"[DEBUG] ConfigureMapAsync: Attempt {attempt}/{MAX_RETRIES}");
+				
+				if (_viewModel?.Spot == null)
+				{
+					Debug.WriteLine("[DEBUG] ConfigureMapAsync: No spot data available");
+					return;
+				}
+
+				if (spotMap == null)
+				{
+					Debug.WriteLine("[ERROR] ConfigureMapAsync: spotMap is null");
+					return;
+				}
+
+				var spot = _viewModel.Spot;
+				Debug.WriteLine($"[DEBUG] ConfigureMapAsync: Spot found - {spot.Name}");
+				Debug.WriteLine($"[DEBUG] ConfigureMapAsync: Coordinates - Lat: {spot.Latitude}, Lon: {spot.Longitude}");
+				
+				// Valider les coordonnées
+				if (spot.Latitude == 0 && spot.Longitude == 0)
+				{
+					Debug.WriteLine("[ERROR] ConfigureMapAsync: Invalid coordinates (0,0)");
+					return;
+				}
+
+				var spotLocation = new Location(Convert.ToDouble(spot.Latitude), Convert.ToDouble(spot.Longitude));
+				Debug.WriteLine($"[DEBUG] ConfigureMapAsync: Location created - {spotLocation.Latitude}, {spotLocation.Longitude}");
+
+				// Attendre avec des délais progressifs et plus longs
+				int delay = attempt switch
+				{
+					1 => 4000, // Premier essai : attendre 4 secondes
+					2 => 2000, // Deuxième essai : 2 secondes
+					3 => 3000, // Troisième essai : 3 secondes  
+					4 => 5000, // Quatrième essai : 5 secondes
+					_ => 1000 * attempt // Autres essais : progression linéaire
+				};
+				
+				Debug.WriteLine($"[DEBUG] ConfigureMapAsync: Waiting {delay}ms for map to be ready...");
+				await Task.Delay(delay);
+				
+				// Vérifier si le contrôle de carte est prêt en mesurant sa taille
+				await MainThread.InvokeOnMainThreadAsync(() =>
+				{
+					Debug.WriteLine($"[DEBUG] Map dimensions check - Width: {spotMap.Width}, Height: {spotMap.Height}");
+				});
+				
+				// Créer le pin
+				var pin = new Pin
+				{
+					Location = spotLocation,
+					Label = spot.Name ?? "Spot",
+					Address = $"{spot.Type?.Name ?? "Spot de plongée"} - Profondeur: {(spot.MaxDepth?.ToString("F1") ?? "N/A")}m",
+					Type = PinType.Place
+				};
+
+				// Nettoyer et ajouter le pin sur le thread principal
+				await MainThread.InvokeOnMainThreadAsync(() =>
+				{
+					spotMap.Pins.Clear();
+					spotMap.Pins.Add(pin);
+					Debug.WriteLine($"[DEBUG] ConfigureMapAsync: Pin added for {spot.Name} at {spotLocation.Latitude}, {spotLocation.Longitude}");
+				});
+				
+				// Tentative de centrage avec différentes approches sur le thread principal
+				bool moveSuccess = false;
+				
+				await MainThread.InvokeOnMainThreadAsync(() =>
+				{
+					try
+					{
+						// Approche 1: MapSpan avec FromCenterAndRadius
+						var mapSpan = MapSpan.FromCenterAndRadius(spotLocation, Distance.FromKilometers(1));
+						spotMap.MoveToRegion(mapSpan);
+						moveSuccess = true;
+						Debug.WriteLine($"[SUCCESS] ConfigureMapAsync: Map centered on {spotLocation.Latitude}, {spotLocation.Longitude} with FromCenterAndRadius");
+					}
+					catch (Exception ex1)
+					{
+						Debug.WriteLine($"[WARNING] Attempt {attempt} - FromCenterAndRadius failed: {ex1.Message}");
+						
+						try
+						{
+							// Approche 2: MapSpan avec constructeur explicite
+							var mapSpan = new MapSpan(spotLocation, 0.01, 0.01); // ~1km span
+							spotMap.MoveToRegion(mapSpan);
+							moveSuccess = true;
+							Debug.WriteLine($"[SUCCESS] ConfigureMapAsync: Map centered using explicit MapSpan constructor");
+						}
+						catch (Exception ex2)
+						{
+							Debug.WriteLine($"[WARNING] Attempt {attempt} - Explicit MapSpan failed: {ex2.Message}");
+							
+							try
+							{
+								// Approche 3: Utilisation de VisibleRegion si disponible
+								var largerSpan = new MapSpan(spotLocation, 0.05, 0.05); // ~5km span
+								spotMap.MoveToRegion(largerSpan);
+								moveSuccess = true;
+								Debug.WriteLine($"[SUCCESS] ConfigureMapAsync: Map centered using larger span");
+							}
+							catch (Exception ex3)
+							{
+								Debug.WriteLine($"[ERROR] Attempt {attempt} - All map centering approaches failed: {ex3.Message}");
+							}
+						}
+					}
+				});
+				
+				if (moveSuccess)
+				{
+					Debug.WriteLine($"[SUCCESS] ConfigureMapAsync completed successfully on attempt {attempt}");
+					
+					// Petite pause puis validation finale
+					await Task.Delay(500);
+					await MainThread.InvokeOnMainThreadAsync(() =>
+					{
+						Debug.WriteLine($"[DEBUG] Final map validation - Center should be near {spotLocation.Latitude}, {spotLocation.Longitude}");
+					});
+					
+					break; // Sortir de la boucle si succès
+				}
+				else if (attempt == MAX_RETRIES)
+				{
+					Debug.WriteLine("[ERROR] ConfigureMapAsync: All attempts failed - map may not center correctly");
+				}
 			}
-
-			var spot = _viewModel.Spot;
-			var spotLocation = new Location(Convert.ToDouble(spot.Latitude), Convert.ToDouble(spot.Longitude));
-			
-			Debug.WriteLine($"[DEBUG] ConfigureMap: Setting map location to {spot.Latitude}, {spot.Longitude}");
-
-			// Centrer la carte sur le spot
-			var mapSpan = MapSpan.FromCenterAndRadius(spotLocation, Distance.FromKilometers(2));
-			spotMap.MoveToRegion(mapSpan);
-
-			// Ajouter un pin pour le spot
-			var pin = new Pin
+			catch (Exception ex)
 			{
-				Location = spotLocation,
-				Label = spot.Name,
-				Address = $"{spot.Type?.Name ?? "Spot"} - {spot.MaxDepth}m",
-				Type = PinType.Place
-			};
-
-			spotMap.Pins.Clear();
-			spotMap.Pins.Add(pin);
-			
-			Debug.WriteLine($"[DEBUG] ConfigureMap: Pin added for {spot.Name}");
+				Debug.WriteLine($"[ERROR] ConfigureMapAsync attempt {attempt} failed: {ex.Message}");
+				
+				if (attempt == MAX_RETRIES)
+				{
+					Debug.WriteLine($"[ERROR] ConfigureMapAsync: All {MAX_RETRIES} attempts failed");
+					Debug.WriteLine($"[ERROR] Final exception: {ex}");
+				}
+			}
 		}
-		catch (Exception ex)
+	}
+
+	/// <summary>
+	/// Implémentation IQueryAttributable pour recevoir les paramètres de navigation directement
+	/// </summary>
+	public void ApplyQueryAttributes(IDictionary<string, object> query)
+	{
+		System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplyQueryAttributes called with {query?.Count ?? 0} parameters");
+		
+		if (query != null)
 		{
-			Debug.WriteLine($"[ERROR] ConfigureMap failed: {ex.Message}");
+			foreach (var kvp in query)
+			{
+				System.Diagnostics.Debug.WriteLine($"[DEBUG] Query parameter: {kvp.Key} = {kvp.Value}");
+			}
+			
+			if (query.ContainsKey("spotId"))
+			{
+				_spotIdFromQuery = query["spotId"]?.ToString();
+				System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplyQueryAttributes: Received spotId = {_spotIdFromQuery}");
+			}
 		}
 	}
 }

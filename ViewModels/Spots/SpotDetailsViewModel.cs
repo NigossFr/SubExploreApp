@@ -116,6 +116,7 @@ namespace SubExplore.ViewModels.Spots
                 if (parameter is Spot spot)
                 {
                     System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Received Spot parameter - {spot.Name} (ID: {spot.Id})");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Spot coordinates - Lat: {spot.Latitude}, Lon: {spot.Longitude}");
                     Spot = spot;
                     await LoadSpotDetails();
                 }
@@ -124,31 +125,26 @@ namespace SubExplore.ViewModels.Spots
                     System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Received Guid parameter - {spotId}");
                     await LoadSpotById(spotId);
                 }
+                else if (parameter is string stringParam && Guid.TryParse(stringParam, out var guidFromString))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Received string parameter converted to Guid - {guidFromString}");
+                    await LoadSpotById(guidFromString);
+                }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERROR] SpotDetailsViewModel: Invalid parameter type: {parameter?.GetType()?.Name ?? "null"}, Value: {parameter}");
                     
-                    // ✅ TEST: Si aucun paramètre, essayons de charger le premier spot disponible
+                    // ✅ CORRECTION: Ne pas charger automatiquement le premier spot, attendre le bon paramètre
                     if (parameter == null)
                     {
-                        System.Diagnostics.Debug.WriteLine("[TEST] SpotDetailsViewModel: No parameter, trying to load first available spot...");
-                        try
-                        {
-                            var spots = await _supabaseApiService.GetSpotsAsync();
-                            if (spots?.Any() == true)
-                            {
-                                var firstSpot = spots.First();
-                                System.Diagnostics.Debug.WriteLine($"[TEST] SpotDetailsViewModel: Loading first spot: {firstSpot.Name} (ID: {firstSpot.Id})");
-                                await LoadSpotById(firstSpot.Id);
-                                return;
-                            }
-                        }
-                        catch (Exception testEx)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[ERROR] Test loading failed: {testEx.Message}");
-                        }
+                        System.Diagnostics.Debug.WriteLine("[WARNING] SpotDetailsViewModel: No parameter provided - waiting for ApplyQueryAttributes to be called");
+                        // Ne pas faire d'action, laisser la page se charger normalement
+                        // ApplyQueryAttributes devrait être appelé après et relancer l'initialisation
+                        IsLoading = false;
+                        return;
                     }
                     
+                    // Si on arrive ici avec un paramètre invalide, afficher erreur
                     await _dialogService.ShowAlertAsync("Erreur", $"Paramètre invalide: {parameter?.GetType()?.Name ?? "null"} - {parameter}", "OK");
                     await _navigationService.GoBackAsync();
                 }
@@ -182,6 +178,14 @@ namespace SubExplore.ViewModels.Spots
                 var targetSupabaseSpot = supabaseSpots.FirstOrDefault(s => s.Id == spotId);
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Target spot found: {targetSupabaseSpot != null}");
                 
+                if (targetSupabaseSpot != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: RAW Supabase data - Name: {targetSupabaseSpot.Name}");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: RAW Supabase data - Latitude: {targetSupabaseSpot.Latitude}");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: RAW Supabase data - Longitude: {targetSupabaseSpot.Longitude}");
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: RAW Supabase data - Id: {targetSupabaseSpot.Id}");
+                }
+                
                 if (targetSupabaseSpot == null)
                 {
                     await _dialogService.ShowAlertAsync("Erreur", $"Spot non trouvé (ID: {spotId})", "OK");
@@ -198,6 +202,7 @@ namespace SubExplore.ViewModels.Spots
                 
                 if (Spot != null)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Successfully converted spot - {Spot.Name} at {Spot.Latitude}, {Spot.Longitude}");
                     await LoadSpotDetails();
                 }
                 else
@@ -597,6 +602,14 @@ namespace SubExplore.ViewModels.Spots
 
             try
             {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Converting spot '{supabaseSpot.Name}'");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: RAW coordinates from Supabase - Lat: {supabaseSpot.Latitude}, Lon: {supabaseSpot.Longitude}");
+                
+                if (supabaseSpot.Name == "AquaTech Diving Store")
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SPECIAL] SpotDetailsViewModel: AquaTech Diving Store RAW data - Lat: {supabaseSpot.Latitude}, Lon: {supabaseSpot.Longitude}");
+                }
+                
                 // Lookup the spot type by TypeId
                 SpotType? spotType = spotTypes.FirstOrDefault(t => t.Id == supabaseSpot.TypeId);
                 

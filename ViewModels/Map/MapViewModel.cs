@@ -283,29 +283,33 @@ namespace SubExplore.ViewModels.Map
                         return;
                     }
 
-                    // Step 2: Load spot types FIRST (required for filters to work)
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types (required for filters)");
+                    // Step 2: Load spot types FIRST (required for filters and conversion to work)
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types (required for filters and spot conversion)");
                     await LoadSpotTypesOptimized();
                     
                     if (SpotTypes?.Count == 0)
                     {
-                        System.Diagnostics.Debug.WriteLine("[WARNING] No spot types loaded - filters will not work");
+                        System.Diagnostics.Debug.WriteLine("[WARNING] ⚠️ No spot types loaded - filters and spot conversion will not work properly!");
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"[SUCCESS] Loaded {SpotTypes.Count} spot types for filtering");
+                        System.Diagnostics.Debug.WriteLine($"[SUCCESS] ✅ Loaded {SpotTypes.Count} spot types for filtering and conversion");
+                        
+                        // ✅ AMÉLIORATION: Log SpotType details for debugging
+                        foreach (var spotType in SpotTypes.Take(3))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotType available: {spotType.Name} (ID: {spotType.Id})");
+                        }
                     }
 
-                    // Step 3: Load spots data in background to improve startup performance
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Scheduling spots data loading in background");
-                    _ = LoadSpotsInBackgroundAsync();
+                    // Step 3: ✅ CORRECTION: Load spots synchronously to ensure proper initialization order
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots data synchronously to ensure proper SpotType linkage");
+                    await LoadSpotsOptimized(); // Changed from background loading to synchronous
 
-                    // Step 4: Update pins on UI thread
+                    // Step 4: Finalize initialization on UI thread
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] Updating pins on UI thread");
-                        UpdatePins();
-                        System.Diagnostics.Debug.WriteLine($"[SUCCESS] Created {Pins?.Count ?? 0} pins for map");
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Finalizing initialization - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
                         
                         _isInitialized = true;
                         _isInitializing = false;
@@ -314,7 +318,7 @@ namespace SubExplore.ViewModels.Map
                         // Initialize menu and other UI elements  
                         InitializeMapPosition();
                         
-                        System.Diagnostics.Debug.WriteLine("[SUCCESS] MapViewModel initialization completed successfully");
+                        System.Diagnostics.Debug.WriteLine("[SUCCESS] ✅ MapViewModel initialization completed successfully");
                     });
 
                     // Step 4.5: Force load current user and update menu AFTER map is initialized
@@ -2168,12 +2172,43 @@ namespace SubExplore.ViewModels.Map
                 IsEmptyState = false;
                 IsNetworkError = false;
                 
+                // ✅ CORRECTION RACE CONDITION: Ensure SpotTypes are loaded before converting spots
+                if (SpotTypes?.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] 🔄 SpotTypes not loaded yet, loading them first...");
+                    await LoadSpotTypesOptimized();
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ Starting spot conversion with {SpotTypes?.Count ?? 0} SpotTypes available");
+                
                 // Use optimized method for better performance with ConfigureAwait
                 // ✅ Utilisation du service Supabase API
                 var supabaseSpots = await _supabaseApiService.GetSpotsAsync().ConfigureAwait(false);
                 
-                var spotsList = supabaseSpots?.Select(ConvertToDomainSpot).Where(s => s != null).ToList() ?? new List<Models.Domain.Spot>();
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ LoadSpotsOptimized - Retrieved {spotsList.Count} spots from repository");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ Raw Supabase spots count: {supabaseSpots?.Count() ?? 0}");
+                
+                // ✅ AMÉLIORATION: Log conversion details to identify filtering issues
+                var spotsList = new List<Models.Domain.Spot>();
+                int nullConversions = 0;
+                
+                if (supabaseSpots != null)
+                {
+                    foreach (var supabaseSpot in supabaseSpots)
+                    {
+                        var convertedSpot = ConvertToDomainSpot(supabaseSpot);
+                        if (convertedSpot != null)
+                        {
+                            spotsList.Add(convertedSpot);
+                        }
+                        else
+                        {
+                            nullConversions++;
+                            System.Diagnostics.Debug.WriteLine($"[WARNING] 🚫 Failed to convert spot: {supabaseSpot?.Name ?? "NULL_SPOT"} (TypeId: {supabaseSpot?.TypeId})");
+                        }
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ LoadSpotsOptimized - Retrieved {spotsList.Count} spots from repository ({nullConversions} failed conversions)");
                 
                 // Handle empty state
                 if (!spotsList.Any())
@@ -2328,16 +2363,30 @@ namespace SubExplore.ViewModels.Map
 
             try
             {
-                // 🔧 CORRECTION CRITIQUE: Lookup the spot type by TypeId
+                // ✅ CORRECTION CRITIQUE: Lookup the spot type by TypeId
                 SpotType? spotType = null;
                 if (SpotTypes?.Any() == true)
                 {
                     spotType = SpotTypes.FirstOrDefault(t => t.Id == supabaseSpot.TypeId);
                 }
                 
-                // Log for debugging
-                var spotTypeName = spotType?.Name ?? "NULL_TYPE";
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Spot '{supabaseSpot.Name}' -> Type: '{spotTypeName}' -> TypeId: {supabaseSpot.TypeId}");
+                // ✅ AMÉLIORATION: Don't fail conversion if SpotType not found, just log it
+                var spotTypeName = spotType?.Name ?? "MISSING_TYPE";
+                var spotTypeStatus = spotType != null ? "FOUND" : "MISSING";
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] MapViewModel: Converting spot '{supabaseSpot.Name}' -> Type: '{spotTypeName}' ({spotTypeStatus}) -> TypeId: {supabaseSpot.TypeId}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] MapViewModel: RAW coordinates from Supabase - Lat: {supabaseSpot.Latitude}, Lon: {supabaseSpot.Longitude}");
+                
+                if (supabaseSpot.Name == "AquaTech Diving Store")
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SPECIAL] MapViewModel: AquaTech Diving Store RAW data - Lat: {supabaseSpot.Latitude}, Lon: {supabaseSpot.Longitude}");
+                }
+                
+                // ✅ AMÉLIORATION: Log when SpotType is missing but continue with conversion
+                if (spotType == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WARNING] 🔍 SpotType not found for '{supabaseSpot.Name}' (TypeId: {supabaseSpot.TypeId}) - Available Types: {SpotTypes?.Count ?? 0}");
+                }
 
                 return new Spot
                 {
