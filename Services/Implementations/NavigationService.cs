@@ -13,14 +13,16 @@ namespace SubExplore.Services.Implementations
     public class NavigationService : INavigationService
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly IShellRouteRegistry _routeRegistry;
         private INavigationGuardService? _navigationGuard;
         private IDialogService? _dialogService;
         private readonly Stack<string> _navigationHistory = new();
         private string? _currentRoute;
 
-        public NavigationService(IServiceProvider serviceProvider)
+        public NavigationService(IServiceProvider serviceProvider, IShellRouteRegistry routeRegistry)
         {
             _serviceProvider = serviceProvider;
+            _routeRegistry = routeRegistry;
         }
 
         // Lazy initialization to avoid circular dependencies
@@ -77,7 +79,7 @@ namespace SubExplore.Services.Implementations
                 if (Application.Current?.MainPage is Shell)
                 {
                     System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Using Shell navigation");
-                    var route = GetRouteForViewModel<TViewModel>();
+                    var route = _routeRegistry.GetRouteForViewModel<TViewModel>();
                     System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Route found: {route}");
                     
                     if (!string.IsNullOrEmpty(route))
@@ -294,23 +296,28 @@ namespace SubExplore.Services.Implementations
                 if (viewModel == null)
                     throw new InvalidOperationException($"Impossible de résoudre le ViewModel {typeof(TViewModel).Name}");
 
-                // Recherche de la page correspondante avec mapping de namespace
-                var viewModelTypeName = typeof(TViewModel).Name;
-                var viewTypeName = viewModelTypeName.Replace("ViewModel", "Page");
-                var viewTypeFullName = GetViewTypeFullName(viewTypeName);
-
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Looking for view type: {viewTypeFullName}");
-                
-                var viewType = Assembly.GetExecutingAssembly().GetType(viewTypeFullName);
+                // Use route registry to find the corresponding view type
+                var viewType = _routeRegistry.GetViewTypeForViewModel<TViewModel>();
                 if (viewType == null)
-                    throw new InvalidOperationException($"Type de vue non trouvé: {viewTypeFullName}");
+                {
+                    // Fallback to old method for backward compatibility
+                    var viewModelTypeName = typeof(TViewModel).Name;
+                    var viewTypeName = viewModelTypeName.Replace("ViewModel", "Page");
+                    var viewTypeFullName = GetViewTypeFullName(viewTypeName);
+                    
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Fallback - Looking for view type: {viewTypeFullName}");
+                    viewType = Assembly.GetExecutingAssembly().GetType(viewTypeFullName);
+                }
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Found view type, creating instance via DI");
+                if (viewType == null)
+                    throw new InvalidOperationException($"Type de vue non trouvé pour {typeof(TViewModel).Name}");
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Found view type {viewType.Name}, creating instance via DI");
                 var page = _serviceProvider.GetService(viewType) as Page;
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Page created: {page != null}");
                 
                 if (page == null)
-                    throw new InvalidOperationException($"Impossible de créer une instance de {viewTypeFullName}");
+                    throw new InvalidOperationException($"Impossible de créer une instance de {viewType.Name}");
 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Setting BindingContext");
                 page.BindingContext = viewModel;
@@ -368,24 +375,7 @@ namespace SubExplore.Services.Implementations
             }
         }
 
-        private string GetRouteForViewModel<TViewModel>()
-        {
-            var viewModelName = typeof(TViewModel).Name;
-            
-            // Map ViewModels to their corresponding routes with Shell prefix
-            return viewModelName switch
-            {
-                "MapViewModel" => "///map",
-                "FavoriteSpotsViewModel" => "///favorites",
-                "AddSpotViewModel" => "///addspot",
-                "SpotDetailsViewModel" => "///spotdetails",
-                "MySpotsViewModel" => "///myspots",
-                "UserProfileViewModel" => "///userprofile",
-                "UserStatsViewModel" => "///userstats",
-                "SpotValidationViewModel" => "///spotvalidation",
-                _ => "///" + ConvertViewModelNameToRoute(viewModelName)
-            };
-        }
+        // Removed - now using IShellRouteRegistry.GetRouteForViewModel
         
         private string ConvertViewModelNameToRoute(string viewModelName)
         {
@@ -595,34 +585,12 @@ namespace SubExplore.Services.Implementations
         
         private string GetFriendlyRouteName(string routeName)
         {
-            return routeName switch
-            {
-                "MapViewModel" => "🗺️ Carte",
-                "FavoriteSpotsViewModel" => "⭐ Favoris",
-                "AddSpotViewModel" => "➕ Ajouter un Spot",
-                "SpotDetailsViewModel" => "📖 Détails du Spot",
-                "MySpotsViewModel" => "📍 Mes Spots",
-                "UserProfileViewModel" => "👤 Profil",
-                "UserStatsViewModel" => "📊 Statistiques",
-                "SpotValidationViewModel" => "⚖️ Validation",
-                _ => "Accueil"
-            };
+            return _routeRegistry.GetFriendlyName(routeName);
         }
         
         private string GetShellRouteFromViewModel(string viewModelName)
         {
-            return viewModelName switch
-            {
-                "MapViewModel" => "map",
-                "FavoriteSpotsViewModel" => "favorites",
-                "AddSpotViewModel" => "addspot",
-                "SpotDetailsViewModel" => "spotdetails", 
-                "MySpotsViewModel" => "myspots",
-                "UserProfileViewModel" => "userprofile",
-                "UserStatsViewModel" => "userstats",
-                "SpotValidationViewModel" => "spotvalidation",
-                _ => "map"
-            };
+            return _routeRegistry.GetShellRouteFromViewModel(viewModelName);
         }
     }
 }

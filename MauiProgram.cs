@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 // 🚫 Entity Framework et Npgsql supprimés - API Supabase uniquement
 using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
+using SubExplore.Extensions;
 // 🚫 Repositories Entity Framework supprimés - API Supabase uniquement
 using SubExplore.Services.Validation;
 using SubExplore.Services.Caching;
@@ -113,7 +114,16 @@ public static class MauiProgram
         builder.Services.AddSingleton<IAppInitializationService, AppInitializationService>();
         
         builder.Services.AddSingleton<IDialogService, DialogService>();
-        builder.Services.AddSingleton<INavigationService, NavigationService>();
+        
+        // 🎯 NEW SHELL SYSTEM SERVICES - Must be registered BEFORE NavigationService
+        builder.Services.AddSubExploreServices();
+        
+        // 🔧 Updated NavigationService registration to include IShellRouteRegistry
+        builder.Services.AddSingleton<INavigationService>(provider =>
+        {
+            var routeRegistry = provider.GetRequiredService<IShellRouteRegistry>();
+            return new NavigationService(provider, routeRegistry);
+        });
         builder.Services.AddScoped<INavigationGuardService, NavigationGuardService>();
         builder.Services.AddSingleton<ILocationService, LocationService>();
         builder.Services.AddSingleton<IMediaService, MediaService>();

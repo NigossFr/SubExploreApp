@@ -2,10 +2,19 @@
 <ContentPage x:Class="SubExplore.Views.Spots.MySpotsPage"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             Title="Mes spots">
+             xmlns:controls="clr-namespace:SubExplore.Views.Controls"
+             Title="Mes spots"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False">
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="20" Padding="20">
+    <Grid>
+        <!-- Custom Navigation Bar -->
+        <controls:CustomNavigationBar Title="Mes spots" 
+                                      VerticalOptions="Start"
+                                      ZIndex="100" />
+        
+        <ScrollView Margin="0,56,0,0">
+            <VerticalStackLayout Spacing="20" Padding="20">
             
             <!-- Header -->
             <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
@@ -110,7 +119,9 @@
                 </Grid>
             </Frame>
 
-        </VerticalStackLayout>
-    </ScrollView>
+            </VerticalStackLayout>
+        </ScrollView>
+        
+    </Grid>
 
 </ContentPage>

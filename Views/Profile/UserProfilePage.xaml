@@ -4,8 +4,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:SubExplore.ViewModels.Profile"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:SubExplore.Views.Controls"
              x:DataType="vm:UserProfileViewModel"
-             Title="{Binding Title}">
+             Title="{Binding Title}"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -13,7 +16,13 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid>
+        <!-- Custom Navigation Bar -->
+        <controls:CustomNavigationBar Title="Profil" 
+                                      VerticalOptions="Start"
+                                      ZIndex="100" />
+        
+        <Grid RowDefinitions="Auto,*" Margin="0,56,0,0">
 
         <!-- Search and Profile Section -->
         <Frame Grid.Row="0" 
@@ -639,5 +648,7 @@
 
             </StackLayout>
         </ScrollView>
+        </Grid>
+        
     </Grid>
 </ContentPage>

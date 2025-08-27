@@ -8,9 +8,13 @@
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Map"
     xmlns:common="clr-namespace:SubExplore.Views.Common"
+    xmlns:components="clr-namespace:SubExplore.Views.Components"
+    xmlns:controls="clr-namespace:SubExplore.Views.Controls"
     xmlns:domain="clr-namespace:SubExplore.Models.Domain"
     x:DataType="viewmodels:MapViewModel"
     Title="Carte"
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
     BackgroundColor="{StaticResource Background}">
     
     
@@ -27,18 +31,25 @@
     </ContentPage.Behaviors>
 
     <Grid>
-        <!-- Main Content -->
-        <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Custom Navigation Bar - GUARANTEED VISIBLE FLYOUT BUTTON -->
+        <controls:CustomNavigationBar x:Name="CustomNavBar"
+                                      Title="Carte"
+                                      VerticalOptions="Start"
+                                      ZIndex="100"
+                                      HamburgerClicked="OnCustomHamburgerClicked" />
+        
+        <!-- Main Content - properly spaced with custom navigation bar -->
+        <Grid RowDefinitions="Auto,*,Auto" Margin="0,56,0,0">
         
         <!-- Enhanced Search Bar with Suggestions -->
-        <StackLayout Grid.Row="0">
+        <StackLayout Grid.Row="0" Margin="0,8,0,8">
             <!-- Main Search Frame -->
             <Frame BackgroundColor="{StaticResource Surface}"
-                   BorderColor="{StaticResource Secondary}"
+                   BorderColor="{StaticResource Primary}"
                    CornerRadius="25"
-                   Padding="5"
+                   Padding="8"
                    HasShadow="True"
-                   Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}"
+                   Margin="12,8,12,4"
                    AutomationId="SearchFrame"
                    SemanticProperties.Description="Zone de recherche de spots améliorée">
                 <Grid ColumnDefinitions="*,Auto,Auto">
@@ -150,11 +161,11 @@
         </StackLayout>
         
         <RefreshView Grid.Row="1" Command="{Binding LoadSpotsCommand}" IsRefreshing="{Binding IsBusy}">
-            <Grid RowDefinitions="Auto,*,Auto">
+            <Grid RowDefinitions="Auto,400,Auto">
                 
                 <!-- Nouvelle organisation des filtres : 4 boutons principaux + sous-filtres -->
                 <StackLayout Grid.Row="0"
-                           Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='8:10:12'}">
+                           Margin="12,4,12,8">
                     
                     <!-- Boutons de catégories principales (4 boutons sur toute la largeur) -->
                     <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
@@ -327,25 +338,27 @@
                     </Frame>
                 </StackLayout>
 
-        <!--  Carte responsive  -->
-        <Grid Grid.Row="1">
-            <maps:Map
-                x:Name="MainMap"
-                IsShowingUser="{Binding IsLocationAvailable}"
-                MapClicked="OnMapClicked"
-                MapType="Street"
-                HorizontalOptions="FillAndExpand"
-                VerticalOptions="FillAndExpand"
-                IsZoomEnabled="True"
-                IsScrollEnabled="True"
-                AutomationId="MainMap"
-                SemanticProperties.Description="Carte interactive des spots de plongée"
-                SemanticProperties.Hint="Explorez les spots de plongée sur la carte, cliquez près d'un marqueur pour voir les détails">
+        <!--  Carte responsive avec hauteur fixe  -->
+        <Grid Grid.Row="1" Margin="8,0,8,8">
+            <Frame CornerRadius="15" HasShadow="True" Padding="0">
+                <maps:Map
+                    x:Name="MainMap"
+                    IsShowingUser="{Binding IsLocationAvailable}"
+                    MapClicked="OnMapClicked"
+                    MapType="Street"
+                    HorizontalOptions="FillAndExpand"
+                    VerticalOptions="FillAndExpand"
+                    IsZoomEnabled="True"
+                    IsScrollEnabled="True"
+                    AutomationId="MainMap"
+                    SemanticProperties.Description="Carte interactive des spots de plongée"
+                    SemanticProperties.Hint="Explorez les spots de plongée sur la carte, cliquez près d'un marqueur pour voir les détails">
                 
             <maps:Map.MapElements>
                 <!--  Custom spot markers will be added programmatically in code-behind  -->
             </maps:Map.MapElements>
-            </maps:Map>
+                </maps:Map>
+            </Frame>
             
             
             <!--  État vide  -->
@@ -396,7 +409,7 @@
             Grid.Row="2"
             ColumnDefinitions="*,*,*" 
             ColumnSpacing="8"
-            Margin="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveMarginConverter}, ConverterParameter='12:15:18'}"
+            Margin="8,8,8,16"
             AutomationId="ActionsGrid"
             SemanticProperties.Description="Barre d'actions principales de la carte">
             

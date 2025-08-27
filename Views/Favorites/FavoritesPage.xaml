@@ -2,9 +2,18 @@
 <ContentPage x:Class="SubExplore.Views.Favorites.FavoritesPage"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             Title="Mes favoris">
+             xmlns:controls="clr-namespace:SubExplore.Views.Controls"
+             Title="Mes favoris"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False">
 
-    <ScrollView>
+    <Grid>
+        <!-- Custom Navigation Bar -->
+        <controls:CustomNavigationBar Title="Mes favoris" 
+                                      VerticalOptions="Start"
+                                      ZIndex="100" />
+        
+        <ScrollView Margin="0,56,0,0">
         <VerticalStackLayout Spacing="20" Padding="20">
             
             <!-- Header -->
@@ -105,6 +114,8 @@
             </Frame>
 
         </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+        
+    </Grid>
 
 </ContentPage>

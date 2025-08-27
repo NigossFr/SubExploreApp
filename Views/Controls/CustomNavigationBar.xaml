@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SubExplore.Views.Controls.CustomNavigationBar"
+             x:Name="CustomNavBarRoot"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
+             
+    <!-- Clean navigation bar replacing Shell navigation -->
+    <Grid ColumnDefinitions="Auto,*,Auto" 
+          HeightRequest="56" 
+          Padding="12,8"
+          BackgroundColor="{AppThemeBinding Light=White, Dark=Black}"
+          VerticalOptions="FillAndExpand">
+              
+            <!-- Left: Hamburger Menu Button -->
+            <Button Grid.Column="0"
+                    x:Name="HamburgerButton"
+                    Text="☰"
+                    FontSize="22"
+                    FontAttributes="Bold"
+                    TextColor="{AppThemeBinding Light=#333333, Dark=#FFFFFF}"
+                    BackgroundColor="Transparent"
+                    BorderColor="Transparent"
+                    BorderWidth="0"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    Padding="0"
+                    Margin="0,0,8,0"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Center"
+                    Clicked="OnHamburgerClicked"
+                    AutomationId="CustomHamburgerButton"
+                    SemanticProperties.Description="Ouvrir le menu de navigation"
+                    ToolTipProperties.Text="Menu" />
+        
+            <!-- Center: Page Title -->
+            <Label Grid.Column="1"
+                   x:Name="TitleLabel"
+                   Text="{Binding Title, Source={x:Reference CustomNavBarRoot}}"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=#333333, Dark=#FFFFFF}"
+                   HorizontalOptions="CenterAndExpand"
+                   VerticalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   LineBreakMode="TailTruncation"
+                   MaxLines="1" />
+               
+            <!-- Right: Optional Action Button -->
+            <Button Grid.Column="2"
+                    x:Name="ActionButton"
+                    Text="⋮"
+                    FontSize="18"
+                    TextColor="{AppThemeBinding Light=#333333, Dark=#FFFFFF}"
+                    BackgroundColor="Transparent"
+                    BorderColor="Transparent"
+                    BorderWidth="0"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    Padding="0"
+                    Margin="8,0,0,0"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center"
+                    IsVisible="False"
+                    Clicked="OnActionClicked"
+                    AutomationId="CustomActionButton"
+                    SemanticProperties.Description="Actions supplémentaires" />
+            
+    </Grid>
+    
+</ContentView>
