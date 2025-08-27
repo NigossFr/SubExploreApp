@@ -3,6 +3,7 @@ using Microsoft.Maui.Maps;
 using SubExplore.ViewModels.Map;
 using SubExplore.Services.Interfaces;
 using System.Linq;
+using System.Diagnostics;
 
 namespace SubExplore.Views.Map
 {
@@ -908,6 +909,31 @@ namespace SubExplore.Views.Map
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] Erreur ouverture menu manuel: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Custom hamburger button clicked - guaranteed flyout access
+        /// </summary>
+        private void OnCustomHamburgerClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                Debug.WriteLine("[MapPage] Custom hamburger button clicked - bypassing MAUI Shell bugs");
+                
+                if (Shell.Current != null)
+                {
+                    Shell.Current.FlyoutIsPresented = true;
+                    Debug.WriteLine("[MapPage] ✅ Flyout opened successfully via custom navigation bar");
+                }
+                else
+                {
+                    Debug.WriteLine("[MapPage] ❌ No Shell.Current available for custom hamburger");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MapPage] ❌ Custom hamburger error: {ex.Message}");
             }
         }
     }
