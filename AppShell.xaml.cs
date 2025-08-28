@@ -3,7 +3,7 @@ using SubExplore.Views.Spots;
 // ✅ Favorites réactivé avec pages simples compatibles API Supabase  
 using SubExplore.Views.Favorites;
 using SubExplore.Views.Profile;
-// using SubExplore.Views.Admin;
+using SubExplore.Views.Admin;
 using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels;
 using SubExplore.Controls;

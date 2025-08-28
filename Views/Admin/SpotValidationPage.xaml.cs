@@ -1,12 +1,12 @@
-using SubExplore.ViewModels.Favorites;
+using SubExplore.ViewModels.Admin;
 
-namespace SubExplore.Views.Favorites
+namespace SubExplore.Views.Admin
 {
-    public partial class FavoritesPage : ContentPage
+    public partial class SpotValidationPage : ContentPage
     {
-        public FavoriteSpotsViewModel ViewModel { get; }
+        public SpotValidationViewModel ViewModel { get; }
 
-        public FavoritesPage(FavoriteSpotsViewModel viewModel)
+        public SpotValidationPage(SpotValidationViewModel viewModel)
         {
             InitializeComponent();
             ViewModel = viewModel;

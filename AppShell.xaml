@@ -217,7 +217,8 @@
                         AccessibilityHint="Appuyez deux fois pour accéder à l'administration"
                         IconAccessibilityText="Icône de balance de justice" />
 
-                    <!-- Test Base de Données -->
+                    <!-- Test Base de Données - TEMPORAIREMENT DÉSACTIVÉ -->
+                    <!--
                     <controls:StagedMenuButton 
                         Title="Test Base de Données"
                         Description="Outils de diagnostic et migration"
@@ -232,6 +233,7 @@
                         AccessibilityDescription="Accéder aux outils de test, diagnostic et migration de base de données"
                         AccessibilityHint="Appuyez deux fois pour accéder aux outils de base de données"
                         IconAccessibilityText="Icône de base de données" />
+                    -->
                     
                     <!-- Information Section -->
                     <Label Text="Informations"
@@ -322,19 +324,20 @@
         Route="spotdetails" 
         FlyoutItemIsVisible="False" />
 
-    <!-- Admin route - Hidden - Placeholder page for navigation -->
+    <!-- Admin route - Hidden - Admin validation page -->
     <ShellContent
         Title="Validation des Spots"
-        ContentTemplate="{DataTemplate spots:MySpotsPage}"
+        ContentTemplate="{DataTemplate admin:SpotValidationPage}"
         Route="spotvalidation"
         FlyoutItemIsVisible="False" />
 
-    <!-- Database Test route - Hidden - Placeholder page for navigation -->
+    <!-- Database Test route - TEMPORAIREMENT DÉSACTIVÉ
     <ShellContent
         Title="Test Base de Données"
         ContentTemplate="{DataTemplate spots:MySpotsPage}"
         Route="databasetest"
         FlyoutItemIsVisible="False" />
+    -->
 
     <!-- About route - Hidden -->
     <ShellContent

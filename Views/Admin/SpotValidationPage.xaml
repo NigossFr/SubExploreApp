@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Admin.SpotValidationPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SubExplore.ViewModels.Admin"
+             xmlns:models="clr-namespace:SubExplore.Models.Domain"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:DataType="vm:SpotValidationViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Header Section -->
+        <Frame Grid.Row="0" 
+               Padding="15"
+               BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource OffBlack}}"
+               BorderColor="Transparent">
+            <StackLayout Spacing="15">
+                
+                <!-- Page Title -->
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                       CornerRadius="12" 
+                       Padding="16"
+                       HasShadow="False">
+                    <StackLayout>
+                        <Label Text="🔍 Validation des Spots" 
+                               FontSize="22" 
+                               FontAttributes="Bold" 
+                               TextColor="White" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Gérer les demandes de spots en attente"
+                               FontSize="14"
+                               TextColor="White"
+                               Opacity="0.9"
+                               HorizontalOptions="Center"
+                               Margin="0,5,0,0" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Loading State -->
+                <Grid IsVisible="{Binding IsLoading}" Padding="0,20">
+                    <StackLayout HorizontalOptions="Center" Spacing="16">
+                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                         Color="{StaticResource Primary}"
+                                         WidthRequest="48" 
+                                         HeightRequest="48" />
+                        <Label Text="Chargement des données de validation..."
+                               FontSize="16"
+                               TextColor="{StaticResource Gray600}"
+                               HorizontalTextAlignment="Center"
+                               LineHeight="1.4" />
+                    </StackLayout>
+                </Grid>
+
+                <!-- Error State -->
+                <Frame IsVisible="{Binding IsError}" 
+                       BackgroundColor="{StaticResource Error}" 
+                       CornerRadius="12" 
+                       Padding="16" 
+                       HasShadow="False">
+                    <StackLayout Spacing="12">
+                        <Label Text="⚠️ Erreur de chargement"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="Center"
+                               LineHeight="1.3" />
+                        <Label Text="{Binding ErrorMessage}"
+                               FontSize="15"
+                               TextColor="White"
+                               HorizontalTextAlignment="Center"
+                               LineBreakMode="WordWrap"
+                               LineHeight="1.5" />
+                        <Button Text="Réessayer"
+                                Command="{Binding RefreshValidationDataCommand}"
+                                BackgroundColor="White"
+                                TextColor="{StaticResource Error}"
+                                CornerRadius="8"
+                                Padding="16,8"
+                                HorizontalOptions="Center" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Statistics Cards -->
+                <Grid ColumnDefinitions="*,*,*,Auto" 
+                      ColumnSpacing="10"
+                      IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}">
+                    
+                    <!-- Pending Spots -->
+                    <Frame Grid.Column="0"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource Accent}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding ValidationStats.PendingCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="En attente"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Under Review -->
+                    <Frame Grid.Column="1"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding ValidationStats.UnderReviewCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="En révision"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Safety Flagged -->
+                    <Frame Grid.Column="2"
+                           Padding="10"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Error}, Dark={StaticResource Error}}"
+                           CornerRadius="8"
+                           HasShadow="False">
+                        <StackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding ValidationStats.SafetyFlaggedCount}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Sécurité"
+                                   FontSize="8"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                    
+                    <!-- Debug Test Button -->
+                    <Button Grid.Column="3"
+                            Text="🧪"
+                            FontSize="16"
+                            WidthRequest="50"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource Warning}}"
+                            TextColor="White"
+                            Command="{Binding CreateTestDataCommand}"
+                            ToolTipProperties.Text="Créer des données de test"
+                            AutomationId="CreateTestDataButton" />
+                </Grid>
+            </StackLayout>
+        </Frame>
+        
+        <!-- Content -->
+        <RefreshView Grid.Row="1" 
+                     Command="{Binding RefreshValidationDataCommand}" 
+                     IsRefreshing="{Binding IsRefreshing}"
+                     RefreshColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
+            <ScrollView>
+                <StackLayout Spacing="15" 
+                             Padding="15"
+                             IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}">
+
+                <!-- Section: Spots en attente de validation -->
+                <StackLayout>
+                    <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}" 
+                           BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}"
+                           Padding="0"
+                           CornerRadius="12"
+                           HasShadow="False">
+                        <StackLayout>
+                            <!-- Header -->
+                            <Grid BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                                  Padding="16">
+                                <Label Text="Spots en attente de validation" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold" 
+                                       TextColor="White" />
+                            </Grid>
+
+                            <!-- Pending Spots List -->
+                            <StackLayout>
+                                <!-- Empty State -->
+                                <StackLayout IsVisible="{Binding PendingSpots.Count, Converter={toolkit:IntToBoolConverter}, ConverterParameter=0}"
+                                             Padding="40,60">
+                                    <Label Text="📋" 
+                                           FontSize="48" 
+                                           HorizontalOptions="Center" 
+                                           TextColor="{StaticResource Gray400}" />
+                                    <Label Text="Aucun spot en attente de validation" 
+                                           FontSize="16" 
+                                           HorizontalOptions="Center" 
+                                           TextColor="{StaticResource Gray600}" 
+                                           Margin="0,10,0,0" />
+                                    <Label Text="Tous les spots ont été traités" 
+                                           FontSize="14" 
+                                           HorizontalOptions="Center" 
+                                           TextColor="{StaticResource Gray500}" />
+                                </StackLayout>
+
+                                <!-- Spots List -->
+                                <CollectionView ItemsSource="{Binding PendingSpots}"
+                                                IsVisible="{Binding PendingSpots.Count, Converter={toolkit:IntToBoolConverter}, ConverterParameter=1}"
+                                                SelectionMode="None">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="models:Spot">
+                                            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}" 
+                                                   Padding="20,15" 
+                                                   CornerRadius="12" 
+                                                   Margin="15,8" 
+                                                   HasShadow="True">
+                                                <Frame.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=ViewSpotDetailsCommand}"
+                                                                          CommandParameter="{Binding .}" />
+                                                </Frame.GestureRecognizers>
+                                                
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+
+                                                    <Label Grid.Row="0" Grid.Column="0"
+                                                           Text="{Binding Name}"
+                                                           FontSize="18"
+                                                           FontAttributes="Bold" 
+                                                           TextColor="{StaticResource Primary}" />
+
+                                                    <Label Grid.Row="1" Grid.Column="0"
+                                                           Text="{Binding Description}"
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource Gray600}"
+                                                           MaxLines="2" 
+                                                           Margin="0,5,0,0" />
+
+                                                    <Label Grid.Row="2" Grid.Column="0"
+                                                           Text="{Binding CreatedAt, StringFormat='Soumis le {0:dd/MM/yyyy à {0:HH:mm}'}"
+                                                           FontSize="12"
+                                                           TextColor="{StaticResource Gray500}" 
+                                                           Margin="0,8,0,0" />
+
+                                                    <Label Grid.Row="3" Grid.Column="0"
+                                                           Text="👆 Cliquez pour examiner et valider"
+                                                           FontSize="12"
+                                                           FontAttributes="Italic"
+                                                           TextColor="{StaticResource Secondary}" 
+                                                           Margin="0,5,0,0" />
+
+                                                    <Frame Grid.Row="0" Grid.Column="1" Grid.RowSpan="4"
+                                                           BackgroundColor="{StaticResource Warning}"
+                                                           Padding="12,8"
+                                                           CornerRadius="15"
+                                                           VerticalOptions="Center">
+                                                        <StackLayout Spacing="4">
+                                                            <Label Text="⏳"
+                                                                   FontSize="16"
+                                                                   TextColor="White"
+                                                                   HorizontalOptions="Center" />
+                                                            <Label Text="Nouveau"
+                                                                   TextColor="White"
+                                                                   FontSize="12"
+                                                                   FontAttributes="Bold"
+                                                                   HorizontalOptions="Center" />
+                                                        </StackLayout>
+                                                    </Frame>
+                                                </Grid>
+                                            </Frame>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </StackLayout>
+                        </StackLayout>
+                    </Frame>
+                </StackLayout>
+
+                <!-- Section: Spots en cours de révision -->
+                <StackLayout IsVisible="{Binding SpotsUnderReview.Count, Converter={toolkit:IntToBoolConverter}, ConverterParameter=1}">
+                    <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}" 
+                           BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}"
+                           Padding="0"
+                           CornerRadius="12"
+                           HasShadow="False">
+                        <StackLayout>
+                            <Grid BackgroundColor="{StaticResource Secondary}" 
+                                  Padding="16">
+                                <Label Text="Spots en cours de révision" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold" 
+                                       TextColor="White" />
+                            </Grid>
+
+                            <CollectionView ItemsSource="{Binding SpotsUnderReview}"
+                                            SelectionMode="None">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:Spot">
+                                        <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}" 
+                                               Padding="20,15" 
+                                               CornerRadius="12" 
+                                               Margin="15,8" 
+                                               HasShadow="True">
+                                            <Frame.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=ViewSpotDetailsCommand}"
+                                                                      CommandParameter="{Binding .}" />
+                                            </Frame.GestureRecognizers>
+                                            
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+
+                                                <Label Grid.Row="0" Grid.Column="0"
+                                                       Text="{Binding Name}"
+                                                       FontSize="18"
+                                                       FontAttributes="Bold" 
+                                                       TextColor="{StaticResource Primary}" />
+
+                                                <Label Grid.Row="1" Grid.Column="0"
+                                                       Text="{Binding Description}"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource Gray600}"
+                                                       MaxLines="2" 
+                                                       Margin="0,5,0,0" />
+
+                                                <Label Grid.Row="2" Grid.Column="0"
+                                                       Text="{Binding CreatedAt, StringFormat='En révision depuis le {0:dd/MM/yyyy}'}"
+                                                       FontSize="12"
+                                                       TextColor="{StaticResource Gray500}" 
+                                                       Margin="0,8,0,0" />
+
+                                                <Label Grid.Row="3" Grid.Column="0"
+                                                       Text="👆 Cliquez pour finaliser la validation"
+                                                       FontSize="12"
+                                                       FontAttributes="Italic"
+                                                       TextColor="{StaticResource Secondary}" 
+                                                       Margin="0,5,0,0" />
+
+                                                <Frame Grid.Row="0" Grid.Column="1" Grid.RowSpan="4"
+                                                       BackgroundColor="{StaticResource Secondary}"
+                                                       Padding="12,8"
+                                                       CornerRadius="15"
+                                                       VerticalOptions="Center">
+                                                    <StackLayout Spacing="4">
+                                                        <Label Text="🔍"
+                                                               FontSize="16"
+                                                               TextColor="White"
+                                                               HorizontalOptions="Center" />
+                                                        <Label Text="En révision"
+                                                               TextColor="White"
+                                                               FontSize="12"
+                                                               FontAttributes="Bold"
+                                                               HorizontalOptions="Center" />
+                                                    </StackLayout>
+                                                </Frame>
+                                            </Grid>
+                                        </Frame>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </StackLayout>
+                    </Frame>
+                </StackLayout>
+
+                <!-- Section: Spots nécessitant une révision de sécurité -->
+                <StackLayout IsVisible="{Binding SafetyFlaggedSpots.Count, Converter={toolkit:IntToBoolConverter}, ConverterParameter=1}">
+                    <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray800}}" 
+                           BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray700}}"
+                           Padding="0"
+                           CornerRadius="12"
+                           HasShadow="False">
+                        <StackLayout>
+                            <Grid BackgroundColor="{StaticResource Error}" 
+                                  Padding="16">
+                                <Label Text="Spots nécessitant une révision de sécurité" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold" 
+                                       TextColor="White" />
+                            </Grid>
+
+                            <CollectionView ItemsSource="{Binding SafetyFlaggedSpots}"
+                                            SelectionMode="None">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:Spot">
+                                        <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}" 
+                                               Padding="20,15" 
+                                               CornerRadius="12" 
+                                               Margin="15,8" 
+                                               HasShadow="True">
+                                            <Frame.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SpotValidationViewModel}}, Path=ViewSpotDetailsCommand}"
+                                                                      CommandParameter="{Binding .}" />
+                                            </Frame.GestureRecognizers>
+                                            
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+
+                                                <Label Grid.Row="0" Grid.Column="0"
+                                                       Text="{Binding Name}"
+                                                       FontSize="18"
+                                                       FontAttributes="Bold" 
+                                                       TextColor="{StaticResource Primary}" />
+
+                                                <Label Grid.Row="1" Grid.Column="0"
+                                                       Text="{Binding Description}"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource Gray600}"
+                                                       MaxLines="2" 
+                                                       Margin="0,5,0,0" />
+
+                                                <Label Grid.Row="2" Grid.Column="0"
+                                                       Text="⚠️ Révision sécurité requise"
+                                                       FontSize="12"
+                                                       TextColor="{StaticResource Error}" 
+                                                       Margin="0,8,0,0" 
+                                                       FontAttributes="Bold" />
+
+                                                <Label Grid.Row="3" Grid.Column="0"
+                                                       Text="👆 Cliquez pour évaluer la sécurité"
+                                                       FontSize="12"
+                                                       FontAttributes="Italic"
+                                                       TextColor="{StaticResource Secondary}" 
+                                                       Margin="0,5,0,0" />
+
+                                                <Frame Grid.Row="0" Grid.Column="1" Grid.RowSpan="4"
+                                                       BackgroundColor="{StaticResource Error}"
+                                                       Padding="12,8"
+                                                       CornerRadius="15"
+                                                       VerticalOptions="Center">
+                                                    <StackLayout Spacing="4">
+                                                        <Label Text="⚠️"
+                                                               FontSize="16"
+                                                               TextColor="White"
+                                                               HorizontalOptions="Center" />
+                                                        <Label Text="Sécurité"
+                                                               TextColor="White"
+                                                               FontSize="12"
+                                                               FontAttributes="Bold"
+                                                               HorizontalOptions="Center" />
+                                                    </StackLayout>
+                                                </Frame>
+                                            </Grid>
+                                        </Frame>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </StackLayout>
+                    </Frame>
+                </StackLayout>
+
+                </StackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

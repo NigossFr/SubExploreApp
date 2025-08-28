@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Favorites.FavoritesPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:SubExplore.Views.Controls"
+             Title="Mes favoris"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False">
+
+    <Grid>
+        <!-- Custom Navigation Bar -->
+        <controls:CustomNavigationBar Title="Mes favoris" 
+                                      VerticalOptions="Start"
+                                      ZIndex="100" />
+        
+        <ScrollView Margin="0,56,0,0">
+        <VerticalStackLayout Spacing="20" Padding="20">
+            
+            <!-- Header -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                   CornerRadius="15"
+                   Padding="20"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Mes Spots Favoris"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center" />
+                    <Label Text="Retrouvez vos spots préférés"
+                           FontSize="14"
+                           TextColor="White"
+                           HorizontalOptions="Center"
+                           Opacity="0.9" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Content -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}"
+                   CornerRadius="15"
+                   Padding="30"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="20">
+                    
+                    <!-- Info Icon -->
+                    <Label Text="❤️"
+                           FontSize="60"
+                           HorizontalOptions="Center" />
+                    
+                    <!-- Main message -->
+                    <Label Text="Aucun favori"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray700}, Dark={StaticResource Gray300}}" />
+                    
+                    <Label Text="Vous n'avez pas encore ajouté de spots à vos favoris. Explorez les spots disponibles et marquez ceux que vous préférez !"
+                           FontSize="14"
+                           HorizontalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                           HorizontalTextAlignment="Center" />
+
+                    <!-- Action button -->
+                    <Button Text="Explorer les spots"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                            TextColor="White"
+                            CornerRadius="25"
+                            Padding="20,10"
+                            FontAttributes="Bold"
+                            Clicked="OnExploreMapClicked"
+                            HorizontalOptions="Center"
+                            Margin="0,20,0,0" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- How to add favorites -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}"
+                   CornerRadius="15"
+                   Padding="20"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="💡 Comment ajouter des favoris ?"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    
+                    <StackLayout Orientation="Horizontal" Spacing="10">
+                        <Label Text="1." 
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                        <Label Text="Explorez la carte des spots" 
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                    </StackLayout>
+                    
+                    <StackLayout Orientation="Horizontal" Spacing="10">
+                        <Label Text="2." 
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                        <Label Text="Cliquez sur un spot qui vous intéresse" 
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                    </StackLayout>
+                    
+                    <StackLayout Orientation="Horizontal" Spacing="10">
+                        <Label Text="3." 
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                        <Label Text="Appuyez sur l'icône ❤️ pour l'ajouter aux favoris" 
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                    </StackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+        </ScrollView>
+        
+    </Grid>
+
+</ContentPage>

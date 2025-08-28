@@ -254,8 +254,8 @@ public static class MauiProgram
         // ✅ PASSWORD RESET SERVICE - 100% SUPABASE
         builder.Services.AddScoped<IPasswordResetService, SupabasePasswordResetService>();
         
-        // 🚫 Validation services supprimés - utilisaient Entity Framework
-        // builder.Services.AddScoped<ISpotValidationService, SpotValidationService>();
+        // ✅ Validation services - Supabase compatible
+        builder.Services.AddScoped<ISpotValidationService, SupabaseSpotValidationService>();
         // builder.Services.AddScoped<TestDataService>();
         // builder.Services.AddScoped<SpotMigrationService>();
         
@@ -310,8 +310,8 @@ public static class MauiProgram
         // builder.Services.AddTransient<MenuViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.FlyoutMenuViewModel>();
         
-        // 🚫 Favorites ViewModels supprimés - utilisaient des repositories
-        // builder.Services.AddTransient<SubExplore.ViewModels.Favorites.FavoriteSpotsViewModel>();
+        // Favorites ViewModels
+        builder.Services.AddTransient<SubExplore.ViewModels.Favorites.FavoriteSpotsViewModel>();
         
         // Authentication ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.LoginViewModel>();
@@ -319,8 +319,8 @@ public static class MauiProgram
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.RegistrationViewModel>();
         builder.Services.AddTransient<SubExplore.ViewModels.Auth.EmailTestViewModel>();
         
-        // 🚫 Admin ViewModels supprimés - utilisaient des repositories
-        // builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotValidationViewModel>();
+        // ✅ Admin ViewModels - Supabase compatible
+        builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotValidationViewModel>();
         // builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotDiagnosticViewModel>();
         
         // Navigation ViewModels
@@ -365,8 +365,8 @@ public static class MauiProgram
         builder.Services.AddTransient<SubExplore.Views.Auth.CompleteRegistrationPage>();
         builder.Services.AddTransient<SubExplore.Views.Auth.RegistrationPage>();
         
-        // 🚫 Admin Pages supprimées - utilisaient Entity Framework
-        // builder.Services.AddTransient<SubExplore.Views.Admin.SpotValidationPage>();
+        // ✅ Admin Pages - Supabase compatible
+        builder.Services.AddTransient<SubExplore.Views.Admin.SpotValidationPage>();
         // builder.Services.AddTransient<SubExplore.Views.Admin.SpotDiagnosticPage>();
         
         // Common Views

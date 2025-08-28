@@ -105,7 +105,9 @@
       "Bash(nslookup:*)",
       "Bash(adb:*)",
       "Bash(fix-emulator-network.bat)",
-      "Bash(.fix-emulator-network.bat)"
+      "Bash(.fix-emulator-network.bat)",
+      "Bash(git log:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

@@ -108,141 +108,117 @@
                 <!-- App Information Section -->
                 <Frame Style="{StaticResource SectionCardStyle}">
                     <StackLayout Spacing="12">
-                        <Label Text="📱 Informations de l'application" 
+                        <Label Text="Informations sur l'application" 
                                Style="{StaticResource SectionHeaderStyle}" />
 
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" 
+                        <Grid RowDefinitions="Auto,Auto" 
                               ColumnDefinitions="Auto,*" 
                               RowSpacing="8" 
                               ColumnSpacing="12">
                             
-                            <Label Grid.Row="0" Grid.Column="0" Text="Nom :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
-                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding AppName}" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="0" Grid.Column="0" Text="Version :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding AppVersion}" Style="{StaticResource InfoItemStyle}" />
                             
-                            <Label Grid.Row="1" Grid.Column="0" Text="Version :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
-                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding AppVersion}" Style="{StaticResource InfoItemStyle}" />
-                            
-                            <Label Grid.Row="2" Grid.Column="0" Text="Build :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
-                            <Label Grid.Row="2" Grid.Column="1" Text="{Binding BuildNumber}" Style="{StaticResource InfoItemStyle}" />
-                            
-                            <Label Grid.Row="3" Grid.Column="0" Text="Plateforme :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
-                            <Label Grid.Row="3" Grid.Column="1" Text="{Binding Platform}" Style="{StaticResource InfoItemStyle}" />
-                            
-                            <Label Grid.Row="4" Grid.Column="0" Text="Framework :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
-                            <Label Grid.Row="4" Grid.Column="1" Text="{Binding Framework}" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="Mise à jour :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
+                            <Label Grid.Row="1" Grid.Column="1" Text="Décembre 2024" Style="{StaticResource InfoItemStyle}" />
                         </Grid>
                     </StackLayout>
                 </Frame>
 
-                <!-- Developer Information Section -->
+                <!-- Mission Section -->
                 <Frame Style="{StaticResource SectionCardStyle}">
                     <StackLayout Spacing="12">
-                        <Label Text="👨‍💻 Développement" 
+                        <Label Text="Notre Mission" 
                                Style="{StaticResource SectionHeaderStyle}" />
 
-                        <Grid RowDefinitions="Auto,Auto,Auto" 
-                              ColumnDefinitions="Auto,*" 
-                              RowSpacing="8" 
-                              ColumnSpacing="12">
-                            
-                            <Label Grid.Row="0" Grid.Column="0" Text="Développeur :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
-                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding DeveloperName}" Style="{StaticResource InfoItemStyle}" />
-                            
-                            <Label Grid.Row="1" Grid.Column="0" Text="Copyright :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
-                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding Copyright}" Style="{StaticResource InfoItemStyle}" />
-                            
-                            <Label Grid.Row="2" Grid.Column="0" Text="Contact :" FontAttributes="Bold" Style="{StaticResource InfoItemStyle}" />
-                            <Label Grid.Row="2" Grid.Column="1" Text="{Binding ContactEmail}" Style="{StaticResource InfoItemStyle}" />
-                        </Grid>
+                        <Label Text="SubExplore a été créé par et pour la communauté des sports sous-marins. Notre objectif est de faciliter la découverte de nouveaux sites de plongée tout en privilégiant la sécurité et le partage d'expériences entre passionnés."
+                               Style="{StaticResource InfoItemStyle}"
+                               LineBreakMode="WordWrap" />
+                               
+                        <Label Text="Chaque spot partagé contribue à enrichir notre base de données collective, permettant à tous les plongeurs de bénéficier des connaissances de la communauté."
+                               Style="{StaticResource InfoItemStyle}"
+                               LineBreakMode="WordWrap" />
                     </StackLayout>
                 </Frame>
 
                 <!-- Features Section -->
                 <Frame Style="{StaticResource SectionCardStyle}">
                     <StackLayout Spacing="12">
-                        <Label Text="⚙️ Fonctionnalités principales" 
+                        <Label Text="Fonctionnalités principales" 
                                Style="{StaticResource SectionHeaderStyle}" />
 
-                        <StackLayout Spacing="8">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="🗺️" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Carte interactive des spots de plongée" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                        <StackLayout Spacing="10">
+                            <Label Text="• Cartographie interactive des sites de plongée"
+                                   Style="{StaticResource InfoItemStyle}" />
                             
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="📍" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Création et gestion de vos spots personnels" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                            <Label Text="• Ajout et partage de vos spots préférés"
+                                   Style="{StaticResource InfoItemStyle}" />
                             
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="⭐" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Système de favoris et notifications" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                            <Label Text="• Informations détaillées : profondeur, courant, visibilité"
+                                   Style="{StaticResource InfoItemStyle}" />
                             
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="📊" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Statistiques personnelles de plongée" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                            <Label Text="• Système de favoris pour retrouver vos sites"
+                                   Style="{StaticResource InfoItemStyle}" />
                             
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="🌙" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Mode sombre/clair adaptatif" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                            <Label Text="• Validation communautaire pour garantir la qualité"
+                                   Style="{StaticResource InfoItemStyle}" />
                             
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="🔒" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Validation communautaire des spots" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                            <Label Text="• Statistiques personnelles de vos plongées"
+                                   Style="{StaticResource InfoItemStyle}" />
+                            
+                            <Label Text="• Profils utilisateur et gestion des préférences"
+                                   Style="{StaticResource InfoItemStyle}" />
                         </StackLayout>
                     </StackLayout>
                 </Frame>
 
-                <!-- Technical Information Section -->
+                <!-- Safety Section -->
                 <Frame Style="{StaticResource SectionCardStyle}">
                     <StackLayout Spacing="12">
-                        <Label Text="🛠️ Technologies utilisées" 
+                        <Label Text="Sécurité et Responsabilités" 
                                Style="{StaticResource SectionHeaderStyle}" />
 
-                        <StackLayout Spacing="8">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="📱" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Microsoft .NET MAUI (Multi-platform App UI)" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                        <Label Text="SubExplore facilite le partage d'informations entre plongeurs, mais ne remplace jamais :"
+                               Style="{StaticResource InfoItemStyle}"
+                               LineBreakMode="WordWrap" />
+
+                        <StackLayout Spacing="8" Margin="16,0,0,0">
+                            <Label Text="• Une formation de plongée certifiée"
+                                   Style="{StaticResource InfoItemStyle}" />
                             
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="🗄️" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Entity Framework Core avec MySQL" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                            <Label Text="• La vérification des conditions locales"
+                                   Style="{StaticResource InfoItemStyle}" />
                             
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="🗺️" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Microsoft Maps pour la cartographie" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                            <Label Text="• L'évaluation personnelle de vos compétences"
+                                   Style="{StaticResource InfoItemStyle}" />
                             
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="🎨" FontSize="16" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="XAML avec thèmes adaptatifs" Style="{StaticResource InfoItemStyle}" />
-                            </Grid>
+                            <Label Text="• Le respect des réglementations locales"
+                                   Style="{StaticResource InfoItemStyle}" />
                         </StackLayout>
+
+                        <Label Text="Plongez toujours accompagné et dans les limites de votre certification."
+                               Style="{StaticResource InfoItemStyle}"
+                               LineBreakMode="WordWrap"
+                               FontAttributes="Italic"
+                               TextColor="{StaticResource Warning}" />
                     </StackLayout>
                 </Frame>
 
                 <!-- Legal Information Section -->
                 <Frame Style="{StaticResource SectionCardStyle}">
                     <StackLayout Spacing="12">
-                        <Label Text="⚖️ Informations légales" 
+                        <Label Text="Mentions légales" 
                                Style="{StaticResource SectionHeaderStyle}" />
 
-                        <StackLayout Spacing="8">
+                        <StackLayout Spacing="12">
                             <Label Text="{Binding LegalDisclaimer}" 
                                    Style="{StaticResource InfoItemStyle}"
                                    LineBreakMode="WordWrap" />
                                    
-                            <Label Text="Cette application est destinée aux plongeurs expérimentés. Vérifiez toujours les conditions locales et respectez les règles de sécurité en plongée." 
+                            <Label Text="{Binding Copyright}" 
                                    Style="{StaticResource InfoItemStyle}"
-                                   LineBreakMode="WordWrap"
-                                   TextColor="{StaticResource Warning}"
-                                   FontAttributes="Italic" />
+                                   FontSize="12"
+                                   HorizontalOptions="Center" />
                         </StackLayout>
                     </StackLayout>
                 </Frame>
@@ -251,7 +227,7 @@
                 <StackLayout Spacing="12" Margin="0,8,0,16">
                     
                     <!-- Contact Button -->
-                    <Button Text="📧 Nous contacter"
+                    <Button Text="Nous contacter"
                             Command="{Binding ContactCommand}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                             TextColor="White"
@@ -261,7 +237,7 @@
                             HeightRequest="44" />
                     
                     <!-- Privacy Policy Button -->
-                    <Button Text="🔒 Politique de confidentialité"
+                    <Button Text="Politique de confidentialité"
                             Command="{Binding PrivacyPolicyCommand}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
                             TextColor="White"
