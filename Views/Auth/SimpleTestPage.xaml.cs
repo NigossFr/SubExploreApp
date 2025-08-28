@@ -62,7 +62,7 @@ namespace SubExplore.Views.Auth
                 
                 var result = await _authService.LoginAsync(email, password);
 
-                if (result.IsSuccess)
+                if (result.Success)
                 {
                     StatusLabel.Text = $"✅ Connexion réussie ! Utilisateur : {result.User?.Email}";
                     StatusLabel.TextColor = Colors.Green;

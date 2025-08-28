@@ -358,7 +358,7 @@ public partial class FlyoutMenuViewModel : ObservableObject
             // Try to login with the default admin credentials
             var result = await _authenticationService.LoginAsync("admin@subexplore.com", "AdminPassword123!");
             
-            if (result.IsSuccess)
+            if (result.Success)
             {
                 System.Diagnostics.Debug.WriteLine($"[FlyoutMenuViewModel] Debug: Admin login successful! User: {result.User?.Username}");
                 

@@ -11,7 +11,7 @@ namespace SubExplore.ViewModels.Auth
 {
     public partial class RegistrationViewModel : ObservableValidator
     {
-        private readonly IAuthenticationService _authenticationService;
+        private readonly ISimpleAuthenticationService _authenticationService;
         private readonly ILogger<RegistrationViewModel> _logger;
 
         [ObservableProperty]
@@ -88,6 +88,15 @@ namespace SubExplore.ViewModels.Auth
         [ObservableProperty]
         private double _registrationProgress = 0.0;
 
+        [ObservableProperty]
+        private string _passwordStrength = "Faible";
+
+        [ObservableProperty]
+        private Color _passwordStrengthColor = Colors.Red;
+
+        [ObservableProperty]
+        private double _passwordStrengthProgress = 0.0;
+
         // Services for navigation and dialogs
         private readonly IDialogService _dialogService;
         private readonly INavigationService _navigationService;
@@ -95,7 +104,7 @@ namespace SubExplore.ViewModels.Auth
         public string Title { get; set; } = "Inscription";
 
         public RegistrationViewModel(
-            IAuthenticationService authenticationService,
+            ISimpleAuthenticationService authenticationService,
             ILogger<RegistrationViewModel> logger,
             IDialogService dialogService,
             INavigationService navigationService)
@@ -130,51 +139,37 @@ namespace SubExplore.ViewModels.Auth
                 // Add slight delay for smooth UX
                 await Task.Delay(300);
 
-                // Create registration request
-                var registrationRequest = new UserRegistrationRequest
-                {
-                    FirstName = FirstName.Trim(),
-                    LastName = LastName.Trim(),
-                    Username = Username.Trim(),
-                    Email = Email.Trim().ToLowerInvariant(),
-                    Password = Password,
-                    ConfirmPassword = ConfirmPassword,
-                    AcceptTermsAndConditions = AcceptTermsAndConditions
-                };
-
                 RegistrationProgress = 0.7;
                 
-                // Perform registration
-                var result = await _authenticationService.RegisterAsync(registrationRequest);
+                // Perform registration using SimpleAuthenticationService
+                var result = await _authenticationService.RegisterSimpleAsync(
+                    Email.Trim().ToLowerInvariant(), 
+                    Password, 
+                    FirstName.Trim(), 
+                    LastName.Trim());
+                    
                 RegistrationProgress = 0.9;
 
-                if (result.IsSuccess)
+                if (result)
                 {
-                    _logger.LogInformation("Registration successful for user: {UserId}", result.User?.Id);
+                    _logger.LogInformation("Registration successful for user: {Email}", Email);
                     RegistrationProgress = 1.0;
                     
                     await _dialogService.ShowAlertAsync(
-                        "🎉 Inscription réussie !",
-                        "Votre compte a été créé avec succès. Vous êtes maintenant connecté.",
+                        "Inscription réussie !",
+                        "Votre compte a été créé avec succès. Vérifiez votre email pour confirmer votre inscription.",
                         "Continuer");
                     
                     // Small delay for progress completion
                     await Task.Delay(200);
                     
-                    // Navigate to main application
-                    await _navigationService.NavigateToAsync<MapViewModel>();
+                    // Navigate back to login page to complete verification
+                    await NavigateToLogin();
                 }
                 else
                 {
-                    _logger.LogWarning("Registration failed: {ErrorMessage}", result.ErrorMessage);
-                    ShowRegistrationError(result.ErrorMessage ?? "Erreur d'inscription inconnue");
-
-                    // Show validation errors if any
-                    if (result.ValidationErrors?.Any() == true)
-                    {
-                        var errors = string.Join("\n", result.ValidationErrors);
-                        await _dialogService.ShowAlertAsync("Erreurs de validation", errors, "D'accord");
-                    }
+                    _logger.LogWarning("Registration failed for user: {Email}", Email);
+                    ShowRegistrationError("L'inscription a échoué. Vérifiez vos informations et réessayez.");
                 }
             }
             catch (Exception ex)
@@ -381,8 +376,55 @@ namespace SubExplore.ViewModels.Auth
 
         private void ValidatePassword()
         {
-            IsPasswordValid = !string.IsNullOrWhiteSpace(Password) && Password.Length >= 8;
+            IsPasswordValid = !string.IsNullOrWhiteSpace(Password) && Password.Length >= 8 && GetPasswordStrength(Password) >= 3;
+            UpdatePasswordStrength();
             UpdateCanRegister();
+        }
+
+        private void UpdatePasswordStrength()
+        {
+            if (string.IsNullOrWhiteSpace(Password))
+            {
+                PasswordStrength = "";
+                PasswordStrengthProgress = 0.0;
+                PasswordStrengthColor = Colors.Gray;
+                return;
+            }
+
+            var strength = GetPasswordStrength(Password);
+            var (strengthText, color, progress) = strength switch
+            {
+                1 => ("Très faible", Colors.Red, 0.2),
+                2 => ("Faible", Colors.Orange, 0.4),
+                3 => ("Correct", Colors.Yellow, 0.6),
+                4 => ("Fort", Colors.LightGreen, 0.8),
+                5 => ("Très fort", Colors.Green, 1.0),
+                _ => ("Invalide", Colors.Gray, 0.0)
+            };
+
+            PasswordStrength = strengthText;
+            PasswordStrengthColor = color;
+            PasswordStrengthProgress = progress;
+        }
+
+        private int GetPasswordStrength(string password)
+        {
+            if (string.IsNullOrWhiteSpace(password)) return 0;
+            
+            var strength = 0;
+            
+            // Length check
+            if (password.Length >= 8) strength++;
+            if (password.Length >= 12) strength++;
+            
+            // Character variety checks
+            if (password.Any(char.IsLower)) strength++;
+            if (password.Any(char.IsUpper)) strength++;
+            if (password.Any(char.IsDigit)) strength++;
+            if (password.Any(c => "!@#$%^&*()_+-=[]{}|;:,.<>?".Contains(c))) strength++;
+            
+            // Cap at 5 for display purposes
+            return Math.Min(5, strength);
         }
 
         private void ValidatePasswordConfirmation()

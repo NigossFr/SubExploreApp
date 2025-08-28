@@ -106,7 +106,7 @@ public static class MauiProgram
         builder.Services.AddScoped<ISupabaseUserService, SupabaseUserService>();
         
         // 🔐 SERVICE D'AUTHENTIFICATION AVANCÉ
-        builder.Services.AddSingleton<IEnhancedAuthenticationService, EnhancedAuthenticationService>();
+        builder.Services.AddSingleton<ISimpleAuthenticationService, EnhancedAuthenticationService>();
 
         Debug.WriteLine("✅ Services Supabase natifs configurés");
         
@@ -252,7 +252,7 @@ public static class MauiProgram
         // 🚫 Services email supprimés - utilisaient des repositories
         // builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
         // ✅ PASSWORD RESET SERVICE - 100% SUPABASE
-        builder.Services.AddScoped<IPasswordResetService, SupabasePasswordResetService>();
+        builder.Services.AddScoped<IPasswordResetService, StubPasswordResetService>();
         
         // ✅ Validation services - Supabase compatible
         builder.Services.AddScoped<ISpotValidationService, SupabaseSpotValidationService>();

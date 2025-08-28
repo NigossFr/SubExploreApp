@@ -6,81 +6,15 @@
 using Microsoft.Extensions.Logging;
 using SubExplore.Services.Interfaces;
 using SubExplore.Models.Domain;
+using SubExplore.Models.DTOs;
 using SubExplore.Models.Enums;
 using BCrypt.Net;
 
 namespace SubExplore.Services.Implementations
 {
-    /// <summary>
-    /// Service d'authentification avancé pour l'API Supabase
-    /// Utilise les services natifs Supabase pour toutes les opérations
-    /// </summary>
-    public interface IEnhancedAuthenticationService
-    {
-        /// <summary>
-        /// Événement déclenché lors du changement d'état d'authentification
-        /// </summary>
-        event EventHandler<AuthenticationStateChangedEventArgs>? StateChanged;
-        
-        /// <summary>
-        /// Initialise le service d'authentification
-        /// </summary>
-        Task<bool> InitializeAsync();
-        
-        /// <summary>
-        /// Indique si l'utilisateur est authentifié
-        /// </summary>
-        bool IsAuthenticated { get; }
-        
-        /// <summary>
-        /// Obtient l'utilisateur actuel
-        /// </summary>
-        User? CurrentUser { get; }
-        
-        /// <summary>
-        /// Connexion avec email et mot de passe
-        /// </summary>
-        Task<AuthenticationResult> LoginAsync(string email, string password);
-        
-        /// <summary>
-        /// Inscription d'un nouvel utilisateur
-        /// </summary>
-        Task<AuthenticationResult> RegisterAsync(string email, string password, string firstName, string lastName, string? username = null);
-        
-        /// <summary>
-        /// Déconnexion
-        /// </summary>
-        Task LogoutAsync();
-        
-        /// <summary>
-        /// Réinitialisation du mot de passe
-        /// </summary>
-        Task<bool> RequestPasswordResetAsync(string email);
-        
-        /// <summary>
-        /// Mise à jour du profil utilisateur
-        /// </summary>
-        Task<bool> UpdateProfileAsync(User user);
-        
-        /// <summary>
-        /// Vérification de l'email
-        /// </summary>
-        Task<bool> VerifyEmailAsync(Guid userId);
-        
-        /// <summary>
-        /// Rafraîchit les données de l'utilisateur actuel
-        /// </summary>
-        Task<bool> RefreshCurrentUserAsync();
-    }
+    // Interface moved to Services/Interfaces/IEnhancedAuthenticationService.cs
 
-    public class AuthenticationResult
-    {
-        public bool Success { get; set; }
-        public string? ErrorMessage { get; set; }
-        public User? User { get; set; }
-    }
-
-    public class EnhancedAuthenticationService : IEnhancedAuthenticationService
+    public class EnhancedAuthenticationService : ISimpleAuthenticationService
     {
         private readonly ISupabaseClientService _supabaseClient;
         private readonly ISupabaseUserService _userService;
@@ -90,10 +24,25 @@ namespace SubExplore.Services.Implementations
         private bool _isInitialized = false;
         private User? _currentUser = null;
 
-        public event EventHandler<AuthenticationStateChangedEventArgs>? StateChanged;
-
         public bool IsAuthenticated => _isInitialized && _currentUser != null;
         public User? CurrentUser => _currentUser;
+
+        public async Task<User?> GetCurrentUserAsync()
+        {
+            if (!IsAuthenticated)
+                return null;
+
+            try
+            {
+                await RefreshCurrentUserAsync();
+                return _currentUser;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la récupération de l'utilisateur actuel");
+                return _currentUser;
+            }
+        }
 
         public EnhancedAuthenticationService(
             ISupabaseClientService supabaseClient,
@@ -107,12 +56,12 @@ namespace SubExplore.Services.Implementations
             _settingsService = settingsService;
         }
 
-        public async Task<bool> InitializeAsync()
+        public async Task InitializeAsync()
         {
             if (_isInitialized)
             {
                 _logger.LogInformation("✅ EnhancedAuthenticationService déjà initialisé");
-                return true;
+                return;
             }
 
             try
@@ -127,7 +76,7 @@ namespace SubExplore.Services.Implementations
                     if (!clientReady)
                     {
                         _logger.LogError("❌ Impossible d'initialiser le client Supabase");
-                        return false;
+                        throw new InvalidOperationException("Impossible d'initialiser le client Supabase");
                     }
                 }
 
@@ -136,16 +85,15 @@ namespace SubExplore.Services.Implementations
 
                 _isInitialized = true;
                 _logger.LogInformation("✅ EnhancedAuthenticationService initialisé avec succès");
-                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Erreur lors de l'initialisation du service d'authentification");
-                return false;
+                throw;
             }
         }
 
-        public async Task<AuthenticationResult> LoginAsync(string email, string password)
+        public async Task<bool> LoginSimpleAsync(string email, string password)
         {
             try
             {
@@ -153,11 +101,8 @@ namespace SubExplore.Services.Implementations
 
                 if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
                 {
-                    return new AuthenticationResult
-                    {
-                        Success = false,
-                        ErrorMessage = "Email et mot de passe requis"
-                    };
+                    _logger.LogWarning("Email et mot de passe requis");
+                    return false;
                 }
 
                 // Récupérer l'utilisateur par email
@@ -165,11 +110,7 @@ namespace SubExplore.Services.Implementations
                 if (supabaseUser == null)
                 {
                     _logger.LogWarning($"🚫 Utilisateur non trouvé: {email}");
-                    return new AuthenticationResult
-                    {
-                        Success = false,
-                        ErrorMessage = "Identifiants invalides"
-                    };
+                    return false;
                 }
 
                 // Vérifier le mot de passe
@@ -177,11 +118,7 @@ namespace SubExplore.Services.Implementations
                     !BCrypt.Net.BCrypt.Verify(password, supabaseUser.PasswordHash))
                 {
                     _logger.LogWarning($"🚫 Mot de passe incorrect pour: {email}");
-                    return new AuthenticationResult
-                    {
-                        Success = false,
-                        ErrorMessage = "Identifiants invalides"
-                    };
+                    return false;
                 }
 
                 // Mettre à jour la dernière connexion
@@ -193,32 +130,17 @@ namespace SubExplore.Services.Implementations
                 // Sauvegarder la session localement
                 await SaveSessionAsync(_currentUser);
 
-                // Déclencher l'événement de changement d'état
-                StateChanged?.Invoke(this, new AuthenticationStateChangedEventArgs 
-                { 
-                    IsAuthenticated = true, 
-                    User = _currentUser 
-                });
-
                 _logger.LogInformation($"✅ Connexion réussie pour: {email}");
-                return new AuthenticationResult
-                {
-                    Success = true,
-                    User = _currentUser
-                };
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"❌ Erreur lors de la connexion: {email}");
-                return new AuthenticationResult
-                {
-                    Success = false,
-                    ErrorMessage = "Erreur interne du serveur"
-                };
+                return false;
             }
         }
 
-        public async Task<AuthenticationResult> RegisterAsync(string email, string password, string firstName, string lastName, string? username = null)
+        public async Task<bool> RegisterSimpleAsync(string email, string password, string firstName, string lastName)
         {
             try
             {
@@ -227,32 +149,17 @@ namespace SubExplore.Services.Implementations
                 if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) ||
                     string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
                 {
-                    return new AuthenticationResult
-                    {
-                        Success = false,
-                        ErrorMessage = "Tous les champs sont requis"
-                    };
+                    _logger.LogWarning("Tous les champs sont requis");
+                    return false;
                 }
 
                 // Vérifier si l'email existe déjà
                 if (await _userService.EmailExistsAsync(email))
                 {
-                    return new AuthenticationResult
-                    {
-                        Success = false,
-                        ErrorMessage = "Cet email est déjà utilisé"
-                    };
+                    _logger.LogWarning($"Cet email est déjà utilisé: {email}");
+                    return false;
                 }
 
-                // Vérifier si le nom d'utilisateur existe déjà
-                if (!string.IsNullOrWhiteSpace(username) && await _userService.UsernameExistsAsync(username))
-                {
-                    return new AuthenticationResult
-                    {
-                        Success = false,
-                        ErrorMessage = "Ce nom d'utilisateur est déjà pris"
-                    };
-                }
 
                 // Hasher le mot de passe
                 var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
@@ -262,7 +169,7 @@ namespace SubExplore.Services.Implementations
                 {
                     Email = email.ToLower(),
                     PasswordHash = passwordHash,
-                    Username = username?.ToLower(),
+                    Username = null,
                     FirstName = firstName,
                     LastName = lastName,
                     AccountType = AccountType.Standard.ToString(),
@@ -277,28 +184,13 @@ namespace SubExplore.Services.Implementations
                 // Sauvegarder la session localement
                 await SaveSessionAsync(_currentUser);
 
-                // Déclencher l'événement de changement d'état
-                StateChanged?.Invoke(this, new AuthenticationStateChangedEventArgs 
-                { 
-                    IsAuthenticated = true, 
-                    User = _currentUser 
-                });
-
                 _logger.LogInformation($"✅ Inscription réussie pour: {email}");
-                return new AuthenticationResult
-                {
-                    Success = true,
-                    User = _currentUser
-                };
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"❌ Erreur lors de l'inscription: {email}");
-                return new AuthenticationResult
-                {
-                    Success = false,
-                    ErrorMessage = "Erreur interne du serveur"
-                };
+                return false;
             }
         }
 
@@ -313,12 +205,6 @@ namespace SubExplore.Services.Implementations
                 // Effacer la session locale
                 await ClearSessionAsync();
 
-                // Déclencher l'événement de changement d'état
-                StateChanged?.Invoke(this, new AuthenticationStateChangedEventArgs 
-                { 
-                    IsAuthenticated = false, 
-                    User = null 
-                });
 
                 _logger.LogInformation("✅ Déconnexion réussie");
             }

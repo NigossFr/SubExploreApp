@@ -51,6 +51,15 @@ namespace SubExplore.ViewModels.Auth
         [ObservableProperty]
         private double _loginProgress = 0.0;
 
+        [ObservableProperty]
+        private bool _showAutoLoginOption = false;
+
+        [ObservableProperty]
+        private bool _isAutoLoginInProgress = false;
+
+        [ObservableProperty]
+        private string _savedUserEmail = string.Empty;
+
         // Services for navigation and dialogs
         private readonly IDialogService _dialogService;
         private readonly INavigationService _navigationService;
@@ -344,6 +353,8 @@ namespace SubExplore.ViewModels.Auth
             {
                 await _secureSettings.SetSecureAsync("remembered_email", Email);
                 await _secureSettings.SetSecureAsync("remember_me", true);
+                await _secureSettings.SetSecureAsync("last_login_time", DateTime.UtcNow);
+                await _secureSettings.SetSecureAsync("auto_login_enabled", true);
                 _logger.LogInformation("User credentials saved securely");
             }
             catch (Exception ex)
@@ -364,11 +375,19 @@ namespace SubExplore.ViewModels.Auth
                 if (rememberMe)
                 {
                     var savedEmail = await _secureSettings.GetSecureAsync("remembered_email", string.Empty);
+                    var autoLogin = await _secureSettings.GetSecureAsync("auto_login_enabled", false);
+                    var lastLoginTime = await _secureSettings.GetSecureAsync("last_login_time", DateTime.MinValue);
                     
                     if (!string.IsNullOrWhiteSpace(savedEmail))
                     {
                         Email = savedEmail;
+                        SavedUserEmail = savedEmail;
                         RememberMe = true;
+                        
+                        // Show auto-login option if credentials were saved recently (within 7 days)
+                        var daysSinceLastLogin = (DateTime.UtcNow - lastLoginTime).TotalDays;
+                        ShowAutoLoginOption = autoLogin && daysSinceLastLogin <= 7;
+                        
                         _logger.LogInformation("Loaded remembered credentials for user");
                     }
                 }
@@ -388,6 +407,8 @@ namespace SubExplore.ViewModels.Auth
             {
                 await _secureSettings.RemoveSecureAsync("remembered_email");
                 await _secureSettings.RemoveSecureAsync("remember_me");
+                await _secureSettings.RemoveSecureAsync("last_login_time");
+                await _secureSettings.RemoveSecureAsync("auto_login_enabled");
                 _logger.LogInformation("Cleared remembered credentials");
             }
             catch (Exception ex)
@@ -408,12 +429,86 @@ namespace SubExplore.ViewModels.Auth
                 Email = string.Empty;
                 Password = string.Empty;
                 RememberMe = false;
-                await _dialogService.ShowToastAsync("🗑️ Identifiants oubliés");
+                ShowAutoLoginOption = false;
+                SavedUserEmail = string.Empty;
+                await _dialogService.ShowToastAsync("Identifiants oubliés");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in clear remembered credentials command");
                 await _dialogService.ShowAlertAsync("Erreur", "Impossible d'effacer les identifiants sauvegardés.", "D'accord");
+            }
+        }
+
+        /// <summary>
+        /// Auto-login with saved credentials
+        /// </summary>
+        [RelayCommand]
+        private async Task AutoLogin()
+        {
+            if (IsAutoLoginInProgress || string.IsNullOrEmpty(SavedUserEmail)) return;
+
+            try
+            {
+                IsAutoLoginInProgress = true;
+                
+                // Check if user is already authenticated
+                if (_simpleAuthenticationService.IsAuthenticated)
+                {
+                    _logger.LogInformation("User already authenticated, navigating to main app");
+                    _navigationService.SwitchToShellNavigation();
+                    return;
+                }
+
+                _logger.LogInformation("Attempting auto-login for saved user");
+                await _dialogService.ShowToastAsync($"Connexion automatique pour {SavedUserEmail}...");
+                
+                // Small delay for UX
+                await Task.Delay(1000);
+                
+                // Try to restore session - if this fails, user will need to login manually
+                await _simpleAuthenticationService.InitializeAsync();
+                
+                if (_simpleAuthenticationService.IsAuthenticated)
+                {
+                    _logger.LogInformation("Auto-login successful");
+                    await _dialogService.ShowToastAsync("Connecté automatiquement !");
+                    _navigationService.SwitchToShellNavigation();
+                }
+                else
+                {
+                    _logger.LogInformation("Auto-login failed, session expired");
+                    ShowAutoLoginOption = false;
+                    await _dialogService.ShowToastAsync("Session expirée, veuillez vous reconnecter");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during auto-login");
+                ShowAutoLoginOption = false;
+                await _dialogService.ShowToastAsync("Erreur lors de la connexion automatique");
+            }
+            finally
+            {
+                IsAutoLoginInProgress = false;
+            }
+        }
+
+        /// <summary>
+        /// Disable auto-login feature
+        /// </summary>
+        [RelayCommand]
+        private async Task DisableAutoLogin()
+        {
+            try
+            {
+                await _secureSettings.SetSecureAsync("auto_login_enabled", false);
+                ShowAutoLoginOption = false;
+                await _dialogService.ShowToastAsync("Connexion automatique désactivée");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error disabling auto-login");
             }
         }
     }

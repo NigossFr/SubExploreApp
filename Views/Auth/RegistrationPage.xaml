@@ -273,6 +273,44 @@
                                     Command="{Binding TogglePasswordVisibilityCommand}" />
                         </Grid>
                     </Frame>
+                    
+                    <!-- Password Strength Indicator -->
+                    <StackLayout Spacing="8" IsVisible="{Binding Password, Converter={StaticResource StringNotEmptyConverter}}">
+                        <StackLayout Orientation="Horizontal" Spacing="8">
+                            <Label Text="Force du mot de passe:"
+                                   FontSize="12"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   VerticalOptions="Center" />
+                            <Label Text="{Binding PasswordStrength}"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   TextColor="{Binding PasswordStrengthColor}"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
+                        
+                        <ProgressBar Progress="{Binding PasswordStrengthProgress}"
+                                     ProgressColor="{Binding PasswordStrengthColor}"
+                                     BackgroundColor="{StaticResource Gray200}"
+                                     HeightRequest="6" />
+                        
+                        <!-- Password Requirements -->
+                        <StackLayout Spacing="4">
+                            <Label Text="Conseils pour un mot de passe fort:"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource TextSecondary}" />
+                                   
+                            <Label Text="• Au moins 8 caractères (12+ recommandés)"
+                                   FontSize="10"
+                                   TextColor="{StaticResource TextSecondary}" />
+                            <Label Text="• Majuscules et minuscules"
+                                   FontSize="10"
+                                   TextColor="{StaticResource TextSecondary}" />
+                            <Label Text="• Chiffres et caractères spéciaux"
+                                   FontSize="10"
+                                   TextColor="{StaticResource TextSecondary}" />
+                        </StackLayout>
+                    </StackLayout>
                 </StackLayout>
 
                 <!-- Confirm Password Field -->
