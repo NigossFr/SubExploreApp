@@ -183,7 +183,6 @@ namespace SubExplore.ViewModels.Map
         partial void OnPinsChanged(ObservableCollection<Pin>? value)
         {
             FilteredSpotsCount = value?.Count ?? 0;
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] OnPinsChanged: FilteredSpotsCount updated to {FilteredSpotsCount}");
         }
 
         public MapViewModel(
@@ -269,12 +268,10 @@ namespace SubExplore.ViewModels.Map
 
                 _isInitializing = true;
                 IsBusy = true;
-                System.Diagnostics.Debug.WriteLine("[DEBUG] MapViewModel InitializeAsync started with enhanced error handling");
                 
                 try
                 {
                     // Step 1: Initialize platform-specific map configuration
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Initializing platform map service");
                     var mapInitialized = await _platformMapService.InitializePlatformMapAsync();
                     if (!mapInitialized)
                     {
@@ -284,7 +281,6 @@ namespace SubExplore.ViewModels.Map
                     }
 
                     // Step 2: Load spot types FIRST (required for filters and conversion to work)
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types (required for filters and spot conversion)");
                     await LoadSpotTypesOptimized();
                     
                     if (SpotTypes?.Count == 0)
@@ -298,18 +294,15 @@ namespace SubExplore.ViewModels.Map
                         // ✅ AMÉLIORATION: Log SpotType details for debugging
                         foreach (var spotType in SpotTypes.Take(3))
                         {
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotType available: {spotType.Name} (ID: {spotType.Id})");
                         }
                     }
 
                     // Step 3: ✅ CORRECTION: Load spots synchronously to ensure proper initialization order
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spots data synchronously to ensure proper SpotType linkage");
                     await LoadSpotsOptimized(); // Changed from background loading to synchronous
 
                     // Step 4: Finalize initialization on UI thread
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Finalizing initialization - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
                         
                         _isInitialized = true;
                         _isInitializing = false;
@@ -322,11 +315,9 @@ namespace SubExplore.ViewModels.Map
                     });
 
                     // Step 4.5: Force load current user and update menu AFTER map is initialized
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Force loading current user for menu initialization");
                     try
                     {
                         await LoadCurrentUser();
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] Force LoadCurrentUser completed - menu should now reflect user permissions");
                     }
                     catch (Exception userEx)
                     {
@@ -334,7 +325,6 @@ namespace SubExplore.ViewModels.Map
                     }
 
                     // Step 5: Try to get user's location after map is initialized
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Attempting to get user location on startup");
                     try
                     {
                         // Check if location services are available
@@ -363,7 +353,6 @@ namespace SubExplore.ViewModels.Map
                                     });
                                     
                                     // Optionally reload spots based on user location
-                                    System.Diagnostics.Debug.WriteLine("[DEBUG] Reloading spots based on user location");
                                     await LoadSpotsOptimized();
                                 }
                                 else
@@ -413,21 +402,17 @@ namespace SubExplore.ViewModels.Map
             try
             {
                 // Exécuter toutes les opérations de chargement en parallèle pour améliorer les performances
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Starting parallel data loading for better performance");
                 
                 var spotTypesTask = Task.Run(async () =>
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading spot types in background");
                     await LoadSpotTypesOptimized();
                 });
                 
                 var userTask = Task.Run(async () =>
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Loading user for menu in background");
                     try
                     {
                         await LoadCurrentUser();
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] LoadCurrentUser completed successfully");
                     }
                     catch (Exception ex)
                     {
@@ -437,7 +422,6 @@ namespace SubExplore.ViewModels.Map
                 
                 var locationTask = Task.Run(async () =>
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Checking location service availability in background");
                     var isAvailable = await _locationService.IsLocationServiceEnabledAsync();
                     await MainThread.InvokeOnMainThreadAsync(() => 
                     {
@@ -447,12 +431,10 @@ namespace SubExplore.ViewModels.Map
                 
                 // Attendre que toutes les tâches parallèles se terminent
                 await Task.WhenAll(spotTypesTask, userTask, locationTask);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Parallel loading completed - SpotTypes: {SpotTypes?.Count ?? 0}, Location available: {IsLocationAvailable}");
                 
                 // Yield minimal to UI thread
                 await Task.Delay(1);
                 
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Data loading with yields completed");
             }
             catch (Exception ex)
             {
@@ -476,47 +458,33 @@ namespace SubExplore.ViewModels.Map
             try
             {
                 IsBusy = true;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpots started. IsLocationAvailable: {IsLocationAvailable}");
 
                 IEnumerable<Models.Domain.Spot> spots;
 
                 // TEMPORAIRE : Force le chargement de tous les spots approuvés pour diagnostic
-                System.Diagnostics.Debug.WriteLine("[DEBUG] FORCE: Loading all approved spots for debugging");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Repository instance: null (temporairement désactivé)");
                 
                 // 🚫 Repository temporairement désactivé
                 // spots = await _spotRepository.GetSpotsByValidationStatusAsync(SpotValidationStatus.Approved);
                 spots = new List<Spot>(); // Liste vide temporaire
                 
                 // Log de diagnostic supplémentaire
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Query completed. Raw result count: {spots?.Count() ?? 0}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] IsLocationAvailable: {IsLocationAvailable}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] UserLatitude: {UserLatitude}, UserLongitude: {UserLongitude}");
                 
                 // Si on obtient des spots, vérifions leur contenu
                 if (spots != null && spots.Any())
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Found {spots.Count()} spots from repository");
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] First 5 spots details:");
                     foreach (var spot in spots.Take(5))
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG]   - {spot.Name} (ID:{spot.Id})");
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG]     Status: {spot.ValidationStatus}, TypeId: {spot.TypeId}");
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG]     Position: {spot.Latitude}, {spot.Longitude}");
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG]     Type: {spot.Type?.Name ?? "null"}, Creator: {spot.Creator?.Id.ToString() ?? "null"}");
                     }
                 }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine("[WARNING] ✗ No spots returned from repository");
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Checking database connection and data...");
                     
                     try
                     {
                         // Test database connectivity
                         // 🚫 DatabaseService temporairement désactivé
                         // await _databaseService.TestConnectionAsync();
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] ✓ Database connection test passed");
                     }
                     catch (Exception dbEx)
                     {
@@ -525,7 +493,6 @@ namespace SubExplore.ViewModels.Map
                 }
 
                 var spotsCount = spots?.Count() ?? 0;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Retrieved {spotsCount} spots from repository");
 
                 if (spotsCount == 0)
                 {
@@ -536,20 +503,15 @@ namespace SubExplore.ViewModels.Map
                 {
                     foreach (var spot in spots.Take(3)) // Log first 3 spots for debugging
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Sample spot: {spot.Name} at {spot.Latitude}, {spot.Longitude}");
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] About to refresh spots list with {spotsCount} spots");
                 RefreshSpotsList(spots);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Spots list refreshed, now contains {Spots?.Count ?? 0} spots");
                 
                 // Allow UI to update between operations
                 await Task.Delay(50);
                 
-                System.Diagnostics.Debug.WriteLine("[DEBUG] About to update pins");
                 UpdatePins();
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Pins updated, now contains {Pins?.Count ?? 0} pins");
                 
                 // Allow UI to refresh after pins are updated
                 await Task.Delay(50);
@@ -675,7 +637,6 @@ namespace SubExplore.ViewModels.Map
                 IsBusy = true;
                 IsFiltering = true;
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] FilterSpots called with filterType: {filterType}");
 
                 // Use the new category-based filtering system
                 string categoryName = filterType.ToLower() switch
@@ -690,12 +651,10 @@ namespace SubExplore.ViewModels.Map
 
                 if (!string.IsNullOrEmpty(categoryName))
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtering by category: {categoryName}");
                     await ApplyCategoryFilter(categoryName);
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] No specific category found for {filterType}, showing all spots");
                     await ClearFilters();
                 }
             }
@@ -735,7 +694,6 @@ namespace SubExplore.ViewModels.Map
         private void FilterSpotsByTypeCore(SpotType spotType)
         {
             SelectedSpotType = spotType;
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtering spots by type: {spotType?.Name ?? "All"}");
             
             // Apply filter and update pins based on current spots in memory
             ApplySpotTypeFilterCore();
@@ -754,7 +712,6 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private void ShowSpotMiniWindow(Models.Domain.Spot spot)
         {
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] ShowSpotMiniWindow CALLED with spot: {spot?.Name ?? "null"}");
             
             if (spot == null) 
             {
@@ -762,21 +719,15 @@ namespace SubExplore.ViewModels.Map
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Before setting properties - IsSpotMiniWindowVisible: {IsSpotMiniWindowVisible}");
             
             SelectedSpot = spot;
             IsSpotMiniWindowVisible = true;
             
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Properties set - IsSpotMiniWindowVisible: {IsSpotMiniWindowVisible}");
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ SelectedSpot: {SelectedSpot?.Name ?? "null"}");
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ SelectedSpot.Type: {SelectedSpot?.Type?.Name ?? "null"}");
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ SelectedSpot.DifficultyLevel: {SelectedSpot?.DifficultyLevel}");
             
             // Force property change notifications
             OnPropertyChanged(nameof(IsSpotMiniWindowVisible));
             OnPropertyChanged(nameof(SelectedSpot));
             
-            System.Diagnostics.Debug.WriteLine("[DEBUG] ✓ Property change notifications sent");
         }
 
         [RelayCommand]
@@ -785,7 +736,6 @@ namespace SubExplore.ViewModels.Map
             IsSpotMiniWindowVisible = false;
             SelectedSpot = null;
             
-            System.Diagnostics.Debug.WriteLine("[DEBUG] Closed spot mini window");
         }
 
         [RelayCommand]
@@ -803,13 +753,9 @@ namespace SubExplore.ViewModels.Map
                 var spotId = SelectedSpot.Id;
                 var spotName = SelectedSpot.Name;
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Starting navigation to details for spot {spotName} (ID: {spotId})");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Current MainPage type: {Application.Current?.MainPage?.GetType().Name}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: NavigationService null check: {NavigationService == null}");
                 
                 // Close mini window after capturing data
                 CloseSpotMiniWindow();
-                System.Diagnostics.Debug.WriteLine("[DEBUG] ViewSpotDetails: Mini window closed");
                 
                 // Check if NavigationService is available
                 if (NavigationService == null)
@@ -819,9 +765,6 @@ namespace SubExplore.ViewModels.Map
                     return;
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: About to call NavigateToAsync with SpotId: {spotId}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Spot name: {spotName}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Using captured data (SelectedSpot is now null after mini window closure)");
                 
                 // Final safety check before navigation
                 if (NavigationService == null)
@@ -831,15 +774,12 @@ namespace SubExplore.ViewModels.Map
                     return;
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: Final pre-navigation check - SpotId: {spotId}, NavigationService: {NavigationService.GetType().Name}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ViewSpotDetails: About to navigate to SpotDetailsViewModel");
                 
                 // Navigate to full details with isolated try-catch
                 try
                 {
                     // ✅ CORRECTION: Réactiver la navigation vers SpotDetailsViewModel
                     await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spotId);
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] ViewSpotDetails: Navigation call completed successfully");
                 }
                 catch (Exception navEx)
                 {
@@ -869,9 +809,6 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         private void TestMiniWindow()
         {
-            System.Diagnostics.Debug.WriteLine("[DEBUG] TestMiniWindow command executed");
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Current binding context exists: {this != null}");
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Current IsSpotMiniWindowVisible before: {IsSpotMiniWindowVisible}");
             
             // Create a test spot to verify mini window functionality
             var testSpot = new Models.Domain.Spot
@@ -889,11 +826,7 @@ namespace SubExplore.ViewModels.Map
                 }
             };
             
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] About to call ShowSpotMiniWindow with test spot: {testSpot.Name}");
             ShowSpotMiniWindow(testSpot);
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] After ShowSpotMiniWindow - IsSpotMiniWindowVisible: {IsSpotMiniWindowVisible}");
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] After ShowSpotMiniWindow - SelectedSpot: {SelectedSpot?.Name}");
-            System.Diagnostics.Debug.WriteLine("[DEBUG] TestMiniWindow: Test spot mini window should now be visible with RED background");
         }
 
 
@@ -914,7 +847,6 @@ namespace SubExplore.ViewModels.Map
                         LocationParameter = $"Current Location ({UserLatitude:F6}, {UserLongitude:F6})"
                     };
                     
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAddSpot with location: {UserLatitude}, {UserLongitude}");
                 }
                 else
                 {
@@ -926,7 +858,6 @@ namespace SubExplore.ViewModels.Map
                         LocationParameter = $"Map Center ({MapLatitude:F6}, {MapLongitude:F6})"
                     };
                     
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAddSpot with map center: {MapLatitude}, {MapLongitude}");
                 }
 
                 // Navigate to AddSpot with location parameters
@@ -1007,7 +938,6 @@ namespace SubExplore.ViewModels.Map
                 // 🚫 Repository temporairement désactivé
                 // var searchResults = await _spotRepository.SearchSpotsAsync(SearchText);
                 var searchResults = new List<Spot>(); // Liste vide temporaire
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Global search performed for '{SearchText}' - no geographic restrictions");
 
                 RefreshSpotsList(searchResults);
                 UpdatePins();
@@ -1017,7 +947,6 @@ namespace SubExplore.ViewModels.Map
                 if (Spots.Count > 0)
                 {
                     CenterMapOnSpots(Spots);
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Found {Spots.Count} spots, centering map on results");
                 }
                 else
                 {
@@ -1142,7 +1071,6 @@ namespace SubExplore.ViewModels.Map
                 CurrentSubFilters.Clear();
                 IsFiltering = false;
                 IsSearching = false;
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Clearing all filters");
 
                 // Apply filter (null means show all) instead of reloading from database
                 await ApplySpotTypeFilter();
@@ -1161,12 +1089,10 @@ namespace SubExplore.ViewModels.Map
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtering by category: {categoryName}");
 
                 // Si on reclique sur la même catégorie, fermer le menu
                 if (SelectedCategory == categoryName)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Toggling off category: {categoryName}");
                     IsSubFiltersVisible = false;
                     CurrentSubFilters.Clear();
                     SelectedCategory = null;
@@ -1209,8 +1135,6 @@ namespace SubExplore.ViewModels.Map
             try
             {
                 IsFiltering = true;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplyCategoryFilter started for category: '{categoryName}'");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Total spots available: {Spots?.Count ?? 0}");
 
                 // Debug log all spots and their types
                 if (Spots != null)
@@ -1219,14 +1143,12 @@ namespace SubExplore.ViewModels.Map
                     {
                         var typeName = spot.Type?.Name ?? "NULL_TYPE";
                         var belongsToCategory = spot.Type?.BelongsToCategory(categoryName) ?? false;
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Spot '{spot.Name}' -> Type: '{typeName}' -> BelongsTo'{categoryName}': {belongsToCategory}");
                     }
                 }
                 
                 var filteredSpots = Spots?.Where(s => s.Type != null && s.Type.BelongsToCategory(categoryName)) ?? Enumerable.Empty<Models.Domain.Spot>();
                 var filteredSpotsList = filteredSpots.ToList(); // Materialize to avoid multiple enumeration
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Category filter applied: {filteredSpotsList.Count} spots found for category '{categoryName}'");
                 
                 // Update the UI properties that show filter counts
                 SelectedCategory = categoryName;
@@ -1263,7 +1185,6 @@ namespace SubExplore.ViewModels.Map
                 if (args?.Location != null)
                 {
                     var clickedLocation = args.Location;
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Map clicked at: {clickedLocation.Latitude}, {clickedLocation.Longitude}");
                     
                     // Show option to add spot at clicked location
                     var result = await DialogService.ShowConfirmationAsync(
@@ -1392,7 +1313,6 @@ namespace SubExplore.ViewModels.Map
         // Menu helper methods
         private void InitializeMenu()
         {
-            System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeMenu starting - clearing menu sections");
             MenuSections.Clear();
             
             // Main Navigation Section
@@ -1475,12 +1395,10 @@ namespace SubExplore.ViewModels.Map
             
             // Check admin permissions
             var currentUser = _authenticationService.CurrentUser;
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Checking admin permissions - CurrentUser: {currentUser?.Id}, AccountType: {currentUser?.AccountType}");
             
             if (currentUser?.AccountType == Models.Enums.AccountType.ExpertModerator ||
                 currentUser?.AccountType == Models.Enums.AccountType.Administrator)
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] ✅ Admin permissions detected - creating admin section");
                 adminSection = new MenuSection
                 {
                     Title = "Administration",
@@ -1499,7 +1417,6 @@ namespace SubExplore.ViewModels.Map
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] ❌ No admin permissions - admin section will not be created");
             }
             
             MenuSections.Add(mainSection);
@@ -1509,25 +1426,20 @@ namespace SubExplore.ViewModels.Map
             // Add admin section if user has permissions
             if (adminSection != null)
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] ✅ Adding admin section to menu");
                 MenuSections.Add(adminSection);
             }
             
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeMenu completed - Total sections: {MenuSections.Count}");
         }
 
         private async Task LoadCurrentUser()
         {
-            System.Diagnostics.Debug.WriteLine("[DEBUG] LoadCurrentUser started");
             try
             {
                 // Use authentication service to get current user
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Checking authentication - IsAuthenticated: {_authenticationService.IsAuthenticated}");
                 
                 if (_authenticationService.IsAuthenticated)
                 {
                     var currentUser = _authenticationService.CurrentUser;
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] CurrentUser from auth service: {currentUser?.Id} ({currentUser?.AccountType})");
                     
                     if (currentUser != null)
                     {
@@ -1535,23 +1447,18 @@ namespace SubExplore.ViewModels.Map
                         UserEmail = currentUser.Email;
                         UserAvatarUrl = currentUser.AvatarUrl ?? "default_avatar.png";
                         
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded authenticated user: {currentUser.Id} with AccountType: {currentUser.AccountType}");
                         
                         // Re-initialize menu to show/hide admin options based on user role
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] About to call InitializeMenu");
                         InitializeMenu();
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeMenu completed");
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] CurrentUser is null despite IsAuthenticated=true");
                         // Should not happen if IsAuthenticated is true, but handle gracefully
                         await HandleUnauthenticatedUser();
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] User not authenticated");
                     await HandleUnauthenticatedUser();
                 }
             }
@@ -1568,7 +1475,6 @@ namespace SubExplore.ViewModels.Map
             UserEmail = "guest@subexplore.com";
             UserAvatarUrl = "default_avatar.png";
             
-            System.Diagnostics.Debug.WriteLine("[DEBUG] User not authenticated - showing guest info");
             
             // Re-initialize menu to hide admin options for unauthenticated users
             InitializeMenu();
@@ -1630,11 +1536,8 @@ namespace SubExplore.ViewModels.Map
             OnPropertyChanged(nameof(IsBusy));
             
             System.Diagnostics.Debug.WriteLine($"[INFO] ForceMapRefresh called: {MapLatitude}, {MapLongitude}, zoom: {MapZoomLevel}, pins: {Pins?.Count}");
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Forced IsBusy to false: {IsBusy}");
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Map coordinates valid: Lat={MapLatitude >= -90 && MapLatitude <= 90}, Lng={MapLongitude >= -180 && MapLongitude <= 180}");
             
             // Additional map debugging
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Current map state - Location available: {IsLocationAvailable}, User position: {UserLatitude}, {UserLongitude}");
         }
         
         public void InitializeMapPosition()
@@ -1665,20 +1568,16 @@ namespace SubExplore.ViewModels.Map
             Application.Current?.Dispatcher.Dispatch(() => {
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePins called with {Spots?.Count ?? 0} spots");
                     
                     if (Spots == null || !Spots.Any())
                     {
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] No spots available for pin creation");
                         Pins = new ObservableCollection<Pin>(); // ✅ FIXED: Atomic replacement
                         return;
                     }
 
                     // Debug first few spots for troubleshooting
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] Processing spots for pin creation:");
                     foreach (var spot in Spots.Take(3))
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Spot: {spot.Name} at {spot.Latitude}, {spot.Longitude} - Status: {spot.ValidationStatus}");
                     }
 
                     var validPins = new List<Pin>();
@@ -1690,25 +1589,20 @@ namespace SubExplore.ViewModels.Map
                         if (pin != null)
                         {
                             validPins.Add(pin);
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Created pin for {spot.Name}");
                         }
                         else
                         {
                             nullPinCount++;
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] ✗ Failed to create pin for {spot.Name} - likely invalid coordinates");
                         }
                     }
 
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Pin creation summary: {validPins.Count} valid, {nullPinCount} failed");
 
                     // ✅ FIXED: Atomic collection replacement instead of Clear/Add pattern
                     Pins = new ObservableCollection<Pin>(validPins);
                     
                     // Mettre à jour le compteur FilteredSpotsCount
                     FilteredSpotsCount = Pins.Count;
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] FilteredSpotsCount manually updated to {FilteredSpotsCount} in UpdatePins");
                     
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePins completed with atomic update. Total pins in collection: {Pins.Count}");
                 }
                 catch (Exception ex)
                 {
@@ -1737,7 +1631,6 @@ namespace SubExplore.ViewModels.Map
                 double lat = Convert.ToDouble(spot.Latitude);
                 double lon = Convert.ToDouble(spot.Longitude);
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Creating pin for {spot.Name} at {lat}, {lon} (decimal: {spot.Latitude}, {spot.Longitude})");
 
                 // Validate coordinates with detailed error reporting
                 if (double.IsNaN(lat) || double.IsInfinity(lat))
@@ -1773,7 +1666,6 @@ namespace SubExplore.ViewModels.Map
                     BindingContext = spot
                 };
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Successfully created pin for {spot.Name} with valid coordinates");
                 return pin;
             }
             catch (Exception ex)
@@ -1829,14 +1721,12 @@ namespace SubExplore.ViewModels.Map
                 try
                 {
                     var spotsList = spots?.ToList() ?? new List<Models.Domain.Spot>();
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Processing {spotsList.Count} spots with atomic update");
                     
                     // ✅ FIXED: Atomic collection replacement instead of Clear/Add pattern
                     // This prevents race conditions and reduces PropertyChanged events from O(n) to O(1)
                     var newCollection = new ObservableCollection<Models.Domain.Spot>(spotsList);
                     Spots = newCollection;
                     
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotsList: Atomic update completed - {Spots.Count} spots");
                 }
                 catch (Exception ex)
                 {
@@ -1861,7 +1751,6 @@ namespace SubExplore.ViewModels.Map
                 try 
                 {
                     var typesList = types?.ToList() ?? new List<SpotType>();
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] RefreshSpotTypesList: Atomic update with {typesList.Count} types");
                     
                     // ✅ FIXED: Atomic collection replacement
                     var newCollection = new ObservableCollection<SpotType>(typesList);
@@ -1902,7 +1791,6 @@ namespace SubExplore.ViewModels.Map
 
         private void ApplySpotTypeFilterCore()
         {
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplySpotTypeFilter: SelectedSpotType = {SelectedSpotType?.Name ?? "null"}");
             
             IEnumerable<Models.Domain.Spot> filteredSpots;
             
@@ -1910,13 +1798,11 @@ namespace SubExplore.ViewModels.Map
             {
                 // Show all spots
                 filteredSpots = Spots;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Showing all {Spots?.Count ?? 0} spots");
             }
             else
             {
                 // Filter by selected type
                 filteredSpots = Spots?.Where(s => s.TypeId == SelectedSpotType.Id) ?? new List<Models.Domain.Spot>();
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Filtered to {filteredSpots.Count()} spots of type {SelectedSpotType.Name}");
             }
             
             // Update pins based on filtered spots
@@ -1959,19 +1845,15 @@ namespace SubExplore.ViewModels.Map
                 }
             }
             
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdatePinsFromFilteredSpotsCore: Creating new ObservableCollection with {validPins.Count} pins");
             
             // Replace the entire collection to trigger PropertyChanged
             Pins = new ObservableCollection<Pin>(validPins);
             
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Updated pins: {Pins.Count} pins from {filteredSpots.Count()} filtered spots");
             
             // Mettre à jour le compteur FilteredSpotsCount
             FilteredSpotsCount = Pins.Count;
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] FilteredSpotsCount manually updated to {FilteredSpotsCount}");
             
             // Force property changed notification (should be automatic with [ObservableProperty] but let's be sure)
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Forcing PropertyChanged notification for Pins");
             OnPropertyChanged(nameof(Pins));
         }
         
@@ -1999,7 +1881,6 @@ namespace SubExplore.ViewModels.Map
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] 🔍 HandleEmptySpotState: Diagnosing empty spot state");
                 
                 // Check if this is a data integrity issue or a filtering issue
                 // ✅ Utilisation du service Supabase API
@@ -2007,7 +1888,6 @@ namespace SubExplore.ViewModels.Map
                 var totalSpots = supabaseSpots?.Select(ConvertToDomainSpot).Where(s => s != null).ToList() ?? new List<Spot>();
                 var totalCount = totalSpots.Count();
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Total spots in database: {totalCount}");
                 
                 if (totalCount == 0)
                 {
@@ -2027,7 +1907,6 @@ namespace SubExplore.ViewModels.Map
                     var approvedSpots = totalSpots.Where(s => s.ValidationStatus == SpotValidationStatus.Approved).Count();
                     var spotsWithActiveTypes = totalSpots.Where(s => s.Type != null && s.Type.IsActive).Count();
                     
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Approved spots: {approvedSpots}, Spots with active types: {spotsWithActiveTypes}");
                     
                     if (approvedSpots == 0)
                     {
@@ -2117,7 +1996,6 @@ namespace SubExplore.ViewModels.Map
                 // Check cache first to avoid unnecessary DB hits
                 if (_lastSpotTypesLoad.AddMinutes(CACHE_EXPIRY_MINUTES) > DateTime.UtcNow && SpotTypes?.Count > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] SpotTypes loaded from cache");
                     return;
                 }
 
@@ -2131,7 +2009,6 @@ namespace SubExplore.ViewModels.Map
                     _lastSpotTypesLoad = DateTime.UtcNow;
                 });
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotTypesOptimized completed - {spotTypes?.Count() ?? 0} types loaded");
             }
             catch (Exception ex)
             {
@@ -2166,7 +2043,6 @@ namespace SubExplore.ViewModels.Map
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] 🗺️ LoadSpotsOptimized started");
                 
                 // Reset error states
                 IsEmptyState = false;
@@ -2175,17 +2051,14 @@ namespace SubExplore.ViewModels.Map
                 // ✅ CORRECTION RACE CONDITION: Ensure SpotTypes are loaded before converting spots
                 if (SpotTypes?.Count == 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] 🔄 SpotTypes not loaded yet, loading them first...");
                     await LoadSpotTypesOptimized();
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ Starting spot conversion with {SpotTypes?.Count ?? 0} SpotTypes available");
                 
                 // Use optimized method for better performance with ConfigureAwait
                 // ✅ Utilisation du service Supabase API
                 var supabaseSpots = await _supabaseApiService.GetSpotsAsync().ConfigureAwait(false);
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ Raw Supabase spots count: {supabaseSpots?.Count() ?? 0}");
                 
                 // ✅ AMÉLIORATION: Log conversion details to identify filtering issues
                 var spotsList = new List<Models.Domain.Spot>();
@@ -2208,7 +2081,6 @@ namespace SubExplore.ViewModels.Map
                     }
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] 🗺️ LoadSpotsOptimized - Retrieved {spotsList.Count} spots from repository ({nullConversions} failed conversions)");
                 
                 // Handle empty state
                 if (!spotsList.Any())
@@ -2228,18 +2100,14 @@ namespace SubExplore.ViewModels.Map
                         .OrderByDescending(x => x.Count)
                         .ToList();
                     
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] 📊 Spots distribution by category:");
                     foreach (var cat in categoryDistribution)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG]   - {cat.Category}: {cat.Count} spots");
                     }
                     
                     // Afficher quelques exemples de spots
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] 📍 First few spots:");
                     foreach (var spot in spotsList.Take(5))
                     {
                         var typeInfo = spot.Type != null ? $"{spot.Type.Name} ({spot.Type.Category})" : "NO TYPE";
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG]   - {spot.Name}: {typeInfo}");
                     }
                 }
                 else
@@ -2252,7 +2120,6 @@ namespace SubExplore.ViewModels.Map
                 // Process spots in batches to maintain UI responsiveness
                 await ProcessSpotsInBatches(spotsList);
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ✅ LoadSpotsOptimized completed. Final counts - Spots: {Spots?.Count ?? 0}, Pins: {Pins?.Count ?? 0}");
             }
             catch (Exception ex)
             {
@@ -2292,7 +2159,6 @@ namespace SubExplore.ViewModels.Map
             try
             {
                 var spotsList = spots?.ToList() ?? new List<Models.Domain.Spot>();
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] ProcessSpotsInBatches: Processing {spotsList.Count} spots with optimized batching");
                 
                 // ✅ FIXED: Process all data off UI thread
                 var (processedSpots, processedPins) = await Task.Run(() =>
@@ -2326,7 +2192,6 @@ namespace SubExplore.ViewModels.Map
                     Pins = new ObservableCollection<Pin>(processedPins);
                     UpdateEmptyState();
                     
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] ProcessSpotsInBatches: Atomic update completed - Spots: {Spots.Count}, Pins: {Pins.Count}");
                 });
             }
             catch (Exception ex)
@@ -2374,8 +2239,6 @@ namespace SubExplore.ViewModels.Map
                 var spotTypeName = spotType?.Name ?? "MISSING_TYPE";
                 var spotTypeStatus = spotType != null ? "FOUND" : "MISSING";
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] MapViewModel: Converting spot '{supabaseSpot.Name}' -> Type: '{spotTypeName}' ({spotTypeStatus}) -> TypeId: {supabaseSpot.TypeId}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] MapViewModel: RAW coordinates from Supabase - Lat: {supabaseSpot.Latitude}, Lon: {supabaseSpot.Longitude}");
                 
                 if (supabaseSpot.Name == "AquaTech Diving Store")
                 {
@@ -2436,7 +2299,6 @@ namespace SubExplore.ViewModels.Map
                     }
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotType '{supabaseSpotType.Name}' -> Category: {category} (from '{supabaseSpotType.Category}')");
 
                 return new SpotType
                 {

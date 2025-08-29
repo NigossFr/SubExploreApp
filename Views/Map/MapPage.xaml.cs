@@ -32,7 +32,6 @@ namespace SubExplore.Views.Map
                 tapGesture.Tapped += OnMapTapped;
                 MainMap.GestureRecognizers.Add(tapGesture);
                 
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Added gesture recognizer to map for direct touch handling");
             }
 
             if (_platformMapService != null)
@@ -48,7 +47,6 @@ namespace SubExplore.Views.Map
 
             if (SpotMiniWindow != null)
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] SpotMiniWindow found and ready");
             }
             else
             {
@@ -90,7 +88,6 @@ namespace SubExplore.Views.Map
             }
             else if (e.PropertyName == nameof(ViewModel.Pins))
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Pins changed - triggering UpdateCustomMarkers");
                 UpdateCustomMarkers();
             }
         }
@@ -101,24 +98,19 @@ namespace SubExplore.Views.Map
             {
                 if (MainMap?.MapElements == null || ViewModel?.Pins == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers: Early return - MainMap.MapElements={MainMap?.MapElements != null}, ViewModel.Pins={ViewModel?.Pins != null}");
                     return;
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers: ViewModel.Pins.Count = {ViewModel.Pins.Count}");
                 
                 // Get spots from filtered pins instead of all spots
                 var filteredSpots = ViewModel.Pins.Where(p => p.BindingContext is Models.Domain.Spot).Select(p => p.BindingContext as Models.Domain.Spot).Where(s => s != null).ToList();
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers: filteredSpots extraction - {filteredSpots.Count} spots found from {ViewModel.Pins.Count} pins");
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers: Adding {filteredSpots.Count} custom markers (filtered)");
                 
                 // Calculate dynamic marker size based on current zoom level
                 var markerRadius = CalculateDynamicMarkerSize();
                 var strokeWidth = CalculateDynamicStrokeWidth();
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Dynamic marker size: {markerRadius}m radius, {strokeWidth}px stroke");
                 
                 // Clear existing markers
                 MainMap.MapElements.Clear();
@@ -170,7 +162,6 @@ namespace SubExplore.Views.Map
                         // Add both circles (outer first, then inner)
                         MainMap.MapElements.Add(outerCircle);
                         MainMap.MapElements.Add(innerCircle);
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Added dynamic marker for spot {spot.Name} at {lat}, {lon} (radius: {markerRadius}m)");
                     }
                     catch (Exception ex)
                     {
@@ -178,7 +169,6 @@ namespace SubExplore.Views.Map
                     }
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] UpdateCustomMarkers completed: {MainMap.MapElements.Count} filtered markers added");
             }
             catch (Exception ex)
             {
@@ -242,7 +232,6 @@ namespace SubExplore.Views.Map
                     markerRadius = 5000; // 5km - maximum pour vue mondiale
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Calculated marker size: {markerRadius}m for zoom span {avgSpan:F6}°");
                 return markerRadius;
             }
             catch (Exception ex)
@@ -345,11 +334,9 @@ namespace SubExplore.Views.Map
             try
             {
                 var clickedLocation = e.Location;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] OnMapClicked: Map clicked at {clickedLocation?.Latitude:F6}, {clickedLocation?.Longitude:F6}");
                 
                 if (clickedLocation == null || ViewModel?.Pins == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] OnMapClicked: Invalid location or no pins available");
                     return;
                 }
 
@@ -358,13 +345,11 @@ namespace SubExplore.Views.Map
                 
                 if (!foundNearbySpot)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] OnMapClicked: No nearby spots found - clicking empty space");
                     
                     // Close mini window if open (clicking empty space)
                     if (ViewModel != null && ViewModel.IsSpotMiniWindowVisible)
                     {
                         ViewModel.CloseSpotMiniWindowCommand?.Execute(null);
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] OnMapClicked: Closed mini window - clicked empty space");
                     }
                     
                     // Handle normal map click for adding spots at specific location
@@ -387,7 +372,6 @@ namespace SubExplore.Views.Map
                     return await CheckNearbyPinsFromMapClickLegacy(clickedLocation);
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Using PinSelectionService for map click at {clickedLocation.Latitude:F6}, {clickedLocation.Longitude:F6}");
                 
                 var selectedSpot = await ViewModel.PinSelectionService.SelectPinAsync(
                     clickedLocation, 
@@ -397,14 +381,12 @@ namespace SubExplore.Views.Map
 
                 if (selectedSpot != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ PinSelectionService found spot: {selectedSpot.Name}");
                     
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
                         try
                         {
                             ViewModel.ShowSpotMiniWindowCommand?.Execute(selectedSpot);
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] ShowSpotMiniWindowCommand executed via PinSelectionService");
                         }
                         catch (Exception ex)
                         {
@@ -415,7 +397,6 @@ namespace SubExplore.Views.Map
                     return true;
                 }
                 
-                System.Diagnostics.Debug.WriteLine("[DEBUG] PinSelectionService found no nearby spots");
                 return false;
             }
             catch (Exception ex)
@@ -432,12 +413,9 @@ namespace SubExplore.Views.Map
                 // Use dynamic tolerance based on zoom level
                 var toleranceKm = CalculateDynamicTolerance();
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] CheckNearbyPinsFromMapClickLegacy: Checking {ViewModel.Spots?.Count ?? 0} spots with {toleranceKm}km tolerance");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Click location: {clickedLocation.Latitude:F6}, {clickedLocation.Longitude:F6}");
                 
                 if (ViewModel?.Spots == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] No spots available for checking");
                     return false;
                 }
                 
@@ -454,21 +432,16 @@ namespace SubExplore.Views.Map
                                 clickedLocation.Latitude, clickedLocation.Longitude,
                                 lat, lon);
                             
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] CheckNearbyPinsFromMapClickLegacy: Spot '{spot.Name}' at ({lat:F6}, {lon:F6})");
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] Distance = {distance:F6}km (tolerance: {toleranceKm:F6}km) - Match: {distance <= toleranceKm}");
                             
                             if (distance <= toleranceKm)
                             {
                                 // Found a nearby spot - show mini window
-                                System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Found nearby spot via MapClick (legacy): {spot.Name} at distance {distance:F6}km");
                                 
                                 await MainThread.InvokeOnMainThreadAsync(() =>
                                 {
                                     try
                                     {
-                                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Executing ShowSpotMiniWindowCommand from MapClick (legacy)");
                                         ViewModel.ShowSpotMiniWindowCommand?.Execute(spot);
-                                        System.Diagnostics.Debug.WriteLine($"[DEBUG] ShowSpotMiniWindowCommand executed successfully from MapClick (legacy)");
                                     }
                                     catch (Exception ex)
                                     {
@@ -486,7 +459,6 @@ namespace SubExplore.Views.Map
                     }
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] No spots found within {toleranceKm}km tolerance (legacy)");
                 return false; // No spots found
             }
             catch (Exception ex)
@@ -554,7 +526,6 @@ namespace SubExplore.Views.Map
                 // Ensure minimum and maximum tolerances for usability
                 tolerance = Math.Max(0.1, Math.Min(tolerance, 10.0)); // Min 100m, Max 10km
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Dynamic tolerance: {tolerance:F3}km based on marker size {markerRadius}m (visible span: {avgSpan:F6}°)");
                 
                 return tolerance;
             }
@@ -569,18 +540,14 @@ namespace SubExplore.Views.Map
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] OnMapTapped: Direct gesture detected");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] OnMapTapped: ViewModel.Pins count: {ViewModel?.Pins?.Count ?? 0}");
                 
                 if (MainMap == null || ViewModel?.Pins == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] OnMapTapped: Map or pins not available");
                     return;
                 }
 
                 // Get the position relative to the map
                 var position = e.GetPosition(MainMap);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] OnMapTapped: Screen position {position?.X:F2}, {position?.Y:F2}");
 
                 if (position == null) return;
 
@@ -605,7 +572,6 @@ namespace SubExplore.Views.Map
                         
                         var clickedLocation = new Location(clickedLat, clickedLon);
                         
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] OnMapTapped: Converted to map coordinates {clickedLat:F6}, {clickedLon:F6}");
                         
                         // Now check for nearby pins with more generous tolerance
                         await CheckNearbyPins(clickedLocation);
@@ -629,7 +595,6 @@ namespace SubExplore.Views.Map
                     return;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Using PinSelectionService for gesture at {clickedLocation.Latitude:F6}, {clickedLocation.Longitude:F6}");
                 
                 var selectedSpot = await ViewModel.PinSelectionService.SelectPinAsync(
                     clickedLocation, 
@@ -639,14 +604,12 @@ namespace SubExplore.Views.Map
 
                 if (selectedSpot != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ PinSelectionService found spot via gesture: {selectedSpot.Name}");
                     
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
                         try
                         {
                             ViewModel.ShowSpotMiniWindowCommand?.Execute(selectedSpot);
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] ShowSpotMiniWindowCommand executed via PinSelectionService (gesture)");
                         }
                         catch (Exception ex)
                         {
@@ -656,14 +619,12 @@ namespace SubExplore.Views.Map
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] PinSelectionService found no nearby spots via gesture");
                     
                     // Close mini window if open (tap-to-close on empty map)
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
                         if (ViewModel != null && ViewModel.IsSpotMiniWindowVisible)
                         {
-                            System.Diagnostics.Debug.WriteLine("[DEBUG] Closing mini window - tapped empty map area");
                             ViewModel.CloseSpotMiniWindowCommand?.Execute(null);
                         }
                     });
@@ -682,12 +643,9 @@ namespace SubExplore.Views.Map
                 var foundNearbySpot = false;
                 var toleranceKm = CalculateDynamicTolerance() * 1.5; // 50% more generous for gestures
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] CheckNearbyPinsLegacy: Checking {ViewModel.Spots?.Count ?? 0} spots with {toleranceKm}km tolerance");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Gesture click location: {clickedLocation.Latitude:F6}, {clickedLocation.Longitude:F6}");
                 
                 if (ViewModel?.Spots == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] No spots available for gesture checking");
                     return;
                 }
                 
@@ -704,21 +662,16 @@ namespace SubExplore.Views.Map
                                 clickedLocation.Latitude, clickedLocation.Longitude,
                                 lat, lon);
                             
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] CheckNearbyPinsLegacy: Spot '{spot.Name}' at ({lat:F6}, {lon:F6})");
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] Distance = {distance:F6}km (tolerance: {toleranceKm:F6}km) - Match: {distance <= toleranceKm}");
                             
                             if (distance <= toleranceKm)
                             {
                                 // Found a nearby spot - show mini window
-                                System.Diagnostics.Debug.WriteLine($"[DEBUG] ✓ Found nearby spot via gesture (legacy): {spot.Name} at distance {distance:F6}km");
                                 
                                 await MainThread.InvokeOnMainThreadAsync(() =>
                                 {
                                     try
                                     {
-                                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Executing ShowSpotMiniWindowCommand on UI thread (legacy)");
                                         ViewModel.ShowSpotMiniWindowCommand?.Execute(spot);
-                                        System.Diagnostics.Debug.WriteLine($"[DEBUG] ShowSpotMiniWindowCommand executed successfully (legacy)");
                                     }
                                     catch (Exception ex)
                                     {
@@ -738,14 +691,12 @@ namespace SubExplore.Views.Map
                 
                 if (!foundNearbySpot)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] No spots found within {toleranceKm}km tolerance via gesture (legacy)");
                     
                     // Close mini window if open (tap-to-close on empty map)
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
                         if (ViewModel != null && ViewModel.IsSpotMiniWindowVisible)
                         {
-                            System.Diagnostics.Debug.WriteLine("[DEBUG] Closing mini window - tapped empty map area (legacy)");
                             ViewModel.CloseSpotMiniWindowCommand?.Execute(null);
                         }
                     });
@@ -831,7 +782,6 @@ namespace SubExplore.Views.Map
                 _regionMonitorTimer.Elapsed += OnRegionMonitorTick;
                 _regionMonitorTimer.Start();
                 
-                System.Diagnostics.Debug.WriteLine("[DEBUG] Started region monitoring timer");
             }
             catch (Exception ex)
             {
@@ -869,7 +819,6 @@ namespace SubExplore.Views.Map
                                 MainThread.BeginInvokeOnMainThread(() =>
                                 {
                                     UpdateCustomMarkers();
-                                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Map region changed - updated marker sizes for new zoom level (monitored)");
                                 });
                             };
                             _markerUpdateTimer.Start();

@@ -9,6 +9,7 @@ using SubExplore.Models.Enums;
 using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels.Base;
 using Microsoft.Extensions.Logging;
+using SubExplore.Models.Navigation;
 
 namespace SubExplore.ViewModels.Favorites
 {
@@ -16,6 +17,8 @@ namespace SubExplore.ViewModels.Favorites
     {
         private readonly IFavoriteSpotService _favoriteSpotService;
         private readonly ISimpleAuthenticationService _authenticationService;
+        private readonly IOfflineFavoriteService _offlineFavoriteService;
+        private readonly IFavoriteExportImportService _exportImportService;
         private readonly ILogger<FavoriteSpotsViewModel>? _logger;
 
         // Concurrency control
@@ -55,6 +58,8 @@ namespace SubExplore.ViewModels.Favorites
         public FavoriteSpotsViewModel(
             IFavoriteSpotService favoriteSpotService,
             ISimpleAuthenticationService authenticationService,
+            IOfflineFavoriteService offlineFavoriteService,
+            IFavoriteExportImportService exportImportService,
             IDialogService dialogService,
             INavigationService navigationService,
             ILogger<FavoriteSpotsViewModel>? logger = null)
@@ -62,6 +67,8 @@ namespace SubExplore.ViewModels.Favorites
         {
             _favoriteSpotService = favoriteSpotService ?? throw new ArgumentNullException(nameof(favoriteSpotService));
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
+            _offlineFavoriteService = offlineFavoriteService ?? throw new ArgumentNullException(nameof(offlineFavoriteService));
+            _exportImportService = exportImportService ?? throw new ArgumentNullException(nameof(exportImportService));
             _logger = logger;
 
             Title = "Favoris";
@@ -136,8 +143,17 @@ namespace SubExplore.ViewModels.Favorites
                     return;
                 }
 
-                // Load user favorites - using IFavoriteSpotService
-                var userFavorites = await _favoriteSpotService.GetUserFavoritesAsync(currentUser.Id);
+                // Load user favorites - check offline mode first
+                IEnumerable<UserFavoriteSpot> userFavorites;
+                if (_offlineFavoriteService.IsOfflineModeActive)
+                {
+                    userFavorites = await _offlineFavoriteService.GetOfflineFavoritesAsync(currentUser.Id);
+                    _logger?.LogInformation("Loaded favorites from offline cache");
+                }
+                else
+                {
+                    userFavorites = await _favoriteSpotService.GetUserFavoritesAsync(currentUser.Id);
+                }
                 
                 // Update collections on UI thread
                 await MainThread.InvokeOnMainThreadAsync(() =>
@@ -248,10 +264,21 @@ namespace SubExplore.ViewModels.Favorites
         {
             try
             {
-                // TODO: Implement import favorites functionality
-                await DialogService.ShowAlertAsync("Information", "Fonctionnalité d'import bientôt disponible.", "OK");
+                var importOptions = await DialogService.ShowActionSheetAsync(
+                    "Importer des favoris", 
+                    "Annuler", 
+                    null, 
+                    "Fichier CSV", "Fichier JSON", "Fichier GPX");
                 
-                _logger?.LogInformation("Import favorites requested");
+                if (string.IsNullOrEmpty(importOptions) || importOptions == "Annuler")
+                    return;
+
+                _logger?.LogInformation($"Import favorites requested: {importOptions}");
+                
+                // In a real implementation, you would use FilePicker here
+                await DialogService.ShowAlertAsync("Information", 
+                    $"Sélectionnez un {importOptions} à importer.\n\nNote: La fonctionnalité de sélection de fichiers sera implémentée prochainement.", 
+                    "OK");
             }
             catch (Exception ex)
             {
@@ -293,8 +320,14 @@ namespace SubExplore.ViewModels.Favorites
             {
                 _logger?.LogInformation($"Viewing details for favorite spot {favorite.Spot.Id}");
                 
-                // TODO: Navigate to spot details page when available
-                await DialogService.ShowAlertAsync("Information", $"Détails du spot '{favorite.Spot.Name}' bientôt disponibles.", "OK");
+                // Enhanced navigation with favorite context
+                var navigationParameter = new FavoriteNavigationParameter(favorite, "Favorites", "FavoritesPage");
+                navigationParameter.AddContext("ViewMode", "Details");
+                navigationParameter.AddContext("CanEdit", true);
+                
+                await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(navigationParameter);
+                
+                _logger?.LogInformation("Navigated to spot details with favorite context");
             }
             catch (Exception ex)
             {
@@ -318,8 +351,17 @@ namespace SubExplore.ViewModels.Favorites
 
                 if (!confirm) return;
 
-                // Remove from favorites using favorite service
-                var success = await _favoriteSpotService.RemoveFromFavoritesAsync(favorite.UserId, favorite.Spot.Id);
+                // Remove from favorites using appropriate service
+                bool success;
+                if (_offlineFavoriteService.IsOfflineModeActive)
+                {
+                    success = await _offlineFavoriteService.RemoveOfflineFavoriteAsync(favorite.UserId, favorite.Spot.Id);
+                    _logger?.LogInformation("Queued favorite removal for offline sync");
+                }
+                else
+                {
+                    success = await _favoriteSpotService.RemoveFromFavoritesAsync(favorite.UserId, favorite.Spot.Id);
+                }
                 if (success)
                 {
                     await MainThread.InvokeOnMainThreadAsync(() =>
@@ -342,6 +384,170 @@ namespace SubExplore.ViewModels.Favorites
             {
                 _logger?.LogError(ex, $"Error removing spot from favorites {favorite?.Spot?.Id}");
                 await DialogService.ShowAlertAsync("Erreur", "Erreur lors de la suppression du favori.", "OK");
+            }
+        }
+
+        [RelayCommand]
+        private async Task ExportFavorites()
+        {
+            try
+            {
+                if (!_authenticationService.IsAuthenticated || _authenticationService.CurrentUser?.Id == null)
+                {
+                    await DialogService.ShowAlertAsync("Erreur", "Vous devez être connecté pour exporter vos favoris.", "OK");
+                    return;
+                }
+
+                var exportFormat = await DialogService.ShowActionSheetAsync(
+                    "Exporter mes favoris", 
+                    "Annuler", 
+                    null, 
+                    "CSV (Excel)", "JSON (Complet)", "GPX (GPS)");
+                
+                if (string.IsNullOrEmpty(exportFormat) || exportFormat == "Annuler")
+                    return;
+
+                _logger?.LogInformation($"Export favorites requested: {exportFormat}");
+                
+                // In a real implementation, you would use FilePicker/folder picker here
+                var userId = _authenticationService.CurrentUser.Id;
+                var timestamp = DateTime.UtcNow;
+                var format = _exportImportService.GetSupportedExportFormats().First();
+                var defaultFileName = _exportImportService.GetDefaultExportFileName(userId, format, timestamp);
+                
+                await DialogService.ShowAlertAsync("Export", 
+                    $"Export en cours...\n\nFichier: {defaultFileName}\n\nNote: La sélection du dossier de destination sera implémentée prochainement.", 
+                    "OK");
+
+                _logger?.LogInformation("Export favorites functionality ready");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error exporting favorites");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible d'exporter les favoris.", "OK");
+            }
+        }
+
+        [RelayCommand]
+        private async Task ToggleOfflineMode()
+        {
+            try
+            {
+                if (_offlineFavoriteService.IsOfflineModeActive)
+                {
+                    var confirm = await DialogService.ShowConfirmationAsync(
+                        "Mode hors ligne", 
+                        "Désactiver le mode hors ligne ? Les modifications en attente seront synchronisées.", 
+                        "Désactiver", 
+                        "Annuler");
+
+                    if (confirm)
+                    {
+                        var success = await _offlineFavoriteService.DisableOfflineModeAsync();
+                        if (success)
+                        {
+                            await DialogService.ShowAlertAsync("Mode hors ligne", "Mode hors ligne désactivé.", "OK");
+                            await LoadFavoriteSpots(); // Refresh from online
+                        }
+                    }
+                }
+                else
+                {
+                    var success = await _offlineFavoriteService.EnableOfflineModeAsync();
+                    if (success)
+                    {
+                        await DialogService.ShowAlertAsync("Mode hors ligne", "Mode hors ligne activé. Vos favoris sont maintenant disponibles sans connexion.", "OK");
+                    }
+                }
+
+                _logger?.LogInformation($"Offline mode toggled: {_offlineFavoriteService.IsOfflineModeActive}");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error toggling offline mode");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible de modifier le mode hors ligne.", "OK");
+            }
+        }
+
+        [RelayCommand]
+        private async Task ShowSyncStatus()
+        {
+            try
+            {
+                var pendingCount = await _offlineFavoriteService.GetPendingSyncCountAsync();
+                var storageInfo = await _offlineFavoriteService.GetStorageInfoAsync();
+
+                var message = $"Mode hors ligne: {(_offlineFavoriteService.IsOfflineModeActive ? "Activé" : "Désactivé")}\n" +
+                             $"Opérations en attente: {pendingCount}\n" +
+                             $"Taille du cache: {storageInfo.GetFormattedSize()}\n" +
+                             $"Dernière synchro: {(storageInfo.LastSyncDate == DateTime.MinValue ? "Jamais" : storageInfo.LastSyncDate.ToString("dd/MM/yyyy HH:mm"))}";
+
+                if (pendingCount > 0)
+                {
+                    var sync = await DialogService.ShowConfirmationAsync(
+                        "Statut de synchronisation", 
+                        message + "\n\nVoulez-vous synchroniser maintenant ?", 
+                        "Synchroniser", 
+                        "Fermer");
+
+                    if (sync)
+                    {
+                        await SyncPendingOperations();
+                    }
+                }
+                else
+                {
+                    await DialogService.ShowAlertAsync("Statut de synchronisation", message, "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error showing sync status");
+                await DialogService.ShowAlertAsync("Erreur", "Impossible d'afficher le statut de synchronisation.", "OK");
+            }
+        }
+
+        [RelayCommand]
+        private async Task SyncPendingOperations()
+        {
+            try
+            {
+                var pendingCount = await _offlineFavoriteService.GetPendingSyncCountAsync();
+                if (pendingCount == 0)
+                {
+                    await DialogService.ShowAlertAsync("Synchronisation", "Aucune opération en attente de synchronisation.", "OK");
+                    return;
+                }
+
+                IsLoading = true;
+                _logger?.LogInformation($"Starting manual sync of {pendingCount} operations");
+
+                var result = await _offlineFavoriteService.SyncPendingOperationsAsync();
+
+                var message = $"Synchronisation terminée:\n" +
+                             $"• {result.SuccessfulOperations} réussies\n" +
+                             $"• {result.FailedOperations} échouées\n" +
+                             $"• Durée: {result.SyncDuration.TotalSeconds:F1}s";
+
+                if (result.IsSuccess)
+                {
+                    await DialogService.ShowAlertAsync("Synchronisation", message, "OK");
+                    await LoadFavoriteSpots(); // Refresh after sync
+                }
+                else
+                {
+                    message += $"\n\nErreurs: {string.Join(", ", result.Errors.Take(3))}";
+                    await DialogService.ShowAlertAsync("Synchronisation", message, "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error during manual sync");
+                await DialogService.ShowAlertAsync("Erreur", "Erreur lors de la synchronisation.", "OK");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 

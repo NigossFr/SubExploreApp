@@ -361,19 +361,16 @@ public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 	/// </summary>
 	public void ApplyQueryAttributes(IDictionary<string, object> query)
 	{
-		System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplyQueryAttributes called with {query?.Count ?? 0} parameters");
 		
 		if (query != null)
 		{
 			foreach (var kvp in query)
 			{
-				System.Diagnostics.Debug.WriteLine($"[DEBUG] Query parameter: {kvp.Key} = {kvp.Value}");
 			}
 			
 			if (query.ContainsKey("spotId"))
 			{
 				_spotIdFromQuery = query["spotId"]?.ToString();
-				System.Diagnostics.Debug.WriteLine($"[DEBUG] ApplyQueryAttributes: Received spotId = {_spotIdFromQuery}");
 			}
 		}
 	}

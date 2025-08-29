@@ -1,245 +1,369 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SubExplore.Models.Domain;
+using SubExplore.Models.Supabase;
 using SubExplore.Services.Interfaces;
-using SubExplore.Services.Validation;
 using SubExplore.ViewModels.Base;
+using System.Collections.ObjectModel;
 
 namespace SubExplore.ViewModels.Spots
 {
     public partial class SpotPhotosViewModel : ViewModelBase
     {
-        private readonly IMediaService _mediaService;
-        private readonly IValidationService _validationService;
+        private readonly ISupabaseApiService _supabaseApiService;
+        private readonly IEnhancedMediaService _enhancedMediaService;
+        private readonly IDialogService _dialogService;
 
         [ObservableProperty]
-        private ObservableCollection<string> _photosPaths;
+        private Spot? _spot;
 
         [ObservableProperty]
-        private string _primaryPhotoPath;
+        private ObservableCollection<SupabaseSpotMedia> _spotPhotos = new();
 
         [ObservableProperty]
-        private bool _isUploading;
+        private bool _isUploading = false;
 
         [ObservableProperty]
-        private bool _isUploadingPrimaryPhoto;
+        private double _uploadProgress = 0.0;
 
         [ObservableProperty]
-        private bool _canAddMorePhotos = true;
+        private string _uploadStatus = string.Empty;
+
+        // Toast properties
+        [ObservableProperty]
+        private bool _isToastVisible = false;
 
         [ObservableProperty]
-        private string _photoCountStatus = string.Empty;
+        private string _toastMessage = string.Empty;
 
         [ObservableProperty]
-        private string _photoCountStatusColor = "Black";
+        private string _toastBackgroundColor = "#4CAF50";
 
         [ObservableProperty]
-        private bool _showPhotoCountStatus;
+        private string _toastBorderColor = "#4CAF50";
 
-        private const int MaxPhotosAllowed = 3;
+        [ObservableProperty]
+        private string _toastTextColor = "White";
+
+        public string PrimaryPhotoPath =>
+            SpotPhotos.FirstOrDefault(p => p.IsPrimary)?.MediaUrl ?? string.Empty;
+
+        public bool CanAddMorePhotos => SpotPhotos.Count < 10; // Max 10 photos per spot
+
+        public string PhotoCountStatus => 
+            $"{SpotPhotos.Count}/10 photos ajoutées";
+
+        public string PhotoCountStatusColor => 
+            SpotPhotos.Count >= 8 ? "#FF6B00" : "#666666";
+
+        public bool ShowPhotoCountStatus => SpotPhotos.Count > 0;
 
         public SpotPhotosViewModel(
-            IMediaService mediaService,
-            IValidationService validationService,
+            ISupabaseApiService supabaseApiService,
+            IEnhancedMediaService enhancedMediaService,
+            INavigationService navigationService,
             IDialogService dialogService)
-            : base(dialogService)
+            : base(dialogService, navigationService)
         {
-            _mediaService = mediaService;
-            _validationService = validationService;
-            PhotosPaths = new ObservableCollection<string>();
-            PhotosPaths.CollectionChanged += OnPhotosPathsChanged;
-            Title = "Photos du spot";
-            UpdatePhotoStatus();
-        }
-        
-        private void OnPhotosPathsChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            UpdatePhotoStatus();
-        }
-        
-        private void UpdatePhotoStatus()
-        {
-            var count = PhotosPaths.Count;
-            CanAddMorePhotos = count < MaxPhotosAllowed;
-            
-            if (count == 0)
-            {
-                PhotoCountStatus = "Aucune photo ajoutée";
-                PhotoCountStatusColor = "#757575";
-                ShowPhotoCountStatus = true;
-            }
-            else if (count < MaxPhotosAllowed)
-            {
-                PhotoCountStatus = $"{count}/{MaxPhotosAllowed} photos - Vous pouvez en ajouter {MaxPhotosAllowed - count} de plus";
-                PhotoCountStatusColor = "#4CAF50";
-                ShowPhotoCountStatus = true;
-            }
-            else
-            {
-                PhotoCountStatus = $"{count}/{MaxPhotosAllowed} photos - Limite atteinte";
-                PhotoCountStatusColor = "#FF9800";
-                ShowPhotoCountStatus = true;
-            }
+            _supabaseApiService = supabaseApiService;
+            _enhancedMediaService = enhancedMediaService;
+            _dialogService = dialogService;
+
+            Title = "Gestion des Photos";
         }
 
-        public override Task InitializeAsync(object parameter = null)
+        public async Task InitializeAsync(string spotId)
         {
-            if (parameter is List<string> existingPhotos)
+            if (!Guid.TryParse(spotId, out var guid))
             {
-                // Initialiser avec des photos existantes
-                PhotosPaths.Clear();
-                foreach (var photo in existingPhotos)
-                {
-                    PhotosPaths.Add(photo);
-                }
-
-                // Définir la première comme principale si elle existe
-                if (PhotosPaths.Count > 0 && string.IsNullOrEmpty(PrimaryPhotoPath))
-                {
-                    PrimaryPhotoPath = PhotosPaths[0];
-                }
-            }
-
-            return Task.CompletedTask;
-        }
-
-        [RelayCommand]
-        private async Task TakePhoto()
-        {
-            if (PhotosPaths.Count >= MaxPhotosAllowed)
-            {
-                await DialogService.ShowAlertAsync("Limite atteinte", $"Vous ne pouvez pas ajouter plus de {MaxPhotosAllowed} photos.", "D'accord");
+                await _dialogService.ShowAlertAsync("Erreur", "ID de spot invalide", "OK");
                 return;
             }
 
-            IsUploading = true;
-            var isFirstPhoto = PhotosPaths.Count == 0;
-            if (isFirstPhoto)
-            {
-                IsUploadingPrimaryPhoto = true;
-            }
-            
+            await LoadSpotPhotos(guid);
+        }
+
+        private async Task LoadSpotPhotos(Guid spotId)
+        {
             try
             {
-                var photoPath = await _mediaService.TakePhotoAsync();
-                if (!string.IsNullOrEmpty(photoPath))
+                IsLoading = true;
+                IsError = false;
+
+                // Load spot information
+                var spots = await _supabaseApiService.GetSpotsAsync();
+                var supabaseSpot = spots.FirstOrDefault(s => s.Id == spotId);
+
+                if (supabaseSpot == null)
                 {
-                    PhotosPaths.Add(photoPath);
-
-                    // Si c'est la première photo, la définir comme principale
-                    if (string.IsNullOrEmpty(PrimaryPhotoPath))
-                    {
-                        PrimaryPhotoPath = photoPath;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de prendre une photo.", "D'accord");
-            }
-            finally
-            {
-                IsUploading = false;
-                IsUploadingPrimaryPhoto = false;
-            }
-        }
-
-        [RelayCommand]
-        private async Task PickPhoto()
-        {
-            if (PhotosPaths.Count >= MaxPhotosAllowed)
-            {
-                await DialogService.ShowAlertAsync("Limite atteinte", $"Vous ne pouvez pas ajouter plus de {MaxPhotosAllowed} photos.", "D'accord");
-                return;
-            }
-
-            IsUploading = true;
-            var isFirstPhoto = PhotosPaths.Count == 0;
-            if (isFirstPhoto)
-            {
-                IsUploadingPrimaryPhoto = true;
-            }
-            
-            try
-            {
-                var photoPath = await _mediaService.PickPhotoAsync();
-                if (!string.IsNullOrEmpty(photoPath))
-                {
-                    PhotosPaths.Add(photoPath);
-
-                    // Si c'est la première photo, la définir comme principale
-                    if (string.IsNullOrEmpty(PrimaryPhotoPath))
-                    {
-                        PrimaryPhotoPath = photoPath;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                await DialogService.ShowAlertAsync("Erreur", "Impossible de sélectionner une photo.", "D'accord");
-            }
-            finally
-            {
-                IsUploading = false;
-                IsUploadingPrimaryPhoto = false;
-            }
-        }
-
-        [RelayCommand]
-        private void RemovePhoto(string path)
-        {
-            if (PhotosPaths.Contains(path))
-            {
-                PhotosPaths.Remove(path);
-
-                // Si c'était la photo principale, en choisir une autre
-                if (PrimaryPhotoPath == path)
-                {
-                    PrimaryPhotoPath = PhotosPaths.Count > 0 ? PhotosPaths[0] : null;
-                }
-            }
-        }
-
-        [RelayCommand]
-        private void SetPrimaryPhoto(string path)
-        {
-            if (PhotosPaths.Contains(path))
-            {
-                PrimaryPhotoPath = path;
-            }
-        }
-
-        [RelayCommand]
-        private async Task ValidatePhotos()
-        {
-            var validationResult = _validationService.ValidatePhotos(PhotosPaths, PrimaryPhotoPath);
-            
-            if (!validationResult.IsValid)
-            {
-                await DialogService.ShowAlertAsync("Erreurs de validation", validationResult.GetErrorsText(), "D'accord");
-                return;
-            }
-            
-            if (validationResult.HasWarnings)
-            {
-                var shouldContinue = await DialogService.ShowConfirmationAsync(
-                    "Avertissements", 
-                    $"Des avertissements ont été détectés:\n{validationResult.GetWarningsText()}\n\nVoulez-vous continuer ?", 
-                    "Continuer", 
-                    "Corriger");
-                    
-                if (!shouldContinue)
-                {
+                    IsError = true;
+                    ErrorMessage = "Spot non trouvé";
                     return;
                 }
+
+                // Convert to domain model
+                Spot = new Spot
+                {
+                    Id = supabaseSpot.Id,
+                    Name = supabaseSpot.Name,
+                    Description = supabaseSpot.Description
+                };
+
+                // Load spot photos
+                var photos = await _supabaseApiService.GetSpotMediaAsync(spotId);
+                SpotPhotos.Clear();
+                foreach (var photo in photos.OrderBy(p => p.DisplayOrder))
+                {
+                    SpotPhotos.Add(photo);
+                }
+                OnPropertyChanged(nameof(PrimaryPhotoPath));
+                OnPropertyChanged(nameof(CanAddMorePhotos));
+                OnPropertyChanged(nameof(PhotoCountStatus));
+                OnPropertyChanged(nameof(PhotoCountStatusColor));
+                OnPropertyChanged(nameof(ShowPhotoCountStatus));
             }
-            
-            await DialogService.ShowToastAsync("Photos validées avec succès");
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotPhotos failed: {ex.Message}");
+                IsError = true;
+                ErrorMessage = "Erreur lors du chargement des photos";
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task AddPhotoFromCamera()
+        {
+            try
+            {
+                if (!MediaPicker.Default.IsCaptureSupported)
+                {
+                    ShowToastMessage("❌ Appareil photo non disponible", "#F44336", "#F44336", "White");
+                    return;
+                }
+
+                var result = await MediaPicker.Default.CapturePhotoAsync();
+                if (result != null)
+                {
+                    await ProcessSelectedPhoto(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] AddPhotoFromCamera failed: {ex.Message}");
+                ShowToastMessage("❌ Erreur lors de la prise de photo", "#F44336", "#F44336", "White");
+            }
+        }
+
+        [RelayCommand]
+        private async Task AddPhotoFromGallery()
+        {
+            try
+            {
+                var result = await MediaPicker.Default.PickPhotoAsync();
+                if (result != null)
+                {
+                    await ProcessSelectedPhoto(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] AddPhotoFromGallery failed: {ex.Message}");
+                ShowToastMessage("❌ Erreur lors de la sélection de photo", "#F44336", "#F44336", "White");
+            }
+        }
+
+        private async Task ProcessSelectedPhoto(FileResult photo)
+        {
+            try
+            {
+                if (Spot == null) return;
+
+                IsUploading = true;
+                UploadProgress = 0.0;
+                UploadStatus = "Préparation de l'image...";
+
+                // Validate file size (max 5MB)
+                using var stream = await photo.OpenReadAsync();
+                if (stream.Length > 5 * 1024 * 1024)
+                {
+                    ShowToastMessage("❌ Image trop grande (max 5MB)", "#F44336", "#F44336", "White");
+                    return;
+                }
+
+                UploadProgress = 25.0;
+                UploadStatus = "Optimisation de l'image...";
+
+                // Optimize the image
+                using var optimizedImageStream = await _enhancedMediaService.OptimizeImageAsync(stream);
+                
+                // Convert to byte array for upload
+                using var memoryStream = new MemoryStream();
+                await optimizedImageStream.CopyToAsync(memoryStream);
+                var optimizedImageBytes = memoryStream.ToArray();
+                
+                UploadProgress = 50.0;
+                UploadStatus = "Upload vers Supabase...";
+
+                // Upload to Supabase
+                string fileName = $"spot_{Spot.Id}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.jpg";
+                var uploadResult = await _supabaseApiService.UploadImageAsync(
+                    "spot-photos", 
+                    fileName, 
+                    optimizedImageBytes);
+
+                if (uploadResult.Success && !string.IsNullOrEmpty(uploadResult.PublicUrl))
+                {
+                    UploadProgress = 75.0;
+                    UploadStatus = "Création de l'enregistrement...";
+
+                    // Create media record
+                    var mediaResult = await _supabaseApiService.CreateSpotMediaAsync(new SupabaseSpotMedia
+                    {
+                        Id = Guid.NewGuid(),
+                        SpotId = Spot.Id,
+                        MediaType = 1, // Photo
+                        MediaUrl = uploadResult.PublicUrl,
+                        IsPrimary = SpotPhotos.Count == 0, // First photo is primary
+                        Width = 800, // Standard optimized width
+                        Height = 600, // Standard optimized height
+                        FileSize = optimizedImageBytes.Length,
+                        ContentType = "image/jpeg",
+                        Status = 1, // Processing
+                        DisplayOrder = SpotPhotos.Count,
+                        CreatedAt = DateTime.UtcNow
+                    });
+
+                    if (mediaResult != null)
+                    {
+                        UploadProgress = 100.0;
+                        UploadStatus = "Terminé !";
+                        
+                        // Refresh the photos list
+                        await LoadSpotPhotos(Spot.Id);
+                        
+                        ShowToastMessage("✅ Photo ajoutée avec succès !", "#4CAF50", "#4CAF50", "White");
+                    }
+                    else
+                    {
+                        ShowToastMessage("❌ Erreur lors de l'enregistrement", "#F44336", "#F44336", "White");
+                    }
+                }
+                else
+                {
+                    ShowToastMessage("❌ Erreur lors de l'upload", "#F44336", "#F44336", "White");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ProcessSelectedPhoto failed: {ex.Message}");
+                ShowToastMessage("❌ Erreur lors du traitement", "#F44336", "#F44336", "White");
+            }
+            finally
+            {
+                IsUploading = false;
+                UploadProgress = 0.0;
+                UploadStatus = string.Empty;
+            }
+        }
+
+        [RelayCommand]
+        private async Task DeletePhoto(SupabaseSpotMedia photo)
+        {
+            try
+            {
+                bool confirm = await _dialogService.ShowConfirmationAsync(
+                    "Supprimer la photo",
+                    "Êtes-vous sûr de vouloir supprimer cette photo ?",
+                    "Supprimer",
+                    "Annuler");
+
+                if (!confirm) return;
+
+                var success = await _supabaseApiService.DeleteSpotMediaAsync(photo.Id);
+                if (success)
+                {
+                    SpotPhotos.Remove(photo);
+                    OnPropertyChanged(nameof(PrimaryPhotoPath));
+                    OnPropertyChanged(nameof(CanAddMorePhotos));
+                    OnPropertyChanged(nameof(PhotoCountStatus));
+                    OnPropertyChanged(nameof(PhotoCountStatusColor));
+                    OnPropertyChanged(nameof(ShowPhotoCountStatus));
+                    ShowToastMessage("✅ Photo supprimée", "#4CAF50", "#4CAF50", "White");
+                }
+                else
+                {
+                    ShowToastMessage("❌ Erreur lors de la suppression", "#F44336", "#F44336", "White");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] DeletePhoto failed: {ex.Message}");
+                ShowToastMessage("❌ Erreur lors de la suppression", "#F44336", "#F44336", "White");
+            }
+        }
+
+        [RelayCommand]
+        private async Task SetAsPrimary(SupabaseSpotMedia photo)
+        {
+            try
+            {
+                if (Spot == null) return;
+
+                var success = await _supabaseApiService.SetPrimarySpotPhotoAsync(Spot.Id, photo.Id);
+                if (success)
+                {
+                    // Update local collection
+                    foreach (var p in SpotPhotos)
+                    {
+                        p.IsPrimary = p.Id == photo.Id;
+                    }
+                    OnPropertyChanged(nameof(PrimaryPhotoPath));
+                    ShowToastMessage("✅ Photo principale mise à jour", "#4CAF50", "#4CAF50", "White");
+                }
+                else
+                {
+                    ShowToastMessage("❌ Erreur lors de la mise à jour", "#F44336", "#F44336", "White");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] SetAsPrimary failed: {ex.Message}");
+                ShowToastMessage("❌ Erreur lors de la mise à jour", "#F44336", "#F44336", "White");
+            }
+        }
+
+        [RelayCommand]
+        private async Task ReorderPhotos()
+        {
+            try
+            {
+                // This could be expanded to allow drag-and-drop reordering
+                ShowToastMessage("ℹ️ Fonction en développement", "#2196F3", "#2196F3", "White");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] ReorderPhotos failed: {ex.Message}");
+            }
+        }
+
+        private void ShowToastMessage(string message, string backgroundColor, string borderColor, string textColor)
+        {
+            ToastMessage = message;
+            ToastBackgroundColor = backgroundColor;
+            ToastBorderColor = borderColor;
+            ToastTextColor = textColor;
+            IsToastVisible = true;
+
+            // Auto-hide after 3 seconds
+            Task.Run(async () =>
+            {
+                await Task.Delay(3000);
+                IsToastVisible = false;
+            });
         }
     }
 }

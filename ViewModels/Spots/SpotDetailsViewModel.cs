@@ -1,11 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SubExplore.Models.Domain;
+using SubExplore.Models.Navigation;
 using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels.Base;
 using System.Collections.ObjectModel;
 using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
+using Microsoft.Extensions.Logging;
 
 namespace SubExplore.ViewModels.Spots
 {
@@ -17,6 +19,12 @@ namespace SubExplore.ViewModels.Spots
         private readonly IFavoriteSpotService _favoriteSpotService;
         private readonly ISimpleAuthenticationService _authenticationService;
         private readonly IWeatherService _weatherService;
+        private readonly ISharingService _sharingService;
+        private readonly ISpotReportService _spotReportService;
+        private readonly ISpotEditService _spotEditService;
+        private readonly IEnhancedMediaService _enhancedMediaService;
+        private readonly IConnectivityService? _connectivityService;
+        private readonly ILogger<SpotDetailsViewModel>? _logger;
 
         [ObservableProperty]
         private Spot? _spot;
@@ -93,7 +101,13 @@ namespace SubExplore.ViewModels.Spots
             IDialogService dialogService,
             IFavoriteSpotService favoriteSpotService,
             ISimpleAuthenticationService authenticationService,
-            IWeatherService weatherService) : base(dialogService, navigationService)
+            IWeatherService weatherService,
+            ISharingService sharingService,
+            ISpotReportService spotReportService,
+            ISpotEditService spotEditService,
+            IEnhancedMediaService enhancedMediaService,
+            IConnectivityService? connectivityService = null,
+            ILogger<SpotDetailsViewModel>? logger = null) : base(dialogService, navigationService)
         {
             _supabaseApiService = supabaseApiService;
             _navigationService = navigationService;
@@ -101,6 +115,12 @@ namespace SubExplore.ViewModels.Spots
             _favoriteSpotService = favoriteSpotService;
             _authenticationService = authenticationService;
             _weatherService = weatherService;
+            _sharingService = sharingService;
+            _spotReportService = spotReportService;
+            _spotEditService = spotEditService;
+            _enhancedMediaService = enhancedMediaService;
+            _connectivityService = connectivityService;
+            _logger = logger;
 
             Title = "Détails du Spot";
         }
@@ -111,47 +131,42 @@ namespace SubExplore.ViewModels.Spots
             {
                 IsLoading = true;
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel.InitializeAsync - Parameter: {parameter}, Type: {parameter?.GetType()?.Name ?? "null"}");
-
                 if (parameter is Spot spot)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Received Spot parameter - {spot.Name} (ID: {spot.Id})");
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Spot coordinates - Lat: {spot.Latitude}, Lon: {spot.Longitude}");
                     Spot = spot;
                     await LoadSpotDetails();
                 }
+                else if (parameter is FavoriteNavigationParameter favoriteParam)
+                {
+                    // Handle favorite navigation parameter
+                    _logger?.LogInformation("Loading spot details from favorite navigation parameter: {SpotId}", favoriteParam.SpotId);
+                    await LoadSpotById(favoriteParam.SpotId);
+                    
+                    // Set favorite state from the parameter
+                    IsFavorite = favoriteParam.IsFavorite;
+                }
                 else if (parameter is Guid spotId)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Received Guid parameter - {spotId}");
                     await LoadSpotById(spotId);
                 }
                 else if (parameter is string stringParam && Guid.TryParse(stringParam, out var guidFromString))
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Received string parameter converted to Guid - {guidFromString}");
                     await LoadSpotById(guidFromString);
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERROR] SpotDetailsViewModel: Invalid parameter type: {parameter?.GetType()?.Name ?? "null"}, Value: {parameter}");
-                    
-                    // ✅ CORRECTION: Ne pas charger automatiquement le premier spot, attendre le bon paramètre
                     if (parameter == null)
                     {
-                        System.Diagnostics.Debug.WriteLine("[WARNING] SpotDetailsViewModel: No parameter provided - waiting for ApplyQueryAttributes to be called");
-                        // Ne pas faire d'action, laisser la page se charger normalement
-                        // ApplyQueryAttributes devrait être appelé après et relancer l'initialisation
                         IsLoading = false;
                         return;
                     }
                     
-                    // Si on arrive ici avec un paramètre invalide, afficher erreur
-                    await _dialogService.ShowAlertAsync("Erreur", $"Paramètre invalide: {parameter?.GetType()?.Name ?? "null"} - {parameter}", "OK");
+                    await _dialogService.ShowAlertAsync("Erreur", "Paramètre de navigation invalide", "OK");
                     await _navigationService.GoBackAsync();
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] SpotDetailsViewModel InitializeAsync failed: {ex.Message}");
                 await _dialogService.ShowAlertAsync("Erreur", $"Erreur lors du chargement : {ex.Message}", "OK");
                 await _navigationService.GoBackAsync();
             }
@@ -165,26 +180,10 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Starting load for SpotId: {spotId}");
-                
-                // ✅ FIX: Add timeout to prevent hanging
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 
-                System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotById: Calling GetSpotsAsync...");
-                // Récupérer tous les spots et trouver celui avec l'ID correspondant
                 var supabaseSpots = await _supabaseApiService.GetSpotsAsync().WaitAsync(cts.Token);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Retrieved {supabaseSpots?.Count() ?? 0} spots from Supabase");
-                
                 var targetSupabaseSpot = supabaseSpots.FirstOrDefault(s => s.Id == spotId);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Target spot found: {targetSupabaseSpot != null}");
-                
-                if (targetSupabaseSpot != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: RAW Supabase data - Name: {targetSupabaseSpot.Name}");
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: RAW Supabase data - Latitude: {targetSupabaseSpot.Latitude}");
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: RAW Supabase data - Longitude: {targetSupabaseSpot.Longitude}");
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: RAW Supabase data - Id: {targetSupabaseSpot.Id}");
-                }
                 
                 if (targetSupabaseSpot == null)
                 {
@@ -202,7 +201,6 @@ namespace SubExplore.ViewModels.Spots
                 
                 if (Spot != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Successfully converted spot - {Spot.Name} at {Spot.Latitude}, {Spot.Longitude}");
                     await LoadSpotDetails();
                 }
                 else
@@ -213,15 +211,12 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (TimeoutException)
             {
-                System.Diagnostics.Debug.WriteLine("[ERROR] LoadSpotById timed out");
                 await _dialogService.ShowAlertAsync("Timeout", 
                     "Le chargement a pris trop de temps. Vérifiez votre connexion réseau.", "OK");
                 await _navigationService.GoBackAsync();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotById failed: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotById stack trace: {ex.StackTrace}");
                 await _dialogService.ShowAlertAsync("Erreur", $"Erreur API Supabase: {ex.Message}", "OK");
                 await _navigationService.GoBackAsync();
             }
@@ -258,8 +253,6 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotDetails failed: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotDetails stack trace: {ex.StackTrace}");
                 await _dialogService.ShowAlertAsync("Erreur", $"Erreur lors du chargement: {ex.Message}", "OK");
             }
             finally
@@ -292,7 +285,6 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadFavoriteStatus failed: {ex.Message}");
                 IsFavorite = false; // Par défaut en cas d'erreur
             }
         }
@@ -311,17 +303,35 @@ namespace SubExplore.ViewModels.Spots
                 // Désactiver le bouton pendant l'opération
                 IsFavoriteLoading = true;
 
-                // Obtenir l'utilisateur connecté
+                // 🔧 AMÉLIORATION: Validation renforcée de l'authentification
                 var currentUser = await _authenticationService.GetCurrentUserAsync();
-                if (currentUser == null)
+                if (currentUser?.Id == null || currentUser.Id == Guid.Empty)
                 {
-                    await _dialogService.ShowAlertAsync("Authentification requise", "Vous devez être connecté pour gérer vos favoris.", "OK");
-                    return;
+                    _logger?.LogWarning("Authentication failed: user is null or has invalid ID");
+                    
+                    // Tentative de re-authentification automatique
+                    await _authenticationService.InitializeAsync();
+                    currentUser = await _authenticationService.GetCurrentUserAsync();
+                    
+                    if (currentUser?.Id == null || currentUser.Id == Guid.Empty)
+                    {
+                        await _dialogService.ShowAlertAsync(
+                            "Authentification expirée", 
+                            "Votre session a expiré. Veuillez vous reconnecter.", 
+                            "OK");
+                        return;
+                    }
                 }
 
-                // Log de débogage
-                var loadingMessage = IsFavorite ? "Suppression du favori..." : "Ajout aux favoris...";
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] {loadingMessage} - Utilisateur: {currentUser.Id}, Spot: {Spot.Id}");
+                // 🔧 AMÉLIORATION: Vérification de la connectivité
+                if (_connectivityService != null && !_connectivityService.IsConnected)
+                {
+                    await _dialogService.ShowAlertAsync(
+                        "Pas de connexion", 
+                        "Une connexion internet est requise pour modifier les favoris.", 
+                        "OK");
+                    return;
+                }
 
                 // ✅ UTILISATION DU SERVICE SUPABASE REAL
                 bool newFavoriteState = await _favoriteSpotService.ToggleFavoriteAsync(currentUser.Id, Spot.Id);
@@ -336,18 +346,45 @@ namespace SubExplore.ViewModels.Spots
                     
                 await _dialogService.ShowToastAsync(successMessage);
                 
-                System.Diagnostics.Debug.WriteLine($"[SUCCESS] Favori mis à jour - Nouveau statut: {IsFavorite}");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                await _dialogService.ShowAlertAsync(
+                    "Authentification requise", 
+                    "Votre session a expiré. Veuillez vous reconnecter.", 
+                    "OK");
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("n'existe pas"))
+            {
+                await _dialogService.ShowAlertAsync(
+                    "Erreur de synchronisation", 
+                    "Problème de synchronisation utilisateur. Reconnectez-vous pour corriger.", 
+                    "OK");
+            }
+            catch (TimeoutException)
+            {
+                await _dialogService.ShowAlertAsync(
+                    "Timeout", 
+                    "L'opération a pris trop de temps. Vérifiez votre connexion.", 
+                    "OK");
+            }
+            catch (HttpRequestException)
+            {
+                await _dialogService.ShowAlertAsync(
+                    "Erreur réseau", 
+                    "Impossible de joindre le serveur. Vérifiez votre connexion.", 
+                    "OK");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] Erreur lors du toggle favori: {ex.Message}");
+                _logger?.LogError(ex, "Unexpected error in ToggleFavorite");
                 
                 // Restaurer l'état précédent en cas d'erreur
                 await LoadFavoriteStatus();
                 
                 var errorMessage = ex.Message.Contains("déjà en favoris") 
                     ? "Ce spot est déjà dans vos favoris" 
-                    : $"Impossible de modifier les favoris : {ex.Message}";
+                    : "Une erreur inattendue s'est produite. Réessayez dans quelques instants.";
                     
                 await _dialogService.ShowAlertAsync("Erreur", errorMessage, "OK");
             }
@@ -365,13 +402,12 @@ namespace SubExplore.ViewModels.Spots
             {
                 if (Spot == null) return;
 
-                var shareText = $"Découvrez ce spot de plongée : {Spot.Name}\n" +
-                               $"Localisation : {CoordinatesDisplay}\n" +
-                               $"Type : {SpotTypeDisplay}\n" +
-                               $"Profondeur : {DepthDisplay}";
-
-                // TODO: Implémenter le partage natif
-                await _dialogService.ShowToastAsync("Partage non encore implémenté");
+                bool success = await _sharingService.ShareSpotAsync(Spot, includePhotos: false);
+                
+                if (success)
+                {
+                    ShowToastMessage("📤 Spot partagé avec succès!", "#4CAF50", "#4CAF50", "White");
+                }
             }
             catch (Exception ex)
             {
@@ -417,11 +453,9 @@ namespace SubExplore.ViewModels.Spots
                     return;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[TEST] Test favoris - Utilisateur: {currentUser.Id}, Spot: {Spot.Id}");
                 
                 // Test vérification statut
                 bool isCurrentlyFavorite = await _favoriteSpotService.IsSpotFavoritedAsync(currentUser.Id, Spot.Id);
-                System.Diagnostics.Debug.WriteLine($"[TEST] Statut actuel: {isCurrentlyFavorite}");
 
                 var testResult = $"Spot: {Spot.Name}\nUtilisateur: {currentUser.FirstName} {currentUser.LastName}\nStatut favori: {(isCurrentlyFavorite ? "En favoris" : "Pas en favoris")}\nID Spot: {Spot.Id}\nID User: {currentUser.Id}";
                 
@@ -429,7 +463,6 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] Test favoris échoué: {ex.Message}");
                 await _dialogService.ShowAlertAsync("Erreur Test", $"Test échoué: {ex.Message}", "OK");
             }
         }
@@ -441,8 +474,44 @@ namespace SubExplore.ViewModels.Spots
             {
                 if (Spot == null) return;
 
-                // For now, show a message that edit functionality is not yet implemented
-                await _dialogService.ShowAlertAsync("Information", "La fonction d'édition des spots sera bientôt disponible.", "OK");
+                // Check if user can edit this spot
+                bool canEdit = await _spotEditService.CanUserEditSpotAsync(Spot);
+                if (!canEdit)
+                {
+                    await _dialogService.ShowAlertAsync("Permission refusée", 
+                        "Vous n'avez pas l'autorisation de modifier ce spot.", "OK");
+                    return;
+                }
+
+                // Show edit options
+                var editOptions = new[]
+                {
+                    "Édition complète",
+                    "Gestion des photos",
+                    "Signaler pour revalidation"
+                };
+
+                var selectedOption = await _dialogService.ShowActionSheetAsync(
+                    "Modifier le spot",
+                    "Annuler",
+                    null,
+                    editOptions);
+
+                if (selectedOption == "Annuler" || string.IsNullOrEmpty(selectedOption))
+                    return;
+
+                switch (selectedOption)
+                {
+                    case "Édition complète":
+                        await NavigateToFullEdit();
+                        break;
+                    case "Gestion des photos":
+                        await ManagePhotos();
+                        break;
+                    case "Signaler pour revalidation":
+                        await SubmitForRevalidation();
+                        break;
+                }
             }
             catch (Exception ex)
             {
@@ -457,16 +526,47 @@ namespace SubExplore.ViewModels.Spots
             {
                 if (Spot == null) return;
 
-                bool confirmed = await _dialogService.ShowConfirmationAsync(
-                    "Signaler le spot",
-                    $"Voulez-vous vraiment signaler le spot '{Spot.Name}' ?\n\nCette action permettra à l'équipe de modération d'examiner ce spot.",
-                    "Signaler",
-                    "Annuler");
+                // Show report type selection
+                var reportTypes = _spotReportService.GetReportTypes();
+                var typeNames = reportTypes.Values.ToArray();
+                
+                var selectedType = await _dialogService.ShowActionSheetAsync(
+                    "Signaler ce spot",
+                    "Annuler",
+                    null,
+                    typeNames);
 
-                if (confirmed)
+                if (selectedType == "Annuler" || string.IsNullOrEmpty(selectedType))
+                    return;
+
+                // Get the report type enum from selected string
+                var reportType = reportTypes.FirstOrDefault(x => x.Value == selectedType).Key;
+
+                // Get description from user
+                string description = await _dialogService.ShowPromptAsync(
+                    "Description du problème",
+                    "Veuillez décrire le problème en détail :",
+                    "OK",
+                    "Annuler",
+                    "Description détaillée...");
+
+                if (string.IsNullOrWhiteSpace(description))
+                    return;
+
+                // Submit report
+                var reportId = await _spotReportService.SubmitReportAsync(
+                    Spot.Id, 
+                    reportType, 
+                    description, 
+                    severity: Models.Enums.SpotReportSeverity.Medium);
+
+                if (reportId.HasValue)
                 {
-                    // TODO: Implémenter la fonctionnalité de signalement
-                    ShowToastMessage("🚨 Spot signalé avec succès", "#FF9800", "#FF9800", "White");
+                    ShowToastMessage("🚨 Signalement soumis avec succès", "#FF9800", "#FF9800", "White");
+                }
+                else
+                {
+                    await _dialogService.ShowAlertAsync("Erreur", "Impossible de soumettre le signalement", "OK");
                 }
             }
             catch (Exception ex)
@@ -530,11 +630,9 @@ namespace SubExplore.ViewModels.Spots
                 {
                     ShowWeatherError = true;
                     WeatherErrorMessage = "Service météo indisponible";
-                    System.Diagnostics.Debug.WriteLine("[WEATHER] ❌ Weather service not available");
                     return;
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[WEATHER] 🔄 Loading weather for coordinates: {Spot.Latitude}, {Spot.Longitude}");
 
                 // Charger la météo actuelle
                 CurrentWeather = await _weatherService.GetCurrentWeatherAsync(
@@ -549,7 +647,6 @@ namespace SubExplore.ViewModels.Spots
                     HasWeatherData = true;
                     ShowWeatherError = false;
                     
-                    System.Diagnostics.Debug.WriteLine($"[WEATHER] ✅ Weather data loaded: {CurrentWeather.Temperature}°C, {CurrentWeather.Description}");
                 }
                 else
                 {
@@ -559,7 +656,6 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] LoadWeatherData failed: {ex.Message}");
                 ShowWeatherError = true;
                 WeatherErrorMessage = $"Erreur météo: {ex.Message}";
                 HasWeatherData = false;
@@ -602,12 +698,9 @@ namespace SubExplore.ViewModels.Spots
 
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: Converting spot '{supabaseSpot.Name}'");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel: RAW coordinates from Supabase - Lat: {supabaseSpot.Latitude}, Lon: {supabaseSpot.Longitude}");
                 
                 if (supabaseSpot.Name == "AquaTech Diving Store")
                 {
-                    System.Diagnostics.Debug.WriteLine($"[SPECIAL] SpotDetailsViewModel: AquaTech Diving Store RAW data - Lat: {supabaseSpot.Latitude}, Lon: {supabaseSpot.Longitude}");
                 }
                 
                 // Lookup the spot type by TypeId
@@ -637,7 +730,6 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to convert SupabaseSpot to Spot: {ex.Message}");
                 return null;
             }
         }
@@ -678,11 +770,159 @@ namespace SubExplore.ViewModels.Spots
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to convert SupabaseSpotType to SpotType: {ex.Message}");
                 return null;
             }
         }
         
+        #endregion
+
+        #region Edit Methods
+
+        private async Task NavigateToFullEdit()
+        {
+            if (Spot == null) return;
+
+            try
+            {
+                // Navigate to comprehensive edit page
+                await Shell.Current.GoToAsync("spotedit", new Dictionary<string, object>
+                {
+                    ["spotId"] = Spot.Id.ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowToastMessage("❌ Erreur navigation", "#F44336", "#F44336", "White");
+            }
+        }
+
+        private async Task ManagePhotos()
+        {
+            if (Spot == null) return;
+
+            var photoOptions = new[]
+            {
+                "Ajouter une photo",
+                "Gérer les photos existantes",
+                "Définir photo principale"
+            };
+
+            var selectedOption = await _dialogService.ShowActionSheetAsync(
+                "Gestion des photos",
+                "Annuler",
+                null,
+                photoOptions);
+
+            switch (selectedOption)
+            {
+                case "Ajouter une photo":
+                    await AddPhoto();
+                    break;
+                case "Gérer les photos existantes":
+                    await ManageExistingPhotos();
+                    break;
+                case "Définir photo principale":
+                    await SetPrimaryPhoto();
+                    break;
+            }
+        }
+
+        private async Task AddPhoto()
+        {
+            try
+            {
+                // TODO: Implement photo picker
+                await _dialogService.ShowToastAsync("Sélection de photo - À implémenter avec MAUI Media picker");
+                
+                // Example implementation:
+                /*
+                var photo = await MediaPicker.PickPhotoAsync();
+                if (photo != null)
+                {
+                    using var stream = await photo.OpenReadAsync();
+                    var spotMedia = await _enhancedMediaService.AddSpotPhotoAsync(
+                        Spot.Id, stream, photo.FileName);
+                        
+                    if (spotMedia != null)
+                    {
+                        await LoadSpotDetails(); // Refresh to show new photo
+                    }
+                }
+                */
+            }
+            catch (Exception ex)
+            {
+                await _dialogService.ShowAlertAsync("Erreur", $"Erreur lors de l'ajout de photo: {ex.Message}", "OK");
+            }
+        }
+
+        private async Task ManageExistingPhotos()
+        {
+            try
+            {
+                var photos = await _enhancedMediaService.GetSpotPhotosAsync(Spot.Id);
+                if (photos.Count == 0)
+                {
+                    await _dialogService.ShowAlertAsync("Aucune photo", "Ce spot n'a pas encore de photos.", "OK");
+                    return;
+                }
+
+                await _dialogService.ShowToastAsync("Gestion des photos existantes - UI à implémenter");
+            }
+            catch (Exception ex)
+            {
+                await _dialogService.ShowAlertAsync("Erreur", $"Erreur lors de la gestion des photos: {ex.Message}", "OK");
+            }
+        }
+
+        private async Task SetPrimaryPhoto()
+        {
+            try
+            {
+                var photos = await _enhancedMediaService.GetSpotPhotosAsync(Spot.Id);
+                if (photos.Count == 0)
+                {
+                    await _dialogService.ShowAlertAsync("Aucune photo", "Ce spot n'a pas de photos.", "OK");
+                    return;
+                }
+
+                await _dialogService.ShowToastAsync("Définition de la photo principale - UI à implémenter");
+            }
+            catch (Exception ex)
+            {
+                await _dialogService.ShowAlertAsync("Erreur", $"Erreur lors de la définition de la photo principale: {ex.Message}", "OK");
+            }
+        }
+
+        private async Task SubmitForRevalidation()
+        {
+            try
+            {
+                if (Spot == null) return;
+
+                string reason = await _dialogService.ShowPromptAsync(
+                    "Revalidation",
+                    "Pourquoi ce spot nécessite-t-il une revalidation ?",
+                    "Soumettre",
+                    "Annuler",
+                    "Raison de la revalidation...");
+
+                if (string.IsNullOrWhiteSpace(reason))
+                    return;
+
+                bool success = await _spotEditService.SubmitForRevalidationAsync(Spot.Id, reason);
+                
+                if (success)
+                {
+                    ShowToastMessage("✅ Spot soumis pour revalidation", "#4CAF50", "#4CAF50", "White");
+                }
+            }
+            catch (Exception ex)
+            {
+                await _dialogService.ShowAlertAsync("Erreur", $"Erreur lors de la soumission: {ex.Message}", "OK");
+            }
+        }
+
         #endregion
     }
 }

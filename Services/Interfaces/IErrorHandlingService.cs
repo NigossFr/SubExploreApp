@@ -36,6 +36,22 @@ namespace SubExplore.Services.Interfaces
         Task HandleNetworkErrorAsync(Exception exception, string operation);
 
         /// <summary>
+        /// Handle a network error with context-aware user messaging
+        /// </summary>
+        /// <param name="exception">The network exception</param>
+        /// <param name="operation">The operation that was being attempted</param>
+        /// <param name="networkStatus">Current network health status for context-aware messaging</param>
+        Task HandleNetworkErrorWithContextAsync(Exception exception, string operation, object? networkStatus = null);
+
+        /// <summary>
+        /// Handle network errors with automatic retry suggestions
+        /// </summary>
+        /// <param name="exception">The network exception</param>
+        /// <param name="operation">The operation that was being attempted</param>
+        /// <param name="retryAction">Optional action to retry the operation</param>
+        Task HandleNetworkErrorWithRetryAsync(Exception exception, string operation, Func<Task>? retryAction = null);
+
+        /// <summary>
         /// Handle a database operation error
         /// </summary>
         /// <param name="exception">The database exception</param>

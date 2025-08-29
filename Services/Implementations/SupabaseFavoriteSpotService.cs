@@ -8,6 +8,7 @@ using SubExplore.Models.Domain;
 using SubExplore.Services.Interfaces;
 using SubExplore.Models.Supabase;
 using SubExplore.Models.Enums;
+using System.Net.Http;
 
 namespace SubExplore.Services.Implementations
 {
@@ -18,16 +19,22 @@ namespace SubExplore.Services.Implementations
     {
         private readonly ISupabaseApiService _supabaseApiService;
         private readonly IFavoriteSpotCacheService _cacheService;
+        private readonly ISupabaseSpotService _spotService;
         private readonly ILogger<SupabaseFavoriteSpotService> _logger;
+        private readonly Lazy<IOfflineFavoriteService>? _offlineFavoriteServiceLazy;
 
         public SupabaseFavoriteSpotService(
             ISupabaseApiService supabaseApiService,
             IFavoriteSpotCacheService cacheService,
-            ILogger<SupabaseFavoriteSpotService> logger)
+            ISupabaseSpotService spotService,
+            ILogger<SupabaseFavoriteSpotService> logger,
+            Lazy<IOfflineFavoriteService>? offlineFavoriteService = null)
         {
             _supabaseApiService = supabaseApiService ?? throw new ArgumentNullException(nameof(supabaseApiService));
             _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
+            _spotService = spotService ?? throw new ArgumentNullException(nameof(spotService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _offlineFavoriteServiceLazy = offlineFavoriteService;
         }
 
         /// <summary>
@@ -131,6 +138,60 @@ namespace SubExplore.Services.Implementations
                     return true; // Maintenant en favoris
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogWarning(ex, "🌐 Erreur réseau, basculement en mode hors ligne");
+                
+                // 🔧 AMÉLIORATION: Fallback vers le service offline
+                if (_offlineFavoriteServiceLazy?.Value != null)
+                {
+                    var offlineService = _offlineFavoriteServiceLazy.Value;
+                    await offlineService.EnableOfflineModeAsync();
+                    
+                    // Obtenir le statut depuis le cache offline
+                    var offlineFavorites = await offlineService.GetOfflineFavoritesAsync(userId, cancellationToken);
+                    bool currentlyFavorite = offlineFavorites.Any(f => f.SpotId == spotId);
+                    
+                    if (currentlyFavorite)
+                    {
+                        await offlineService.RemoveOfflineFavoriteAsync(userId, spotId, cancellationToken);
+                        return false;
+                    }
+                    else
+                    {
+                        await offlineService.AddOfflineFavoriteAsync(userId, spotId, 5, null, true, cancellationToken);
+                        return true;
+                    }
+                }
+                
+                throw; // Re-throw si pas de service offline
+            }
+            catch (TimeoutException ex)
+            {
+                _logger.LogWarning(ex, "⏱️ Timeout, tentative de basculement offline");
+                
+                if (_offlineFavoriteServiceLazy?.Value != null)
+                {
+                    // Même logique que pour HttpRequestException
+                    var offlineService = _offlineFavoriteServiceLazy.Value;
+                    await offlineService.EnableOfflineModeAsync();
+                    var offlineFavorites = await offlineService.GetOfflineFavoritesAsync(userId, cancellationToken);
+                    bool currentlyFavorite = offlineFavorites.Any(f => f.SpotId == spotId);
+                    
+                    if (currentlyFavorite)
+                    {
+                        await offlineService.RemoveOfflineFavoriteAsync(userId, spotId, cancellationToken);
+                        return false;
+                    }
+                    else
+                    {
+                        await offlineService.AddOfflineFavoriteAsync(userId, spotId, 5, null, true, cancellationToken);
+                        return true;
+                    }
+                }
+                
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Erreur lors du basculement favori du spot {SpotId} pour l'utilisateur {UserId}", spotId, userId);
@@ -183,10 +244,20 @@ namespace SubExplore.Services.Implementations
                 var supabaseFavorites = await _supabaseApiService.GetUserFavoritesAsync(userId);
 
                 // Convertir en mod\u00e8les de domaine
-                var domainFavorites = supabaseFavorites
-                    .Select(ConvertToDomainModel)
-                    .Where(f => f != null)
-                    .Cast<UserFavoriteSpot>()
+                // Convertir en modèles de domaine avec chargement des spots
+                var domainFavorites = new List<UserFavoriteSpot>();
+                
+                foreach (var supabaseFavorite in supabaseFavorites)
+                {
+                    var domainFavorite = await ConvertToDomainModelWithSpotAsync(supabaseFavorite, cancellationToken);
+                    if (domainFavorite != null)
+                    {
+                        domainFavorites.Add(domainFavorite);
+                    }
+                }
+
+                // Appliquer pagination et tri
+                var pagedFavorites = domainFavorites
                     .OrderByDescending(f => f.Priority)
                     .ThenByDescending(f => f.CreatedAt)
                     .Skip((pageNumber - 1) * pageSize)
@@ -194,7 +265,7 @@ namespace SubExplore.Services.Implementations
                     .ToList();
 
                 _logger.LogInformation("✅ {Count} favoris r\u00e9cup\u00e9r\u00e9s pour l'utilisateur {UserId}", domainFavorites.Count, userId);
-                return domainFavorites;
+                return pagedFavorites;
             }
             catch (Exception ex)
             {
@@ -433,6 +504,93 @@ namespace SubExplore.Services.Implementations
             {
                 _logger.LogWarning(ex, "⚠️ Erreur lors de l'invalidation du cache pour l'utilisateur {UserId}", userId);
                 // Ne pas propager l'erreur, ce n'est pas critique
+            }
+        }
+
+        /// <summary>
+        /// Convertit un modèle Supabase en modèle de domaine avec chargement du spot associé
+        /// </summary>
+        private async Task<UserFavoriteSpot?> ConvertToDomainModelWithSpotAsync(SupabaseUserFavoriteSpot supabaseFavorite, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Charger les données du spot
+                var supabaseSpot = await _spotService.GetSpotByIdAsync(supabaseFavorite.SpotId);
+                if (supabaseSpot == null)
+                {
+                    _logger.LogWarning("⚠️ Spot {SpotId} introuvable pour le favori {FavoriteId}", supabaseFavorite.SpotId, supabaseFavorite.Id);
+                    return null;
+                }
+
+                // Convertir le spot Supabase en modèle de domaine
+                var domainSpot = ConvertSupabaseSpotToDomain(supabaseSpot);
+                if (domainSpot == null)
+                {
+                    _logger.LogWarning("⚠️ Impossible de convertir le spot {SpotId}", supabaseFavorite.SpotId);
+                    return null;
+                }
+
+                return new UserFavoriteSpot
+                {
+                    Id = supabaseFavorite.Id,
+                    UserId = supabaseFavorite.UserId,
+                    SpotId = supabaseFavorite.SpotId,
+                    CreatedAt = supabaseFavorite.CreatedAt,
+                    UpdatedAt = supabaseFavorite.UpdatedAt,
+                    Notes = supabaseFavorite.Notes,
+                    Priority = supabaseFavorite.Priority,
+                    NotificationEnabled = supabaseFavorite.NotificationEnabled,
+                    Spot = domainSpot,
+                    User = null! // TODO: Load user data if needed
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la conversion du favori avec spot {FavoriteId}", supabaseFavorite.Id);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Convertit un SupabaseSpot en Spot de domaine
+        /// </summary>
+        private Spot? ConvertSupabaseSpotToDomain(SupabaseSpot supabaseSpot)
+        {
+            try
+            {
+                return new Spot
+                {
+                    Id = supabaseSpot.Id,
+                    CreatorId = supabaseSpot.CreatorId,
+                    Name = supabaseSpot.Name,
+                    Description = supabaseSpot.Description,
+                    Latitude = supabaseSpot.Latitude,
+                    Longitude = supabaseSpot.Longitude,
+                    DifficultyLevel = supabaseSpot.DifficultyLevel.HasValue ? (DifficultyLevel)supabaseSpot.DifficultyLevel.Value : DifficultyLevel.Beginner,
+                    TypeId = supabaseSpot.TypeId,
+                    RequiredEquipment = supabaseSpot.RequiredEquipment,
+                    SafetyNotes = supabaseSpot.SafetyNotes,
+                    BestConditions = supabaseSpot.BestConditions,
+                    CreatedAt = supabaseSpot.CreatedAt,
+                    ValidationStatus = (SpotValidationStatus)supabaseSpot.ValidationStatus,
+                    LastSafetyReview = supabaseSpot.LastSafetyReview,
+                    MaxDepth = (int?)supabaseSpot.MaxDepth,
+                    CurrentStrength = (CurrentStrength)supabaseSpot.CurrentStrength,
+                    HasMooring = supabaseSpot.HasMooring,
+                    BottomType = supabaseSpot.BottomType,
+                    // TODO: Load SpotType navigation property if needed for display
+                    Type = new SpotType
+                    {
+                        Id = supabaseSpot.TypeId,
+                        Name = "Type de plongée", // Placeholder - will be loaded properly later
+                        Category = ActivityCategory.Activity
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la conversion du spot {SpotId}", supabaseSpot.Id);
+                return null;
             }
         }
 

@@ -58,10 +58,10 @@
                     
                     <!-- Progress indicator overlay -->
                     <Grid BackgroundColor="#80000000"
-                          IsVisible="{Binding IsUploadingPrimaryPhoto}"
+                          IsVisible="{Binding IsUploading}"
                           AutomationId="PrimaryPhotoProgressOverlay">
                         <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
-                            <ActivityIndicator IsRunning="{Binding IsUploadingPrimaryPhoto}"
+                            <ActivityIndicator IsRunning="{Binding IsUploading}"
                                                Color="White"
                                                HeightRequest="40"
                                                WidthRequest="40" />
@@ -79,7 +79,7 @@
             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                 <Button Grid.Column="0" 
                         Text="Prendre une photo" 
-                        Command="{Binding TakePhotoCommand}"
+                        Command="{Binding AddPhotoFromCameraCommand}"
                         Style="{StaticResource ButtonSecondaryStyle}"
                         IsEnabled="{Binding CanAddMorePhotos}"
                         AutomationId="TakePhotoButton"
@@ -93,7 +93,7 @@
                 </Button>
                 <Button Grid.Column="1" 
                         Text="Choisir une photo" 
-                        Command="{Binding PickPhotoCommand}"
+                        Command="{Binding AddPhotoFromGalleryCommand}"
                         Style="{StaticResource ButtonOutlinedStyle}"
                         IsEnabled="{Binding CanAddMorePhotos}"
                         AutomationId="PickPhotoButton"
@@ -118,10 +118,10 @@
 
             <!-- Photos additionnelles -->
             <Label Text="Photos additionnelles" Margin="0,15,0,0" />
-            <CollectionView ItemsSource="{Binding PhotosPaths}" 
+            <CollectionView ItemsSource="{Binding SpotPhotos}" 
                            SelectionMode="None"
                            EmptyView="Aucune photo ajoutée"
-                           HeightRequest="{Binding PhotosPaths.Count, Converter={StaticResource CollectionCountToHeightConverter}, FallbackValue=100}">
+                           HeightRequest="{Binding SpotPhotos.Count, Converter={StaticResource CollectionCountToHeightConverter}, FallbackValue=100}">
                 <CollectionView.ItemsLayout>
                     <GridItemsLayout Orientation="Vertical" 
                                      Span="2"

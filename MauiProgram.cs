@@ -89,10 +89,13 @@ public static class MauiProgram
         // 🛡️ RESILIENCE SERVICES - Retry policies, circuit breakers, health monitoring
         builder.Services.AddSingleton<IRetryPolicyService, RetryPolicyService>();
         builder.Services.AddSingleton<ICircuitBreakerService, CircuitBreakerService>();
-        // 🚫 ConnectionHealthService supprimé - utilisait Entity Framework
         builder.Services.AddSingleton<IErrorCategorizationService, ErrorCategorizationService>();
         builder.Services.AddSingleton<IAutoReconnectService, AutoReconnectService>();
         builder.Services.AddSingleton<IFallbackDataService, FallbackDataService>();
+        
+        // 📡 NETWORK MONITORING SERVICES - Enhanced network health and offline capabilities
+        builder.Services.AddSingleton<INetworkHealthService, NetworkHealthService>();
+        builder.Services.AddSingleton<IOfflineCapabilityService, OfflineCapabilityService>();
 
         // 🚫 SupabaseService supprimé - utilisait Entity Framework
         
@@ -138,10 +141,35 @@ public static class MauiProgram
         builder.Services.AddScoped<IUserProfileService, SimpleUserProfileService>();
         // 🚫 Services supprimés - utilisaient des repositories
         // builder.Services.AddScoped<ISpotService, SpotService>();
-        // ✅ SERVICE DE FAVORIS 100% SUPABASE
-        builder.Services.AddScoped<IFavoriteSpotService, SupabaseFavoriteSpotService>();
+        // ✅ SERVICE DE FAVORIS 100% SUPABASE (avec Lazy pour éviter les dépendances circulaires)
+        builder.Services.AddScoped<IFavoriteSpotService>(provider =>
+        {
+            var supabaseApi = provider.GetRequiredService<ISupabaseApiService>();
+            var cacheService = provider.GetRequiredService<IFavoriteSpotCacheService>();
+            var logger = provider.GetRequiredService<ILogger<SupabaseFavoriteSpotService>>();
+            
+            // Lazy loading pour éviter la dépendance circulaire
+            var lazyOfflineService = new Lazy<IOfflineFavoriteService>(() => 
+                provider.GetRequiredService<IOfflineFavoriteService>());
+            
+            var spotService = provider.GetRequiredService<ISupabaseSpotService>();
+            return new SupabaseFavoriteSpotService(supabaseApi, cacheService, spotService, logger, lazyOfflineService);
+        });
         builder.Services.AddSingleton<IFavoriteSpotCacheService, FavoriteSpotCacheService>();
-        // ✅ ErrorHandlingService restauré pour WeatherService
+        
+        // ✅ ENHANCED FAVORITES SERVICES - Offline capabilities sans dépendance circulaire
+        builder.Services.AddSingleton<IOfflineFavoriteService>(provider =>
+        {
+            var cacheService = provider.GetRequiredService<IFavoriteSpotCacheService>();
+            var networkService = provider.GetRequiredService<INetworkHealthService>();
+            var settingsService = provider.GetRequiredService<ISettingsService>();
+            var logger = provider.GetRequiredService<ILogger<OfflineFavoriteService>>();
+            
+            // Création sans dépendance au IFavoriteSpotService pour éviter la circularité
+            return new OfflineFavoriteService(null, cacheService, networkService, settingsService, logger);
+        });
+        builder.Services.AddScoped<IFavoriteExportImportService, FavoriteExportImportService>();
+        // ✅ ErrorHandlingService with enhanced network error handling capabilities
         builder.Services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
         
         // Weather services
@@ -253,6 +281,12 @@ public static class MauiProgram
         // builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
         // ✅ PASSWORD RESET SERVICE - 100% SUPABASE
         builder.Services.AddScoped<IPasswordResetService, StubPasswordResetService>();
+
+        // ✅ ENHANCED SPOT SERVICES
+        builder.Services.AddScoped<ISharingService, SharingService>();
+        builder.Services.AddScoped<ISpotReportService, SpotReportService>();
+        builder.Services.AddScoped<ISpotEditService, SpotEditService>();
+        builder.Services.AddScoped<IEnhancedMediaService, EnhancedMediaService>();
         
         // ✅ Validation services - Supabase compatible
         builder.Services.AddScoped<ISpotValidationService, SupabaseSpotValidationService>();
@@ -279,7 +313,19 @@ public static class MauiProgram
         builder.Services.AddScoped<ISpotCacheService, SpotCacheService>();
         
         // Configure logging
-        builder.Services.AddLogging(configure => configure.AddDebug());
+        // 🔧 AMÉLIORATION: Configuration de logging renforcée
+#if DEBUG
+        builder.Services.AddLogging(configure =>
+        {
+            configure.AddDebug();
+            configure.SetMinimumLevel(LogLevel.Debug);
+        });
+#else
+        builder.Services.AddLogging(configure =>
+        {
+            configure.SetMinimumLevel(LogLevel.Information);
+        });
+#endif
         
         // Add HttpClient for image caching
         builder.Services.AddHttpClient<ImageCacheService>(client =>
@@ -300,6 +346,7 @@ public static class MauiProgram
         // builder.Services.AddTransient<SpotManagementViewModel>();
         // builder.Services.AddTransient<AddSpotViewModel>();
         builder.Services.AddTransient<SpotDetailsViewModel>();
+        builder.Services.AddTransient<SpotEditViewModel>();
         // builder.Services.AddTransient<MySpotsViewModel>();
         builder.Services.AddTransient<SpotLocationViewModel>();
         // builder.Services.AddTransient<SpotCharacteristicsViewModel>();
@@ -337,6 +384,8 @@ public static class MauiProgram
         builder.Services.AddTransient<EnhancedMapPage>();
         // builder.Services.AddTransient<AddSpotPage>();
         builder.Services.AddTransient<SpotDetailsPage>();
+        builder.Services.AddTransient<SpotPhotosPage>();
+        builder.Services.AddTransient<SpotEditPage>();
         builder.Services.AddTransient<MySpotsPage>();
         // 🚫 Vues supprimées - utilisaient Entity Framework
         // builder.Services.AddTransient<SpotLocationView>();

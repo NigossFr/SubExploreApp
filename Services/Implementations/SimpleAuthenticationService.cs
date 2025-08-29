@@ -63,10 +63,15 @@ namespace SubExplore.Services.Implementations
                 if (client.Auth.CurrentSession != null)
                 {
                     _logger.LogInformation("✅ Session utilisateur existante trouvée");
-                    // ✅ UTILISATION DE L'ID UTILISATEUR SUPABASE RÉEL
+                    // ✅ UTILISATION DE L'ID UTILISATEUR SUPABASE RÉEL + SYNCHRONISATION
+                    var userId = Guid.Parse(client.Auth.CurrentUser.Id);
+                    
+                    // Ensure user exists in custom users table
+                    await EnsureUserExistsInDatabaseAsync(userId, client.Auth.CurrentUser);
+                    
                     _currentUser = new User
                     {
-                        Id = Guid.Parse(client.Auth.CurrentUser.Id),
+                        Id = userId,
                         Email = client.Auth.CurrentUser?.Email ?? "unknown@supabase.com",
                         FirstName = "Supabase",
                         LastName = "User",
@@ -98,10 +103,15 @@ namespace SubExplore.Services.Implementations
                 {
                     _logger.LogInformation("✅ Connexion réussie pour: {Email}", email);
                     
-                    // ✅ UTILISATION DE L'ID UTILISATEUR SUPABASE RÉEL
+                    // ✅ UTILISATION DE L'ID UTILISATEUR SUPABASE RÉEL + SYNCHRONISATION
+                    var userId = Guid.Parse(session.User.Id);
+                    
+                    // Ensure user exists in custom users table
+                    await EnsureUserExistsInDatabaseAsync(userId, session.User);
+                    
                     _currentUser = new User
                     {
-                        Id = Guid.Parse(session.User.Id),
+                        Id = userId,
                         Email = session.User.Email ?? email,
                         FirstName = "Supabase",
                         LastName = "User",
@@ -195,6 +205,78 @@ namespace SubExplore.Services.Implementations
                 _logger.LogError(ex, "❌ Erreur lors de l'inscription pour: {Email}", email);
                 return false;
             }
+        }
+        
+        /// <summary>
+        /// Ensures that the authenticated Supabase user exists in the custom users table
+        /// </summary>
+        private async Task EnsureUserExistsInDatabaseAsync(Guid userId, Supabase.Gotrue.User supabaseUser)
+        {
+            try
+            {
+                _logger.LogInformation("🔍 Vérification de l'existence de l'utilisateur {UserId} dans la base de données", userId);
+                
+                var client = _supabaseClient.GetClient();
+                
+                // Check if user already exists
+                var existingUsers = await client
+                    .From<Models.Supabase.SupabaseUser>()
+                    .Where(u => u.Id == userId)
+                    .Get();
+                
+                if (existingUsers?.Models?.Any() == true)
+                {
+                    _logger.LogDebug("✅ Utilisateur {UserId} existe déjà dans la base de données", userId);
+                    return;
+                }
+                
+                // Create new user record
+                _logger.LogInformation("➕ Création d'un nouvel enregistrement utilisateur {UserId}", userId);
+                
+                var newUser = new Models.Supabase.SupabaseUser
+                {
+                    Id = userId,
+                    Email = supabaseUser.Email ?? "unknown@example.com",
+                    FirstName = GetUserMetadata(supabaseUser, "first_name") ?? "Utilisateur",
+                    LastName = GetUserMetadata(supabaseUser, "last_name") ?? "SubExplore",
+                    IsEmailConfirmed = supabaseUser.EmailConfirmedAt != null,
+                    CreatedAt = supabaseUser.CreatedAt,
+                    LastLogin = DateTime.UtcNow,
+                    AccountType = AccountType.Standard.ToString(),
+                    SubscriptionStatus = SubscriptionStatus.Free.ToString(),
+                    Permissions = (int)UserPermissions.CreateSpots
+                };
+                
+                await client.From<Models.Supabase.SupabaseUser>().Insert(newUser);
+                
+                _logger.LogInformation("✅ Utilisateur {UserId} créé avec succès dans la base de données", userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la synchronisation de l'utilisateur {UserId}", userId);
+                // Don't throw - allow the authentication to continue
+                // The favorites functionality might fail, but the user can still use the app
+            }
+        }
+        
+        /// <summary>
+        /// Safely extracts user metadata from Supabase user object
+        /// </summary>
+        private string? GetUserMetadata(Supabase.Gotrue.User supabaseUser, string key)
+        {
+            try
+            {
+                if (supabaseUser.UserMetadata?.TryGetValue(key, out var value) == true)
+                {
+                    return value?.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Could not extract metadata key '{Key}': {Error}", key, ex.Message);
+            }
+            
+            return null;
         }
     }
 }

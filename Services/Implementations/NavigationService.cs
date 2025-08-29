@@ -37,13 +37,11 @@ namespace SubExplore.Services.Implementations
             try
             {
                 var targetRoute = typeof(TViewModel).Name;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Starting navigation to {targetRoute}");
                 
                 // Add to navigation history for better back navigation
                 if (!string.IsNullOrEmpty(_currentRoute) && _currentRoute != targetRoute)
                 {
                     _navigationHistory.Push(_currentRoute);
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Added {_currentRoute} to navigation history");
                 }
                 
                 // Check navigation permissions first
@@ -53,7 +51,6 @@ namespace SubExplore.Services.Implementations
                     if (!canNavigate)
                     {
                         var message = NavigationGuard.GetAccessDeniedMessage(typeof(TViewModel));
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Access denied - {message}");
                         
                         if (DialogService != null)
                         {
@@ -71,16 +68,11 @@ namespace SubExplore.Services.Implementations
                     }
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Parameter: {parameter}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Application.Current: {Application.Current != null}");
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: MainPage type: {Application.Current?.MainPage?.GetType().Name}");
                 
                 // Use Shell navigation if available (with fallback on failure)
                 if (Application.Current?.MainPage is Shell)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Using Shell navigation");
                     var route = _routeRegistry.GetRouteForViewModel<TViewModel>();
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Route found: {route}");
                     
                     if (!string.IsNullOrEmpty(route))
                     {
@@ -92,15 +84,11 @@ namespace SubExplore.Services.Implementations
                                 var queryParams = BuildQueryParameters(parameter);
                                 var fullRoute = string.IsNullOrEmpty(queryParams) ? route : $"{route}?{queryParams}";
                                 
-                                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Navigating to {fullRoute}");
                                 await Shell.Current.GoToAsync(fullRoute, true); // Animate transitions
-                                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Shell navigation completed successfully");
                             }
                             else
                             {
-                                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Navigating to {route} (no parameters)");
                                 await Shell.Current.GoToAsync(route, true); // Animate transitions
-                                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Shell navigation completed successfully");
                             }
                             
                             // Update current route for breadcrumb tracking
@@ -122,26 +110,19 @@ namespace SubExplore.Services.Implementations
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Not using Shell navigation (MainPage is not Shell)");
                 }
                 
                 // Fallback to traditional navigation
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Using traditional navigation fallback");
                 var page = await CreateAndInitializePage<TViewModel>(parameter);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Page created successfully");
 
                 if (Application.Current?.MainPage is NavigationPage navigationPage)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Pushing to existing NavigationPage");
                     await navigationPage.PushAsync(page);
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Traditional navigation completed successfully");
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: Creating new NavigationPage");
                     // Create new navigation page
                     Application.Current.MainPage = new NavigationPage(page);
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync: New NavigationPage set as MainPage");
                 }
             }
             catch (System.Runtime.InteropServices.COMException comEx)
@@ -178,7 +159,6 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigateToAsync (Type): Starting navigation to {viewModelType.Name}");
                 
                 // Use reflection to call the generic method
                 var method = typeof(NavigationService).GetMethod(nameof(NavigateToAsync), new[] { typeof(object) });
@@ -211,18 +191,15 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Starting navigation back");
                 
                 if (Application.Current.MainPage is Shell)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Using Shell navigation back");
                     
                     // Use navigation history for smarter back navigation
                     if (_navigationHistory.Count > 0)
                     {
                         var previousRoute = _navigationHistory.Pop();
                         _currentRoute = previousRoute;
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] GoBackAsync: Going back to {previousRoute} from history");
                         await Shell.Current.GoToAsync($"///{GetShellRouteFromViewModel(previousRoute)}", true);
                         UpdateNavigationBreadcrumb(previousRoute);
                     }
@@ -230,24 +207,19 @@ namespace SubExplore.Services.Implementations
                     {
                         await Shell.Current.GoToAsync("..", true);
                     }
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Shell navigation back completed");
                 }
                 else if (Application.Current.MainPage is NavigationPage navigationPage)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Using NavigationPage pop");
                     if (navigationPage.Navigation.NavigationStack.Count > 1)
                     {
                         await navigationPage.PopAsync();
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: NavigationPage pop completed");
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Cannot go back - already at root page");
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoBackAsync: Unknown navigation type, attempting to go to home");
                     await GoToHomeAsync();
                 }
             }
@@ -282,7 +254,6 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Starting for {typeof(TViewModel).Name}");
                 
                 if (_serviceProvider == null)
                 {
@@ -291,7 +262,6 @@ namespace SubExplore.Services.Implementations
                 }
 
                 var viewModel = _serviceProvider.GetService<TViewModel>();
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: ViewModel resolved: {viewModel != null}");
                 
                 if (viewModel == null)
                     throw new InvalidOperationException($"Impossible de résoudre le ViewModel {typeof(TViewModel).Name}");
@@ -305,31 +275,24 @@ namespace SubExplore.Services.Implementations
                     var viewTypeName = viewModelTypeName.Replace("ViewModel", "Page");
                     var viewTypeFullName = GetViewTypeFullName(viewTypeName);
                     
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Fallback - Looking for view type: {viewTypeFullName}");
                     viewType = Assembly.GetExecutingAssembly().GetType(viewTypeFullName);
                 }
 
                 if (viewType == null)
                     throw new InvalidOperationException($"Type de vue non trouvé pour {typeof(TViewModel).Name}");
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] NavigationService: Found view type {viewType.Name}, creating instance via DI");
                 var page = _serviceProvider.GetService(viewType) as Page;
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Page created: {page != null}");
                 
                 if (page == null)
                     throw new InvalidOperationException($"Impossible de créer une instance de {viewType.Name}");
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Setting BindingContext");
                 page.BindingContext = viewModel;
 
                 // Check if ViewModel has InitializeAsync method
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Looking for InitializeAsync method");
                 var initMethod = viewModel.GetType().GetMethod("InitializeAsync", new[] { typeof(object) });
                 if (initMethod != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Calling InitializeAsync with parameter");
                     await (Task)initMethod.Invoke(viewModel, new[] { parameter });
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: InitializeAsync completed");
                 }
                 else
                 {
@@ -337,17 +300,13 @@ namespace SubExplore.Services.Implementations
                     var initMethodNoParam = viewModel.GetType().GetMethod("InitializeAsync", Type.EmptyTypes);
                     if (initMethodNoParam != null)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Calling InitializeAsync without parameter");
                         await (Task)initMethodNoParam.Invoke(viewModel, null);
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: InitializeAsync completed");
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: No InitializeAsync method found");
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateAndInitializePage: Returning page successfully");
                 return page;
             }
             catch (System.Runtime.InteropServices.COMException comEx)
@@ -422,20 +381,17 @@ namespace SubExplore.Services.Implementations
                 {
                     var encodedValue = System.Web.HttpUtility.UrlEncode(parameter.ToString());
                     queryParams.Add($"spotId={encodedValue}");
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BuildQueryParameters: Guid type -> spotId={encodedValue}");
                 }
                 else if (parameterType.IsPrimitive || parameterType == typeof(string) || parameterType == typeof(decimal))
                 {
                     var encodedValue = System.Web.HttpUtility.UrlEncode(parameter.ToString());
                     queryParams.Add($"id={encodedValue}");
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BuildQueryParameters: Simple type {parameterType.Name} -> id={encodedValue}");
                 }
                 else
                 {
                     // Special handling for SpotNavigationParameter to ensure SpotId is passed correctly
                     if (parameter is SubExplore.Models.Navigation.SpotNavigationParameter spotParam)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DEBUG] BuildQueryParameters: SpotNavigationParameter detected with SpotId={spotParam.SpotId}");
                         
                         // Shell Navigation has issues with complex parameters, so we use multiple simple parameters
                         // This ensures all parameters are preserved
@@ -447,7 +403,6 @@ namespace SubExplore.Services.Implementations
                             {
                                 queryParams.Add($"spotname={System.Web.HttpUtility.UrlEncode(spotParam.SpotName)}");
                             }
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] Added SpotId parameters: spotid={spotParam.SpotId}, mode=edit");
                         }
                         
                         // Add latitude and longitude
@@ -476,7 +431,6 @@ namespace SubExplore.Services.Implementations
                 }
 
                 var result = string.Join("&", queryParams);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] BuildQueryParameters result: {result}");
                 return result;
             }
             catch (Exception ex)
@@ -493,7 +447,6 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Navigating to home page");
                 
                 // Clear navigation history when going home
                 _navigationHistory.Clear();
@@ -501,14 +454,11 @@ namespace SubExplore.Services.Implementations
                 
                 if (Application.Current.MainPage is Shell)
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Using Shell navigation to map");
                     await Shell.Current.GoToAsync("///map", true);
                     UpdateNavigationBreadcrumb("MapViewModel");
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Shell navigation to map completed");
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[DEBUG] GoToHomeAsync: Using ViewModel navigation to MapViewModel");
                     await NavigateToAsync<ViewModels.Map.MapViewModel>();
                 }
             }
@@ -526,9 +476,7 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DEBUG] NavigationService: Switching to Shell navigation");
                 Application.Current.MainPage = new AppShell();
-                System.Diagnostics.Debug.WriteLine("[DEBUG] NavigationService: ✓ AppShell set as MainPage successfully");
             }
             catch (Exception ex)
             {
@@ -560,7 +508,6 @@ namespace SubExplore.Services.Implementations
         {
             _navigationHistory.Clear();
             _currentRoute = null;
-            System.Diagnostics.Debug.WriteLine("[DEBUG] Navigation history cleared");
         }
         
         private void UpdateNavigationBreadcrumb(string routeName)
@@ -568,7 +515,6 @@ namespace SubExplore.Services.Implementations
             try
             {
                 var breadcrumb = GetFriendlyRouteName(routeName);
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Updated navigation breadcrumb to: {breadcrumb}");
                 
                 // Update Shell flyout header if possible
                 if (Application.Current.MainPage is Shell shell)

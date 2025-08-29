@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Spots.SpotEditPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:SubExplore.Views.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             Title="{Binding Title}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False">
+
+    <Grid>
+        <!-- Custom Navigation Bar -->
+        <controls:CustomNavigationBar Title="{Binding Title}" 
+                                      VerticalOptions="Start"
+                                      ZIndex="100" />
+
+        <ScrollView Margin="0,56,0,0">
+            <StackLayout Padding="20" Spacing="20">
+                
+                <!-- Loading State -->
+                <Frame IsVisible="{Binding IsLoading}"
+                       BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource CardDark}}"
+                       BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                       CornerRadius="12"
+                       HasShadow="True">
+                    <StackLayout Orientation="Horizontal" Spacing="15">
+                        <ActivityIndicator IsRunning="True" 
+                                         Color="{StaticResource Primary}" 
+                                         VerticalOptions="Center" />
+                        <Label Text="Chargement des informations du spot..." 
+                               VerticalOptions="Center"
+                               FontSize="16" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Edit Categories -->
+                <StackLayout IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" 
+                           Spacing="15">
+
+                    <!-- Basic Information Card -->
+                    <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource CardDark}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                           CornerRadius="12" HasShadow="True" Padding="20">
+                        <StackLayout Spacing="15">
+                            <Label Text="📝 Informations Générales" 
+                                   FontSize="18" FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                            
+                            <!-- Name Field -->
+                            <Entry Text="{Binding SpotName}" 
+                                   Placeholder="Nom du spot"
+                                   FontSize="16"
+                                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            
+                            <!-- Description Field -->
+                            <Editor Text="{Binding SpotDescription}" 
+                                    Placeholder="Description du spot..."
+                                    HeightRequest="100"
+                                    FontSize="14"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            
+                            <!-- Required Equipment -->
+                            <Editor Text="{Binding RequiredEquipment}" 
+                                    Placeholder="Équipement requis..."
+                                    HeightRequest="80"
+                                    FontSize="14"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            
+                            <!-- Safety Notes -->
+                            <Editor Text="{Binding SafetyNotes}" 
+                                    Placeholder="Notes de sécurité..."
+                                    HeightRequest="80"
+                                    FontSize="14"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            
+                            <!-- Best Conditions -->
+                            <Editor Text="{Binding BestConditions}" 
+                                    Placeholder="Meilleures conditions..."
+                                    HeightRequest="80"
+                                    FontSize="14"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            
+                            <Button Text="💾 Sauvegarder les Informations"
+                                    Command="{Binding SaveBasicInfoCommand}"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    FontAttributes="Bold" />
+                        </StackLayout>
+                    </Frame>
+
+                    <!-- Technical Details Card -->
+                    <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource CardDark}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                           CornerRadius="12" HasShadow="True" Padding="20">
+                        <StackLayout Spacing="15">
+                            <Label Text="🔧 Détails Techniques" 
+                                   FontSize="18" FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                            
+                            <!-- Max Depth -->
+                            <StackLayout>
+                                <Label Text="Profondeur maximale (mètres)" FontSize="14" />
+                                <Entry Text="{Binding MaxDepth}" 
+                                       Placeholder="ex: 30"
+                                       Keyboard="Numeric"
+                                       FontSize="16"
+                                       BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            </StackLayout>
+                            
+                            <!-- Difficulty Level -->
+                            <StackLayout>
+                                <Label Text="Niveau de Difficulté" FontSize="14" />
+                                <Picker ItemsSource="{Binding DifficultyLevels}"
+                                        SelectedItem="{Binding SelectedDifficultyLevel}"
+                                        FontSize="16"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            </StackLayout>
+                            
+                            <!-- Current Strength -->
+                            <StackLayout>
+                                <Label Text="Force du Courant" FontSize="14" />
+                                <Picker ItemsSource="{Binding CurrentStrengths}"
+                                        SelectedItem="{Binding SelectedCurrentStrength}"
+                                        FontSize="16"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            </StackLayout>
+                            
+                            <Button Text="🔧 Sauvegarder les Détails Techniques"
+                                    Command="{Binding SaveTechnicalDetailsCommand}"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    FontAttributes="Bold" />
+                        </StackLayout>
+                    </Frame>
+
+                    <!-- Location Card -->
+                    <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource CardDark}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                           CornerRadius="12" HasShadow="True" Padding="20">
+                        <StackLayout Spacing="15">
+                            <Label Text="📍 Localisation" 
+                                   FontSize="18" FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                            
+                            <!-- Latitude -->
+                            <StackLayout>
+                                <Label Text="Latitude" FontSize="14" />
+                                <Entry Text="{Binding Latitude}" 
+                                       Placeholder="ex: 43.6047"
+                                       Keyboard="Numeric"
+                                       FontSize="16"
+                                       BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            </StackLayout>
+                            
+                            <!-- Longitude -->
+                            <StackLayout>
+                                <Label Text="Longitude" FontSize="14" />
+                                <Entry Text="{Binding Longitude}" 
+                                       Placeholder="ex: 1.4442"
+                                       Keyboard="Numeric"
+                                       FontSize="16"
+                                       BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray700}}" />
+                            </StackLayout>
+                            
+                            <!-- Current Location Button -->
+                            <Button Text="📍 Utiliser ma Position Actuelle"
+                                    Command="{Binding UseCurrentLocationCommand}"
+                                    BackgroundColor="{StaticResource Secondary}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    FontAttributes="Bold" />
+                            
+                            <Button Text="📍 Sauvegarder la Localisation"
+                                    Command="{Binding SaveLocationCommand}"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    FontAttributes="Bold" />
+                        </StackLayout>
+                    </Frame>
+
+                    <!-- Actions Card -->
+                    <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource CardDark}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                           CornerRadius="12" HasShadow="True" Padding="20">
+                        <StackLayout Spacing="15">
+                            <Label Text="⚡ Actions Avancées" 
+                                   FontSize="18" FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                            
+                            <Button Text="📸 Gérer les Photos"
+                                    Command="{Binding ManagePhotosCommand}"
+                                    BackgroundColor="{StaticResource Success}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    FontAttributes="Bold" />
+                            
+                            <Button Text="✅ Soumettre pour Revalidation"
+                                    Command="{Binding SubmitForRevalidationCommand}"
+                                    BackgroundColor="{StaticResource Warning}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    FontAttributes="Bold" />
+                        </StackLayout>
+                    </Frame>
+
+                </StackLayout>
+
+                <!-- Error State -->
+                <Frame IsVisible="{Binding IsError}"
+                       BackgroundColor="{StaticResource Danger}"
+                       BorderColor="{StaticResource Danger}"
+                       CornerRadius="12" HasShadow="True" Padding="20">
+                    <StackLayout Spacing="10">
+                        <Label Text="❌ Erreur"
+                               TextColor="White"
+                               FontSize="18"
+                               FontAttributes="Bold" />
+                        <Label Text="{Binding ErrorMessage}"
+                               TextColor="White"
+                               FontSize="14" />
+                        <Button Text="🔄 Réessayer"
+                                Command="{Binding RefreshCommand}"
+                                BackgroundColor="White"
+                                TextColor="{StaticResource Danger}"
+                                CornerRadius="8" />
+                    </StackLayout>
+                </Frame>
+
+            </StackLayout>
+        </ScrollView>
+
+        <!-- Toast Notification -->
+        <Frame IsVisible="{Binding IsToastVisible}"
+               BackgroundColor="{Binding ToastBackgroundColor}"
+               BorderColor="{Binding ToastBorderColor}"
+               CornerRadius="25"
+               Padding="15,10"
+               Margin="20"
+               VerticalOptions="End"
+               HorizontalOptions="Center"
+               HasShadow="True"
+               ZIndex="999">
+            <Label Text="{Binding ToastMessage}"
+                   TextColor="{Binding ToastTextColor}"
+                   FontSize="14"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center" />
+        </Frame>
+
+    </Grid>
+</ContentPage>

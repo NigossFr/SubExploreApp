@@ -324,6 +324,20 @@
         Route="spotdetails" 
         FlyoutItemIsVisible="False" />
 
+    <!-- Spot Photos Page Route -->
+    <ShellContent
+        Title="Gestion des Photos"
+        ContentTemplate="{DataTemplate spots:SpotPhotosPage}"
+        Route="spotphotos" 
+        FlyoutItemIsVisible="False" />
+
+    <!-- Spot Edit Page Route -->
+    <ShellContent
+        Title="Édition du Spot"
+        ContentTemplate="{DataTemplate spots:SpotEditPage}"
+        Route="spotedit" 
+        FlyoutItemIsVisible="False" />
+
     <!-- Admin route - Hidden - Admin validation page -->
     <ShellContent
         Title="Validation des Spots"

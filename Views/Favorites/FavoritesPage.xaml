@@ -18,7 +18,7 @@
             <local:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <local:StringNotEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
             <local:StringToVisibilityConverter x:Key="IsNotNullConverter" />
-            <toolkit:BoolToObjectConverter x:Key="BoolToObjectConverter" />
+            <toolkit:BoolToObjectConverter x:Key="BoolToObjectConverter" TrueObject="🔔" FalseObject="🔕" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -119,7 +119,7 @@
                                    SemanticProperties.Hint="Tapez pour rechercher par nom, description ou type" />
                         </Frame>
                         
-                        <!-- Filter Button -->
+                        <!-- Advanced Menu Button -->
                         <Button Grid.Column="1"
                                 Text="⚙"
                                 FontSize="18"
@@ -128,9 +128,9 @@
                                 CornerRadius="25"
                                 BackgroundColor="{StaticResource Primary}"
                                 TextColor="White"
-                                Command="{Binding ShowActivityFilterCommand}"
-                                AutomationId="FilterButton"
-                                SemanticProperties.Description="Filtrer par type d'activité" />
+                                Clicked="OnAdvancedMenuClicked"
+                                AutomationId="AdvancedMenuButton"
+                                SemanticProperties.Description="Menu avancé des favoris" />
                         
                         <!-- Clear Search Button -->
                         <Button Grid.Column="2"
@@ -234,6 +234,14 @@
                         <Button Text="Importer des favoris"
                                 Command="{Binding ImportFavoritesCommand}"
                                 BackgroundColor="{StaticResource Secondary}"
+                                TextColor="White"
+                                CornerRadius="8"
+                                Padding="14,10"
+                                WidthRequest="250" />
+                                
+                        <Button Text="Exporter mes favoris"
+                                Command="{Binding ExportFavoritesCommand}"
+                                BackgroundColor="#4CAF50"
                                 TextColor="White"
                                 CornerRadius="8"
                                 Padding="14,10"
@@ -382,7 +390,7 @@
                                                 
                                                 <!-- Notification toggle -->
                                                 <Button Grid.Column="0"
-                                                        Text="{Binding NotificationEnabled, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='🔔|🔕'}"
+                                                        Text="{Binding NotificationEnabled, Converter={StaticResource BoolToObjectConverter}}"
                                                         FontSize="16"
                                                         HeightRequest="44"
                                                         CornerRadius="8"
