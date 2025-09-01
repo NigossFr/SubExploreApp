@@ -778,9 +778,9 @@ namespace SubExplore.ViewModels.Map
                 // Navigate to full details with isolated try-catch
                 try
                 {
-                    // ✅ FIXED: Use direct Shell navigation instead of ViewModel-based navigation
-                    await Shell.Current.GoToAsync($"spotdetails?spotId={spotId}");
-                    System.Diagnostics.Debug.WriteLine($"[SUCCESS] ViewSpotDetails: Direct Shell navigation to spotdetails?spotId={spotId}");
+                    // ✅ FIXED: Use absolute Shell navigation with /// prefix
+                    await Shell.Current.GoToAsync($"///spotdetails?spotId={spotId}");
+                    System.Diagnostics.Debug.WriteLine($"[SUCCESS] ViewSpotDetails: Direct Shell navigation to ///spotdetails?spotId={spotId}");
                 }
                 catch (Exception navEx)
                 {

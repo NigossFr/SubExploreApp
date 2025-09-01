@@ -320,8 +320,8 @@ namespace SubExplore.ViewModels.Favorites
             {
                 _logger?.LogInformation($"Viewing details for favorite spot {favorite.Spot.Id}");
                 
-                // ✅ FIXED: Use direct Shell navigation instead of ViewModel-based navigation
-                await Shell.Current.GoToAsync($"spotdetails?spotId={favorite.SpotId}");
+                // ✅ FIXED: Use absolute Shell navigation with /// prefix
+                await Shell.Current.GoToAsync($"///spotdetails?spotId={favorite.SpotId}");
                 
                 _logger?.LogInformation("Navigated to spot details with favorite context");
             }
