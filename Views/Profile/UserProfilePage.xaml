@@ -107,14 +107,14 @@
                         <Label Text="{Binding DisplayName}"
                                FontSize="18"
                                FontAttributes="Bold"
-                               TextColor="{StaticResource TextPrimary}"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource White}}"
                                LineBreakMode="TailTruncation" />
                         <Label Text="{Binding CurrentUser.Username, StringFormat='@{0}'}"
                                FontSize="14"
-                               TextColor="{StaticResource TextSecondary}" />
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource Gray300}}" />
                         <Label Text="{Binding MemberSince, StringFormat='Membre depuis {0}'}"
                                FontSize="12"
-                               TextColor="{StaticResource TextSecondary}" />
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource Gray300}}" />
                     </StackLayout>
                     
                     <!-- Edit Button -->
@@ -213,7 +213,7 @@
                         <Label Text="Modifier le profil" 
                                FontSize="16" 
                                FontAttributes="Bold" 
-                               TextColor="{StaticResource TextPrimary}" />
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource White}}" />
 
                         <!-- Validation Message -->
                         <Label Text="{Binding ValidationMessage}"
@@ -223,43 +223,38 @@
 
                         <!-- First Name -->
                         <StackLayout>
-                            <Label Text="Prénom" FontSize="14" TextColor="{StaticResource Gray600}" />
+                            <Label Text="Prénom" FontSize="14" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
                             <Entry Text="{Binding FirstName}" 
-                                   BackgroundColor="White" 
                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
                         </StackLayout>
 
                         <!-- Last Name -->
                         <StackLayout>
-                            <Label Text="Nom de famille" FontSize="14" TextColor="{StaticResource Gray600}" />
+                            <Label Text="Nom de famille" FontSize="14" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
                             <Entry Text="{Binding LastName}" 
-                                   BackgroundColor="White" 
                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
                         </StackLayout>
 
                         <!-- Username -->
                         <StackLayout>
-                            <Label Text="Nom d'utilisateur" FontSize="14" TextColor="{StaticResource Gray600}" />
+                            <Label Text="Nom d'utilisateur" FontSize="14" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
                             <Entry Text="{Binding Username}" 
-                                   BackgroundColor="White" 
                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
                         </StackLayout>
 
                         <!-- Email -->
                         <StackLayout>
-                            <Label Text="Email" FontSize="14" TextColor="{StaticResource Gray600}" />
+                            <Label Text="Email" FontSize="14" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
                             <Entry Text="{Binding Email}" 
                                    Keyboard="Email" 
-                                   BackgroundColor="White" 
                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
                         </StackLayout>
 
                         <!-- Expertise Level -->
                         <StackLayout>
-                            <Label Text="Niveau d'expertise" FontSize="14" TextColor="{StaticResource Gray600}" />
+                            <Label Text="Niveau d'expertise" FontSize="14" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
                             <Picker ItemsSource="{Binding ExpertiseLevelOptionsDisplay}" 
                                     SelectedIndex="{Binding SelectedExpertiseLevelIndex}" 
-                                    BackgroundColor="White"
                                     IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
                         </StackLayout>
 
@@ -268,9 +263,9 @@
                             <Button Grid.Column="0"
                                     Text="Annuler" 
                                     Command="{Binding ToggleEditModeCommand}"
-                                    BackgroundColor="{StaticResource Surface}"
-                                    TextColor="{StaticResource TextPrimary}"
-                                    BorderColor="{StaticResource BorderColor}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource Gray700}}"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource White}}"
+                                    BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource Gray600}}"
                                     BorderWidth="1"
                                     CornerRadius="8"
                                     HeightRequest="44"
@@ -356,16 +351,16 @@
                         <Label Text="Informations du compte"
                                FontSize="16"
                                FontAttributes="Bold"
-                               TextColor="{StaticResource TextPrimary}" />
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource White}}" />
                         
                         <!-- Email Display -->
                         <StackLayout Spacing="4">
                             <Label Text="Adresse email"
                                    FontSize="12"
-                                   TextColor="{StaticResource TextSecondary}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource Gray300}}" />
                             <Label Text="{Binding CurrentUser.Email}"
                                    FontSize="14"
-                                   TextColor="{StaticResource TextPrimary}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource White}}" />
                         </StackLayout>
                         
                         <!-- Action Buttons -->
@@ -416,13 +411,14 @@
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="White" />
-                                <Frame BackgroundColor="White"
+                                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
                                        CornerRadius="8"
                                        HasShadow="False"
                                        Padding="0">
                                     <Picker ItemsSource="{Binding ThemeOptionsDisplay}" 
                                             SelectedIndex="{Binding SelectedThemeIndex}" 
                                             BackgroundColor="Transparent"
+                                            TextColor="{AppThemeBinding Light={StaticResource InputText}, Dark={StaticResource InputTextDark}}"
                                             FontSize="14"
                                             Margin="12,8"
                                             AutomationId="ThemePicker"
@@ -442,13 +438,14 @@
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="White" />
-                                <Frame BackgroundColor="White"
+                                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
                                        CornerRadius="8"
                                        HasShadow="False"
                                        Padding="0">
                                     <Picker ItemsSource="{Binding LanguageOptionsDisplay}" 
                                             SelectedIndex="{Binding SelectedLanguageIndex}" 
                                             BackgroundColor="Transparent"
+                                            TextColor="{AppThemeBinding Light={StaticResource InputText}, Dark={StaticResource InputTextDark}}"
                                             FontSize="14"
                                             Margin="12,8"
                                             AutomationId="LanguagePicker"
@@ -468,13 +465,14 @@
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="White" />
-                                <Frame BackgroundColor="White"
+                                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
                                        CornerRadius="8"
                                        HasShadow="False"
                                        Padding="0">
                                     <Picker ItemsSource="{Binding DisplayNameOptionsDisplay}" 
                                             SelectedIndex="{Binding SelectedDisplayNameIndex}" 
                                             BackgroundColor="Transparent"
+                                            TextColor="{AppThemeBinding Light={StaticResource InputText}, Dark={StaticResource InputTextDark}}"
                                             FontSize="14"
                                             Margin="12,8"
                                             AutomationId="DisplayNamePicker"

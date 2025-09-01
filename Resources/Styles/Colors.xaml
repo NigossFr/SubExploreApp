@@ -25,7 +25,7 @@
     <Color x:Key="Surface">#FFFFFF</Color>
     <!--  Blanc pur  -->
 
-    <!--  Textes  -->
+    <!--  Textes avec support thème sombre amélioré  -->
     <Color x:Key="TextPrimary">#333333</Color>
     <!--  Texte principal  -->
     <Color x:Key="TextSecondary">#666666</Color>
@@ -34,6 +34,20 @@
     <!--  Texte sur fond foncé  -->
     <Color x:Key="SecondaryDarkText">#EEEEEE</Color>
     <!--  Texte secondaire sur fond foncé  -->
+    
+    <!--  Couleurs d'interface spécifiques pour meilleur contraste  -->
+    <Color x:Key="InputBackground">#FFFFFF</Color>
+    <!--  Fond d'entrée clair  -->
+    <Color x:Key="InputBackgroundDark">#2C2C2C</Color>
+    <!--  Fond d'entrée sombre  -->
+    <Color x:Key="InputText">#333333</Color>
+    <!--  Texte d'entrée clair  -->
+    <Color x:Key="InputTextDark">#FFFFFF</Color>
+    <!--  Texte d'entrée sombre  -->
+    <Color x:Key="InputPlaceholder">#666666</Color>
+    <!--  Placeholder clair  -->
+    <Color x:Key="InputPlaceholderDark">#AAAAAA</Color>
+    <!--  Placeholder sombre  -->
 
     <!--  Couleurs supplémentaires  -->
     <Color x:Key="MidnightBlue">#003366</Color>
