@@ -85,6 +85,9 @@ namespace SubExplore.ViewModels.Profile
         [ObservableProperty]
         private bool _safetyAlerts = true;
 
+        [ObservableProperty]
+        private int _selectedExpertiseLevelIndex = 0;
+
         public UserProfileViewModel(
             IUserProfileService userProfileService,
             IDialogService dialogService,
@@ -108,10 +111,12 @@ namespace SubExplore.ViewModels.Profile
         public List<string> ThemeOptionsDisplay { get; } = new() { "Clair", "Sombre", "Automatique" };
         public List<string> DisplayNameOptionsDisplay { get; } = new() { "Nom d'utilisateur", "Nom complet", "Prénom" };
         public List<string> LanguageOptionsDisplay { get; } = new() { "Français", "English", "Español", "Deutsch", "Italiano" };
+        public List<string> ExpertiseLevelOptionsDisplay { get; } = new() { "Débutant", "Intermédiaire", "Avancé", "Expert", "Professionnel" };
 
         private readonly List<string> _themeOptions = new() { "light", "dark", "auto" };
         private readonly List<string> _displayNameOptions = new() { "username", "full_name", "first_name" };
         private readonly List<string> _languageOptions = new() { "fr", "en", "es", "de", "it" };
+        private readonly List<ExpertiseLevel> _expertiseLevelOptions = new() { ExpertiseLevel.Beginner, ExpertiseLevel.Intermediate, ExpertiseLevel.Advanced, ExpertiseLevel.Expert, ExpertiseLevel.Professional };
 
         public override async Task InitializeAsync(object? parameter = null)
         {
@@ -194,7 +199,7 @@ namespace SubExplore.ViewModels.Profile
                     Username = Username,
                     Email = Email,
                     AvatarUrl = AvatarUrl,
-                    ExpertiseLevel = ExpertiseLevel,
+                    ExpertiseLevel = _expertiseLevelOptions[SelectedExpertiseLevelIndex],
                     Certifications = string.IsNullOrEmpty(Certifications) ? new Dictionary<string, object>() : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(Certifications) ?? new Dictionary<string, object>(),
                     CreatedAt = CurrentUser.CreatedAt
                 };
@@ -298,27 +303,48 @@ namespace SubExplore.ViewModels.Profile
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] LoadPreferencesAsync: Starting preferences load");
+                
+                // Always create preferences to ensure UI has data
                 if (CurrentUser?.Preferences != null)
                 {
+                    System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] LoadPreferencesAsync: Using existing preferences");
                     CurrentPreferences = CurrentUser.Preferences;
-                    PopulatePreferencesFields();
                 }
                 else
                 {
-                    // Create default preferences
+                    System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] LoadPreferencesAsync: Creating default preferences");
+                    // Create default preferences with current user ID
                     CurrentPreferences = new UserPreferences
                     {
+                        Id = Guid.NewGuid(),
+                        UserId = CurrentUser?.Id ?? Guid.Empty,
                         Theme = "light",
                         DisplayNamePreference = "username",
                         Language = "fr",
-                        NotificationSettings = new Dictionary<string, object>()
+                        NotificationSettings = new Dictionary<string, object>
+                        {
+                            ["push_notifications"] = true,
+                            ["email_notifications"] = true,
+                            ["spots_nearby"] = true,
+                            ["community_updates"] = true,
+                            ["safety_alerts"] = true
+                        },
+                        CreatedAt = DateTime.UtcNow
                     };
-                    PopulatePreferencesFields();
                 }
+                
+                // Always populate fields after setting preferences
+                PopulatePreferencesFields();
+                
+                System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] LoadPreferencesAsync: Preferences loaded - Theme: {CurrentPreferences?.Theme}, Language: {CurrentPreferences?.Language}");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] LoadPreferencesAsync error: {ex.Message}");
+                
+                // Ensure we have fallback preferences even if there's an error
+                EnsureFallbackPreferences();
             }
         }
 
@@ -460,6 +486,12 @@ namespace SubExplore.ViewModels.Profile
             Email = CurrentUser.Email ?? string.Empty;
             AvatarUrl = CurrentUser.AvatarUrl ?? string.Empty;
             ExpertiseLevel = CurrentUser.ExpertiseLevel ?? ExpertiseLevel.Beginner;
+            
+            // Set expertise level index
+            var expertiseLevel = CurrentUser.ExpertiseLevel ?? ExpertiseLevel.Beginner;
+            SelectedExpertiseLevelIndex = _expertiseLevelOptions.IndexOf(expertiseLevel);
+            if (SelectedExpertiseLevelIndex < 0) SelectedExpertiseLevelIndex = 0;
+            
             Certifications = System.Text.Json.JsonSerializer.Serialize(CurrentUser.Certifications ?? new Dictionary<string, object>());
             
             LoadCertifications();
@@ -467,23 +499,32 @@ namespace SubExplore.ViewModels.Profile
 
         private void PopulatePreferencesFields()
         {
+            System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] PopulatePreferencesFields: Starting");
+            
             if (CurrentPreferences == null)
-                return;
+            {
+                System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] PopulatePreferencesFields: CurrentPreferences is null, creating fallback");
+                EnsureFallbackPreferences();
+                if (CurrentPreferences == null) return;
+            }
 
             // Set theme index
             var theme = CurrentPreferences.Theme ?? "light";
             SelectedThemeIndex = _themeOptions.IndexOf(theme);
             if (SelectedThemeIndex < 0) SelectedThemeIndex = 0;
+            System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] PopulatePreferencesFields: Theme = {theme}, Index = {SelectedThemeIndex}");
 
             // Set display name index
             var displayName = CurrentPreferences.DisplayNamePreference ?? "username";
             SelectedDisplayNameIndex = _displayNameOptions.IndexOf(displayName);
             if (SelectedDisplayNameIndex < 0) SelectedDisplayNameIndex = 0;
+            System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] PopulatePreferencesFields: DisplayName = {displayName}, Index = {SelectedDisplayNameIndex}");
 
             // Set language index
             var language = CurrentPreferences.Language ?? "fr";
             SelectedLanguageIndex = _languageOptions.IndexOf(language);
             if (SelectedLanguageIndex < 0) SelectedLanguageIndex = 0;
+            System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] PopulatePreferencesFields: Language = {language}, Index = {SelectedLanguageIndex}");
 
             // Parse notification settings
             if (CurrentPreferences.NotificationSettings != null && CurrentPreferences.NotificationSettings.Any())
@@ -498,6 +539,8 @@ namespace SubExplore.ViewModels.Profile
                         SpotsNearby = settings.TryGetValue("spots_nearby", out var nearbyValue) ? Convert.ToBoolean(nearbyValue) : true;
                         CommunityUpdates = settings.TryGetValue("community_updates", out var communityValue) ? Convert.ToBoolean(communityValue) : true;
                         SafetyAlerts = settings.TryGetValue("safety_alerts", out var safetyValue) ? Convert.ToBoolean(safetyValue) : true;
+                        
+                        System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] PopulatePreferencesFields: Notifications loaded - Push: {PushNotifications}, Email: {EmailNotifications}");
                     }
                 }
                 catch (Exception ex)
@@ -508,8 +551,19 @@ namespace SubExplore.ViewModels.Profile
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] PopulatePreferencesFields: No notification settings found, using defaults");
                 SetDefaultNotificationSettings();
             }
+            
+            // Trigger UI updates
+            OnPropertyChanged(nameof(SelectedThemeIndex));
+            OnPropertyChanged(nameof(SelectedDisplayNameIndex));
+            OnPropertyChanged(nameof(SelectedLanguageIndex));
+            OnPropertyChanged(nameof(PushNotifications));
+            OnPropertyChanged(nameof(EmailNotifications));
+            OnPropertyChanged(nameof(SpotsNearby));
+            OnPropertyChanged(nameof(CommunityUpdates));
+            OnPropertyChanged(nameof(SafetyAlerts));
         }
 
         private void SetDefaultNotificationSettings()
@@ -651,6 +705,31 @@ namespace SubExplore.ViewModels.Profile
             {
                 System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] ApplyThemeAsync error: {ex.Message}");
             }
+        }
+        
+        private void EnsureFallbackPreferences()
+        {
+            System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] EnsureFallbackPreferences: Creating fallback preferences");
+            
+            CurrentPreferences = new UserPreferences
+            {
+                Id = Guid.NewGuid(),
+                UserId = CurrentUser?.Id ?? Guid.Empty,
+                Theme = "light",
+                DisplayNamePreference = "username",
+                Language = "fr",
+                NotificationSettings = new Dictionary<string, object>
+                {
+                    ["push_notifications"] = true,
+                    ["email_notifications"] = true,
+                    ["spots_nearby"] = true,
+                    ["community_updates"] = true,
+                    ["safety_alerts"] = true
+                },
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            PopulatePreferencesFields();
         }
     }
 

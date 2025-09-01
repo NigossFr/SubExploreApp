@@ -52,7 +52,29 @@ namespace SubExplore.Services.Implementations
                     return null;
                 }
 
-                // L'utilisateur est déjà au format Domain Model
+                // Ensure user has preferences - create default if missing
+                if (domainUser.Preferences == null)
+                {
+                    _logger.LogInformation("User has no preferences, creating default preferences");
+                    domainUser.Preferences = new UserPreferences
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = domainUser.Id,
+                        Theme = "light",
+                        DisplayNamePreference = "username",
+                        Language = "fr",
+                        NotificationSettings = new Dictionary<string, object>
+                        {
+                            ["push_notifications"] = true,
+                            ["email_notifications"] = true,
+                            ["spots_nearby"] = true,
+                            ["community_updates"] = true,
+                            ["safety_alerts"] = true
+                        },
+                        CreatedAt = DateTime.UtcNow
+                    };
+                }
+
                 return domainUser;
             }
             catch (Exception ex)
@@ -117,9 +139,17 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
-                _logger.LogInformation("Updating user preferences");
+                _logger.LogInformation("Updating user preferences - Theme: {Theme}, Language: {Language}", 
+                    preferences?.Theme, preferences?.Language);
                 
-                // Pour l'instant, retourne true
+                // Update the current user's preferences in memory
+                if (_authService.CurrentUser != null && preferences != null)
+                {
+                    _authService.CurrentUser.Preferences = preferences;
+                    _logger.LogInformation("User preferences updated in memory");
+                }
+                
+                // TODO: Persist to Supabase database when implemented
                 await Task.Delay(1);
                 return true;
             }

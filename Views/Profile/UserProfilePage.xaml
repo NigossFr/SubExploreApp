@@ -257,8 +257,8 @@
                         <!-- Expertise Level -->
                         <StackLayout>
                             <Label Text="Niveau d'expertise" FontSize="14" TextColor="{StaticResource Gray600}" />
-                            <Picker ItemsSource="{Binding ExpertiseLevel}" 
-                                    SelectedItem="{Binding ExpertiseLevel}" 
+                            <Picker ItemsSource="{Binding ExpertiseLevelOptionsDisplay}" 
+                                    SelectedIndex="{Binding SelectedExpertiseLevelIndex}" 
                                     BackgroundColor="White"
                                     IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
                         </StackLayout>
