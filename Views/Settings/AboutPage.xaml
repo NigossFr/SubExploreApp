@@ -85,14 +85,14 @@
                             <Label Text="{Binding AppName}"
                                    FontSize="20"
                                    FontAttributes="Bold"
-                                   TextColor="White" />
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                             <Label Text="{Binding AppVersion, StringFormat='Version {0}'}"
                                    FontSize="14"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    Opacity="0.9" />
                             <Label Text="{Binding AppDescription}"
                                    FontSize="12"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    Opacity="0.8"
                                    LineBreakMode="WordWrap" />
                         </StackLayout>
@@ -230,7 +230,7 @@
                     <Button Text="Nous contacter"
                             Command="{Binding ContactCommand}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                            TextColor="White"
+                            TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                             CornerRadius="8"
                             FontSize="14"
                             FontAttributes="Bold"
@@ -240,7 +240,7 @@
                     <Button Text="Politique de confidentialité"
                             Command="{Binding PrivacyPolicyCommand}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
-                            TextColor="White"
+                            TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                             CornerRadius="8"
                             FontSize="14"
                             FontAttributes="Bold"

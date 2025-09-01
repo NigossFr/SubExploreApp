@@ -26,14 +26,14 @@
             <StackLayout Spacing="15">
                 
                 <!-- Email -->
-                <Label Text="Email:" FontSize="16" TextColor="Black" />
+                <Label Text="Email:" FontSize="16" TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}" />
                 <Entry Text="{Binding Email}" 
                        Placeholder="Enter your email"
                        FontSize="16"
                        BackgroundColor="LightGray" />
                 
                 <!-- Password -->
-                <Label Text="Password:" FontSize="16" TextColor="Black" />
+                <Label Text="Password:" FontSize="16" TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}" />
                 <Entry Text="{Binding Password}" 
                        Placeholder="Enter your password"
                        IsPassword="True"

@@ -84,7 +84,7 @@
                             <Button Text="💾 Sauvegarder les Informations"
                                     Command="{Binding SaveBasicInfoCommand}"
                                     BackgroundColor="{StaticResource Primary}"
-                                    TextColor="White"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="8"
                                     FontAttributes="Bold" />
                         </StackLayout>
@@ -130,7 +130,7 @@
                             <Button Text="🔧 Sauvegarder les Détails Techniques"
                                     Command="{Binding SaveTechnicalDetailsCommand}"
                                     BackgroundColor="{StaticResource Primary}"
-                                    TextColor="White"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="8"
                                     FontAttributes="Bold" />
                         </StackLayout>
@@ -169,14 +169,14 @@
                             <Button Text="📍 Utiliser ma Position Actuelle"
                                     Command="{Binding UseCurrentLocationCommand}"
                                     BackgroundColor="{StaticResource Secondary}"
-                                    TextColor="White"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="8"
                                     FontAttributes="Bold" />
                             
                             <Button Text="📍 Sauvegarder la Localisation"
                                     Command="{Binding SaveLocationCommand}"
                                     BackgroundColor="{StaticResource Primary}"
-                                    TextColor="White"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="8"
                                     FontAttributes="Bold" />
                         </StackLayout>
@@ -194,14 +194,14 @@
                             <Button Text="📸 Gérer les Photos"
                                     Command="{Binding ManagePhotosCommand}"
                                     BackgroundColor="{StaticResource Success}"
-                                    TextColor="White"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="8"
                                     FontAttributes="Bold" />
                             
                             <Button Text="✅ Soumettre pour Revalidation"
                                     Command="{Binding SubmitForRevalidationCommand}"
                                     BackgroundColor="{StaticResource Warning}"
-                                    TextColor="White"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="8"
                                     FontAttributes="Bold" />
                         </StackLayout>
@@ -216,15 +216,15 @@
                        CornerRadius="12" HasShadow="True" Padding="20">
                     <StackLayout Spacing="10">
                         <Label Text="❌ Erreur"
-                               TextColor="White"
+                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                FontSize="18"
                                FontAttributes="Bold" />
                         <Label Text="{Binding ErrorMessage}"
-                               TextColor="White"
+                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                FontSize="14" />
                         <Button Text="🔄 Réessayer"
                                 Command="{Binding RefreshCommand}"
-                                BackgroundColor="White"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource SurfaceDark}}"
                                 TextColor="{StaticResource Danger}"
                                 CornerRadius="8" />
                     </StackLayout>

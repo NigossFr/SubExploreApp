@@ -16,17 +16,17 @@
         
         <Label Text="Si vous voyez ce texte, le rendu fonctionne"
                FontSize="16"
-               TextColor="Black"
+               TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}"
                HorizontalOptions="Center" />
                
         <Entry Placeholder="Email de test"
                BackgroundColor="LightGray"
-               TextColor="Black" />
+               TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}" />
                
         <Entry Placeholder="Mot de passe de test"
                IsPassword="True"
                BackgroundColor="LightGray"
-               TextColor="Black" />
+               TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}" />
                
         <Button Text="BOUTON DE TEST"
                 BackgroundColor="DarkBlue"

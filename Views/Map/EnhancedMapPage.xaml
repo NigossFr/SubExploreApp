@@ -42,7 +42,7 @@
                             Command="{Binding AddSpotCommand}"
                             WidthRequest="50"
                             BackgroundColor="{StaticResource Primary}"
-                            TextColor="White"
+                            TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                             ToolTipProperties.Text="Ajouter un spot" />
                 </Grid>
 

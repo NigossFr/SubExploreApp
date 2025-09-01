@@ -50,11 +50,11 @@
                                 <Label Text="{Binding FavoriteStats.TotalFavorites}"
                                        FontSize="20"
                                        FontAttributes="Bold"
-                                       TextColor="White"
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                        HorizontalOptions="Center" />
                                 <Label Text="Total"
                                        FontSize="11"
-                                       TextColor="White"
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                        HorizontalOptions="Center" />
                             </StackLayout>
                         </Frame>
@@ -69,18 +69,18 @@
                                 <Label Text="{Binding FavoriteStats.NotificationEnabled}"
                                        FontSize="20"
                                        FontAttributes="Bold"
-                                       TextColor="White"
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                        HorizontalOptions="Center" />
                                 <Label Text="Notifiés"
                                        FontSize="11"
-                                       TextColor="White"
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                        HorizontalOptions="Center" />
                             </StackLayout>
                         </Frame>
                         
                         <!-- Activités -->
                         <Frame Grid.Column="2"
-                               BackgroundColor="#4CAF50"
+                               BackgroundColor="{AppThemeBinding Light={StaticResource StatusGreen}, Dark={StaticResource StatusGreenDark}}"
                                CornerRadius="12"
                                HasShadow="False"
                                Padding="12,8">
@@ -88,11 +88,11 @@
                                 <Label Text="{Binding FavoriteStats.ActivityFavorites}"
                                        FontSize="20"
                                        FontAttributes="Bold"
-                                       TextColor="White"
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                        HorizontalOptions="Center" />
                                 <Label Text="Activités"
                                        FontSize="11"
-                                       TextColor="White"
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                        HorizontalOptions="Center" />
                             </StackLayout>
                         </Frame>
@@ -104,7 +104,7 @@
                         <!-- Search Entry -->
                         <Frame Grid.Column="0"
                                BackgroundColor="{StaticResource Surface}"
-                               BorderColor="{StaticResource BorderColor}"
+                               BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
                                CornerRadius="8"
                                Padding="0"
                                HasShadow="False">
@@ -127,7 +127,7 @@
                                 HeightRequest="50"
                                 CornerRadius="25"
                                 BackgroundColor="{StaticResource Primary}"
-                                TextColor="White"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 Clicked="OnAdvancedMenuClicked"
                                 AutomationId="AdvancedMenuButton"
                                 SemanticProperties.Description="Menu avancé des favoris" />
@@ -140,7 +140,7 @@
                                 HeightRequest="50"
                                 CornerRadius="25"
                                 BackgroundColor="{StaticResource Secondary}"
-                                TextColor="White"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 Command="{Binding ClearSearchCommand}"
                                 AutomationId="ClearSearchButton"
                                 SemanticProperties.Description="Effacer la recherche"
@@ -174,7 +174,7 @@
                     <Button Text="Réessayer"
                             Command="{Binding RefreshCommand}"
                             BackgroundColor="{StaticResource Primary}"
-                            TextColor="White"
+                            TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                             CornerRadius="8"
                             Padding="14,10"
                             Margin="0,16,0,0" />
@@ -218,7 +218,7 @@
                         <Button Text="Explorer la carte"
                                 Command="{Binding ExploreMapCommand}"
                                 BackgroundColor="{StaticResource Primary}"
-                                TextColor="White"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 CornerRadius="8"
                                 Padding="14,10"
                                 WidthRequest="250" />
@@ -226,7 +226,7 @@
                         <Button Text="Voir mes spots"
                                 Command="{Binding ViewMySpotsCommand}"
                                 BackgroundColor="{StaticResource Secondary}"
-                                TextColor="White"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 CornerRadius="8"
                                 Padding="14,10"
                                 WidthRequest="250" />
@@ -234,15 +234,15 @@
                         <Button Text="Importer des favoris"
                                 Command="{Binding ImportFavoritesCommand}"
                                 BackgroundColor="{StaticResource Secondary}"
-                                TextColor="White"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 CornerRadius="8"
                                 Padding="14,10"
                                 WidthRequest="250" />
                                 
                         <Button Text="Exporter mes favoris"
                                 Command="{Binding ExportFavoritesCommand}"
-                                BackgroundColor="#4CAF50"
-                                TextColor="White"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource StatusGreen}, Dark={StaticResource StatusGreenDark}}"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 CornerRadius="8"
                                 Padding="14,10"
                                 WidthRequest="250" />
@@ -258,10 +258,10 @@
                             <Label Text="Astuce"
                                    FontSize="14"
                                    FontAttributes="Bold"
-                                   TextColor="White" />
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                             <Label Text="Explorez la carte pour découvrir des spots incroyables et ajoutez-les à vos favoris d'un simple clic !"
                                    FontSize="12"
-                                   TextColor="White" />
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                         </StackLayout>
                     </Frame>
                 </StackLayout>
@@ -345,7 +345,7 @@
                                                             Padding="8,4">
                                                         <Label Text="{Binding Spot.DifficultyLevel}" 
                                                                FontSize="12"
-                                                               TextColor="White"
+                                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                                FontAttributes="Bold"
                                                                HorizontalTextAlignment="Center" />
                                                     </Frame>
@@ -408,7 +408,7 @@
                                                         HeightRequest="44"
                                                         CornerRadius="8"
                                                         BackgroundColor="{StaticResource Primary}"
-                                                        TextColor="White"
+                                                        TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                         Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=ViewSpotDetailsCommand}"
                                                         CommandParameter="{Binding .}"
                                                         AutomationId="ViewDetailsButton"
@@ -421,8 +421,8 @@
                                                         FontAttributes="Bold"
                                                         HeightRequest="44"
                                                         CornerRadius="8"
-                                                        BackgroundColor="#FF4444"
-                                                        TextColor="White"
+                                                        BackgroundColor="{AppThemeBinding Light={StaticResource StatusRed}, Dark={StaticResource StatusRedDark}}"
+                                                        TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                         Command="{Binding Source={x:RelativeSource AncestorType={x:Type vm:FavoriteSpotsViewModel}}, Path=RemoveFromFavoritesCommand}"
                                                         CommandParameter="{Binding .}"
                                                         AutomationId="RemoveFavoriteButton"
@@ -448,7 +448,7 @@
                         FontSize="24"
                         FontAttributes="Bold"
                         BackgroundColor="{StaticResource Primary}"
-                        TextColor="White"
+                        TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                         WidthRequest="56"
                         HeightRequest="56"
                         CornerRadius="28"

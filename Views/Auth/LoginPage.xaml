@@ -8,7 +8,7 @@
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Auth"
     x:DataType="viewmodels:LoginViewModel"
     Title="{Binding Title}"
-    BackgroundColor="{StaticResource Background}"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}"
     Shell.NavBarIsVisible="False">
     
     <!-- FORCE RECOMPILE: Modified login page with removed continue button and enhanced remember me -->
@@ -72,7 +72,7 @@
                            FontAttributes="Bold"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
-                           TextColor="White" />
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                 </Frame>
 
                 <!-- Welcome Text -->
@@ -104,14 +104,14 @@
                        BorderColor="Transparent"
                        HasShadow="True">
                     <Label Text="{Binding LoginErrorMessage}"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                            FontSize="14"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center" />
                 </Frame>
 
                 <!-- Login Credentials Card SIMPLIFIED -->
-                <Frame BackgroundColor="{StaticResource Surface}"
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                        BorderColor="{StaticResource Gray300}"
                        CornerRadius="12"
                        HasShadow="False"
@@ -126,7 +126,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource TextPrimary}" />
                             
-                            <Frame BackgroundColor="{StaticResource Surface}"
+                            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                                    BorderColor="{StaticResource Gray200}"
                                    CornerRadius="8"
                                    HasShadow="False"
@@ -145,7 +145,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource TextPrimary}" />
                             
-                            <Frame BackgroundColor="{StaticResource Surface}"
+                            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                                    BorderColor="{StaticResource Gray200}"
                                    CornerRadius="8"
                                    HasShadow="False"
@@ -251,8 +251,8 @@
 
     <!-- Loading Overlay -->
     <Grid IsVisible="{Binding IsLoginInProgress}"
-          BackgroundColor="#80000000">
-        <Frame BackgroundColor="{StaticResource Surface}"
+          BackgroundColor="{AppThemeBinding Light={StaticResource ModalOverlay}, Dark={StaticResource ModalOverlayDark}}">
+        <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                CornerRadius="8"
                WidthRequest="120"
                HeightRequest="120"

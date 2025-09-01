@@ -56,18 +56,18 @@
                     <Label Text="⚠️ Erreur de chargement"
                            FontSize="18"
                            FontAttributes="Bold"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                            HorizontalTextAlignment="Center"
                            LineHeight="1.3" />
                     <Label Text="{Binding ErrorMessage}"
                            FontSize="15"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                            HorizontalTextAlignment="Center"
                            LineBreakMode="WordWrap"
                            LineHeight="1.5" />
                     <Button Text="Réessayer"
                             Command="{Binding RefreshCommand}"
-                            BackgroundColor="White"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource SurfaceDark}}"
                             TextColor="{StaticResource Danger}"
                             CornerRadius="8"
                             Padding="16,8"
@@ -83,7 +83,7 @@
                     
                     <!-- Avatar -->
                     <Frame Grid.Column="0"
-                           BackgroundColor="White"
+                           BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource SurfaceDark}}"
                            CornerRadius="35"
                            Padding="2"
                            WidthRequest="70"
@@ -122,7 +122,7 @@
                             Text="✏️"
                             FontSize="18"
                             BackgroundColor="{StaticResource Primary}"
-                            TextColor="White"
+                            TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                             WidthRequest="48"
                             HeightRequest="40"
                             CornerRadius="20"
@@ -144,11 +144,11 @@
                             <Label Text="{Binding UserStats.TotalSpots}"
                                    FontSize="20"
                                    FontAttributes="Bold"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                             <Label Text="Spots"
                                    FontSize="10"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                         </StackLayout>
                         <Frame.GestureRecognizers>
@@ -166,11 +166,11 @@
                             <Label Text="{Binding UserStats.ValidatedSpots}"
                                    FontSize="20"
                                    FontAttributes="Bold"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                             <Label Text="Validés"
                                    FontSize="10"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                         </StackLayout>
                     </Frame>
@@ -185,11 +185,11 @@
                             <Label Text="{Binding UserStats.ContributionScore}"
                                    FontSize="20"
                                    FontAttributes="Bold"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                             <Label Text="Points"
                                    FontSize="10"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                         </StackLayout>
                     </Frame>
@@ -275,7 +275,7 @@
                                     Text="Enregistrer" 
                                     Command="{Binding SaveProfileCommand}"
                                     BackgroundColor="{StaticResource Primary}"
-                                    TextColor="White"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="8"
                                     HeightRequest="44"
                                     IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}" />
@@ -300,7 +300,7 @@
                         <Label Text="Certifications"
                                FontSize="15"
                                FontAttributes="Bold"
-                               TextColor="White" />
+                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                         
                         <CollectionView ItemsSource="{Binding CertificationsList}"
                                         SelectionMode="None">
@@ -321,17 +321,17 @@
                                             <Label Text="{Binding Type}"
                                                    FontSize="13"
                                                    FontAttributes="Bold"
-                                                   TextColor="White"
+                                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                    LineBreakMode="TailTruncation" />
                                             <Label Text="{Binding Level}"
                                                    FontSize="11"
-                                                   TextColor="White"
+                                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                    LineBreakMode="TailTruncation" />
                                         </StackLayout>
                                         <Label Grid.Column="2"
                                                Text="{Binding Date, StringFormat='{0:MMM yyyy}'}"
                                                FontSize="10"
-                                               TextColor="White"
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                 </DataTemplate>
@@ -369,7 +369,7 @@
                                     Text="Changer mot de passe"
                                     Command="{Binding ChangePasswordCommand}"
                                     BackgroundColor="{StaticResource Secondary}"
-                                    TextColor="White"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="8"
                                     HeightRequest="44"
                                     FontSize="12" />
@@ -378,7 +378,7 @@
                                     Text="Voir statistiques"
                                     Command="{Binding ViewStatsCommand}"
                                     BackgroundColor="{StaticResource Primary}"
-                                    TextColor="White"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="8"
                                     HeightRequest="44"
                                     FontSize="12"
@@ -399,7 +399,7 @@
                         <Label Text="Préférences d'apparence"
                                FontSize="16"
                                FontAttributes="Bold"
-                               TextColor="White" />
+                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
 
                         <!-- Theme Selection -->
                         <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
@@ -410,7 +410,7 @@
                                 <Label Text="Thème"
                                        FontSize="14"
                                        FontAttributes="Bold"
-                                       TextColor="White" />
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                 <Frame BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
                                        CornerRadius="8"
                                        HasShadow="False"
@@ -437,7 +437,7 @@
                                 <Label Text="Langue"
                                        FontSize="14"
                                        FontAttributes="Bold"
-                                       TextColor="White" />
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                 <Frame BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
                                        CornerRadius="8"
                                        HasShadow="False"
@@ -464,7 +464,7 @@
                                 <Label Text="Affichage du nom"
                                        FontSize="14"
                                        FontAttributes="Bold"
-                                       TextColor="White" />
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                 <Frame BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
                                        CornerRadius="8"
                                        HasShadow="False"
@@ -496,7 +496,7 @@
                         <Label Text="Notifications"
                                FontSize="16"
                                FontAttributes="Bold"
-                               TextColor="White" />
+                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
 
                         <!-- Enhanced Notification Settings -->
                         <StackLayout Spacing="12">
@@ -510,13 +510,13 @@
                                         <Label Text="Notifications push"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                         <Label Text="Recevez des alertes sur votre appareil"
                                                FontSize="12"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding PushNotifications}" 
-                                            OnColor="#FFD700"
+                                            OnColor="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource Warning}}"
                                             ThumbColor="White"
                                             VerticalOptions="Center"
                                             BackgroundColor="Transparent"
@@ -536,13 +536,13 @@
                                         <Label Text="Notifications par email"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                         <Label Text="Recevez des résumés par email"
                                                FontSize="12"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding EmailNotifications}" 
-                                            OnColor="#FFD700"
+                                            OnColor="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource Warning}}"
                                             ThumbColor="White"
                                             VerticalOptions="Center"
                                             BackgroundColor="Transparent"
@@ -562,13 +562,13 @@
                                         <Label Text="Nouveaux spots à proximité"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                         <Label Text="Découvrez les spots près de vous"
                                                FontSize="12"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding SpotsNearby}" 
-                                            OnColor="#FFD700"
+                                            OnColor="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource Warning}}"
                                             ThumbColor="White"
                                             VerticalOptions="Center"
                                             BackgroundColor="Transparent"
@@ -588,13 +588,13 @@
                                         <Label Text="Actualités de la communauté"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                         <Label Text="Restez informé des nouvelles"
                                                FontSize="12"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding CommunityUpdates}" 
-                                            OnColor="#FFD700"
+                                            OnColor="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource Warning}}"
                                             ThumbColor="White"
                                             VerticalOptions="Center"
                                             BackgroundColor="Transparent"
@@ -614,13 +614,13 @@
                                         <Label Text="Alertes de sécurité"
                                                FontSize="14"
                                                FontAttributes="Bold"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                         <Label Text="Informations importantes de sécurité"
                                                FontSize="12"
-                                               TextColor="White" />
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                                     </StackLayout>
                                     <Switch IsToggled="{Binding SafetyAlerts}" 
-                                            OnColor="#FFD700"
+                                            OnColor="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource Warning}}"
                                             ThumbColor="White"
                                             VerticalOptions="Center"
                                             BackgroundColor="Transparent"
@@ -637,7 +637,7 @@
                 <Button Text="Enregistrer les préférences"
                         Command="{Binding SavePreferencesCommand}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                        TextColor="White"
+                        TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                         FontSize="16"
                         CornerRadius="8"
                         HeightRequest="48"

@@ -4,6 +4,6 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="{Binding Title}"
-    BackgroundColor="#F8FDFF"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}"
     Shell.NavBarIsVisible="False">
 </ContentPage>

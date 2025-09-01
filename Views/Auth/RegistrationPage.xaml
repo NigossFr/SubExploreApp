@@ -46,7 +46,7 @@
                            FontSize="24"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
-                           TextColor="White" />
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" />
                 </Frame>
 
                 <!-- Welcome Text -->
@@ -75,7 +75,7 @@
                        IsVisible="{Binding HasRegistrationError}"
                        BorderColor="Transparent">
                     <Label Text="{Binding RegistrationErrorMessage}"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                            FontSize="14"
                            HorizontalOptions="Center" />
                 </Frame>
@@ -390,7 +390,7 @@
                     <Button Text="Créer mon compte"
                             Command="{Binding RegisterCommand}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                            TextColor="White"
+                            TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                             FontSize="16"
                             FontAttributes="Bold"
                             CornerRadius="8"
@@ -446,7 +446,7 @@
 
     <!-- Enhanced Loading Overlay -->
     <Grid IsVisible="{Binding IsRegistrationInProgress}"
-          BackgroundColor="#80000000">
+          BackgroundColor="{AppThemeBinding Light={StaticResource ModalOverlay}, Dark={StaticResource ModalOverlayDark}}">
         <Frame BackgroundColor="{StaticResource Surface}"
                CornerRadius="16"
                WidthRequest="180"

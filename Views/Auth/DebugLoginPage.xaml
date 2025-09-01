@@ -14,7 +14,7 @@
             <Label Text="🔥 DEBUG LOGIN PAGE LOADED" 
                    FontSize="24" 
                    FontAttributes="Bold"
-                   TextColor="Black"
+                   TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}"
                    BackgroundColor="Yellow"
                    HorizontalOptions="Center" />
             
@@ -43,7 +43,7 @@
             <!-- Debug info -->
             <Label Text="BindingContext disponible ?" 
                    FontSize="14"
-                   TextColor="Black"
+                   TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}"
                    HorizontalOptions="Center" />
                    
             <!-- Test ViewModel binding -->

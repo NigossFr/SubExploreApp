@@ -21,26 +21,26 @@
         <!-- Status Info -->
         <Label Text="{Binding Title, StringFormat='Title: {0}'}" 
                FontSize="16"
-               TextColor="Black"
+               TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}"
                BackgroundColor="LightGreen"
                Padding="10" />
                
         <Label Text="{Binding Email, StringFormat='Email: {0}'}" 
                FontSize="16"
-               TextColor="Black"
+               TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}"
                BackgroundColor="LightCoral"
                Padding="10" />
         
         <!-- Simple Login Form -->
         <StackLayout Spacing="15" BackgroundColor="LightGray" Padding="20">
             
-            <Label Text="Email:" FontSize="16" TextColor="Black" />
+            <Label Text="Email:" FontSize="16" TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}" />
             <Entry Text="{Binding Email}" 
                    Placeholder="admin@subexplore.com"
                    FontSize="16"
                    BackgroundColor="White" />
             
-            <Label Text="Password:" FontSize="16" TextColor="Black" />
+            <Label Text="Password:" FontSize="16" TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}" />
             <Entry Text="{Binding Password}" 
                    Placeholder="Admin123!"
                    IsPassword="True"
@@ -65,9 +65,9 @@
         <!-- Debug Info -->
         <StackLayout BackgroundColor="Yellow" Padding="15" Spacing="5">
             <Label Text="DEBUG INFO:" FontAttributes="Bold" TextColor="Red" />
-            <Label Text="{Binding HasLoginError, StringFormat='HasLoginError: {0}'}" TextColor="Black" />
+            <Label Text="{Binding HasLoginError, StringFormat='HasLoginError: {0}'}" TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}" />
             <Label Text="{Binding LoginErrorMessage, StringFormat='Error: {0}'}" TextColor="Red" />
-            <Label Text="{Binding IsLoginInProgress, StringFormat='IsLoginInProgress: {0}'}" TextColor="Black" />
+            <Label Text="{Binding IsLoginInProgress, StringFormat='IsLoginInProgress: {0}'}" TextColor="{AppThemeBinding Light=Black, Dark={StaticResource PrimaryDarkText}}" />
         </StackLayout>
         
     </StackLayout>

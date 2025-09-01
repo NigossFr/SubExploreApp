@@ -62,6 +62,50 @@
     <!--  Beige sable  -->
     <Color x:Key="Magenta">#E91E63</Color>
     <!--  Accent pour tests/debug  -->
+    
+    <!--  Couleurs de filtres pour interface carte  -->
+    <Color x:Key="FilterActivities">#0077BE</Color>
+    <!--  Bleu activités  -->
+    <Color x:Key="FilterActivitiesDark">#4A9FD1</Color>
+    <!--  Bleu activités mode sombre  -->
+    <Color x:Key="FilterStructures">#228B22</Color>
+    <!--  Vert structures  -->
+    <Color x:Key="FilterStructuresDark">#5CB85C</Color>
+    <!--  Vert structures mode sombre  -->
+    <Color x:Key="FilterShops">#FF8C00</Color>
+    <!--  Orange boutiques  -->
+    <Color x:Key="FilterShopsDark">#FFB347</Color>
+    <!--  Orange boutiques mode sombre  -->
+    
+    <!--  Couleurs spécialisées pour messages et alertes  -->
+    <Color x:Key="SafetyWarningBackground">#FFF3E0</Color>
+    <!--  Fond avertissement sécurité clair  -->
+    <Color x:Key="SafetyWarningBackgroundDark">#3E2723</Color>
+    <!--  Fond avertissement sécurité sombre  -->
+    <Color x:Key="ErrorMessageBackground">#FFEBEE</Color>
+    <!--  Fond message d'erreur clair  -->
+    <Color x:Key="ErrorMessageBackgroundDark">#3E2723</Color>
+    <!--  Fond message d'erreur sombre  -->
+    
+    <!--  Couleurs de statut pour statistiques  -->
+    <Color x:Key="StatusGreen">#4CAF50</Color>
+    <!--  Vert de réussite  -->
+    <Color x:Key="StatusGreenDark">#66BB6A</Color>
+    <!--  Vert de réussite sombre  -->
+    <Color x:Key="StatusRed">#FF4444</Color>
+    <!--  Rouge d'alerte  -->
+    <Color x:Key="StatusRedDark">#EF5350</Color>
+    <!--  Rouge d'alerte sombre  -->
+    
+    <!--  Couleurs d'overlay et transparence  -->
+    <Color x:Key="ModalOverlay">#80000000</Color>
+    <!--  Overlay modal semi-transparent  -->
+    <Color x:Key="ModalOverlayDark">#C0000000</Color>
+    <!--  Overlay modal sombre plus opaque  -->
+    <Color x:Key="LoadingOverlay">#60000000</Color>
+    <!--  Overlay de chargement plus léger  -->
+    <Color x:Key="LoadingOverlayDark">#B0000000</Color>
+    <!--  Overlay de chargement sombre  -->
 
     <!--  Tons de gris  -->
     <Color x:Key="White">White</Color>

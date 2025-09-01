@@ -46,7 +46,7 @@
                                    VerticalOptions="Center"
                                    FontSize="32"
                                    FontAttributes="Bold"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    SemanticProperties.Description="Ajouter une photo" />
                         </Frame>
                         <Label Text="Vue générale du site conseillée" 
@@ -57,7 +57,7 @@
                     </StackLayout>
                     
                     <!-- Progress indicator overlay -->
-                    <Grid BackgroundColor="#80000000"
+                    <Grid BackgroundColor="{AppThemeBinding Light={StaticResource LoadingOverlay}, Dark={StaticResource LoadingOverlayDark}}"
                           IsVisible="{Binding IsUploading}"
                           AutomationId="PrimaryPhotoProgressOverlay">
                         <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
@@ -66,7 +66,7 @@
                                                HeightRequest="40"
                                                WidthRequest="40" />
                             <Label Text="Traitement de l'image..."
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    FontSize="14"
                                    Margin="0,10,0,0"
                                    SemanticProperties.Description="Traitement de l'image en cours" />
@@ -138,7 +138,7 @@
                                        HeightRequest="120" />
 
                                 <!-- Action buttons overlay - Always visible for better UX -->
-                                <Grid BackgroundColor="#60000000"
+                                <Grid BackgroundColor="{AppThemeBinding Light={StaticResource LoadingOverlay}, Dark={StaticResource LoadingOverlayDark}}"
                                       VerticalOptions="End"
                                       HeightRequest="50">
                                     <HorizontalStackLayout HorizontalOptions="Center" 
@@ -148,7 +148,7 @@
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.RemovePhotoCommand}"
                                                 CommandParameter="{Binding .}"
                                                 BackgroundColor="{StaticResource Error}"
-                                                TextColor="White"
+                                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                 CornerRadius="20"
                                                 HeightRequest="36"
                                                 WidthRequest="36"
@@ -161,7 +161,7 @@
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SetPrimaryPhotoCommand}"
                                                 CommandParameter="{Binding .}"
                                                 BackgroundColor="{StaticResource Primary}"
-                                                TextColor="White"
+                                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                 CornerRadius="20"
                                                 HeightRequest="36"
                                                 WidthRequest="36"
@@ -181,7 +181,7 @@
                                       Margin="8"
                                       IsVisible="{Binding ., Converter={StaticResource StringEqualConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.PrimaryPhotoPath}}">
                                     <Label Text="Principale" 
-                                           TextColor="White"
+                                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                            FontSize="10"
                                            FontAttributes="Bold"
                                            SemanticProperties.Description="Photo principale du spot" />
@@ -193,7 +193,7 @@
             </CollectionView>
 
             <!-- Conseils -->
-            <Frame Padding="15" BackgroundColor="#E3F2FD" BorderColor="{StaticResource Secondary}" Margin="0,15,0,0">
+            <Frame Padding="15" BackgroundColor="{AppThemeBinding Light={StaticResource Info}, Dark={StaticResource Info}}" BorderColor="{StaticResource Secondary}" Margin="0,15,0,0">
                 <StackLayout Spacing="8">
                     <Label Text="Conseils pour les photos" FontAttributes="Bold" />
                     <Label Text="• Privilégiez la lumière naturelle" FontSize="12" />

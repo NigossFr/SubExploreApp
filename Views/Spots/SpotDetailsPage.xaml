@@ -78,7 +78,7 @@
                                            HorizontalOptions="Center" />
                                     <Label Text="Aucune photo disponible"
                                            FontSize="16"
-                                           TextColor="{StaticResource TextSecondary}"
+                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                            HorizontalOptions="Center"
                                            Margin="0,10,0,0"
                                            SemanticProperties.Description="Aucune photo n'est disponible pour ce spot" />
@@ -137,8 +137,8 @@
                                                   VerticalOptions="Center">
                                                 
                                                 <!-- Subtle background circle -->
-                                                <Ellipse Fill="#20FFFFFF"
-                                                         Stroke="#40FFFFFF"
+                                                <Ellipse Fill="{AppThemeBinding Light=#20000000, Dark=#40FFFFFF}"
+                                                         Stroke="{AppThemeBinding Light=#40000000, Dark=#60FFFFFF}"
                                                          StrokeThickness="1"
                                                          WidthRequest="44"
                                                          HeightRequest="44"
@@ -213,7 +213,7 @@
                                             <!-- Difficulté -->
                                             <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="8">
                                                 <Label Text="⚡" FontSize="16" VerticalOptions="Center" />
-                                                <Label TextColor="{StaticResource TextSecondary}"
+                                                <Label TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                        FontSize="14"
                                                        VerticalOptions="Center"
                                                        HorizontalOptions="Start"
@@ -227,7 +227,7 @@
                                                 <Label Text="🌊" FontSize="16" VerticalOptions="Center" />
                                                 <Label Text="{Binding DepthDisplay}"
                                                        FontSize="14"
-                                                       TextColor="{StaticResource TextPrimary}"
+                                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}"
                                                        VerticalOptions="Center"
                                                        HorizontalOptions="Start" />
                                             </StackLayout>
@@ -236,7 +236,7 @@
                                             <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="8">
                                                 <Label Text="📍" FontSize="16" VerticalOptions="Center" />
                                                 <Label FontSize="14"
-                                                       TextColor="{StaticResource TextPrimary}"
+                                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}"
                                                        VerticalOptions="Center"
                                                        HorizontalOptions="Start"
                                                        Text="{Binding CoordinatesDisplay}" />
@@ -277,7 +277,7 @@
                                                            WidthRequest="30" />
                                         <Label Text="Chargement de la carte..."
                                                FontSize="14"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalOptions="Center" />
                                     </StackLayout>
                                 </Grid>
@@ -287,7 +287,7 @@
                         <!--  Notes de sécurité  -->
                         <Frame
                             Padding="15"
-                            BackgroundColor="#FFF3E0"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource SafetyWarningBackground}, Dark={StaticResource SafetyWarningBackgroundDark}}"
                             BorderColor="{StaticResource Warning}"
                             IsVisible="{Binding Spot.SafetyNotes, Converter={StaticResource IsNotNullConverter}}">
                             <VerticalStackLayout Spacing="10">
@@ -349,7 +349,7 @@
                                                      HeightRequest="20" />
                                     <Label Text="Chargement des données météo..."
                                            FontSize="14"
-                                           TextColor="{StaticResource TextSecondary}"
+                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                            VerticalOptions="Center" />
                                 </StackLayout>
 
@@ -375,19 +375,19 @@
                                                    TextColor="{StaticResource Primary}" />
                                             <Label Text="{Binding CurrentWeather.Description}"
                                                    FontSize="14"
-                                                   TextColor="{StaticResource TextSecondary}" />
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
                                         </StackLayout>
                                         
                                         <StackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="4">
                                             <Label Text="{Binding CurrentWeather.WindSpeed, StringFormat='💨 {0:F0} km/h'}"
                                                    FontSize="14"
-                                                   TextColor="{StaticResource TextSecondary}"
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                    HorizontalOptions="End"
                                                    AutomationId="WindSpeedLabel"
                                                    SemanticProperties.Description="Vitesse du vent" />
                                             <Label Text="{Binding CurrentWeather.Humidity, StringFormat='💧 {0}%'}"
                                                    FontSize="14"
-                                                   TextColor="{StaticResource TextSecondary}"
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                    HorizontalOptions="End"
                                                    AutomationId="HumidityLabel"
                                                    SemanticProperties.Description="Taux d'humidité" />
@@ -416,13 +416,13 @@
                                                 <Label Grid.Column="1"
                                                        Text="{Binding DivingConditions.SafetyScore, StringFormat='⚡ {0}/100'}"
                                                        FontSize="14"
-                                                       TextColor="{StaticResource TextSecondary}"
+                                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                        VerticalOptions="Center" />
                                             </Grid>
                                             
                                             <Label Text="{Binding DivingConditions.Assessment}"
                                                    FontSize="12"
-                                                   TextColor="{StaticResource TextSecondary}"
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                    IsVisible="{Binding DivingConditions.Assessment, Converter={StaticResource StringNotEmptyConverter}}" />
                                         </StackLayout>
                                     </Frame>
@@ -430,7 +430,7 @@
                                     <!-- Last update -->
                                     <Label Text="{Binding CurrentWeather.LastUpdated, StringFormat='Dernière mise à jour: {0:HH:mm}'}"
                                            FontSize="10"
-                                           TextColor="{StaticResource TextSecondary}"
+                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                            HorizontalOptions="End"
                                            Margin="0,5,0,0" />
                                 </StackLayout>
@@ -439,26 +439,26 @@
 
                         <!-- Weather error message -->
                         <Frame Padding="15" 
-                               BackgroundColor="#FFEBEE"
-                               BorderColor="#F44336"
+                               BackgroundColor="{AppThemeBinding Light={StaticResource ErrorMessageBackground}, Dark={StaticResource ErrorMessageBackgroundDark}}"
+                               BorderColor="{AppThemeBinding Light=#F44336, Dark=#EF5350}"
                                IsVisible="{Binding ShowWeatherError}">
                             <StackLayout Orientation="Horizontal" Spacing="10">
                                 <Label Text="⚠️"
                                        FontSize="16"
                                        FontAttributes="Bold"
-                                       TextColor="#F44336"
+                                       TextColor="{AppThemeBinding Light={StaticResource Error}, Dark={StaticResource Error}}"
                                        VerticalOptions="Center" />
                                 <Label Text="{Binding WeatherErrorMessage}"
                                        FontSize="14"
-                                       TextColor="#D32F2F"
+                                       TextColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource Danger}}"
                                        VerticalOptions="Center"
                                        HorizontalOptions="FillAndExpand" />
                                 <Button Text="Réessayer"
                                         FontSize="12"
                                         Padding="8,4"
                                         BackgroundColor="Transparent"
-                                        TextColor="#D32F2F"
-                                        BorderColor="#D32F2F"
+                                        TextColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource Danger}}"
+                                        BorderColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource Danger}}"
                                         BorderWidth="1"
                                         Command="{Binding RefreshWeatherCommand}"
                                         VerticalOptions="Center" />
@@ -541,7 +541,7 @@
                                 Grid.Column="0"
                                 Command="{Binding ShareSpotCommand}"
                                 BackgroundColor="{StaticResource Primary}"
-                                TextColor="White"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 Text="📤 Partager"
                                 CornerRadius="8"
                                 HeightRequest="50" />
@@ -550,7 +550,7 @@
                                 Grid.Column="1"
                                 Command="{Binding ReportSpotCommand}"
                                 BackgroundColor="{StaticResource Error}"
-                                TextColor="White"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 Text="🚨 Signaler"
                                 CornerRadius="8"
                                 HeightRequest="50" />
@@ -571,7 +571,7 @@
                         <Label Text="Chargement des détails du spot..."
                                HorizontalOptions="Center"
                                FontSize="16"
-                               TextColor="{StaticResource TextSecondary}"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                SemanticProperties.Description="Chargement des informations du spot en cours" />
                     </StackLayout>
                 </Grid>
@@ -596,7 +596,7 @@
                         <Button Text="🔄 Réessayer"
                                 Command="{Binding RefreshCommand}"
                                 BackgroundColor="{StaticResource Primary}"
-                                TextColor="White"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 HorizontalOptions="Center"
                                 AutomationId="RetryButton"
                                 SemanticProperties.Description="Bouton pour réessayer le chargement"

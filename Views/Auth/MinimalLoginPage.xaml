@@ -26,12 +26,12 @@
         <Entry Text="{Binding Email}"
                Placeholder="Email"
                Keyboard="Email" 
-               BackgroundColor="#F0F0F0" />
+               BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}" />
 
         <Entry Text="{Binding Password}"
                Placeholder="Mot de passe"
                IsPassword="True" 
-               BackgroundColor="#F0F0F0" />
+               BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}" />
 
         <CheckBox IsChecked="{Binding RememberMe}" />
 

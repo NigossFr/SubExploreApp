@@ -15,7 +15,7 @@
     Title="Carte"
     Shell.NavBarIsVisible="False"
     Shell.TabBarIsVisible="False"
-    BackgroundColor="{StaticResource Background}">
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}">
     
     
     <ContentPage.Resources>
@@ -44,7 +44,7 @@
         <!-- Enhanced Search Bar with Suggestions -->
         <StackLayout Grid.Row="0" Margin="0,8,0,8">
             <!-- Main Search Frame -->
-            <Frame BackgroundColor="{StaticResource Surface}"
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                    BorderColor="{StaticResource Primary}"
                    CornerRadius="25"
                    Padding="8"
@@ -109,7 +109,7 @@
             
             <!-- Search Suggestions Dropdown -->
             <Frame IsVisible="{Binding AreSuggestionsVisible}"
-                   BackgroundColor="{StaticResource Surface}"
+                   BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                    BorderColor="{StaticResource Gray200}"
                    CornerRadius="15"
                    Padding="8"
@@ -194,8 +194,8 @@
                                 CommandParameter="Activités"
                                 Style="{StaticResource ButtonFilterStyle}"
                                 Text="Activités"
-                                BackgroundColor="#0077BE"
-                                TextColor="White"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource FilterActivities}, Dark={StaticResource FilterActivitiesDark}}"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.85'}"
                                 CornerRadius="8"
                                 Padding="8,8"
@@ -215,8 +215,8 @@
                                 CommandParameter="Structures"
                                 Style="{StaticResource ButtonFilterStyle}"
                                 Text="Structures"
-                                BackgroundColor="#228B22"
-                                TextColor="White"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource FilterStructures}, Dark={StaticResource FilterStructuresDark}}"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.85'}"
                                 CornerRadius="8"
                                 Padding="8,8"
@@ -236,8 +236,8 @@
                                 CommandParameter="Boutiques"
                                 Style="{StaticResource ButtonFilterStyle}"
                                 Text="Boutiques"
-                                BackgroundColor="#FF8C00"
-                                TextColor="White"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource FilterShops}, Dark={StaticResource FilterShopsDark}}"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.85'}"
                                 CornerRadius="8"
                                 Padding="8,8"
@@ -254,8 +254,8 @@
                     
                     <!-- Indicateur de filtrage actif -->
                     <Frame IsVisible="{Binding IsAnyFilterActive}"
-                           BackgroundColor="#E3F2FD"
-                           BorderColor="#2196F3"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Info}, Dark={StaticResource Info}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            CornerRadius="8"
                            Padding="12,8"
                            HasShadow="False"
@@ -266,11 +266,11 @@
                                    Text="🔍"
                                    FontSize="16"
                                    VerticalOptions="Center"
-                                   TextColor="#1976D2" />
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                             <Label Grid.Column="1"
                                    FontSize="14"
                                    VerticalOptions="Center"
-                                   TextColor="#1976D2"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                    FontAttributes="Bold"
                                    Margin="8,0,0,0">
                                 <Label.Text>
@@ -282,8 +282,8 @@
                             <Button Grid.Column="2"
                                     Text="Effacer"
                                     FontSize="12"
-                                    BackgroundColor="#FF5722"
-                                    TextColor="White"
+                                    BackgroundColor="{AppThemeBinding Light=#FF5722, Dark=#D32F2F}"
+                                    TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                     CornerRadius="4"
                                     Padding="8,4"
                                     Command="{Binding ClearFiltersCommand}"
@@ -293,7 +293,7 @@
                     
                     <!-- Menu de sous-filtres (visible uniquement si une catégorie est sélectionnée) -->
                     <Frame IsVisible="{Binding IsSubFiltersVisible}"
-                           BackgroundColor="{StaticResource Surface}"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                            BorderColor="{StaticResource Gray200}"
                            CornerRadius="12"
                            Padding="8"
@@ -313,7 +313,7 @@
                                         <Button BackgroundColor="{Binding ColorCode}"
                                                 Style="{StaticResource ButtonFilterStyle}"
                                                 Text="{Binding Name}"
-                                                TextColor="White"
+                                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                 FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='0.8'}"
                                                 CornerRadius="8"
                                                 Padding="12,6"
@@ -324,7 +324,7 @@
                                             <Button.Triggers>
                                                 <!-- Visual feedback when this filter is active -->
                                                 <DataTrigger TargetType="Button" Binding="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MapViewModel}}, Path=SelectedSpotType.Id}" Value="{Binding Id}">
-                                                    <Setter Property="BorderColor" Value="#FFDD00" />
+                                                    <Setter Property="BorderColor" Value="{AppThemeBinding Light=#FFDD00, Dark=#FFF176}" />
                                                     <Setter Property="BorderWidth" Value="3" />
                                                     <Setter Property="Opacity" Value="1" />
                                                     <Setter Property="Scale" Value="1.05" />
@@ -469,12 +469,12 @@
                 Grid.Row="0"
                 Grid.RowSpan="3"
                 IsVisible="{Binding IsBusy}"
-                BackgroundColor="{AppThemeBinding Light=#80000000, Dark=#80FFFFFF}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource ModalOverlay}, Dark={StaticResource ModalOverlayDark}}"
                 AutomationId="LoadingOverlay">
             <Frame
                 HorizontalOptions="Center"
                 VerticalOptions="Center"
-                BackgroundColor="{StaticResource Surface}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                 CornerRadius="15"
                 Padding="20"
                 HasShadow="True">
@@ -497,7 +497,7 @@
         <!-- Custom Spot Window - Shows spot info with details button -->
         <Frame x:Name="SpotMiniWindow"
                IsVisible="{Binding IsSpotMiniWindowVisible}"
-               BackgroundColor="{StaticResource Surface}"
+               BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                BorderColor="{StaticResource Primary}"
                CornerRadius="15"
                Padding="15"
@@ -551,7 +551,7 @@
                         <Label Text="{Binding SelectedSpot.Type.Name, FallbackValue='Spot'}"
                                FontSize="12"
                                FontAttributes="Bold"
-                               TextColor="White"
+                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
                                LineBreakMode="TailTruncation"
@@ -566,7 +566,7 @@
                            HasShadow="False">
                         <Label FontSize="12"
                                FontAttributes="Bold"
-                               TextColor="White"
+                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
                                AutomationId="SpotLevelLabel"

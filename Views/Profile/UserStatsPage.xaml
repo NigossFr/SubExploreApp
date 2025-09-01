@@ -75,11 +75,11 @@
                             <Label Text="{Binding UserStats.TotalSpots}"
                                    FontSize="20"
                                    FontAttributes="Bold"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                             <Label Text="Spots"
                                    FontSize="10"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                         </StackLayout>
                     </Frame>
@@ -94,11 +94,11 @@
                             <Label Text="{Binding UserStats.ValidatedSpots}"
                                    FontSize="20"
                                    FontAttributes="Bold"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                             <Label Text="Validés"
                                    FontSize="10"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                         </StackLayout>
                     </Frame>
@@ -113,11 +113,11 @@
                             <Label Text="{Binding UserStats.ContributionScore}"
                                    FontSize="20"
                                    FontAttributes="Bold"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                             <Label Text="Points"
                                    FontSize="10"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalOptions="Center" />
                         </StackLayout>
                     </Frame>
@@ -144,7 +144,7 @@
                                          WidthRequest="50" />
                         <Label Text="Chargement de vos statistiques..."
                                FontSize="16"
-                               TextColor="{StaticResource TextSecondary}"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                HorizontalOptions="Center" />
                     </StackLayout>
 
@@ -158,16 +158,16 @@
                             <Label Text="⚠️ Erreur de chargement"
                                    FontSize="18"
                                    FontAttributes="Bold"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalTextAlignment="Center" />
                             <Label Text="{Binding ErrorMessage}"
                                    FontSize="15"
-                                   TextColor="White"
+                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                    HorizontalTextAlignment="Center"
                                    LineBreakMode="WordWrap" />
                             <Button Text="Réessayer"
                                     Command="{Binding RefreshCommand}"
-                                    BackgroundColor="White"
+                                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource SurfaceDark}}"
                                     TextColor="{StaticResource Error}"
                                     CornerRadius="8"
                                     Padding="16,8"
@@ -188,7 +188,7 @@
                                 <Label Text="Votre Évolution" 
                                        FontSize="16" 
                                        FontAttributes="Bold" 
-                                       TextColor="White" 
+                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" 
                                        HorizontalTextAlignment="Center" />
                             
                                 <!-- User Status Display -->
@@ -199,7 +199,7 @@
                                        HorizontalOptions="Center">
                                     <Label Text="{Binding UserStatusDisplay}"
                                            FontSize="14"
-                                           TextColor="White"
+                                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                            FontAttributes="Bold" />
                                 </Frame>
 
@@ -208,12 +208,12 @@
                                     <Label Text="{Binding ContributionLevel}"
                                            FontSize="20"
                                            FontAttributes="Bold"
-                                           TextColor="White"
+                                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                            HorizontalTextAlignment="Center" />
                                     
                                     <Label Text="{Binding LevelDescription}"
                                            FontSize="14"
-                                           TextColor="White"
+                                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                            Opacity="0.8"
                                            HorizontalTextAlignment="Center"
                                            LineBreakMode="WordWrap"
@@ -224,7 +224,7 @@
                                 <StackLayout Spacing="8">
                                     <Label Text="{Binding NextLevelInfo}"
                                            FontSize="12"
-                                           TextColor="White"
+                                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                            Opacity="0.8"
                                            HorizontalTextAlignment="Center"
                                            FontAttributes="Italic"
@@ -258,14 +258,14 @@
                                                        HasShadow="False">
                                                     <Label Text="10" 
                                                            FontSize="9" 
-                                                           TextColor="White" 
+                                                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" 
                                                            FontAttributes="Bold"
                                                            HorizontalTextAlignment="Center"
                                                            VerticalTextAlignment="Center" />
                                                 </Frame>
                                                 <Label Text="1 mois" 
                                                        FontSize="8" 
-                                                       TextColor="White" 
+                                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" 
                                                        Opacity="0.8"
                                                        HorizontalTextAlignment="Center"
                                                        FontAttributes="Bold" />
@@ -281,14 +281,14 @@
                                                        HasShadow="False">
                                                     <Label Text="25" 
                                                            FontSize="9" 
-                                                           TextColor="{StaticResource TextPrimary}" 
+                                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}" 
                                                            FontAttributes="Bold"
                                                            HorizontalTextAlignment="Center"
                                                            VerticalTextAlignment="Center" />
                                                 </Frame>
                                                 <Label Text="3 mois" 
                                                        FontSize="8" 
-                                                       TextColor="White" 
+                                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" 
                                                        Opacity="0.8"
                                                        HorizontalTextAlignment="Center"
                                                        FontAttributes="Bold" />
@@ -304,14 +304,14 @@
                                                        HasShadow="False">
                                                     <Label Text="50" 
                                                            FontSize="9" 
-                                                           TextColor="White" 
+                                                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" 
                                                            FontAttributes="Bold"
                                                            HorizontalTextAlignment="Center"
                                                            VerticalTextAlignment="Center" />
                                                 </Frame>
                                                 <Label Text="6 mois" 
                                                        FontSize="8" 
-                                                       TextColor="White" 
+                                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" 
                                                        Opacity="0.8"
                                                        HorizontalTextAlignment="Center"
                                                        FontAttributes="Bold" />
@@ -327,14 +327,14 @@
                                                        HasShadow="False">
                                                     <Label Text="100" 
                                                            FontSize="8" 
-                                                           TextColor="White" 
+                                                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" 
                                                            FontAttributes="Bold"
                                                            HorizontalTextAlignment="Center"
                                                            VerticalTextAlignment="Center" />
                                                 </Frame>
                                                 <Label Text="12 mois" 
                                                        FontSize="8" 
-                                                       TextColor="White" 
+                                                       TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" 
                                                        Opacity="0.8"
                                                        HorizontalTextAlignment="Center"
                                                        FontAttributes="Bold" />
@@ -351,14 +351,14 @@
                                                Margin="0,8,0,0">
                                             <Label Text="{Binding PremiumStatusInfo}"
                                                    FontSize="12"
-                                                   TextColor="White"
+                                                   TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                    FontAttributes="Bold" />
                                         </Frame>
                                            
                                         <!-- Motivational Messages -->
                                         <Label Text="Récompenses Premium pour modérateurs !"
                                                FontSize="11"
-                                               TextColor="White"
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                Opacity="0.8"
                                                HorizontalTextAlignment="Center"
                                                FontAttributes="Italic"
@@ -367,7 +367,7 @@
                                                
                                         <Label Text="💪 Continuez à partager pour faire grandir la communauté !"
                                                FontSize="11"
-                                               TextColor="White"
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                Opacity="0.8"
                                                HorizontalTextAlignment="Center"
                                                FontAttributes="Italic"
@@ -387,11 +387,11 @@
                                         <Label Text="{Binding UserStats.ValidatedSpots}"
                                                FontSize="24"
                                                FontAttributes="Bold"
-                                               TextColor="White"
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                         <Label Text="Spots Validés"
                                                FontSize="12"
-                                               TextColor="White"
+                                               TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                                Opacity="0.9"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
@@ -417,7 +417,7 @@
                                                Style="{StaticResource StatValueStyle}" />
                                         <Label Text="Total Spots"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -428,7 +428,7 @@
                                                Style="{StaticResource StatValueStyle}" />
                                         <Label Text="En Attente"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -439,7 +439,7 @@
                                                Style="{StaticResource StatValueStyle}" />
                                         <Label Text="Total Photos"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -450,7 +450,7 @@
                                                Style="{StaticResource StatValueStyle}" />
                                         <Label Text="Taux de Validation"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -461,7 +461,7 @@
                                                Style="{StaticResource StatValueStyle}" />
                                         <Label Text="Photos par Spot"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -472,7 +472,7 @@
                                                Style="{StaticResource StatValueStyle}" />
                                         <Label Text="Score de Contribution"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
                                 </Grid>
@@ -497,7 +497,7 @@
                                                Style="{StaticResource StatValueStyle}" />
                                         <Label Text="Profondeur Moyenne"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -508,7 +508,7 @@
                                                Style="{StaticResource StatValueStyle}" />
                                         <Label Text="Profondeur Maximale"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -522,7 +522,7 @@
                                                HorizontalTextAlignment="Center" />
                                         <Label Text="Niveau d'Expertise"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -533,7 +533,7 @@
                                                Style="{StaticResource StatValueStyle}" />
                                         <Label Text="Jours Actif"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -548,7 +548,7 @@
                                                HorizontalTextAlignment="Center" />
                                         <Label Text="Type de Spot Favori"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
                                 </Grid>
@@ -574,7 +574,7 @@
                                                HorizontalTextAlignment="Center" />
                                         <Label Text="Dernière Activité"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
 
@@ -588,7 +588,7 @@
                                                HorizontalTextAlignment="Center" />
                                         <Label Text="Dernier Spot Créé"
                                                FontSize="12"
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                HorizontalTextAlignment="Center" />
                                     </StackLayout>
                                 </Grid>
@@ -614,7 +614,7 @@
                                                     <Label Text="{Binding .}" 
                                                            FontSize="14" 
                                                            FontAttributes="Bold"
-                                                           TextColor="White" 
+                                                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}" 
                                                            HorizontalTextAlignment="Center" />
                                                 </Frame>
                                             </Grid>
@@ -628,7 +628,7 @@
                         <Button Text="← Retour au Profil" 
                                 Command="{Binding GoBackCommand}"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                TextColor="White"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                 CornerRadius="8"
                                 FontSize="14"
                                 FontAttributes="Bold"

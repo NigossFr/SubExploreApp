@@ -62,7 +62,7 @@
                        BorderColor="Transparent"
                        HasShadow="False">
                     <Label Text="{Binding LoginErrorMessage}"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                            FontSize="14"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center" />
@@ -88,7 +88,7 @@
                                 
                                 <Label Text="✓"
                                        FontSize="14"
-                                       TextColor="#28a745"
+                                       TextColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}"
                                        IsVisible="{Binding IsEmailValid}"
                                        VerticalOptions="Center" />
                             </StackLayout>
@@ -110,7 +110,7 @@
                                        ReturnType="Next" />
                                 <Frame.Triggers>
                                     <DataTrigger TargetType="Frame" Binding="{Binding IsEmailValid}" Value="True">
-                                        <Setter Property="BorderColor" Value="#28a745" />
+                                        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}" />
                                     </DataTrigger>
                                 </Frame.Triggers>
                             </Frame>
@@ -127,7 +127,7 @@
                                 
                                 <Label Text="✓"
                                        FontSize="14"
-                                       TextColor="#28a745"
+                                       TextColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}"
                                        IsVisible="{Binding IsPasswordValid}"
                                        VerticalOptions="Center" />
                             </StackLayout>
@@ -160,7 +160,7 @@
                                 </Grid>
                                 <Frame.Triggers>
                                     <DataTrigger TargetType="Frame" Binding="{Binding IsPasswordValid}" Value="True">
-                                        <Setter Property="BorderColor" Value="#28a745" />
+                                        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}" />
                                     </DataTrigger>
                                 </Frame.Triggers>
                             </Frame>
@@ -191,7 +191,7 @@
                     <Button Text="Se connecter"
                             Command="{Binding LoginCommand}"
                             BackgroundColor="{AppThemeBinding Light=#006994, Dark={StaticResource PrimaryDark}}"
-                            TextColor="White"
+                            TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                             FontSize="16"
                             FontAttributes="Bold"
                             CornerRadius="12"
@@ -201,10 +201,10 @@
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding IsLoginInProgress}" Value="True">
                                 <Setter Property="Text" Value="⏳ Connexion..." />
-                                <Setter Property="BackgroundColor" Value="#4A90A4" />
+                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                             </DataTrigger>
                             <DataTrigger TargetType="Button" Binding="{Binding CanLogin}" Value="False">
-                                <Setter Property="BackgroundColor" Value="#CCCCCC" />
+                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" />
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>

@@ -307,6 +307,42 @@ public partial class StagedMenuButton : ContentView
 
     #endregion
 
+    #region Helper Methods
+
+    private static Color GetDefaultTextColor()
+    {
+        try
+        {
+            if (Application.Current?.Resources.TryGetValue("TextPrimary", out var primaryColor) == true && primaryColor is Color primary)
+                return primary;
+        }
+        catch
+        {
+            // Fallback if resource lookup fails
+        }
+        
+        // Theme-aware fallback
+        return Application.Current?.RequestedTheme == AppTheme.Dark ? Colors.White : Colors.Black;
+    }
+
+    private static Color GetDefaultSecondaryTextColor()
+    {
+        try
+        {
+            if (Application.Current?.Resources.TryGetValue("TextSecondary", out var secondaryColor) == true && secondaryColor is Color secondary)
+                return secondary;
+        }
+        catch
+        {
+            // Fallback if resource lookup fails
+        }
+        
+        // Theme-aware fallback
+        return Application.Current?.RequestedTheme == AppTheme.Dark ? Colors.LightGray : Colors.Gray;
+    }
+
+    #endregion
+
     #region Event Handlers
 
     private void OnButtonTapped(object? sender, EventArgs e)
@@ -394,7 +430,7 @@ public partial class StagedMenuButton : ContentView
                     if (Application.Current?.Resources.TryGetValue("TextSecondary", out var secondaryColor) == true && secondaryColor is Color secondary)
                         DescriptionColor = secondary;
                     else
-                        DescriptionColor = Colors.Gray;
+                        DescriptionColor = isDarkTheme ? Colors.LightGray : Colors.Gray;
                 }
 
                 IconColor = TitleColor;
