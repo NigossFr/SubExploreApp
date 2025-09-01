@@ -42,10 +42,28 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		
+		<!-- Android Debug Properties -->
+		<AndroidDexTool Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">d8</AndroidDexTool>
+		<AndroidLinkResources Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">false</AndroidLinkResources>
+		<AndroidUseSharedRuntime Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Debug'">true</AndroidUseSharedRuntime>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 		<Platforms>AnyCPU;x64</Platforms>
+	</PropertyGroup>
+	
+	<!-- Android Debug Configuration -->
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Debug|net8.0-android'">
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>portable</DebugType>
+		<AndroidDexTool>d8</AndroidDexTool>
+		<AndroidLinkResources>false</AndroidLinkResources>
+		<AndroidLinkMode>None</AndroidLinkMode>
+		<AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
+		<EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+		<AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+		<AndroidUseAapt2>true</AndroidUseAapt2>
 	</PropertyGroup>
 
 	<ItemGroup>

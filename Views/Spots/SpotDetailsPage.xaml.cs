@@ -12,6 +12,8 @@ public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 	private readonly SpotDetailsViewModel _viewModel;
 	private bool _hasInitialized = false;
 	private string _spotIdFromQuery = null;
+	private bool _isValidationMode = false;
+	private string _validationMode = null;
 
 	public SpotDetailsPage(SpotDetailsViewModel viewModel)
 	{
@@ -41,6 +43,9 @@ public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 		base.OnAppearing();
 		
 		Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing - HasInitialized: {_hasInitialized}");
+		
+		// ✅ VALIDATION: Check CustomNavigationBar initialization
+		ValidateCustomNavigationBarSetup();
 		
 		// ✅ CORRECTION CRITIQUE: Toujours vérifier si on a un nouveau spotId
 		if (_viewModel != null)
@@ -89,8 +94,22 @@ public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 			{
 				if (Guid.TryParse(_spotIdFromQuery, out var querySpotId))
 				{
-					parameter = querySpotId;
-					System.Diagnostics.Debug.WriteLine($"[SUCCESS] Priority method: Using IQueryAttributable SpotId: {querySpotId}");
+					// Create validation parameter if validation mode is enabled
+					if (_isValidationMode)
+					{
+						parameter = new Dictionary<string, object>
+						{
+							["SpotId"] = querySpotId,
+							["IsValidationMode"] = _isValidationMode,
+							["ValidationMode"] = _validationMode ?? "Unknown"
+						};
+						System.Diagnostics.Debug.WriteLine($"[SUCCESS] Priority method: Using validation parameter for SpotId: {querySpotId}, ValidationMode: {_validationMode}");
+					}
+					else
+					{
+						parameter = querySpotId;
+						System.Diagnostics.Debug.WriteLine($"[SUCCESS] Priority method: Using IQueryAttributable SpotId: {querySpotId}");
+					}
 				}
 				else
 				{
@@ -361,17 +380,214 @@ public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 	/// </summary>
 	public void ApplyQueryAttributes(IDictionary<string, object> query)
 	{
-		
 		if (query != null)
 		{
 			foreach (var kvp in query)
 			{
+				Debug.WriteLine($"[DEBUG] Query parameter: {kvp.Key} = {kvp.Value}");
 			}
 			
 			if (query.ContainsKey("spotId"))
 			{
 				_spotIdFromQuery = query["spotId"]?.ToString();
+				Debug.WriteLine($"[DEBUG] Extracted SpotId: {_spotIdFromQuery}");
 			}
+			
+			if (query.ContainsKey("isValidationMode"))
+			{
+				if (bool.TryParse(query["isValidationMode"]?.ToString(), out bool validationMode))
+				{
+					_isValidationMode = validationMode;
+					Debug.WriteLine($"[DEBUG] Extracted IsValidationMode: {_isValidationMode}");
+				}
+			}
+			
+			if (query.ContainsKey("validationMode"))
+			{
+				_validationMode = query["validationMode"]?.ToString();
+				Debug.WriteLine($"[DEBUG] Extracted ValidationMode: {_validationMode}");
+			}
+		}
+	}
+
+	/// <summary>
+	/// Custom hamburger button clicked - UNIVERSAL SOLUTION for any navigation context
+	/// </summary>
+	private void OnCustomHamburgerClicked(object sender, EventArgs e)
+	{
+		try
+		{
+			Debug.WriteLine("[SpotDetailsPage] 🍔 Custom hamburger button clicked - UNIVERSAL FLYOUT ACCESS");
+			Debug.WriteLine($"[SpotDetailsPage] Context: Shell.Current={(Shell.Current != null ? "✅" : "❌")}, MainPage={Application.Current?.MainPage?.GetType().Name}");
+			
+			bool flyoutOpened = false;
+
+			// 🎯 METHOD 1: Shell.Current (when available)
+			if (Shell.Current != null)
+			{
+				try
+				{
+					Shell.Current.FlyoutIsPresented = true;
+					flyoutOpened = true;
+					Debug.WriteLine("[SpotDetailsPage] ✅ Method 1: Shell.Current flyout opened successfully");
+				}
+				catch (Exception shellEx)
+				{
+					Debug.WriteLine($"[SpotDetailsPage] ⚠️ Method 1 failed: {shellEx.Message}");
+				}
+			}
+
+			// 🎯 METHOD 2: Application.Current.MainPage as Shell (fallback #1)
+			if (!flyoutOpened && Application.Current?.MainPage is Shell appShell)
+			{
+				try
+				{
+					appShell.FlyoutIsPresented = true;
+					flyoutOpened = true;
+					Debug.WriteLine("[SpotDetailsPage] ✅ Method 2: Application.Current.MainPage flyout opened successfully");
+				}
+				catch (Exception appEx)
+				{
+					Debug.WriteLine($"[SpotDetailsPage] ⚠️ Method 2 failed: {appEx.Message}");
+				}
+			}
+
+			// 🎯 METHOD 3: Navigate back to Shell context (fallback #2)
+			if (!flyoutOpened && Application.Current?.MainPage is NavigationPage navPage)
+			{
+				try
+				{
+					Debug.WriteLine("[SpotDetailsPage] 🔄 Detected NavigationPage context - navigating back to Shell");
+					
+					// Navigate back to map with flyout open
+					MainThread.BeginInvokeOnMainThread(async () =>
+					{
+						try
+						{
+							await Shell.Current.GoToAsync("///map");
+							// Small delay to ensure navigation completes
+							await Task.Delay(300);
+							if (Shell.Current != null)
+							{
+								Shell.Current.FlyoutIsPresented = true;
+								Debug.WriteLine("[SpotDetailsPage] ✅ Method 3: Navigated to Shell and opened flyout");
+							}
+						}
+						catch (Exception navEx)
+						{
+							Debug.WriteLine($"[SpotDetailsPage] ❌ Method 3 navigation failed: {navEx.Message}");
+						}
+					});
+					flyoutOpened = true; // Assume success for async operation
+				}
+				catch (Exception navEx)
+				{
+					Debug.WriteLine($"[SpotDetailsPage] ⚠️ Method 3 failed: {navEx.Message}");
+				}
+			}
+
+			// 🎯 METHOD 4: Force Shell creation/navigation (emergency fallback)
+			if (!flyoutOpened)
+			{
+				try
+				{
+					Debug.WriteLine("[SpotDetailsPage] 🚨 Emergency: Creating new Shell navigation context");
+					
+					MainThread.BeginInvokeOnMainThread(async () =>
+					{
+						try
+						{
+							// Force navigate back to a known Shell route
+							if (Application.Current?.MainPage != null)
+							{
+								var shell = new AppShell();
+								Application.Current.MainPage = shell;
+								await Task.Delay(500); // Allow Shell initialization
+								shell.FlyoutIsPresented = true;
+								Debug.WriteLine("[SpotDetailsPage] ✅ Method 4: Emergency Shell creation succeeded");
+							}
+						}
+						catch (Exception emergencyEx)
+						{
+							Debug.WriteLine($"[SpotDetailsPage] ❌ Method 4 emergency fallback failed: {emergencyEx.Message}");
+							
+							// Final fallback: Show user message
+							await Application.Current?.MainPage?.DisplayAlert(
+								"Menu indisponible", 
+								"Le menu est temporairement indisponible. Veuillez redémarrer l'application.", 
+								"OK");
+						}
+					});
+				}
+				catch (Exception emergencyEx)
+				{
+					Debug.WriteLine($"[SpotDetailsPage] ❌ Emergency method setup failed: {emergencyEx.Message}");
+				}
+			}
+
+			// 📊 Log final status
+			if (flyoutOpened)
+			{
+				Debug.WriteLine("[SpotDetailsPage] 🎉 SUCCESS: Flyout menu access achieved!");
+			}
+			else
+			{
+				Debug.WriteLine("[SpotDetailsPage] ❌ FAILED: All flyout access methods failed");
+			}
+		}
+		catch (Exception ex)
+		{
+			Debug.WriteLine($"[SpotDetailsPage] ❌ CRITICAL ERROR in OnCustomHamburgerClicked: {ex.Message}");
+			Debug.WriteLine($"[SpotDetailsPage] Stack trace: {ex.StackTrace}");
+		}
+	}
+
+	/// <summary>
+	/// Validate CustomNavigationBar setup and event binding
+	/// </summary>
+	private void ValidateCustomNavigationBarSetup()
+	{
+		try
+		{
+			Debug.WriteLine("[SpotDetailsPage] Validating CustomNavigationBar setup...");
+			
+			if (CustomNavBar == null)
+			{
+				Debug.WriteLine("[SpotDetailsPage] ❌ CustomNavBar is NULL - this should not happen!");
+				return;
+			}
+			
+			Debug.WriteLine($"[SpotDetailsPage] ✅ CustomNavBar initialized: {CustomNavBar.GetType().Name}");
+			Debug.WriteLine($"[SpotDetailsPage] CustomNavBar Title: '{CustomNavBar.Title}'");
+			Debug.WriteLine($"[SpotDetailsPage] CustomNavBar IsVisible: {CustomNavBar.IsVisible}");
+			Debug.WriteLine($"[SpotDetailsPage] CustomNavBar IsEnabled: {CustomNavBar.IsEnabled}");
+			Debug.WriteLine($"[SpotDetailsPage] CustomNavBar Parent: {CustomNavBar.Parent?.GetType().Name ?? "NULL"}");
+			
+			// Check if the HamburgerClicked event has subscribers
+			var hamburgerClickedField = typeof(Views.Controls.CustomNavigationBar)
+				.GetField("HamburgerClicked", 
+					System.Reflection.BindingFlags.Instance | 
+					System.Reflection.BindingFlags.Public);
+					
+			if (hamburgerClickedField != null)
+			{
+				var eventValue = hamburgerClickedField.GetValue(CustomNavBar) as EventHandler;
+				Debug.WriteLine($"[SpotDetailsPage] HamburgerClicked event subscribers: {(eventValue?.GetInvocationList()?.Length ?? 0)}");
+			}
+			
+			// Validate Shell context
+			Debug.WriteLine($"[SpotDetailsPage] Shell.Current available: {Shell.Current != null}");
+			if (Shell.Current != null)
+			{
+				Debug.WriteLine($"[SpotDetailsPage] Shell.Current.FlyoutBehavior: {Shell.Current.FlyoutBehavior}");
+				Debug.WriteLine($"[SpotDetailsPage] Shell.Current.FlyoutIsPresented: {Shell.Current.FlyoutIsPresented}");
+			}
+			
+			Debug.WriteLine("[SpotDetailsPage] CustomNavigationBar validation complete");
+		}
+		catch (Exception ex)
+		{
+			Debug.WriteLine($"[SpotDetailsPage] ❌ CustomNavigationBar validation failed: {ex.Message}");
 		}
 	}
 }

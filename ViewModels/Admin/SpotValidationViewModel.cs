@@ -448,15 +448,15 @@ namespace SubExplore.ViewModels.Admin
             {
                 _logger?.LogInformation($"Navigating to spot details for validation - Spot ID: {spot.Id}");
                 
-                // Create navigation parameter with admin validation mode
-                var parameter = new Dictionary<string, object>
+                // ✅ FIXED: Use NavigationService with validation parameters
+                var validationParameter = new Dictionary<string, object>
                 {
                     ["SpotId"] = spot.Id,
                     ["IsValidationMode"] = true,
                     ["ValidationMode"] = "Admin"
                 };
-
-                await _navigationService.NavigateToAsync<SpotDetailsViewModel>(parameter);
+                
+                await _navigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(validationParameter);
             }
             catch (Exception ex)
             {

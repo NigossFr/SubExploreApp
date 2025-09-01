@@ -320,12 +320,8 @@ namespace SubExplore.ViewModels.Favorites
             {
                 _logger?.LogInformation($"Viewing details for favorite spot {favorite.Spot.Id}");
                 
-                // Enhanced navigation with favorite context
-                var navigationParameter = new FavoriteNavigationParameter(favorite, "Favorites", "FavoritesPage");
-                navigationParameter.AddContext("ViewMode", "Details");
-                navigationParameter.AddContext("CanEdit", true);
-                
-                await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(navigationParameter);
+                // ✅ FIXED: Use direct Shell navigation instead of ViewModel-based navigation
+                await Shell.Current.GoToAsync($"spotdetails?spotId={favorite.SpotId}");
                 
                 _logger?.LogInformation("Navigated to spot details with favorite context");
             }

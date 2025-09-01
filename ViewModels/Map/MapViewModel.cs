@@ -778,8 +778,9 @@ namespace SubExplore.ViewModels.Map
                 // Navigate to full details with isolated try-catch
                 try
                 {
-                    // ✅ CORRECTION: Réactiver la navigation vers SpotDetailsViewModel
-                    await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spotId);
+                    // ✅ FIXED: Use direct Shell navigation instead of ViewModel-based navigation
+                    await Shell.Current.GoToAsync($"spotdetails?spotId={spotId}");
+                    System.Diagnostics.Debug.WriteLine($"[SUCCESS] ViewSpotDetails: Direct Shell navigation to spotdetails?spotId={spotId}");
                 }
                 catch (Exception navEx)
                 {

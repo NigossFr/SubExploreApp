@@ -9,10 +9,10 @@
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
     xmlns:controls="clr-namespace:SubExplore.Views.Controls"
     x:DataType="viewmodels:SpotDetailsViewModel"
-    Title="{Binding Title}"
-    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}"
+    Title="Détails du spot"
     Shell.NavBarIsVisible="False"
-    Shell.TabBarIsVisible="False">
+    Shell.TabBarIsVisible="False"
+    BackgroundColor="{StaticResource Background}">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -27,595 +27,598 @@
     </ContentPage.Resources>
 
     <Grid>
-        <!-- Custom Navigation Bar -->
-        <controls:CustomNavigationBar Title="{Binding Title}" 
+        <!-- Custom Navigation Bar - GUARANTEED VISIBLE FLYOUT BUTTON -->
+        <controls:CustomNavigationBar x:Name="CustomNavBar"
+                                      Title="{Binding PageTitle}"
                                       VerticalOptions="Start"
-                                      ZIndex="100" />
+                                      ZIndex="100"
+                                      HamburgerClicked="OnCustomHamburgerClicked" />
 
+        <!-- Main Content with proper spacing -->
         <Grid RowDefinitions="*,Auto" Margin="0,56,0,0">
-        <!-- Main content with loading overlay -->
-        <Grid Grid.Row="0">
-            <ScrollView IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}">
-            <VerticalStackLayout Padding="15" Spacing="15">
+            <!-- Main content with loading overlay -->
+            <Grid Grid.Row="0">
+                <ScrollView IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}">
+                    <VerticalStackLayout Padding="15" Spacing="15">
 
-                <!--  Carousel de photos  -->
-                <Frame
-                    Padding="0"
-                    CornerRadius="10"
-                    HeightRequest="250"
-                    IsClippedToBounds="True"
-                    AutomationId="PhotoCarouselFrame">
-                    <Grid>
-                        <CarouselView
+                        <!--  Carousel de photos  -->
+                        <Frame
+                            Padding="0"
+                            CornerRadius="10"
                             HeightRequest="250"
-                            IndicatorView="indicatorView"
-                            ItemsSource="{Binding Photos}"
-                            IsVisible="{Binding Photos.Count, Converter={StaticResource IsNotZeroConverter}}"
-                            AutomationId="SpotPhotoCarousel"
-                            SemanticProperties.Description="Galerie de photos du spot">
-                            <CarouselView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Image Aspect="AspectFill" 
-                                               Source="{Binding .}"
-                                               AutomationId="SpotPhotoImage"
-                                               SemanticProperties.Description="Photo du spot de plongée" />
-                                    </Grid>
-                                </DataTemplate>
-                            </CarouselView.ItemTemplate>
-                        </CarouselView>
-                        
-                        <!-- No photos placeholder -->
-                        <StackLayout VerticalOptions="Center" 
-                                    HorizontalOptions="Center"
-                                    IsVisible="{Binding Photos.Count, Converter={StaticResource IsNotZeroConverter}, Converter={StaticResource InvertedBoolConverter}}"
-                                    AutomationId="NoPhotosPlaceholder">
-                            <Label Text="📷"
-                                   FontSize="48"
-                                   HorizontalOptions="Center" />
-                            <Label Text="Aucune photo disponible"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   HorizontalOptions="Center"
-                                   Margin="0,10,0,0"
-                                   SemanticProperties.Description="Aucune photo n'est disponible pour ce spot" />
-                        </StackLayout>
-                    </Grid>
-                </Frame>
-
-                <IndicatorView
-                    x:Name="indicatorView"
-                    HorizontalOptions="Center"
-                    IndicatorColor="{StaticResource Gray400}"
-                    SelectedIndicatorColor="{StaticResource Primary}" />
-
-                <!--  En-tête avec description et bouton favori  -->
-                <Frame BorderColor="{StaticResource Secondary}">
-                    <Frame.Padding>
-                        <OnIdiom x:TypeArguments="Thickness" Phone="15" Tablet="25" Desktop="30" />
-                    </Frame.Padding>
-                    <Frame.MinimumHeightRequest>
-                        <OnIdiom x:TypeArguments="x:Double" Phone="160" Tablet="200" Desktop="220" />
-                    </Frame.MinimumHeightRequest>
-                    <Grid RowDefinitions="Auto,*" RowSpacing="15">
-                        <!-- Première ligne: Titre et bouton favori -->
-                        <Grid Grid.Row="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <Label
-                                Grid.Column="0"
-                                FontAttributes="Bold"
-                                Text="{Binding Spot.Name}"
-                                TextColor="{StaticResource Primary}"
-                                VerticalOptions="Center"
-                                LineBreakMode="WordWrap"
-                                MaxLines="2">
-                                <Label.FontSize>
-                                    <OnIdiom x:TypeArguments="x:Double" Phone="22" Tablet="26" Desktop="28" />
-                                </Label.FontSize>  
-                            </Label>
-
-                            <!-- Favorite button with count -->
-                            <StackLayout Grid.Column="1" 
-                                       Orientation="Horizontal" 
-                                       VerticalOptions="Start"
-                                       Spacing="8"
-                                       Margin="10,0,0,0">
-                                <StackLayout Orientation="Vertical" 
-                                             HorizontalOptions="Center"
-                                             VerticalOptions="Center"
-                                             Spacing="2">
-                                    
-                                    <Grid WidthRequest="44" HeightRequest="44"
-                                          HorizontalOptions="Center"
-                                          VerticalOptions="Center">
-                                        
-                                        <!-- Subtle background circle -->
-                                        <Ellipse Fill="#20FFFFFF"
-                                                 Stroke="#40FFFFFF"
-                                                 StrokeThickness="1"
-                                                 WidthRequest="44"
-                                                 HeightRequest="44"
-                                                 HorizontalOptions="Center"
-                                                 VerticalOptions="Center" />
-                                        
-                                        <!-- Loading indicator -->
-                                        <ActivityIndicator IsRunning="{Binding IsFavoriteLoading}"
-                                                           IsVisible="{Binding IsFavoriteLoading}"
-                                                           Color="{StaticResource Primary}"
-                                                           WidthRequest="22"
-                                                           HeightRequest="22"
-                                                           HorizontalOptions="Center"
-                                                           VerticalOptions="Center" />
-                                        
-                                        <!-- Favorite button -->
-                                        <Button Command="{Binding ToggleFavoriteCommand}"
-                                                BackgroundColor="Transparent"
-                                                BorderWidth="0"
-                                                Padding="0"
-                                                Margin="0"
-                                                WidthRequest="44"
-                                                HeightRequest="44"
-                                                HorizontalOptions="Center"
-                                                VerticalOptions="Center"
-                                                IsEnabled="{Binding IsFavoriteLoading, Converter={StaticResource InvertBoolConverter}}"
-                                                IsVisible="{Binding IsFavoriteLoading, Converter={StaticResource InvertBoolConverter}}"
-                                                AutomationId="FavoriteToggleButton"
-                                                SemanticProperties.Description="Ajouter ou retirer ce spot des favoris"
-                                                SemanticProperties.Hint="Appuyez pour basculer l'état favori" />
-                                        
-                                        <!-- Heart icon overlay -->
-                                        <Label Text="{Binding IsFavorite, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='❤️|♡'}"
-                                               FontSize="26"
-                                               TextColor="{Binding IsFavorite, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#E91E63|{StaticResource TextSecondary}'}"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center"
-                                               InputTransparent="True"
-                                               IsVisible="{Binding IsFavoriteLoading, Converter={StaticResource InvertBoolConverter}}" />
-                                        
-                                    </Grid>
+                            IsClippedToBounds="True"
+                            AutomationId="PhotoCarouselFrame">
+                            <Grid>
+                                <CarouselView
+                                    HeightRequest="250"
+                                    IndicatorView="indicatorView"
+                                    ItemsSource="{Binding Photos}"
+                                    IsVisible="{Binding Photos.Count, Converter={StaticResource IsNotZeroConverter}}"
+                                    AutomationId="SpotPhotoCarousel"
+                                    SemanticProperties.Description="Galerie de photos du spot">
+                                    <CarouselView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Image Aspect="AspectFill" 
+                                                       Source="{Binding .}"
+                                                       AutomationId="SpotPhotoImage"
+                                                       SemanticProperties.Description="Photo du spot de plongée" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </CarouselView.ItemTemplate>
+                                </CarouselView>
+                                
+                                <!-- No photos placeholder -->
+                                <StackLayout VerticalOptions="Center" 
+                                            HorizontalOptions="Center"
+                                            IsVisible="{Binding Photos.Count, Converter={StaticResource IsNotZeroConverter}, Converter={StaticResource InvertedBoolConverter}}"
+                                            AutomationId="NoPhotosPlaceholder">
+                                    <Label Text="📷"
+                                           FontSize="48"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="Aucune photo disponible"
+                                           FontSize="16"
+                                           TextColor="{StaticResource TextSecondary}"
+                                           HorizontalOptions="Center"
+                                           Margin="0,10,0,0"
+                                           SemanticProperties.Description="Aucune photo n'est disponible pour ce spot" />
                                 </StackLayout>
-                            </StackLayout>
-                        </Grid>
+                            </Grid>
+                        </Frame>
 
-                        <!-- Deuxième ligne: Description -->
-                        <Grid Grid.Row="1" VerticalOptions="FillAndExpand">
-                            <StackLayout Spacing="10">
+                        <IndicatorView
+                            x:Name="indicatorView"
+                            HorizontalOptions="Center"
+                            IndicatorColor="{StaticResource Gray400}"
+                            SelectedIndicatorColor="{StaticResource Primary}" />
+
+                        <!--  En-tête avec description et bouton favori  -->
+                        <Frame BorderColor="{StaticResource Secondary}">
+                            <Frame.Padding>
+                                <OnIdiom x:TypeArguments="Thickness" Phone="15" Tablet="25" Desktop="30" />
+                            </Frame.Padding>
+                            <Frame.MinimumHeightRequest>
+                                <OnIdiom x:TypeArguments="x:Double" Phone="160" Tablet="200" Desktop="220" />
+                            </Frame.MinimumHeightRequest>
+                            <Grid RowDefinitions="Auto,*" RowSpacing="15">
+                                <!-- Première ligne: Titre et bouton favori -->
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="{Binding Spot.Name}"
+                                        TextColor="{StaticResource Primary}"
+                                        VerticalOptions="Center"
+                                        LineBreakMode="WordWrap"
+                                        MaxLines="2">
+                                        <Label.FontSize>
+                                            <OnIdiom x:TypeArguments="x:Double" Phone="22" Tablet="26" Desktop="28" />
+                                        </Label.FontSize>  
+                                    </Label>
+
+                                    <!-- Favorite button with count -->
+                                    <StackLayout Grid.Column="1" 
+                                               Orientation="Horizontal" 
+                                               VerticalOptions="Start"
+                                               Spacing="8"
+                                               Margin="10,0,0,0">
+                                        <StackLayout Orientation="Vertical" 
+                                                     HorizontalOptions="Center"
+                                                     VerticalOptions="Center"
+                                                     Spacing="2">
+                                            
+                                            <Grid WidthRequest="44" HeightRequest="44"
+                                                  HorizontalOptions="Center"
+                                                  VerticalOptions="Center">
+                                                
+                                                <!-- Subtle background circle -->
+                                                <Ellipse Fill="#20FFFFFF"
+                                                         Stroke="#40FFFFFF"
+                                                         StrokeThickness="1"
+                                                         WidthRequest="44"
+                                                         HeightRequest="44"
+                                                         HorizontalOptions="Center"
+                                                         VerticalOptions="Center" />
+                                                
+                                                <!-- Loading indicator -->
+                                                <ActivityIndicator IsRunning="{Binding IsFavoriteLoading}"
+                                                                   IsVisible="{Binding IsFavoriteLoading}"
+                                                                   Color="{StaticResource Primary}"
+                                                                   WidthRequest="22"
+                                                                   HeightRequest="22"
+                                                                   HorizontalOptions="Center"
+                                                                   VerticalOptions="Center" />
+                                                
+                                                <!-- Favorite button -->
+                                                <Button Command="{Binding ToggleFavoriteCommand}"
+                                                        BackgroundColor="Transparent"
+                                                        BorderWidth="0"
+                                                        Padding="0"
+                                                        Margin="0"
+                                                        WidthRequest="44"
+                                                        HeightRequest="44"
+                                                        HorizontalOptions="Center"
+                                                        VerticalOptions="Center"
+                                                        IsEnabled="{Binding IsFavoriteLoading, Converter={StaticResource InvertBoolConverter}}"
+                                                        IsVisible="{Binding IsFavoriteLoading, Converter={StaticResource InvertBoolConverter}}"
+                                                        AutomationId="FavoriteToggleButton"
+                                                        SemanticProperties.Description="Ajouter ou retirer ce spot des favoris"
+                                                        SemanticProperties.Hint="Appuyez pour basculer l'état favori" />
+                                                
+                                                <!-- Heart icon overlay -->
+                                                <Label Text="{Binding IsFavorite, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='❤️|♡'}"
+                                                       FontSize="26"
+                                                       TextColor="{Binding IsFavorite, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#E91E63|{StaticResource TextSecondary}'}"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center"
+                                                       InputTransparent="True"
+                                                       IsVisible="{Binding IsFavoriteLoading, Converter={StaticResource InvertBoolConverter}}" />
+                                                
+                                            </Grid>
+                                        </StackLayout>
+                                    </StackLayout>
+                                </Grid>
+
+                                <!-- Deuxième ligne: Description -->
+                                <Grid Grid.Row="1" VerticalOptions="FillAndExpand">
+                                    <StackLayout Spacing="10">
+                                        <Label
+                                            FontAttributes="Bold"
+                                            Text="Description"
+                                            TextColor="{StaticResource Primary}"
+                                            FontSize="16" />
+
+                                        <Label Text="{Binding Spot.Description}" 
+                                               FontSize="14"
+                                               LineBreakMode="WordWrap" />
+
+                                        <!-- Type et informations de base -->
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,10,0,0">
+                                            <!-- Type de spot -->
+                                            <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                                <Label Text="🏊" FontSize="16" VerticalOptions="Center" />
+                                                <Label FontAttributes="Bold"
+                                                       Text="{Binding SpotTypeDisplay}"
+                                                       TextColor="{StaticResource Secondary}"
+                                                       FontSize="14"
+                                                       VerticalOptions="Center"
+                                                       HorizontalOptions="Start" />
+                                            </StackLayout>
+
+                                            <!-- Difficulté -->
+                                            <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                                <Label Text="⚡" FontSize="16" VerticalOptions="Center" />
+                                                <Label TextColor="{StaticResource TextSecondary}"
+                                                       FontSize="14"
+                                                       VerticalOptions="Center"
+                                                       HorizontalOptions="Start"
+                                                       Text="{Binding DifficultyDisplay}" />
+                                            </StackLayout>
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+                                            <!-- Profondeur -->
+                                            <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                                <Label Text="🌊" FontSize="16" VerticalOptions="Center" />
+                                                <Label Text="{Binding DepthDisplay}"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource TextPrimary}"
+                                                       VerticalOptions="Center"
+                                                       HorizontalOptions="Start" />
+                                            </StackLayout>
+
+                                            <!-- Coordonnées -->
+                                            <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                                <Label Text="📍" FontSize="16" VerticalOptions="Center" />
+                                                <Label FontSize="14"
+                                                       TextColor="{StaticResource TextPrimary}"
+                                                       VerticalOptions="Center"
+                                                       HorizontalOptions="Start"
+                                                       Text="{Binding CoordinatesDisplay}" />
+                                            </StackLayout>
+                                        </Grid>
+                                    </StackLayout>
+                                </Grid>
+                            </Grid>
+                        </Frame>
+
+                        <!--  Carte de localisation  -->
+                        <Frame
+                            Padding="0"
+                            CornerRadius="10"
+                            IsClippedToBounds="True">
+                            <Frame.HeightRequest>
+                                <OnIdiom x:TypeArguments="x:Double" Phone="220" Tablet="300" Desktop="350" />
+                            </Frame.HeightRequest>
+                            <Grid>
+                                <maps:Map
+                                    x:Name="spotMap"
+                                    IsScrollEnabled="True"
+                                    IsZoomEnabled="True"
+                                    IsShowingUser="False"
+                                    MapType="Street"
+                                    AutomationId="SpotLocationMap"
+                                    SemanticProperties.Description="Carte montrant la localisation du spot de plongée" />
+                                
+                                <!-- Map loading indicator -->
+                                <Grid BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                                      IsVisible="{Binding IsLoading}"
+                                      VerticalOptions="Center"
+                                      HorizontalOptions="Center">
+                                    <StackLayout Spacing="10" HorizontalOptions="Center" VerticalOptions="Center">
+                                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                                           Color="{StaticResource Primary}"
+                                                           HeightRequest="30"
+                                                           WidthRequest="30" />
+                                        <Label Text="Chargement de la carte..."
+                                               FontSize="14"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               HorizontalOptions="Center" />
+                                    </StackLayout>
+                                </Grid>
+                            </Grid>
+                        </Frame>
+
+                        <!--  Notes de sécurité  -->
+                        <Frame
+                            Padding="15"
+                            BackgroundColor="#FFF3E0"
+                            BorderColor="{StaticResource Warning}"
+                            IsVisible="{Binding Spot.SafetyNotes, Converter={StaticResource IsNotNullConverter}}">
+                            <VerticalStackLayout Spacing="10">
                                 <Label
                                     FontAttributes="Bold"
-                                    Text="Description"
+                                    Text="⚠️ Notes de sécurité"
                                     TextColor="{StaticResource Primary}"
                                     FontSize="16" />
 
-                                <Label Text="{Binding Spot.Description}" 
+                                <Label Text="{Binding Spot.SafetyNotes}" 
                                        FontSize="14"
                                        LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Frame>
 
-                                <!-- Type et informations de base -->
-                                <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,10,0,0">
-                                    <!-- Type de spot -->
-                                    <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                        <Label Text="🏊" FontSize="16" VerticalOptions="Center" />
-                                        <Label FontAttributes="Bold"
-                                               Text="{Binding SpotTypeDisplay}"
-                                               TextColor="{StaticResource Secondary}"
-                                               FontSize="14"
-                                               VerticalOptions="Center"
-                                               HorizontalOptions="Start" />
-                                    </StackLayout>
+                        <!--  Conditions météo  -->
+                        <Frame Padding="15" BorderColor="{StaticResource Secondary}"
+                               IsVisible="{Binding HasWeatherData}">
+                            <VerticalStackLayout Spacing="10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
 
-                                    <!-- Difficulté -->
-                                    <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                        <Label Text="⚡" FontSize="16" VerticalOptions="Center" />
-                                        <Label TextColor="{StaticResource TextSecondary}"
-                                               FontSize="14"
-                                               VerticalOptions="Center"
-                                               HorizontalOptions="Start"
-                                               Text="{Binding DifficultyDisplay}" />
-                                    </StackLayout>
+                                    <Label
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="🌤️ Conditions météo"
+                                        TextColor="{StaticResource Primary}"
+                                        FontSize="16"
+                                        VerticalOptions="Center" />
+
+                                    <!-- Refresh button -->
+                                    <Button Grid.Column="1"
+                                            Text="🔄"
+                                            FontSize="16"
+                                            WidthRequest="40"
+                                            HeightRequest="40"
+                                            CornerRadius="20"
+                                            BackgroundColor="Transparent"
+                                            TextColor="{StaticResource Primary}"
+                                            Command="{Binding RefreshWeatherCommand}"
+                                            IsEnabled="{Binding IsLoadingWeather, Converter={StaticResource InvertBoolConverter}}"
+                                            Margin="5,0"
+                                            AutomationId="RefreshWeatherButton"
+                                            SemanticProperties.Description="Actualiser les données météo"
+                                            SemanticProperties.Hint="Appuyez pour actualiser la météo" />
                                 </Grid>
 
-                                <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
-                                    <!-- Profondeur -->
-                                    <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                        <Label Text="🌊" FontSize="16" VerticalOptions="Center" />
-                                        <Label Text="{Binding DepthDisplay}"
-                                               FontSize="14"
-                                               TextColor="{StaticResource TextPrimary}"
-                                               VerticalOptions="Center"
-                                               HorizontalOptions="Start" />
-                                    </StackLayout>
-
-                                    <!-- Coordonnées -->
-                                    <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                        <Label Text="📍" FontSize="16" VerticalOptions="Center" />
-                                        <Label FontSize="14"
-                                               TextColor="{StaticResource TextPrimary}"
-                                               VerticalOptions="Center"
-                                               HorizontalOptions="Start"
-                                               Text="{Binding CoordinatesDisplay}" />
-                                    </StackLayout>
-                                </Grid>
-                            </StackLayout>
-                        </Grid>
-                    </Grid>
-                </Frame>
-
-                <!--  Carte de localisation  -->
-                <Frame
-                    Padding="0"
-                    CornerRadius="10"
-                    IsClippedToBounds="True">
-                    <Frame.HeightRequest>
-                        <OnIdiom x:TypeArguments="x:Double" Phone="220" Tablet="300" Desktop="350" />
-                    </Frame.HeightRequest>
-                    <Grid>
-                        <maps:Map
-                            x:Name="spotMap"
-                            IsScrollEnabled="True"
-                            IsZoomEnabled="True"
-                            IsShowingUser="False"
-                            MapType="Street"
-                            AutomationId="SpotLocationMap"
-                            SemanticProperties.Description="Carte montrant la localisation du spot de plongée" />
-                        
-                        <!-- Map loading indicator -->
-                        <Grid BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
-                              IsVisible="{Binding IsLoading}"
-                              VerticalOptions="Center"
-                              HorizontalOptions="Center">
-                            <StackLayout Spacing="10" HorizontalOptions="Center" VerticalOptions="Center">
-                                <ActivityIndicator IsRunning="{Binding IsLoading}"
-                                                   Color="{StaticResource Primary}"
-                                                   HeightRequest="30"
-                                                   WidthRequest="30" />
-                                <Label Text="Chargement de la carte..."
-                                       FontSize="14"
-                                       TextColor="{StaticResource TextSecondary}"
-                                       HorizontalOptions="Center" />
-                            </StackLayout>
-                        </Grid>
-                    </Grid>
-                </Frame>
-
-                <!--  Notes de sécurité  -->
-                <Frame
-                    Padding="15"
-                    BackgroundColor="#FFF3E0"
-                    BorderColor="{StaticResource Warning}"
-                    IsVisible="{Binding Spot.SafetyNotes, Converter={StaticResource IsNotNullConverter}}">
-                    <VerticalStackLayout Spacing="10">
-                        <Label
-                            FontAttributes="Bold"
-                            Text="⚠️ Notes de sécurité"
-                            TextColor="{StaticResource Primary}"
-                            FontSize="16" />
-
-                        <Label Text="{Binding Spot.SafetyNotes}" 
-                               FontSize="14"
-                               LineBreakMode="WordWrap" />
-                    </VerticalStackLayout>
-                </Frame>
-
-                <!--  Conditions météo  -->
-                <Frame Padding="15" BorderColor="{StaticResource Secondary}"
-                       IsVisible="{Binding HasWeatherData}">
-                    <VerticalStackLayout Spacing="10">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <Label
-                                Grid.Column="0"
-                                FontAttributes="Bold"
-                                Text="🌤️ Conditions météo"
-                                TextColor="{StaticResource Primary}"
-                                FontSize="16"
-                                VerticalOptions="Center" />
-
-                            <!-- Refresh button -->
-                            <Button Grid.Column="1"
-                                    Text="🔄"
-                                    FontSize="16"
-                                    WidthRequest="40"
-                                    HeightRequest="40"
-                                    CornerRadius="20"
-                                    BackgroundColor="Transparent"
-                                    TextColor="{StaticResource Primary}"
-                                    Command="{Binding RefreshWeatherCommand}"
-                                    IsEnabled="{Binding IsLoadingWeather, Converter={StaticResource InvertBoolConverter}}"
-                                    Margin="5,0"
-                                    AutomationId="RefreshWeatherButton"
-                                    SemanticProperties.Description="Actualiser les données météo"
-                                    SemanticProperties.Hint="Appuyez pour actualiser la météo" />
-                        </Grid>
-
-                        <!-- Loading indicator -->
-                        <StackLayout Orientation="Horizontal" 
-                                   HorizontalOptions="Center"
-                                   IsVisible="{Binding IsLoadingWeather}"
-                                   Spacing="10">
-                            <ActivityIndicator IsRunning="{Binding IsLoadingWeather}"
-                                             Color="{StaticResource Primary}"
-                                             WidthRequest="20"
-                                             HeightRequest="20" />
-                            <Label Text="Chargement des données météo..."
-                                   FontSize="14"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   VerticalOptions="Center" />
-                        </StackLayout>
-
-                        <!-- Weather content -->
-                        <StackLayout IsVisible="{Binding IsLoadingWeather, Converter={StaticResource InvertBoolConverter}}">
-                            
-                            <!-- Current weather summary -->
-                            <Grid ColumnDefinitions="Auto,*,120" ColumnSpacing="15" Margin="0,5">
-                                <Label Grid.Column="0"
-                                       Text="{Binding CurrentWeather.IconCode, Converter={StaticResource WeatherIconConverter}, FallbackValue='❓'}"
-                                       FontSize="48"
-                                       VerticalOptions="Center"
-                                       HorizontalOptions="Center"
-                                       WidthRequest="60"
-                                       HeightRequest="60"
-                                       AutomationId="WeatherIcon"
-                                       SemanticProperties.Description="Icône météo actuelle" />
-                                
-                                <StackLayout Grid.Column="1" VerticalOptions="Center">
-                                    <Label Text="{Binding CurrentWeather.Temperature, StringFormat='{0:F1}°C'}"
-                                           FontSize="24"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Primary}" />
-                                    <Label Text="{Binding CurrentWeather.Description}"
-                                           FontSize="14"
-                                           TextColor="{StaticResource TextSecondary}" />
-                                </StackLayout>
-                                
-                                <StackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="4">
-                                    <Label Text="{Binding CurrentWeather.WindSpeed, StringFormat='💨 {0:F0} km/h'}"
+                                <!-- Loading indicator -->
+                                <StackLayout Orientation="Horizontal" 
+                                           HorizontalOptions="Center"
+                                           IsVisible="{Binding IsLoadingWeather}"
+                                           Spacing="10">
+                                    <ActivityIndicator IsRunning="{Binding IsLoadingWeather}"
+                                                     Color="{StaticResource Primary}"
+                                                     WidthRequest="20"
+                                                     HeightRequest="20" />
+                                    <Label Text="Chargement des données météo..."
                                            FontSize="14"
                                            TextColor="{StaticResource TextSecondary}"
-                                           HorizontalOptions="End"
-                                           AutomationId="WindSpeedLabel"
-                                           SemanticProperties.Description="Vitesse du vent" />
-                                    <Label Text="{Binding CurrentWeather.Humidity, StringFormat='💧 {0}%'}"
-                                           FontSize="14"
-                                           TextColor="{StaticResource TextSecondary}"
-                                           HorizontalOptions="End"
-                                           AutomationId="HumidityLabel"
-                                           SemanticProperties.Description="Taux d'humidité" />
+                                           VerticalOptions="Center" />
                                 </StackLayout>
-                            </Grid>
 
-                            <!-- Diving conditions -->
-                            <Frame Padding="10" 
-                                   Margin="0,10,0,0"
-                                   BackgroundColor="{Binding DivingConditions.SafetyScore, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#E8F5E8|#FFF3E0'}"
-                                   BorderColor="{Binding DivingConditions.SafetyScore, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#4CAF50|#FFC107'}"
-                                   IsVisible="{Binding DivingConditions, Converter={StaticResource IsNotNullConverter}}">
-                                <StackLayout Spacing="5">
-                                    <Label Text="🤿 Conditions de plongée"
-                                           FontAttributes="Bold"
-                                           FontSize="14"
-                                           TextColor="{StaticResource Primary}" />
+                                <!-- Weather content -->
+                                <StackLayout IsVisible="{Binding IsLoadingWeather, Converter={StaticResource InvertBoolConverter}}">
                                     
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <!-- Current weather summary -->
+                                    <Grid ColumnDefinitions="Auto,*,120" ColumnSpacing="15" Margin="0,5">
                                         <Label Grid.Column="0"
-                                               Text="{Binding DivingConditions.OverallCondition}"
-                                               FontSize="16"
-                                               FontAttributes="Bold"
-                                               VerticalOptions="Center" />
+                                               Text="{Binding CurrentWeather.IconCode, Converter={StaticResource WeatherIconConverter}, FallbackValue='❓'}"
+                                               FontSize="48"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="Center"
+                                               WidthRequest="60"
+                                               HeightRequest="60"
+                                               AutomationId="WeatherIcon"
+                                               SemanticProperties.Description="Icône météo actuelle" />
                                         
-                                        <Label Grid.Column="1"
-                                               Text="{Binding DivingConditions.SafetyScore, StringFormat='⚡ {0}/100'}"
-                                               FontSize="14"
-                                               TextColor="{StaticResource TextSecondary}"
-                                               VerticalOptions="Center" />
+                                        <StackLayout Grid.Column="1" VerticalOptions="Center">
+                                            <Label Text="{Binding CurrentWeather.Temperature, StringFormat='{0:F1}°C'}"
+                                                   FontSize="24"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource Primary}" />
+                                            <Label Text="{Binding CurrentWeather.Description}"
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource TextSecondary}" />
+                                        </StackLayout>
+                                        
+                                        <StackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="4">
+                                            <Label Text="{Binding CurrentWeather.WindSpeed, StringFormat='💨 {0:F0} km/h'}"
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource TextSecondary}"
+                                                   HorizontalOptions="End"
+                                                   AutomationId="WindSpeedLabel"
+                                                   SemanticProperties.Description="Vitesse du vent" />
+                                            <Label Text="{Binding CurrentWeather.Humidity, StringFormat='💧 {0}%'}"
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource TextSecondary}"
+                                                   HorizontalOptions="End"
+                                                   AutomationId="HumidityLabel"
+                                                   SemanticProperties.Description="Taux d'humidité" />
+                                        </StackLayout>
                                     </Grid>
-                                    
-                                    <Label Text="{Binding DivingConditions.Assessment}"
-                                           FontSize="12"
+
+                                    <!-- Diving conditions -->
+                                    <Frame Padding="10" 
+                                           Margin="0,10,0,0"
+                                           BackgroundColor="{Binding DivingConditions.SafetyScore, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#E8F5E8|#FFF3E0'}"
+                                           BorderColor="{Binding DivingConditions.SafetyScore, Converter={StaticResource BoolToObjectConverter}, ConverterParameter='#4CAF50|#FFC107'}"
+                                           IsVisible="{Binding DivingConditions, Converter={StaticResource IsNotNullConverter}}">
+                                        <StackLayout Spacing="5">
+                                            <Label Text="🤿 Conditions de plongée"
+                                                   FontAttributes="Bold"
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource Primary}" />
+                                            
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                                <Label Grid.Column="0"
+                                                       Text="{Binding DivingConditions.OverallCondition}"
+                                                       FontSize="16"
+                                                       FontAttributes="Bold"
+                                                       VerticalOptions="Center" />
+                                                
+                                                <Label Grid.Column="1"
+                                                       Text="{Binding DivingConditions.SafetyScore, StringFormat='⚡ {0}/100'}"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource TextSecondary}"
+                                                       VerticalOptions="Center" />
+                                            </Grid>
+                                            
+                                            <Label Text="{Binding DivingConditions.Assessment}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource TextSecondary}"
+                                                   IsVisible="{Binding DivingConditions.Assessment, Converter={StaticResource StringNotEmptyConverter}}" />
+                                        </StackLayout>
+                                    </Frame>
+
+                                    <!-- Last update -->
+                                    <Label Text="{Binding CurrentWeather.LastUpdated, StringFormat='Dernière mise à jour: {0:HH:mm}'}"
+                                           FontSize="10"
                                            TextColor="{StaticResource TextSecondary}"
-                                           IsVisible="{Binding DivingConditions.Assessment, Converter={StaticResource StringNotEmptyConverter}}" />
+                                           HorizontalOptions="End"
+                                           Margin="0,5,0,0" />
                                 </StackLayout>
-                            </Frame>
+                            </VerticalStackLayout>
+                        </Frame>
 
-                            <!-- Last update -->
-                            <Label Text="{Binding CurrentWeather.LastUpdated, StringFormat='Dernière mise à jour: {0:HH:mm}'}"
-                                   FontSize="10"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   HorizontalOptions="End"
-                                   Margin="0,5,0,0" />
-                        </StackLayout>
-                    </VerticalStackLayout>
-                </Frame>
+                        <!-- Weather error message -->
+                        <Frame Padding="15" 
+                               BackgroundColor="#FFEBEE"
+                               BorderColor="#F44336"
+                               IsVisible="{Binding ShowWeatherError}">
+                            <StackLayout Orientation="Horizontal" Spacing="10">
+                                <Label Text="⚠️"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="#F44336"
+                                       VerticalOptions="Center" />
+                                <Label Text="{Binding WeatherErrorMessage}"
+                                       FontSize="14"
+                                       TextColor="#D32F2F"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="FillAndExpand" />
+                                <Button Text="Réessayer"
+                                        FontSize="12"
+                                        Padding="8,4"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#D32F2F"
+                                        BorderColor="#D32F2F"
+                                        BorderWidth="1"
+                                        Command="{Binding RefreshWeatherCommand}"
+                                        VerticalOptions="Center" />
+                            </StackLayout>
+                        </Frame>
 
-                <!-- Weather error message -->
-                <Frame Padding="15" 
-                       BackgroundColor="#FFEBEE"
-                       BorderColor="#F44336"
-                       IsVisible="{Binding ShowWeatherError}">
-                    <StackLayout Orientation="Horizontal" Spacing="10">
-                        <Label Text="⚠️"
-                               FontSize="16"
-                               FontAttributes="Bold"
-                               TextColor="#F44336"
-                               VerticalOptions="Center" />
-                        <Label Text="{Binding WeatherErrorMessage}"
-                               FontSize="14"
-                               TextColor="#D32F2F"
-                               VerticalOptions="Center"
-                               HorizontalOptions="FillAndExpand" />
-                        <Button Text="Réessayer"
-                                FontSize="12"
-                                Padding="8,4"
-                                BackgroundColor="Transparent"
-                                TextColor="#D32F2F"
-                                BorderColor="#D32F2F"
-                                BorderWidth="1"
-                                Command="{Binding RefreshWeatherCommand}"
-                                VerticalOptions="Center" />
-                    </StackLayout>
-                </Frame>
+                        <!--  Informations complémentaires  -->
+                        <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                            <VerticalStackLayout Spacing="10">
+                                <Label
+                                    FontAttributes="Bold"
+                                    Text="ℹ️ Informations complémentaires"
+                                    TextColor="{StaticResource Primary}"
+                                    FontSize="16" />
 
-                <!--  Informations complémentaires  -->
-                <Frame Padding="15" BorderColor="{StaticResource Secondary}">
-                    <VerticalStackLayout Spacing="10">
-                        <Label
-                            FontAttributes="Bold"
-                            Text="ℹ️ Informations complémentaires"
-                            TextColor="{StaticResource Primary}"
-                            FontSize="16" />
+                                <Grid
+                                    ColumnDefinitions="Auto,*"
+                                    ColumnSpacing="10"
+                                    RowDefinitions="Auto,Auto,Auto,Auto"
+                                    RowSpacing="8">
+                                    
+                                    <!-- Équipement requis -->
+                                    <Label
+                                        Grid.Row="0"
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="Équipement requis:"
+                                        FontSize="14" />
+                                    <Label
+                                        Grid.Row="0"
+                                        Grid.Column="1"
+                                        Text="{Binding Spot.RequiredEquipment}"
+                                        FontSize="14" />
 
-                        <Grid
-                            ColumnDefinitions="Auto,*"
-                            ColumnSpacing="10"
-                            RowDefinitions="Auto,Auto,Auto,Auto"
-                            RowSpacing="8">
-                            
-                            <!-- Équipement requis -->
-                            <Label
-                                Grid.Row="0"
+                                    <!-- Meilleures conditions -->
+                                    <Label
+                                        Grid.Row="1"
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="Meilleures conditions:"
+                                        FontSize="14" />
+                                    <Label
+                                        Grid.Row="1"
+                                        Grid.Column="1"
+                                        Text="{Binding Spot.BestConditions}"
+                                        FontSize="14" />
+
+                                    <!-- Ajouté le -->
+                                    <Label
+                                        Grid.Row="2"
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="Ajouté le:"
+                                        FontSize="14" />
+                                    <Label
+                                        Grid.Row="2"
+                                        Grid.Column="1"
+                                        Text="{Binding Spot.CreatedAt, StringFormat='{0:dd/MM/yyyy}'}"
+                                        FontSize="14" />
+
+                                    <!-- Dernière vérification -->
+                                    <Label
+                                        Grid.Row="3"
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="Dernière vérification:"
+                                        FontSize="14" />
+                                    <Label
+                                        Grid.Row="3"
+                                        Grid.Column="1"
+                                        Text="{Binding Spot.LastSafetyReview, StringFormat='{0:dd/MM/yyyy}'}"
+                                        FontSize="14" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <!--  Boutons d'action - SEULEMENT 2 comme spécifié  -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,10,0,0">
+                            <Button
                                 Grid.Column="0"
-                                FontAttributes="Bold"
-                                Text="Équipement requis:"
-                                FontSize="14" />
-                            <Label
-                                Grid.Row="0"
-                                Grid.Column="1"
-                                Text="{Binding Spot.RequiredEquipment}"
-                                FontSize="14" />
+                                Command="{Binding ShareSpotCommand}"
+                                BackgroundColor="{StaticResource Primary}"
+                                TextColor="White"
+                                Text="📤 Partager"
+                                CornerRadius="8"
+                                HeightRequest="50" />
 
-                            <!-- Meilleures conditions -->
-                            <Label
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                FontAttributes="Bold"
-                                Text="Meilleures conditions:"
-                                FontSize="14" />
-                            <Label
-                                Grid.Row="1"
+                            <Button
                                 Grid.Column="1"
-                                Text="{Binding Spot.BestConditions}"
-                                FontSize="14" />
-
-                            <!-- Ajouté le -->
-                            <Label
-                                Grid.Row="2"
-                                Grid.Column="0"
-                                FontAttributes="Bold"
-                                Text="Ajouté le:"
-                                FontSize="14" />
-                            <Label
-                                Grid.Row="2"
-                                Grid.Column="1"
-                                Text="{Binding Spot.CreatedAt, StringFormat='{0:dd/MM/yyyy}'}"
-                                FontSize="14" />
-
-                            <!-- Dernière vérification -->
-                            <Label
-                                Grid.Row="3"
-                                Grid.Column="0"
-                                FontAttributes="Bold"
-                                Text="Dernière vérification:"
-                                FontSize="14" />
-                            <Label
-                                Grid.Row="3"
-                                Grid.Column="1"
-                                Text="{Binding Spot.LastSafetyReview, StringFormat='{0:dd/MM/yyyy}'}"
-                                FontSize="14" />
+                                Command="{Binding ReportSpotCommand}"
+                                BackgroundColor="{StaticResource Error}"
+                                TextColor="White"
+                                Text="🚨 Signaler"
+                                CornerRadius="8"
+                                HeightRequest="50" />
                         </Grid>
+
                     </VerticalStackLayout>
-                </Frame>
-
-                <!--  Boutons d'action - SEULEMENT 2 comme spécifié  -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,10,0,0">
-                    <Button
-                        Grid.Column="0"
-                        Command="{Binding ShareSpotCommand}"
-                        BackgroundColor="{StaticResource Primary}"
-                        TextColor="White"
-                        Text="📤 Partager"
-                        CornerRadius="8"
-                        HeightRequest="50" />
-
-                    <Button
-                        Grid.Column="1"
-                        Command="{Binding ReportSpotCommand}"
-                        BackgroundColor="{StaticResource Error}"
-                        TextColor="White"
-                        Text="🚨 Signaler"
-                        CornerRadius="8"
-                        HeightRequest="50" />
+                </ScrollView>
+                
+                <!-- Loading state -->
+                <Grid IsVisible="{Binding IsLoading}"
+                      BackgroundColor="{StaticResource Background}">
+                    <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20">
+                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                           Color="{StaticResource Primary}"
+                                           HeightRequest="50"
+                                           WidthRequest="50"
+                                           AutomationId="SpotDetailsLoadingIndicator" />
+                        <Label Text="Chargement des détails du spot..."
+                               HorizontalOptions="Center"
+                               FontSize="16"
+                               TextColor="{StaticResource TextSecondary}"
+                               SemanticProperties.Description="Chargement des informations du spot en cours" />
+                    </StackLayout>
                 </Grid>
-
-            </VerticalStackLayout>
-        </ScrollView>
-        
-        <!-- Loading state -->
-        <Grid IsVisible="{Binding IsLoading}"
-              BackgroundColor="{StaticResource Background}">
-            <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20">
-                <ActivityIndicator IsRunning="{Binding IsLoading}"
-                                   Color="{StaticResource Primary}"
-                                   HeightRequest="50"
-                                   WidthRequest="50"
-                                   AutomationId="SpotDetailsLoadingIndicator" />
-                <Label Text="Chargement des détails du spot..."
+                
+                <!-- Error state -->
+                <Grid IsVisible="{Binding IsError}"
+                      BackgroundColor="{StaticResource Background}">
+                    <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20" Padding="40">
+                        <Label Text="❌ Erreur"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Error}"
+                               HorizontalOptions="Center"
+                               SemanticProperties.Description="Erreur de chargement" />
+                        <Label Text="{Binding ErrorMessage}"
+                               HorizontalOptions="Center"
+                               FontSize="16"
+                               TextColor="{StaticResource Error}"
+                               HorizontalTextAlignment="Center"
+                               AutomationId="ErrorMessageLabel"
+                               SemanticProperties.Description="Message d'erreur" />
+                        <Button Text="🔄 Réessayer"
+                                Command="{Binding RefreshCommand}"
+                                BackgroundColor="{StaticResource Primary}"
+                                TextColor="White"
+                                HorizontalOptions="Center"
+                                AutomationId="RetryButton"
+                                SemanticProperties.Description="Bouton pour réessayer le chargement"
+                                SemanticProperties.Hint="Appuyez pour recharger les informations du spot" />
+                    </StackLayout>
+                </Grid>
+            </Grid>
+            
+            <!-- Success/Error toast message -->
+            <Frame Grid.Row="1"
+                   Padding="15,10"
+                   Margin="10,5"
+                   BackgroundColor="{Binding ToastBackgroundColor}"
+                   BorderColor="{Binding ToastBorderColor}"
+                   IsVisible="{Binding IsToastVisible}"
+                   AutomationId="ToastMessage">
+                <Label Text="{Binding ToastMessage}"
+                       TextColor="{Binding ToastTextColor}"
+                       FontSize="14"
                        HorizontalOptions="Center"
-                       FontSize="16"
-                       TextColor="{StaticResource TextSecondary}"
-                       SemanticProperties.Description="Chargement des informations du spot en cours" />
-            </StackLayout>
-        </Grid>
-        
-        <!-- Error state -->
-        <Grid IsVisible="{Binding IsError}"
-              BackgroundColor="{StaticResource Background}">
-            <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20" Padding="40">
-                <Label Text="❌ Erreur"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource Error}"
-                       HorizontalOptions="Center"
-                       SemanticProperties.Description="Erreur de chargement" />
-                <Label Text="{Binding ErrorMessage}"
-                       HorizontalOptions="Center"
-                       FontSize="16"
-                       TextColor="{StaticResource Error}"
-                       HorizontalTextAlignment="Center"
-                       AutomationId="ErrorMessageLabel"
-                       SemanticProperties.Description="Message d'erreur" />
-                <Button Text="🔄 Réessayer"
-                        Command="{Binding RefreshCommand}"
-                        BackgroundColor="{StaticResource Primary}"
-                        TextColor="White"
-                        HorizontalOptions="Center"
-                        AutomationId="RetryButton"
-                        SemanticProperties.Description="Bouton pour réessayer le chargement"
-                        SemanticProperties.Hint="Appuyez pour recharger les informations du spot" />
-            </StackLayout>
-        </Grid>
-    </Grid>
-    
-    <!-- Success/Error toast message -->
-    <Frame Grid.Row="1"
-           Padding="15,10"
-           Margin="10,5"
-           BackgroundColor="{Binding ToastBackgroundColor}"
-           BorderColor="{Binding ToastBorderColor}"
-           IsVisible="{Binding IsToastVisible}"
-           AutomationId="ToastMessage">
-        <Label Text="{Binding ToastMessage}"
-               TextColor="{Binding ToastTextColor}"
-               FontSize="14"
-               HorizontalOptions="Center"
-               SemanticProperties.Description="Message de notification" />
-    </Frame>
+                       SemanticProperties.Description="Message de notification" />
+            </Frame>
         </Grid>
     </Grid>
 </ContentPage>

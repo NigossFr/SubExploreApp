@@ -95,6 +95,29 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private string _errorMessage = string.Empty;
 
+        [ObservableProperty]
+        private string _pageTitle = "Détails du spot";
+
+        // Validation mode properties
+        [ObservableProperty]
+        private bool _isValidationMode = false;
+
+        [ObservableProperty]
+        private string _validationMode = string.Empty;
+
+        // Property change handler for dynamic title updates
+        partial void OnSpotChanged(Spot? value)
+        {
+            if (value != null && !string.IsNullOrEmpty(value.Name))
+            {
+                PageTitle = value.Name;
+            }
+            else
+            {
+                PageTitle = "Détails du spot";
+            }
+        }
+
         public SpotDetailsViewModel(
             ISupabaseApiService supabaseApiService,
             INavigationService navigationService,
@@ -144,6 +167,36 @@ namespace SubExplore.ViewModels.Spots
                     
                     // Set favorite state from the parameter
                     IsFavorite = favoriteParam.IsFavorite;
+                }
+                else if (parameter is Dictionary<string, object> validationParam)
+                {
+                    // Handle validation mode parameters from NavigationService
+                    _logger?.LogInformation("Loading spot details with validation parameters");
+                    
+                    if (validationParam.TryGetValue("SpotId", out var spotIdValue) && spotIdValue is Guid validationSpotId)
+                    {
+                        // Set validation mode properties first
+                        if (validationParam.TryGetValue("IsValidationMode", out var isValidationValue) && isValidationValue is bool isValidation)
+                        {
+                            IsValidationMode = isValidation;
+                        }
+                        
+                        if (validationParam.TryGetValue("ValidationMode", out var validationModeValue))
+                        {
+                            ValidationMode = validationModeValue?.ToString() ?? string.Empty;
+                        }
+                        
+                        // Load the spot data
+                        await LoadSpotById(validationSpotId);
+                        
+                        // Update page title for validation mode after spot is loaded
+                        if (IsValidationMode && Spot != null)
+                        {
+                            PageTitle = $"Validation - {Spot.Name}";
+                        }
+                        
+                        _logger?.LogInformation("Validation mode enabled: {ValidationMode} for spot {SpotId}", ValidationMode, validationSpotId);
+                    }
                 }
                 else if (parameter is Guid spotId)
                 {
