@@ -105,6 +105,9 @@ namespace SubExplore.ViewModels.Profile
             _themeService = themeService;
             
             Title = "Profil";
+            
+            // Initialize default values to ensure Pickers display something
+            InitializeDefaultValues();
         }
 
         // Preferences options in French
@@ -337,6 +340,15 @@ namespace SubExplore.ViewModels.Profile
                 // Always populate fields after setting preferences
                 PopulatePreferencesFields();
                 
+                // Force a refresh of all UI bindings on main thread
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    OnPropertyChanged(nameof(ThemeOptionsDisplay));
+                    OnPropertyChanged(nameof(DisplayNameOptionsDisplay));
+                    OnPropertyChanged(nameof(LanguageOptionsDisplay));
+                    OnPropertyChanged(nameof(ExpertiseLevelOptionsDisplay));
+                });
+                
                 System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] LoadPreferencesAsync: Preferences loaded - Theme: {CurrentPreferences?.Theme}, Language: {CurrentPreferences?.Language}");
             }
             catch (Exception ex)
@@ -494,6 +506,13 @@ namespace SubExplore.ViewModels.Profile
             
             Certifications = System.Text.Json.JsonSerializer.Serialize(CurrentUser.Certifications ?? new Dictionary<string, object>());
             
+            // Ensure UI updates on main thread
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                OnPropertyChanged(nameof(SelectedExpertiseLevelIndex));
+                System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] PopulateEditFields: Updated SelectedExpertiseLevelIndex to {SelectedExpertiseLevelIndex}");
+            });
+            
             LoadCertifications();
         }
 
@@ -555,15 +574,21 @@ namespace SubExplore.ViewModels.Profile
                 SetDefaultNotificationSettings();
             }
             
-            // Trigger UI updates
-            OnPropertyChanged(nameof(SelectedThemeIndex));
-            OnPropertyChanged(nameof(SelectedDisplayNameIndex));
-            OnPropertyChanged(nameof(SelectedLanguageIndex));
-            OnPropertyChanged(nameof(PushNotifications));
-            OnPropertyChanged(nameof(EmailNotifications));
-            OnPropertyChanged(nameof(SpotsNearby));
-            OnPropertyChanged(nameof(CommunityUpdates));
-            OnPropertyChanged(nameof(SafetyAlerts));
+            // Trigger UI updates on main thread to ensure proper binding
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                OnPropertyChanged(nameof(SelectedThemeIndex));
+                OnPropertyChanged(nameof(SelectedDisplayNameIndex));
+                OnPropertyChanged(nameof(SelectedLanguageIndex));
+                OnPropertyChanged(nameof(SelectedExpertiseLevelIndex));
+                OnPropertyChanged(nameof(PushNotifications));
+                OnPropertyChanged(nameof(EmailNotifications));
+                OnPropertyChanged(nameof(SpotsNearby));
+                OnPropertyChanged(nameof(CommunityUpdates));
+                OnPropertyChanged(nameof(SafetyAlerts));
+                
+                System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] UI Updates triggered - Theme: {SelectedThemeIndex}, Display: {SelectedDisplayNameIndex}, Language: {SelectedLanguageIndex}, Expertise: {SelectedExpertiseLevelIndex}");
+            });
         }
 
         private void SetDefaultNotificationSettings()
@@ -730,6 +755,26 @@ namespace SubExplore.ViewModels.Profile
             };
             
             PopulatePreferencesFields();
+        }
+        
+        private void InitializeDefaultValues()
+        {
+            System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] InitializeDefaultValues: Setting default picker indices");
+            
+            // Set default indices to ensure Pickers show values immediately
+            SelectedThemeIndex = 0; // "Clair"
+            SelectedDisplayNameIndex = 0; // "Nom d'utilisateur"
+            SelectedLanguageIndex = 0; // "Français"
+            SelectedExpertiseLevelIndex = 0; // "Débutant"
+            
+            // Set default notification values
+            PushNotifications = true;
+            EmailNotifications = true;
+            SpotsNearby = true;
+            CommunityUpdates = true;
+            SafetyAlerts = true;
+            
+            System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] InitializeDefaultValues: Set indices - Theme: {SelectedThemeIndex}, Display: {SelectedDisplayNameIndex}, Language: {SelectedLanguageIndex}, Expertise: {SelectedExpertiseLevelIndex}");
         }
     }
 
