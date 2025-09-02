@@ -338,7 +338,7 @@ namespace SubExplore.ViewModels.Profile
                 }
                 
                 // Always populate fields after setting preferences
-                PopulatePreferencesFields();
+                await PopulatePreferencesFields();
                 
                 // Force a refresh of all UI bindings on main thread
                 MainThread.BeginInvokeOnMainThread(() =>
@@ -516,7 +516,7 @@ namespace SubExplore.ViewModels.Profile
             LoadCertifications();
         }
 
-        private void PopulatePreferencesFields()
+        private async Task PopulatePreferencesFields()
         {
             System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] PopulatePreferencesFields: Starting");
             
@@ -527,11 +527,51 @@ namespace SubExplore.ViewModels.Profile
                 if (CurrentPreferences == null) return;
             }
 
-            // Set theme index
+            // Set theme index - this should reflect the user's actual preference
             var theme = CurrentPreferences.Theme ?? "light";
+            var previousIndex = SelectedThemeIndex;
             SelectedThemeIndex = _themeOptions.IndexOf(theme);
-            if (SelectedThemeIndex < 0) SelectedThemeIndex = 0;
-            System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] PopulatePreferencesFields: Theme = {theme}, Index = {SelectedThemeIndex}");
+            if (SelectedThemeIndex < 0) 
+            {
+                System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] WARNING: Unknown theme '{theme}', defaulting to light");
+                SelectedThemeIndex = 0;
+            }
+            
+            // Diagnostic: Check if stored preference matches actual app theme
+            var currentAppTheme = _themeService.CurrentTheme;
+            var expectedAppTheme = theme switch
+            {
+                "light" => AppTheme.Light,
+                "dark" => AppTheme.Dark,
+                "auto" => AppTheme.Unspecified,
+                _ => AppTheme.Light
+            };
+            
+            bool isThemeSynced = (currentAppTheme == expectedAppTheme) || 
+                               (theme == "auto"); // Auto theme can match any actual theme
+            
+            System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] THEME SYNC CHECK:");
+            System.Diagnostics.Debug.WriteLine($"  Stored preference: '{theme}' → Picker index {SelectedThemeIndex}");
+            System.Diagnostics.Debug.WriteLine($"  Expected app theme: {expectedAppTheme}");
+            System.Diagnostics.Debug.WriteLine($"  Actual app theme: {currentAppTheme}");
+            System.Diagnostics.Debug.WriteLine($"  Themes synchronized: {isThemeSynced}");
+            
+            if (!isThemeSynced && theme != "auto")
+            {
+                System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] WARNING: Theme mismatch detected! Stored='{theme}' but app shows '{currentAppTheme}'");
+                System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] AUTO-FIX: Applying stored theme preference to synchronize app theme");
+                
+                // Auto-fix: Apply the stored theme preference to the app
+                try
+                {
+                    await _themeService.SetThemeAsync(expectedAppTheme);
+                    System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] Successfully applied theme '{theme}' to app");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] ERROR: Failed to apply theme: {ex.Message}");
+                }
+            }
 
             // Set display name index
             var displayName = CurrentPreferences.DisplayNamePreference ?? "username";
@@ -754,15 +794,18 @@ namespace SubExplore.ViewModels.Profile
                 CreatedAt = DateTime.UtcNow
             };
             
-            PopulatePreferencesFields();
+            // Use fire-and-forget to populate fields with theme sync
+            _ = PopulatePreferencesFields();
         }
         
         private void InitializeDefaultValues()
         {
             System.Diagnostics.Debug.WriteLine("[UserProfileViewModel] InitializeDefaultValues: Setting default picker indices");
             
-            // Set default indices to ensure Pickers show values immediately
-            SelectedThemeIndex = 0; // "Clair"
+            // NOTE: Do NOT set SelectedThemeIndex here - it will be set correctly in PopulatePreferencesFields()
+            // when the user preferences are loaded from the database. Setting it here causes sync issues.
+            
+            // Set default indices for other pickers (these are safe fallbacks)
             SelectedDisplayNameIndex = 0; // "Nom d'utilisateur"
             SelectedLanguageIndex = 0; // "Français"
             SelectedExpertiseLevelIndex = 0; // "Débutant"
@@ -774,7 +817,7 @@ namespace SubExplore.ViewModels.Profile
             CommunityUpdates = true;
             SafetyAlerts = true;
             
-            System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] InitializeDefaultValues: Set indices - Theme: {SelectedThemeIndex}, Display: {SelectedDisplayNameIndex}, Language: {SelectedLanguageIndex}, Expertise: {SelectedExpertiseLevelIndex}");
+            System.Diagnostics.Debug.WriteLine($"[UserProfileViewModel] InitializeDefaultValues: Set indices - Display: {SelectedDisplayNameIndex}, Language: {SelectedLanguageIndex}, Expertise: {SelectedExpertiseLevelIndex} (Theme will be set when preferences load)");
         }
     }
 

@@ -69,6 +69,95 @@ namespace SubExplore
             }
         }
 
+        private async Task InitializeUserThemeAsync(IServiceProvider services)
+        {
+            try
+            {
+                Debug.WriteLine("[App.xaml.cs] 🎨 Starting user theme initialization");
+                
+                // Get required services
+                var themeService = services.GetService<IThemeService>();
+                var userProfileService = services.GetService<IUserProfileService>();
+                var authService = services.GetService<ISimpleAuthenticationService>();
+                
+                if (themeService == null)
+                {
+                    Debug.WriteLine("[App.xaml.cs] ⚠️ ThemeService not found - using default theme");
+                    return;
+                }
+                
+                // Try to load user preferences if user is authenticated
+                string userThemePreference = "light"; // Default fallback
+                
+                if (authService != null && userProfileService != null)
+                {
+                    try
+                    {
+                        Debug.WriteLine("[App.xaml.cs] 🔍 Attempting to load user theme preference from database");
+                        
+                        // Try to get current user if authenticated
+                        if (authService.IsAuthenticated)
+                        {
+                            var currentUser = await userProfileService.GetCurrentUserAsync();
+                            if (currentUser?.Preferences?.Theme != null)
+                            {
+                                userThemePreference = currentUser.Preferences.Theme;
+                                Debug.WriteLine($"[App.xaml.cs] 📊 Loaded user theme preference: '{userThemePreference}'");
+                            }
+                            else
+                            {
+                                Debug.WriteLine("[App.xaml.cs] 📊 No theme preference found, using default 'light'");
+                            }
+                        }
+                        else
+                        {
+                            Debug.WriteLine("[App.xaml.cs] 🔒 User not authenticated, using default theme");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[App.xaml.cs] ⚠️ Failed to load user preferences: {ex.Message}");
+                        Debug.WriteLine("[App.xaml.cs] Using default theme as fallback");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("[App.xaml.cs] ⚠️ UserProfileService or AuthService not available - using default theme");
+                }
+                
+                // Apply the theme (either user preference or default)
+                var appTheme = userThemePreference switch
+                {
+                    "dark" => AppTheme.Dark,
+                    "light" => AppTheme.Light,
+                    "auto" => AppTheme.Unspecified,
+                    _ => AppTheme.Light // Fallback
+                };
+                
+                Debug.WriteLine($"[App.xaml.cs] 🎯 Applying theme: '{userThemePreference}' → {appTheme}");
+                await themeService.SetThemeAsync(appTheme);
+                
+                // Verify theme was applied
+                var currentTheme = themeService.CurrentTheme;
+                Debug.WriteLine($"[App.xaml.cs] ✅ Theme applied successfully. Current theme: {currentTheme}");
+                
+                if (currentTheme == appTheme || userThemePreference == "auto")
+                {
+                    Debug.WriteLine("[App.xaml.cs] 🎉 Theme synchronization successful!");
+                }
+                else
+                {
+                    Debug.WriteLine($"[App.xaml.cs] ⚠️ Theme mismatch: expected {appTheme}, got {currentTheme}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App.xaml.cs] ❌ ERROR in InitializeUserThemeAsync: {ex.Message}");
+                Debug.WriteLine($"[App.xaml.cs] Stack trace: {ex.StackTrace}");
+                Debug.WriteLine("[App.xaml.cs] App will continue with default theme");
+            }
+        }
+
         private async Task InitializeAuthenticationAndNavigationAsync(IServiceProvider services)
         {
             try
@@ -98,16 +187,9 @@ namespace SubExplore
                     Debug.WriteLine("[App.xaml.cs] ❌ AppInitializationService not found!");
                 }
                 
-                // 2. Initialize theme service (if available)
-                var themeService = services.GetService<IThemeService>();
-                if (themeService != null)
-                {
-                    Debug.WriteLine("[App.xaml.cs] ✅ Theme service initialized");
-                }
-                else
-                {
-                    Debug.WriteLine("[App.xaml.cs] ⚠️ Theme service not found");
-                }
+                // 2. Initialize and apply user theme preferences (critical for consistency)
+                await InitializeUserThemeAsync(services);
+                Debug.WriteLine("[App.xaml.cs] ✅ User theme initialization completed");
                 
                 // 3. Initialize Simple Authentication Service - 100% API Supabase UNIQUEMENT
                 Debug.WriteLine("[App.xaml.cs] 🔐 Initializing Simple Authentication Service - 100% API Supabase");
