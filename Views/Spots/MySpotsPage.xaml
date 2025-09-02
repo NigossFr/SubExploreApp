@@ -8,14 +8,14 @@
     xmlns:common="clr-namespace:SubExplore.Views.Common"
     xmlns:domain="clr-namespace:SubExplore.Models.Domain"
     x:DataType="viewmodels:MySpotsViewModel"
-    Title="{Binding Title}"
-    BackgroundColor="{StaticResource Background}"
+    Title="Mes Spots"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}"
     Shell.NavBarIsVisible="False"
     Shell.TabBarIsVisible="False">
 
     <Grid>
         <!-- Custom Navigation Bar -->
-        <controls:CustomNavigationBar Title="{Binding Title}" 
+        <controls:CustomNavigationBar Title="Mes Spots" 
                                       VerticalOptions="Start"
                                       ZIndex="100" />
         
@@ -24,7 +24,7 @@
             <!-- Search and Filter Section -->
             <Frame Grid.Row="0" 
                    Padding="15"
-                   BackgroundColor="{StaticResource Background}"
+                   BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}"
                    BorderColor="Transparent">
                 <StackLayout Spacing="15">
                     
@@ -113,7 +113,7 @@
                         
                         <!-- Search Entry -->
                         <Frame Grid.Column="0"
-                               BackgroundColor="{StaticResource Surface}"
+                               BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                                BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
                                CornerRadius="8"
                                Padding="0"
@@ -121,8 +121,8 @@
                             <Entry Text="{Binding SearchText}"
                                    Placeholder="Rechercher vos spots..."
                                    BackgroundColor="Transparent"
-                                   TextColor="{StaticResource TextPrimary}"
-                                   PlaceholderColor="{StaticResource TextSecondary}"
+                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}"
+                                   PlaceholderColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                    FontSize="16"
                                    AutomationId="SearchEntry"
                                    SemanticProperties.Description="Rechercher parmi vos spots"
@@ -131,7 +131,7 @@
                         
                         <!-- Filter Picker -->
                         <Frame Grid.Column="1"
-                               BackgroundColor="{StaticResource Surface}"
+                               BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                                BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
                                CornerRadius="8"
                                Padding="0"
@@ -140,7 +140,7 @@
                             <Picker ItemsSource="{Binding FilterTypes}"
                                     SelectedItem="{Binding SelectedFilterType}"
                                     BackgroundColor="Transparent"
-                                    TextColor="{StaticResource TextPrimary}"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}"
                                     FontSize="14"
                                     AutomationId="FilterPicker"
                                     SemanticProperties.Description="Filtrer les spots par type" />
@@ -178,7 +178,7 @@
                                        AutomationId="LoadingIndicator" />
                     <Label Text="Chargement de vos spots..."
                            FontSize="16"
-                           TextColor="{StaticResource TextSecondary}"
+                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                            HorizontalOptions="Center"
                            SemanticProperties.Description="Chargement des spots en cours" />
                 </StackLayout>
@@ -196,11 +196,11 @@
                     <Label Text="Aucun spot trouvé"
                            FontSize="20"
                            FontAttributes="Bold"
-                           TextColor="{StaticResource TextPrimary}"
+                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}"
                            HorizontalOptions="Center" />
                     <Label Text="Vous n'avez pas encore créé de spots ou aucun spot ne correspond à vos critères de recherche."
                            FontSize="14"
-                           TextColor="{StaticResource TextSecondary}"
+                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center" />
                     <Button Text="Ajouter mon premier spot"
@@ -229,7 +229,7 @@
                             <DataTemplate x:DataType="domain:Spot">
                                 <Frame Padding="15"
                                        Margin="15,8"
-                                       BackgroundColor="{StaticResource Surface}"
+                                       BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                                        BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
                                        CornerRadius="12"
                                        HasShadow="True">
@@ -242,7 +242,7 @@
                                                    Text="{Binding Name}"
                                                    FontSize="18"
                                                    FontAttributes="Bold"
-                                                   TextColor="{StaticResource Primary}"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Accent}}"
                                                    VerticalOptions="Center"
                                                    LineBreakMode="TailTruncation" />
                                             
@@ -264,7 +264,7 @@
                                                     Text="✏️"
                                                     FontSize="16"
                                                     BackgroundColor="Transparent"
-                                                    TextColor="{StaticResource Secondary}"
+                                                    TextColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Accent}}"
                                                     WidthRequest="40"
                                                     HeightRequest="40"
                                                     CornerRadius="20"
@@ -280,12 +280,12 @@
                                                    Text="{Binding Type.Name}"
                                                    FontSize="14"
                                                    FontAttributes="Bold"
-                                                   TextColor="{StaticResource Secondary}"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Accent}}"
                                                    VerticalOptions="Center" />
                                             <Label Grid.Column="1"
                                                    Text="{Binding DifficultyLevel, StringFormat='Difficulté: {0}'}"
                                                    FontSize="12"
-                                                   TextColor="{StaticResource TextSecondary}"
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                    VerticalOptions="Center" />
                                         </Grid>
                                         
@@ -293,7 +293,7 @@
                                         <Label Grid.Row="2"
                                                Text="{Binding Description}"
                                                FontSize="14"
-                                               TextColor="{StaticResource TextPrimary}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}"
                                                LineBreakMode="TailTruncation"
                                                MaxLines="2" />
                                         
@@ -302,7 +302,7 @@
                                             <Label Grid.Column="0"
                                                    Text="{Binding CreatedAt, StringFormat='Créé le {0:dd/MM/yyyy}'}"
                                                    FontSize="12"
-                                                   TextColor="{StaticResource TextSecondary}"
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
                                                    VerticalOptions="Center" />
                                             
                                             <StackLayout Grid.Column="1"
@@ -313,7 +313,7 @@
                                                        FontSize="12" />
                                                 <Label Text="{Binding ValidationStatus}"
                                                        FontSize="12"
-                                                       TextColor="{StaticResource TextSecondary}" />
+                                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
                                             </StackLayout>
                                             
                                             <Button Grid.Column="2"
