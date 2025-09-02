@@ -2,13 +2,22 @@ using System.Windows.Input;
 
 namespace SubExplore.Controls;
 
-public partial class StagedMenuButton : ContentView
+public partial class StagedMenuButton : ContentView, IDisposable
 {
     public StagedMenuButton()
     {
         InitializeComponent();
         UpdateAccessibilityProperties();
         SetupKeyboardNavigation();
+        
+        // Update colors when theme changes
+        UpdateStageVisuals(Stage);
+        
+        // Listen for theme changes
+        if (Application.Current != null)
+        {
+            Application.Current.RequestedThemeChanged += OnThemeChanged;
+        }
     }
 
     #region Bindable Properties
@@ -313,15 +322,24 @@ public partial class StagedMenuButton : ContentView
     {
         try
         {
-            if (Application.Current?.Resources.TryGetValue("TextPrimary", out var primaryColor) == true && primaryColor is Color primary)
-                return primary;
+            var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+            
+            // Try menu-specific colors first
+            var colorKey = isDark ? "MenuTextPrimaryDark" : "MenuTextPrimary";
+            if (Application.Current?.Resources.TryGetValue(colorKey, out var menuColor) == true && menuColor is Color menu)
+                return menu;
+                
+            // Fallback to general text colors
+            var textKey = isDark ? "TextPrimaryDark" : "TextPrimary";
+            if (Application.Current?.Resources.TryGetValue(textKey, out var textColor) == true && textColor is Color text)
+                return text;
         }
         catch
         {
             // Fallback if resource lookup fails
         }
         
-        // Theme-aware fallback
+        // Final theme-aware fallback
         return Application.Current?.RequestedTheme == AppTheme.Dark ? Colors.White : Colors.Black;
     }
 
@@ -329,16 +347,25 @@ public partial class StagedMenuButton : ContentView
     {
         try
         {
-            if (Application.Current?.Resources.TryGetValue("TextSecondary", out var secondaryColor) == true && secondaryColor is Color secondary)
-                return secondary;
+            var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+            
+            // Try menu-specific colors first
+            var colorKey = isDark ? "MenuTextSecondaryDark" : "MenuTextSecondary";
+            if (Application.Current?.Resources.TryGetValue(colorKey, out var menuColor) == true && menuColor is Color menu)
+                return menu;
+                
+            // Fallback to general text colors
+            var textKey = isDark ? "TextSecondaryDark" : "TextSecondary";
+            if (Application.Current?.Resources.TryGetValue(textKey, out var textColor) == true && textColor is Color text)
+                return text;
         }
         catch
         {
             // Fallback if resource lookup fails
         }
         
-        // Theme-aware fallback
-        return Application.Current?.RequestedTheme == AppTheme.Dark ? Colors.LightGray : Colors.Gray;
+        // Final theme-aware fallback with better contrast
+        return Application.Current?.RequestedTheme == AppTheme.Dark ? Color.FromArgb("#D0D0D0") : Colors.Gray;
     }
 
     #endregion
@@ -422,15 +449,39 @@ public partial class StagedMenuButton : ContentView
                 }
                 else
                 {
-                    if (Application.Current?.Resources.TryGetValue("TextPrimary", out var primaryColor) == true && primaryColor is Color primary)
-                        TitleColor = primary;
-                    else
-                        TitleColor = isDarkTheme ? Colors.White : Colors.Black;
+                    // Try to get theme-aware menu colors first, fallback to general text colors
+                    if (isDarkTheme)
+                    {
+                        if (Application.Current?.Resources.TryGetValue("MenuTextPrimaryDark", out var menuPrimaryDark) == true && menuPrimaryDark is Color menuPrimDark)
+                            TitleColor = menuPrimDark;
+                        else if (Application.Current?.Resources.TryGetValue("TextPrimaryDark", out var primaryDark) == true && primaryDark is Color primDark)
+                            TitleColor = primDark;
+                        else
+                            TitleColor = Colors.White;
 
-                    if (Application.Current?.Resources.TryGetValue("TextSecondary", out var secondaryColor) == true && secondaryColor is Color secondary)
-                        DescriptionColor = secondary;
+                        if (Application.Current?.Resources.TryGetValue("MenuTextSecondaryDark", out var menuSecondaryDark) == true && menuSecondaryDark is Color menuSecDark)
+                            DescriptionColor = menuSecDark;
+                        else if (Application.Current?.Resources.TryGetValue("TextSecondaryDark", out var secondaryDark) == true && secondaryDark is Color secDark)
+                            DescriptionColor = secDark;
+                        else
+                            DescriptionColor = Color.FromArgb("#D0D0D0"); // Improved light gray for better contrast
+                    }
                     else
-                        DescriptionColor = isDarkTheme ? Colors.LightGray : Colors.Gray;
+                    {
+                        if (Application.Current?.Resources.TryGetValue("MenuTextPrimary", out var menuPrimary) == true && menuPrimary is Color menuPrim)
+                            TitleColor = menuPrim;
+                        else if (Application.Current?.Resources.TryGetValue("TextPrimary", out var primaryColor) == true && primaryColor is Color primary)
+                            TitleColor = primary;
+                        else
+                            TitleColor = Colors.Black;
+
+                        if (Application.Current?.Resources.TryGetValue("MenuTextSecondary", out var menuSecondary) == true && menuSecondary is Color menuSec)
+                            DescriptionColor = menuSec;
+                        else if (Application.Current?.Resources.TryGetValue("TextSecondary", out var secondaryColor) == true && secondaryColor is Color secondary)
+                            DescriptionColor = secondary;
+                        else
+                            DescriptionColor = Colors.Gray;
+                    }
                 }
 
                 IconColor = TitleColor;
@@ -573,6 +624,49 @@ public partial class StagedMenuButton : ContentView
         }
     }
 
+    private void OnThemeChanged(object? sender, AppThemeChangedEventArgs e)
+    {
+        // Update colors when theme changes
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            UpdateStageVisuals(Stage);
+        });
+    }
+
+    protected override void OnBindingContextChanged()
+    {
+        base.OnBindingContextChanged();
+        // Ensure colors are updated when binding context changes
+        UpdateStageVisuals(Stage);
+    }
+
+    #endregion
+
+    #region IDisposable
+
+    private bool _disposed = false;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Unsubscribe from theme changes
+                if (Application.Current != null)
+                {
+                    Application.Current.RequestedThemeChanged -= OnThemeChanged;
+                }
+            }
+            _disposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 
     #endregion
 }

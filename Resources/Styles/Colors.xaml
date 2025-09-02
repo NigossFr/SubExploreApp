@@ -27,13 +27,17 @@
 
     <!--  Textes avec support thème sombre amélioré  -->
     <Color x:Key="TextPrimary">#333333</Color>
-    <!--  Texte principal  -->
+    <!--  Texte principal clair  -->
+    <Color x:Key="TextPrimaryDark">#FFFFFF</Color>
+    <!--  Texte principal sombre  -->
     <Color x:Key="TextSecondary">#666666</Color>
-    <!--  Texte secondaire  -->
+    <!--  Texte secondaire clair  -->
+    <Color x:Key="TextSecondaryDark">#CCCCCC</Color>
+    <!--  Texte secondaire sombre - amélioré pour contraste  -->
     <Color x:Key="PrimaryDarkText">#FFFFFF</Color>
     <!--  Texte sur fond foncé  -->
-    <Color x:Key="SecondaryDarkText">#EEEEEE</Color>
-    <!--  Texte secondaire sur fond foncé  -->
+    <Color x:Key="SecondaryDarkText">#E0E0E0</Color>
+    <!--  Texte secondaire sur fond foncé - amélioré  -->
     
     <!--  Couleurs d'interface spécifiques pour meilleur contraste  -->
     <Color x:Key="InputBackground">#FFFFFF</Color>
@@ -96,6 +100,16 @@
     <!--  Rouge d'alerte  -->
     <Color x:Key="StatusRedDark">#EF5350</Color>
     <!--  Rouge d'alerte sombre  -->
+    
+    <!--  Couleurs pour menus et navigation  -->
+    <Color x:Key="MenuTextPrimary">#333333</Color>
+    <!--  Texte principal menu clair  -->
+    <Color x:Key="MenuTextPrimaryDark">#FFFFFF</Color>
+    <!--  Texte principal menu sombre  -->
+    <Color x:Key="MenuTextSecondary">#666666</Color>
+    <!--  Texte secondaire menu clair  -->
+    <Color x:Key="MenuTextSecondaryDark">#D0D0D0</Color>
+    <!--  Texte secondaire menu sombre  -->
     
     <!--  Couleurs d'overlay et transparence  -->
     <Color x:Key="ModalOverlay">#80000000</Color>
