@@ -39,7 +39,7 @@ namespace SubExplore.Services.Implementations
         {
             if (!_supabaseClientService.IsReady)
             {
-                _logger.LogInformation("🔧 Initialisation du client Supabase en cours...");
+                // Initializing Supabase client
                 var initialized = await _supabaseClientService.InitializeAsync();
                 if (!initialized)
                 {
@@ -57,7 +57,7 @@ namespace SubExplore.Services.Implementations
         {
             return await ExecuteWithResilienceAsync(async (cancellationToken) =>
             {
-                _logger.LogInformation("🔍 Test de connexion Supabase API...");
+                // Testing Supabase API connection
                 
                 var client = await GetClientAsync();
 
@@ -67,7 +67,7 @@ namespace SubExplore.Services.Implementations
                     .Limit(1)
                     .Get();
 
-                _logger.LogInformation($"✅ Connexion Supabase API réussie - {result.Models.Count} enregistrement(s) trouvé(s)");
+                // Supabase API connection successful
                 return true;
             });
         }
@@ -81,10 +81,10 @@ namespace SubExplore.Services.Implementations
             {
                 var client = await GetClientAsync();
 
-                _logger.LogInformation("📥 Récupération des utilisateurs...");
+                // Getting users
                 var result = await client.From<SupabaseUser>().Get();
                 
-                _logger.LogInformation($"✅ {result.Models.Count} utilisateur(s) récupéré(s)");
+                // Users retrieved successfully
                 return result.Models;
             });
         }
@@ -134,7 +134,6 @@ namespace SubExplore.Services.Implementations
                 _logger.LogInformation("📥 Récupération des types de spots...");
                 
                 var result = await client.From<SupabaseSpotType>()
-                    .Where(st => st.IsActive == true)
                     .Order("name", Postgrest.Constants.Ordering.Ascending)
                     .Get();
 
@@ -144,6 +143,35 @@ namespace SubExplore.Services.Implementations
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Erreur lors de la récupération des spot types");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Crée un nouveau type de spot
+        /// </summary>
+        public async Task<SupabaseSpotType> CreateSpotTypeAsync(SupabaseSpotType spotType)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("➕ Création d'un nouveau type de spot: {Name}", spotType.Name);
+                
+                // Définir les propriétés par défaut
+                spotType.Id = Guid.NewGuid();
+                spotType.CreatedAt = DateTime.UtcNow;
+                spotType.UpdatedAt = DateTime.UtcNow;
+                
+                var result = await client.From<SupabaseSpotType>()
+                    .Insert(spotType);
+
+                _logger.LogInformation("✅ Type de spot créé avec succès: {Id} - {Name}", result.Model.Id, result.Model.Name);
+                return result.Model;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la création du type de spot: {Name}", spotType.Name);
                 throw;
             }
         }
@@ -171,6 +199,294 @@ namespace SubExplore.Services.Implementations
             {
                 _logger.LogError(ex, "❌ Erreur lors de la récupération des spots");
                 throw;
+            }
+        }
+
+        // ========================================
+        // NOUVELLE ARCHITECTURE 3-TABLES
+        // ========================================
+
+        /// <summary>
+        /// Récupère tous les spots de pratique
+        /// </summary>
+        public async Task<List<SupabasePracticeSpot>> GetPracticeSpotsAsync()
+        {
+            try
+            {
+                _logger.LogInformation("📥 Récupération des spots de pratique - DEBUT");
+                
+                var client = await GetClientAsync();
+                _logger.LogInformation("🔧 Client Supabase obtenu avec succès");
+
+                _logger.LogInformation("🔍 Tentative de requête vers table 'practice_spots'");
+                
+                var result = await client.From<SupabasePracticeSpot>()
+                    .Order("created_at", Postgrest.Constants.Ordering.Descending)
+                    .Limit(100)
+                    .Get();
+
+                _logger.LogInformation($"✅ Requête exécutée - {result.Models.Count} spot(s) de pratique récupéré(s)");
+                
+                // Log détaillé des premiers éléments pour diagnostic
+                if (result.Models.Count > 0)
+                {
+                    var firstSpot = result.Models.First();
+                    _logger.LogInformation($"🔍 Premier spot: ID={firstSpot.Id}, Name='{firstSpot.Name}', DifficultyLevel='{firstSpot.DifficultyLevel}', CurrentStrength='{firstSpot.CurrentStrength}'");
+                }
+                
+                return result.Models;
+            }
+            catch (Postgrest.Exceptions.PostgrestException pgEx)
+            {
+                _logger.LogError(pgEx, "❌ Erreur PostgreSQL lors de la récupération des spots de pratique: {Message}, Code: {Code}, Details: {Details}", 
+                    pgEx.Message, pgEx.StatusCode, pgEx.Content);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur générale lors de la récupération des spots de pratique: {Message}, Type: {Type}", 
+                    ex.Message, ex.GetType().Name);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Récupère toutes les organisations
+        /// </summary>
+        public async Task<List<SupabaseOrganization>> GetOrganizationsAsync()
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("📥 Récupération des organisations...");
+                
+                var result = await client.From<SupabaseOrganization>()
+                    .Order("created_at", Postgrest.Constants.Ordering.Descending)
+                    .Limit(100)
+                    .Get();
+
+                _logger.LogInformation($"✅ {result.Models.Count} organisation(s) récupérée(s)");
+                return result.Models;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la récupération des organisations");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Récupère tous les commerces
+        /// </summary>
+        public async Task<List<SupabaseBusiness>> GetBusinessesAsync()
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("📥 Récupération des commerces...");
+                
+                var result = await client.From<SupabaseBusiness>()
+                    .Order("created_at", Postgrest.Constants.Ordering.Descending)
+                    .Limit(100)
+                    .Get();
+
+                _logger.LogInformation($"✅ {result.Models.Count} commerce(s) récupéré(s)");
+                return result.Models;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la récupération des commerces");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Crée un nouveau spot de pratique
+        /// </summary>
+        public async Task<SupabasePracticeSpot> CreatePracticeSpotAsync(SupabasePracticeSpot practiceSpot)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("➕ Création d'un nouveau spot de pratique: {Name} par {CreatorId}", practiceSpot.Name, practiceSpot.CreatorId);
+                
+                practiceSpot.CreatedAt = DateTime.UtcNow;
+                practiceSpot.ValidationStatus = "pending";
+                
+                var result = await client.From<SupabasePracticeSpot>()
+                    .Insert(practiceSpot);
+
+                _logger.LogInformation("✅ Spot de pratique créé: {Id} - {Name}", result.Model.Id, result.Model.Name);
+                return result.Model;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la création du spot de pratique: {Name}", practiceSpot.Name);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Crée une nouvelle organisation
+        /// </summary>
+        public async Task<SupabaseOrganization> CreateOrganizationAsync(SupabaseOrganization organization)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("➕ Création d'une nouvelle organisation: {Name}", organization.Name);
+                
+                organization.CreatedAt = DateTime.UtcNow;
+                
+                var result = await client.From<SupabaseOrganization>()
+                    .Insert(organization);
+
+                _logger.LogInformation("✅ Organisation créée: {Id} - {Name}", result.Model.Id, result.Model.Name);
+                return result.Model;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la création de l'organisation: {Name}", organization.Name);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Crée un nouveau commerce
+        /// </summary>
+        public async Task<SupabaseBusiness> CreateBusinessAsync(SupabaseBusiness business)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("➕ Création d'un nouveau commerce: {Name}", business.Name);
+                
+                business.CreatedAt = DateTime.UtcNow;
+                
+                var result = await client.From<SupabaseBusiness>()
+                    .Insert(business);
+
+                _logger.LogInformation("✅ Commerce créé: {Id} - {Name}", result.Model.Id, result.Model.Name);
+                return result.Model;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la création du commerce: {Name}", business.Name);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Crée un nouveau spot
+        /// </summary>
+        public async Task<SupabaseSpot> CreateSpotAsync(SupabaseSpot spot)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("➕ Création d'un nouveau spot: {Name} par {CreatorId}", spot.Name, spot.CreatorId);
+                
+                spot.Id = Guid.NewGuid();
+                spot.CreatedAt = DateTime.UtcNow;
+                spot.ValidationStatus = "pending"; // Pending
+                
+                var result = await client.From<SupabaseSpot>()
+                    .Insert(spot);
+
+                _logger.LogInformation("✅ Spot créé avec succès: {Id} - {Name}", result.Model.Id, result.Model.Name);
+                return result.Model;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la création du spot: {Name}", spot.Name);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Met à jour un spot existant
+        /// </summary>
+        public async Task<SupabaseSpot> UpdateSpotAsync(SupabaseSpot spot)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("🔄 Mise à jour du spot: {Id} - {Name}", spot.Id, spot.Name);
+                
+                var result = await client.From<SupabaseSpot>()
+                    .Filter("id", Postgrest.Constants.Operator.Equals, spot.Id.ToString())
+                    .Update(spot);
+
+                _logger.LogInformation("✅ Spot mis à jour avec succès: {Id}", spot.Id);
+                return result.Model;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la mise à jour du spot: {Id}", spot.Id);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Supprime un spot
+        /// </summary>
+        public async Task<bool> DeleteSpotAsync(Guid spotId)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("🗑️ Suppression du spot: {SpotId}", spotId);
+                
+                await client.From<SupabaseSpot>()
+                    .Filter("id", Postgrest.Constants.Operator.Equals, spotId.ToString())
+                    .Delete();
+
+                _logger.LogInformation("✅ Spot supprimé avec succès: {SpotId}", spotId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la suppression du spot: {SpotId}", spotId);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Récupère un spot par son ID
+        /// </summary>
+        public async Task<SupabaseSpot?> GetSpotByIdAsync(Guid spotId)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+
+                _logger.LogInformation("🔍 Récupération du spot: {SpotId}", spotId);
+                
+                var result = await client.From<SupabaseSpot>()
+                    .Filter("id", Postgrest.Constants.Operator.Equals, spotId.ToString())
+                    .Single();
+
+                if (result != null)
+                {
+                    _logger.LogInformation("✅ Spot récupéré: {Id} - {Name}", result.Id, result.Name);
+                    return result;
+                }
+                
+                _logger.LogWarning("⚠️ Spot non trouvé: {SpotId}", spotId);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la récupération du spot: {SpotId}", spotId);
+                return null;
             }
         }
 
@@ -727,7 +1043,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Get reports for a specific spot
         /// </summary>
-        public async Task<List<SupabaseSpotReport>> GetSpotReportsAsync(Guid spotId)
+        public async Task<List<SupabaseSpotReport>> GetSpotReportsAsync(int spotId)
         {
             return await ExecuteWithResilienceAsync(async (cancellationToken) =>
             {
@@ -787,7 +1103,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Update report status
         /// </summary>
-        public async Task<bool> UpdateSpotReportAsync(Guid reportId, int status, string reviewNotes, Guid reviewerId)
+        public async Task<bool> UpdateSpotReportAsync(int reportId, int status, string reviewNotes, Guid reviewerId)
         {
             return await ExecuteWithResilienceAsync(async (cancellationToken) =>
             {
@@ -996,7 +1312,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Get spot media
         /// </summary>
-        public async Task<List<SupabaseSpotMedia>> GetSpotMediaAsync(Guid spotId)
+        public async Task<List<SupabaseSpotMedia>> GetSpotMediaAsync(int spotId)
         {
             return await ExecuteWithResilienceAsync(async (cancellationToken) =>
             {
@@ -1016,7 +1332,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Delete spot media
         /// </summary>
-        public async Task<bool> DeleteSpotMediaAsync(Guid mediaId)
+        public async Task<bool> DeleteSpotMediaAsync(int mediaId)
         {
             return await ExecuteWithResilienceAsync(async (cancellationToken) =>
             {
@@ -1051,7 +1367,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Update spot media metadata
         /// </summary>
-        public async Task<bool> UpdateSpotMediaAsync(Guid mediaId, string? caption, bool? isPrimary)
+        public async Task<bool> UpdateSpotMediaAsync(int mediaId, string? caption, bool? isPrimary)
         {
             return await ExecuteWithResilienceAsync(async (cancellationToken) =>
             {
@@ -1075,7 +1391,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Set primary photo for spot
         /// </summary>
-        public async Task<bool> SetPrimarySpotPhotoAsync(Guid spotId, Guid photoId)
+        public async Task<bool> SetPrimarySpotPhotoAsync(int spotId, int photoId)
         {
             return await ExecuteWithResilienceAsync(async (cancellationToken) =>
             {

@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Organizations.OrganizationDetailsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Organizations"
+    xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
+    xmlns:controls="clr-namespace:SubExplore.Views.Controls"
+    x:DataType="viewmodels:OrganizationDetailsViewModel"
+    Title="Détails de l'organisation"
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    BackgroundColor="{StaticResource Background}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:InvertedBoolConverter x:Key="InvertBoolConverter" />
+            <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+            <converters:IsNotZeroConverter x:Key="IsNotZeroConverter" />
+            <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <!-- Custom Navigation Bar -->
+        <controls:CustomNavigationBar x:Name="CustomNavBar"
+                                      Title="{Binding PageTitle}"
+                                      VerticalOptions="Start"
+                                      ZIndex="100"
+                                      HamburgerClicked="OnCustomHamburgerClicked" />
+
+        <!-- Main Content with proper spacing -->
+        <Grid RowDefinitions="*,Auto" Margin="0,56,0,0">
+            <!-- Main content with loading overlay -->
+            <Grid Grid.Row="0">
+                <ScrollView IsVisible="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}">
+                    <VerticalStackLayout Padding="15" Spacing="15">
+
+                        <!-- En-tête avec nom et type d'organisation -->
+                        <Frame BorderColor="{StaticResource Secondary}">
+                            <Frame.Padding>
+                                <OnIdiom x:TypeArguments="Thickness" Phone="15" Tablet="25" Desktop="30" />
+                            </Frame.Padding>
+                            <Frame.MinimumHeightRequest>
+                                <OnIdiom x:TypeArguments="x:Double" Phone="140" Tablet="180" Desktop="200" />
+                            </Frame.MinimumHeightRequest>
+                            <Grid RowDefinitions="Auto,*" RowSpacing="15">
+                                <!-- Première ligne: Titre et statut de vérification -->
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="{Binding Organization.Name}"
+                                        TextColor="{StaticResource Primary}"
+                                        VerticalOptions="Center"
+                                        LineBreakMode="WordWrap"
+                                        MaxLines="2">
+                                        <Label.FontSize>
+                                            <OnIdiom x:TypeArguments="x:Double" Phone="22" Tablet="26" Desktop="28" />
+                                        </Label.FontSize>  
+                                    </Label>
+
+                                    <!-- Organization info badge -->
+                                    <Frame Grid.Column="1"
+                                           Padding="8,4"
+                                           CornerRadius="12"
+                                           BackgroundColor="{AppThemeBinding Light=#E3F2FD, Dark=#1565C0}"
+                                           BorderColor="{StaticResource Primary}"
+                                           VerticalOptions="Start"
+                                           Margin="10,0,0,0">
+                                        <Label Text="🏢 Organisation"
+                                               FontSize="12"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource Primary}"
+                                               HorizontalOptions="Center" />
+                                    </Frame>
+                                </Grid>
+
+                                <!-- Deuxième ligne: Type d'organisation et description -->
+                                <Grid Grid.Row="1" VerticalOptions="FillAndExpand">
+                                    <StackLayout Spacing="10">
+                                        <StackLayout Orientation="Horizontal" Spacing="8">
+                                            <Label Text="🏢" FontSize="16" VerticalOptions="Center" />
+                                            <Label FontAttributes="Bold"
+                                                   Text="{Binding OrganizationTypeDisplay}"
+                                                   TextColor="{StaticResource Secondary}"
+                                                   FontSize="14"
+                                                   VerticalOptions="Center" />
+                                        </StackLayout>
+
+                                        <Label Text="{Binding Organization.Description}" 
+                                               FontSize="14"
+                                               LineBreakMode="WordWrap"
+                                               IsVisible="{Binding Organization.Description, Converter={StaticResource IsNotNullConverter}}" />
+
+                                        <!-- Coordonnées -->
+                                        <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,5,0,0">
+                                            <Label Text="📍" FontSize="16" VerticalOptions="Center" />
+                                            <Label FontSize="14"
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}"
+                                                   VerticalOptions="Center"
+                                                   Text="{Binding CoordinatesDisplay}" />
+                                        </StackLayout>
+                                    </StackLayout>
+                                </Grid>
+                            </Grid>
+                        </Frame>
+
+                        <!-- Adresse et contact -->
+                        <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                            <VerticalStackLayout Spacing="12">
+                                <Label
+                                    FontAttributes="Bold"
+                                    Text="📍 Adresse &amp; Contact"
+                                    TextColor="{StaticResource Primary}"
+                                    FontSize="16" />
+
+                                <!-- Adresse -->
+                                <StackLayout Spacing="5" IsVisible="{Binding AddressDisplay, Converter={StaticResource IsNotNullConverter}}">
+                                    <Label FontAttributes="Bold"
+                                           Text="Adresse:"
+                                           FontSize="14" />
+                                    <Label Text="{Binding AddressDisplay}"
+                                           FontSize="14"
+                                           LineBreakMode="WordWrap" />
+                                </StackLayout>
+
+                                <!-- Contact -->
+                                <StackLayout Spacing="5" IsVisible="{Binding ContactDisplay, Converter={StaticResource IsNotNullConverter}}">
+                                    <Label FontAttributes="Bold"
+                                           Text="Contact:"
+                                           FontSize="14" />
+                                    <Label Text="{Binding ContactDisplay}"
+                                           FontSize="14"
+                                           LineBreakMode="WordWrap" />
+                                </StackLayout>
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <!--  Carte de localisation  -->
+                        <Frame
+                            Padding="0"
+                            CornerRadius="10"
+                            IsClippedToBounds="True">
+                            <Frame.HeightRequest>
+                                <OnIdiom x:TypeArguments="x:Double" Phone="220" Tablet="300" Desktop="350" />
+                            </Frame.HeightRequest>
+                            <Grid>
+                                <maps:Map
+                                    x:Name="organizationMap"
+                                    IsScrollEnabled="True"
+                                    IsZoomEnabled="True"
+                                    IsShowingUser="False"
+                                    MapType="Street"
+                                    AutomationId="OrganizationLocationMap"
+                                    SemanticProperties.Description="Carte montrant la localisation de l'organisation" />
+                                
+                                <!-- Map loading indicator -->
+                                <Grid BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                                      IsVisible="{Binding IsLoading}"
+                                      VerticalOptions="Center"
+                                      HorizontalOptions="Center">
+                                    <StackLayout Spacing="10" HorizontalOptions="Center" VerticalOptions="Center">
+                                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                                           Color="{StaticResource Primary}"
+                                                           HeightRequest="30"
+                                                           WidthRequest="30" />
+                                        <Label Text="Chargement de la carte..."
+                                               FontSize="14"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
+                                               HorizontalOptions="Center" />
+                                    </StackLayout>
+                                </Grid>
+                            </Grid>
+                        </Frame>
+
+                        <!-- Services -->
+                        <Frame Padding="15" 
+                               BorderColor="{StaticResource Secondary}"
+                               IsVisible="{Binding HasServices}">
+                            <VerticalStackLayout Spacing="10">
+                                <Label
+                                    FontAttributes="Bold"
+                                    Text="🔧 Services proposés"
+                                    TextColor="{StaticResource Primary}"
+                                    FontSize="16" />
+
+                                <Label Text="{Binding ServicesDisplay}"
+                                       FontSize="14"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <!-- Horaires d'ouverture -->
+                        <Frame Padding="15" 
+                               BorderColor="{StaticResource Secondary}"
+                               IsVisible="{Binding HasOperatingHours}">
+                            <VerticalStackLayout Spacing="10">
+                                <Label
+                                    FontAttributes="Bold"
+                                    Text="🕒 Horaires d'ouverture"
+                                    TextColor="{StaticResource Primary}"
+                                    FontSize="16" />
+
+                                <Label Text="{Binding OperatingHoursDisplay}"
+                                       FontSize="14"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <!--  Informations complémentaires  -->
+                        <Frame Padding="15" BorderColor="{StaticResource Secondary}">
+                            <VerticalStackLayout Spacing="10">
+                                <Label
+                                    FontAttributes="Bold"
+                                    Text="ℹ️ Informations complémentaires"
+                                    TextColor="{StaticResource Primary}"
+                                    FontSize="16" />
+
+                                <Grid
+                                    ColumnDefinitions="Auto,*"
+                                    ColumnSpacing="10"
+                                    RowDefinitions="Auto,Auto,Auto"
+                                    RowSpacing="8">
+                                    
+                                    <!-- Date de création -->
+                                    <Label
+                                        Grid.Row="0"
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="Créé le:"
+                                        FontSize="14" />
+                                    <Label
+                                        Grid.Row="0"
+                                        Grid.Column="1"
+                                        Text="{Binding Organization.CreatedAt, StringFormat='{0:dd/MM/yyyy}'}"
+                                        FontSize="14" />
+
+                                    <!-- Dernière mise à jour -->
+                                    <Label
+                                        Grid.Row="1"
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="Mis à jour le:"
+                                        FontSize="14" />
+                                    <Label
+                                        Grid.Row="1"
+                                        Grid.Column="1"
+                                        Text="{Binding Organization.UpdatedAt, StringFormat='{0:dd/MM/yyyy}', FallbackValue='Jamais'}"
+                                        FontSize="14" />
+
+                                    <!-- Type d'organisation -->
+                                    <Label
+                                        Grid.Row="2"
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="Type d'organisation:"
+                                        FontSize="14" />
+                                    <Label
+                                        Grid.Row="2"
+                                        Grid.Column="1"
+                                        Text="{Binding OrganizationTypeDisplay}"
+                                        FontSize="14" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <!--  Boutons d'action  -->
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" Margin="0,10,0,0">
+                            <!-- Call button -->
+                            <Button
+                                Grid.Column="0"
+                                Command="{Binding CallOrganizationCommand}"
+                                BackgroundColor="{StaticResource Success}"
+                                TextColor="White"
+                                Text="📞 Appeler"
+                                CornerRadius="8"
+                                HeightRequest="50"
+                                IsVisible="{Binding Organization.Phone, Converter={StaticResource IsNotNullConverter}}" />
+
+                            <!-- Website button -->
+                            <Button
+                                Grid.Column="1"
+                                Command="{Binding OpenWebsiteCommand}"
+                                BackgroundColor="{StaticResource Info}"
+                                TextColor="White"
+                                Text="🌐 Site web"
+                                CornerRadius="8"
+                                HeightRequest="50"
+                                IsVisible="{Binding Organization.Website, Converter={StaticResource IsNotNullConverter}}" />
+
+                            <!-- Share button -->
+                            <Button
+                                Grid.Column="2"
+                                Command="{Binding ShareOrganizationCommand}"
+                                BackgroundColor="{StaticResource Primary}"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
+                                Text="📤 Partager"
+                                CornerRadius="8"
+                                HeightRequest="50" />
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </ScrollView>
+                
+                <!-- Loading state -->
+                <Grid IsVisible="{Binding IsLoading}"
+                      BackgroundColor="{StaticResource Background}">
+                    <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20">
+                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                           Color="{StaticResource Primary}"
+                                           HeightRequest="50"
+                                           WidthRequest="50"
+                                           AutomationId="OrganizationDetailsLoadingIndicator" />
+                        <Label Text="Chargement des détails de l'organisation..."
+                               HorizontalOptions="Center"
+                               FontSize="16"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
+                               SemanticProperties.Description="Chargement des informations de l'organisation en cours" />
+                    </StackLayout>
+                </Grid>
+                
+                <!-- Error state -->
+                <Grid IsVisible="{Binding IsError}"
+                      BackgroundColor="{StaticResource Background}">
+                    <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20" Padding="40">
+                        <Label Text="❌ Erreur"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Error}"
+                               HorizontalOptions="Center"
+                               SemanticProperties.Description="Erreur de chargement" />
+                        <Label Text="{Binding ErrorMessage}"
+                               HorizontalOptions="Center"
+                               FontSize="16"
+                               TextColor="{StaticResource Error}"
+                               HorizontalTextAlignment="Center"
+                               AutomationId="ErrorMessageLabel"
+                               SemanticProperties.Description="Message d'erreur" />
+                        <Button Text="🔄 Réessayer"
+                                Command="{Binding RefreshCommand}"
+                                BackgroundColor="{StaticResource Primary}"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
+                                HorizontalOptions="Center"
+                                AutomationId="RetryButton"
+                                SemanticProperties.Description="Bouton pour réessayer le chargement"
+                                SemanticProperties.Hint="Appuyez pour recharger les informations de l'organisation" />
+                    </StackLayout>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>

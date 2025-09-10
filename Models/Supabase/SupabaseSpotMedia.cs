@@ -7,10 +7,10 @@ namespace SubExplore.Models.Supabase
     public class SupabaseSpotMedia : BaseModel
     {
         [PrimaryKey("id")]
-        public Guid Id { get; set; }
+        public int Id { get; set; }  // SERIAL en DB → int en C#
 
         [Column("spot_id")]
-        public Guid SpotId { get; set; }
+        public int SpotId { get; set; }  // Référence vers practice_spots/organizations/businesses.id
 
         [Column("media_type")]
         public int MediaType { get; set; } = 1; // Photo

@@ -107,7 +107,8 @@
       "Bash(fix-emulator-network.bat)",
       "Bash(.fix-emulator-network.bat)",
       "Bash(git log:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

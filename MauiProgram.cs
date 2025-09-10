@@ -1,19 +1,29 @@
 // ========================================
-// MauiProgram ALTERNATIF SANS ENUM MAPPING
+// MauiProgram HYBRIDE ENTITY FRAMEWORK + SUPABASE
 // ========================================
-// Cette version utilise des converters personnalisés au lieu 
-// du mapping enum direct pour éviter les erreurs PostgreSQL
+// Cette version utilise Entity Framework + PostgreSQL pour les performances
+// tout en conservant l'API Supabase pour certaines fonctionnalités
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
-// 🚫 Entity Framework et Npgsql supprimés - API Supabase uniquement
+// ✅ Entity Framework et Npgsql ajoutés pour l'approche hybride
+using Microsoft.EntityFrameworkCore;
+using SubExplore.DataAccess;
+// ✅ Repositories pour l'approche hybride Entity Framework + PostGIS
+using SubExplore.Repositories.Interfaces;
+using SubExplore.Repositories.Implementations;
 using SubExplore.Services.Interfaces;
 using SubExplore.Services.Implementations;
+// using SubExplore.Repositories.Implementations;
+// 🚫 Entity Framework supprimé - migration vers Supabase 100% API
+// using Microsoft.EntityFrameworkCore;
+// using SubExplore.DataAccess;
 using SubExplore.Extensions;
 // 🚫 Repositories Entity Framework supprimés - API Supabase uniquement
 using SubExplore.Services.Validation;
 using SubExplore.Services.Caching;
 using SubExplore.Models.Validation;
+using SubExplore.Models.Domain;
 using SubExplore.ViewModels.Settings;
 using SubExplore.ViewModels.Map;
 using SubExplore.Constants;
@@ -61,22 +71,22 @@ public static class MauiProgram
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine("[WARNING] appsettings.json not found as embedded resource");
+            // appsettings.json not found as embedded resource
         }
 
         // 🚀 CONFIGURATION 100% API SUPABASE - PLUS D'ENTITY FRAMEWORK
         // L'application utilise UNIQUEMENT l'API Supabase via supabase-csharp
-        Debug.WriteLine("🚀 Configuration 100% API Supabase - Plus d'Entity Framework");
+        // Configuration 100% API Supabase - Plus d'Entity Framework
         
         // 🔧 CORRECTIF RESEAU EMULATEUR ANDROID
         EmulatorNetworkFix.ApplyEmulatorDnsFixIfNeeded();
-        Debug.WriteLine(EmulatorNetworkFix.GetNetworkDiagnosticInfo());
+        // Network diagnostic applied
         
         // 🔐 CONFIGURATION SERVICE - DOIT ÊTRE ENREGISTRÉ EN PREMIER
 #if DEBUG
         // ✅ Supabase configuré avec les vraies clés API (Janvier 2025)
         builder.Services.AddSingleton<ISupabaseConfigurationService, DevelopmentConfigurationService>();
-        System.Diagnostics.Debug.WriteLine("[DEBUG] Using DevelopmentConfigurationService - SUPABASE RÉEL ACTIVÉ");
+        // Using DevelopmentConfigurationService - SUPABASE ENABLED
         // Mode offline disponible avec: OfflineTestConfigurationService
 #else
         builder.Services.AddSingleton<ISupabaseConfigurationService, SupabaseConfigurationService>();
@@ -85,6 +95,43 @@ public static class MauiProgram
         
         // Enregistrer le service client Supabase (APRÈS le service de configuration)
         builder.Services.AddSingleton<ISupabaseClientService, SupabaseClientService>();
+
+        // ✅ ENTITY FRAMEWORK + POSTGRESQL CONFIGURATION HYBRIDE
+        // Configuration du DbContext pour l'approche hybride performante
+        builder.Services.AddDbContext<SubExploreDbContext>(options =>
+        {
+            var configuration = builder.Configuration;
+            
+            // Détection automatique de la plateforme pour la chaîne de connexion
+            string connectionString = GetPlatformConnectionString(configuration);
+            
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                // Configuration PostGIS pour les fonctions de géolocalisation
+                npgsqlOptions.UseNetTopologySuite();
+                // Timeout adapté aux requêtes PostGIS complexes
+                npgsqlOptions.CommandTimeout(60);
+            });
+
+#if DEBUG
+            // Logs SQL en développement pour le debugging
+            options.EnableSensitiveDataLogging();
+            options.LogTo(message => System.Diagnostics.Debug.WriteLine($"[EF] {message}"));
+#endif
+        });
+
+        // ✅ REPOSITORIES HYBRIDES ENTITY FRAMEWORK + POSTGIS
+        // Enregistrement des repositories génériques et spécialisés
+        builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        builder.Services.AddScoped<IPracticeSpotRepository, PracticeSpotRepository>();
+        builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+        builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
+        builder.Services.AddScoped<IUnifiedMediaRepository, UnifiedMediaRepository>();
+
+        // ✅ SERVICE HYBRIDE POUR LA CARTE (Entity Framework + PostGIS + Supabase fallback)
+        builder.Services.AddScoped<IHybridMapService, HybridMapService>();
+        
+        // ✅ SERVICES SUPABASE NATIFS (définis plus bas dans le fichier)
 
         // 🛡️ RESILIENCE SERVICES - Retry policies, circuit breakers, health monitoring
         builder.Services.AddSingleton<IRetryPolicyService, RetryPolicyService>();
@@ -111,7 +158,7 @@ public static class MauiProgram
         // 🔐 SERVICE D'AUTHENTIFICATION AVANCÉ
         builder.Services.AddSingleton<ISimpleAuthenticationService, EnhancedAuthenticationService>();
 
-        Debug.WriteLine("✅ Services Supabase natifs configurés");
+        // Services Supabase natifs configured
         
         // ✅ SERVICE D'INITIALISATION DE L'APPLICATION
         builder.Services.AddSingleton<IAppInitializationService, AppInitializationService>();
@@ -342,6 +389,8 @@ public static class MauiProgram
         builder.Services.AddTransient<OptimizedMapViewModel>();
         // ✅ NOUVEAU VIEWMODEL AVANCÉ 100% SUPABASE
         builder.Services.AddTransient<EnhancedMapViewModel>();
+        // ✅ NOUVEAU VIEWMODEL HYBRIDE ENTITY FRAMEWORK + POSTGIS
+        builder.Services.AddTransient<HybridMapViewModel>();
         // 🚫 ViewModels supprimés - utilisaient des repositories
         // builder.Services.AddTransient<SpotManagementViewModel>();
         // builder.Services.AddTransient<AddSpotViewModel>();
@@ -370,11 +419,18 @@ public static class MauiProgram
         builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotValidationViewModel>();
         // builder.Services.AddTransient<SubExplore.ViewModels.Admin.SpotDiagnosticViewModel>();
         
+        // ✅ New specialized detail ViewModels
+        builder.Services.AddTransient<SubExplore.ViewModels.Organizations.OrganizationDetailsViewModel>();
+        builder.Services.AddTransient<SubExplore.ViewModels.Businesses.BusinessDetailsViewModel>();
+        
         // Navigation ViewModels
         builder.Services.AddTransient<SubExplore.ViewModels.Common.NavigationBarViewModel>();
         
         // Settings ViewModels
         builder.Services.AddTransient<AboutViewModel>();
+        
+        // ✅ TEST VIEWMODEL POSTGIS
+        builder.Services.AddTransient<SubExplore.ViewModels.Test.PostGisTestViewModel>();
 
         // Enregistrement des vues (Pages et Views)
         // 🚫 Pages supprimées - utilisaient Entity Framework
@@ -382,7 +438,7 @@ public static class MauiProgram
         builder.Services.AddTransient<MapPage>();
         // ✅ NOUVELLE PAGE AVANCÉE 100% SUPABASE
         builder.Services.AddTransient<EnhancedMapPage>();
-        // builder.Services.AddTransient<AddSpotPage>();
+        builder.Services.AddTransient<AddSpotPage>();
         builder.Services.AddTransient<SpotDetailsPage>();
         builder.Services.AddTransient<SpotPhotosPage>();
         builder.Services.AddTransient<SpotEditPage>();
@@ -418,14 +474,42 @@ public static class MauiProgram
         builder.Services.AddTransient<SubExplore.Views.Admin.SpotValidationPage>();
         // builder.Services.AddTransient<SubExplore.Views.Admin.SpotDiagnosticPage>();
         
+        // ✅ New specialized detail Pages
+        builder.Services.AddTransient<SubExplore.Views.Organizations.OrganizationDetailsPage>();
+        builder.Services.AddTransient<SubExplore.Views.Businesses.BusinessDetailsPage>();
+        
         // Common Views
         builder.Services.AddTransient<SubExplore.Views.Common.NavigationBarView>();
         
         // Settings Pages
         builder.Services.AddTransient<AboutPage>();
         
+        // ✅ TEST PAGE POSTGIS
+        builder.Services.AddTransient<SubExplore.Views.Test.PostGisTestPage>();
+        
 
 #if DEBUG
+        // Configure restrictive logging to reduce noise
+        builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+        builder.Logging.AddFilter("System", LogLevel.Warning);
+        builder.Logging.AddFilter("Default", LogLevel.Information);
+        
+        // Only show errors and critical issues for SubExplore namespaces
+        builder.Logging.AddFilter("SubExplore", LogLevel.Error);
+        
+        // Allow spot addition specific logs with our SPOT_ADD_ prefixes
+        builder.Logging.AddFilter((provider, category, level) => 
+        {
+            // Always allow Error and Critical levels
+            if (level >= LogLevel.Error) return true;
+            
+            // For SubExplore categories, only allow Warning and above
+            if (category?.StartsWith("SubExplore") == true && level >= LogLevel.Warning) return true;
+            
+            // Block everything else
+            return false;
+        });
+        
         builder.Logging.AddDebug();
 #endif
 
@@ -436,5 +520,60 @@ public static class MauiProgram
         };
 
         return builder.Build();
+    }
+
+    /// <summary>
+    /// Détection automatique de la chaîne de connexion selon la plateforme
+    /// Compatible avec l'architecture hybride Entity Framework + Supabase
+    /// </summary>
+    private static string GetPlatformConnectionString(IConfiguration configuration)
+    {
+        string connectionString = string.Empty;
+
+#if ANDROID
+        if (DeviceInfo.DeviceType == DeviceType.Virtual)
+        {
+            // Émulateur Android - utilise l'IP de l'hôte
+            connectionString = configuration.GetConnectionString("AndroidEmulator");
+            System.Diagnostics.Debug.WriteLine("🤖 Android Emulator: Using AndroidEmulator connection string");
+        }
+        else
+        {
+            // Appareil Android physique
+            connectionString = configuration.GetConnectionString("AndroidDevice");
+            System.Diagnostics.Debug.WriteLine("📱 Android Device: Using AndroidDevice connection string");
+        }
+#elif IOS
+        if (DeviceInfo.DeviceType == DeviceType.Virtual)
+        {
+            // Simulateur iOS
+            connectionString = configuration.GetConnectionString("iOSSimulator");
+            System.Diagnostics.Debug.WriteLine("📲 iOS Simulator: Using iOSSimulator connection string");
+        }
+        else
+        {
+            // Appareil iOS physique
+            connectionString = configuration.GetConnectionString("iOSDevice");
+            System.Diagnostics.Debug.WriteLine("📱 iOS Device: Using iOSDevice connection string");
+        }
+#elif WINDOWS
+        // Windows Desktop
+        connectionString = configuration.GetConnectionString("Windows");
+        System.Diagnostics.Debug.WriteLine("🪟 Windows: Using Windows connection string");
+#else
+        // Plateforme par défaut
+        connectionString = configuration.GetConnectionString("Default");
+        System.Diagnostics.Debug.WriteLine("⚙️ Default Platform: Using Default connection string");
+#endif
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            // Fallback vers la connexion par défaut
+            connectionString = configuration.GetConnectionString("Default");
+            System.Diagnostics.Debug.WriteLine("⚠️ Fallback: Using Default connection string");
+        }
+
+        System.Diagnostics.Debug.WriteLine($"🔗 Final Connection String: {connectionString?.Substring(0, Math.Min(50, connectionString?.Length ?? 0))}...");
+        return connectionString ?? throw new InvalidOperationException("Aucune chaîne de connexion disponible pour la plateforme actuelle");
     }
 }

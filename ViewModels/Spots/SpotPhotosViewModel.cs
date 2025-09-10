@@ -109,8 +109,9 @@ namespace SubExplore.ViewModels.Spots
                     Description = supabaseSpot.Description
                 };
 
-                // Load spot photos
-                var photos = await _supabaseApiService.GetSpotMediaAsync(spotId);
+                // Load spot photos (conversion temporaire Guid->int pour compatibilité)
+                // TODO: Migrer vers l'architecture hybride avec int IDs
+                var photos = await _supabaseApiService.GetSpotMediaAsync((int)spotId.GetHashCode());
                 SpotPhotos.Clear();
                 foreach (var photo in photos.OrderBy(p => p.DisplayOrder))
                 {
@@ -223,8 +224,8 @@ namespace SubExplore.ViewModels.Spots
                     // Create media record
                     var mediaResult = await _supabaseApiService.CreateSpotMediaAsync(new SupabaseSpotMedia
                     {
-                        Id = Guid.NewGuid(),
-                        SpotId = Spot.Id,
+                        // Id sera auto-généré par la DB (SERIAL), ne pas l'assigner
+                        SpotId = Spot.Id.GetHashCode(), // Conversion Guid vers int (temporaire jusqu'à migration complète)
                         MediaType = 1, // Photo
                         MediaUrl = uploadResult.PublicUrl,
                         IsPrimary = SpotPhotos.Count == 0, // First photo is primary
@@ -313,7 +314,7 @@ namespace SubExplore.ViewModels.Spots
             {
                 if (Spot == null) return;
 
-                var success = await _supabaseApiService.SetPrimarySpotPhotoAsync(Spot.Id, photo.Id);
+                var success = await _supabaseApiService.SetPrimarySpotPhotoAsync(Spot.Id.GetHashCode(), photo.Id);
                 if (success)
                 {
                     // Update local collection

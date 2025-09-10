@@ -309,13 +309,11 @@
         FlyoutItemIsVisible="False" />
 
     <!-- Modal Pages - Outside main navigation -->
-    <!-- Add Spot Page Route - TEMPORAIREMENT DÉSACTIVÉ (ViewModels Entity Framework supprimés) -->
-    <!--
+    <!-- Add Spot Page Route -->
     <ShellContent
         Title="Ajouter un Spot"
         ContentTemplate="{DataTemplate spots:AddSpotPage}"
         Route="addspot" />
-    -->
 
     <!-- Spot Details Page Route -->
     <ShellContent

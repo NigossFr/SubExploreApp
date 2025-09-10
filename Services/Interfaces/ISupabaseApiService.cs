@@ -29,9 +29,69 @@ namespace SubExplore.Services.Interfaces
         Task<List<SupabaseSpotType>> GetSpotTypesAsync();
 
         /// <summary>
-        /// Récupère tous les spots
+        /// Crée un nouveau type de spot
         /// </summary>
+        Task<SupabaseSpotType> CreateSpotTypeAsync(SupabaseSpotType spotType);
+
+        /// <summary>
+        /// Récupère tous les spots (ancien modèle, obsolète)
+        /// </summary>
+        [Obsolete("Utilisez GetPracticeSpotsAsync, GetOrganizationsAsync, GetBusinessesAsync pour la nouvelle architecture 3-tables")]
         Task<List<SupabaseSpot>> GetSpotsAsync();
+
+        // ========================================
+        // NOUVELLE ARCHITECTURE 3-TABLES
+        // ========================================
+
+        /// <summary>
+        /// Récupère tous les spots de pratique
+        /// </summary>
+        Task<List<SupabasePracticeSpot>> GetPracticeSpotsAsync();
+
+        /// <summary>
+        /// Récupère toutes les organisations
+        /// </summary>
+        Task<List<SupabaseOrganization>> GetOrganizationsAsync();
+
+        /// <summary>
+        /// Récupère tous les commerces
+        /// </summary>
+        Task<List<SupabaseBusiness>> GetBusinessesAsync();
+
+        /// <summary>
+        /// Crée un nouveau spot de pratique
+        /// </summary>
+        Task<SupabasePracticeSpot> CreatePracticeSpotAsync(SupabasePracticeSpot practiceSpot);
+
+        /// <summary>
+        /// Crée une nouvelle organisation
+        /// </summary>
+        Task<SupabaseOrganization> CreateOrganizationAsync(SupabaseOrganization organization);
+
+        /// <summary>
+        /// Crée un nouveau commerce
+        /// </summary>
+        Task<SupabaseBusiness> CreateBusinessAsync(SupabaseBusiness business);
+
+        /// <summary>
+        /// Crée un nouveau spot
+        /// </summary>
+        Task<SupabaseSpot> CreateSpotAsync(SupabaseSpot spot);
+
+        /// <summary>
+        /// Met à jour un spot existant
+        /// </summary>
+        Task<SupabaseSpot> UpdateSpotAsync(SupabaseSpot spot);
+
+        /// <summary>
+        /// Supprime un spot
+        /// </summary>
+        Task<bool> DeleteSpotAsync(Guid spotId);
+
+        /// <summary>
+        /// Récupère un spot par son ID
+        /// </summary>
+        Task<SupabaseSpot?> GetSpotByIdAsync(Guid spotId);
 
         /// <summary>
         /// Crée un nouvel utilisateur
@@ -65,7 +125,7 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Get reports for a specific spot
         /// </summary>
-        Task<List<SupabaseSpotReport>> GetSpotReportsAsync(Guid spotId);
+        Task<List<SupabaseSpotReport>> GetSpotReportsAsync(int spotId);
 
         /// <summary>
         /// Get user's reports
@@ -80,7 +140,7 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Update report status
         /// </summary>
-        Task<bool> UpdateSpotReportAsync(Guid reportId, int status, string reviewNotes, Guid reviewerId);
+        Task<bool> UpdateSpotReportAsync(int reportId, int status, string reviewNotes, Guid reviewerId);
 
         /// <summary>
         /// Update spot basic information
@@ -120,22 +180,22 @@ namespace SubExplore.Services.Interfaces
         /// <summary>
         /// Get spot media
         /// </summary>
-        Task<List<SupabaseSpotMedia>> GetSpotMediaAsync(Guid spotId);
+        Task<List<SupabaseSpotMedia>> GetSpotMediaAsync(int spotId);
 
         /// <summary>
         /// Delete spot media
         /// </summary>
-        Task<bool> DeleteSpotMediaAsync(Guid mediaId);
+        Task<bool> DeleteSpotMediaAsync(int mediaId);
 
         /// <summary>
         /// Update spot media metadata
         /// </summary>
-        Task<bool> UpdateSpotMediaAsync(Guid mediaId, string? caption, bool? isPrimary);
+        Task<bool> UpdateSpotMediaAsync(int mediaId, string? caption, bool? isPrimary);
 
         /// <summary>
         /// Set primary photo for spot
         /// </summary>
-        Task<bool> SetPrimarySpotPhotoAsync(Guid spotId, Guid photoId);
+        Task<bool> SetPrimarySpotPhotoAsync(int spotId, int photoId);
 
         /// <summary>
         /// Upload image to Supabase Storage

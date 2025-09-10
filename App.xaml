@@ -37,6 +37,7 @@
             <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
             <converters:StringEmptyConverter x:Key="StringEmptyConverter" />
             <converters:StringEqualConverter x:Key="StringEqualConverter" />
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <converters:SelectedItemToBgConverter x:Key="SelectedItemToBgConverter" />
             <converters:SelectedItemToTextColorConverter x:Key="SelectedItemToTextColorConverter" />
             <converters:InvertBoolConverter x:Key="InvertBoolConverter" />

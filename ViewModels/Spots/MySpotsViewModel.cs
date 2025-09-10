@@ -196,9 +196,9 @@ namespace SubExplore.ViewModels.Spots
             try
             {
                 // Navigate to add spot page
-                await Shell.Current.GoToAsync("///map");
+                await Shell.Current.GoToAsync("//addspot");
                 
-                _logger?.LogInformation("Navigating to map to add new spot");
+                _logger?.LogInformation("Navigating to add new spot page");
             }
             catch (Exception ex)
             {

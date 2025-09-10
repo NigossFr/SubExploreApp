@@ -1,0 +1,709 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Spots.AddSpotPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spots"
+    xmlns:models="clr-namespace:SubExplore.Models.ViewModels"
+    x:DataType="viewmodels:SimpleApiAddSpotViewModel"
+    x:Name="AddSpotPageRoot"
+    Title="{Binding Title}"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}">
+
+    <!-- Page Content -->
+    <ScrollView Padding="20">
+        <StackLayout Spacing="20">
+            
+            <!-- Page Header -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                   Padding="20"
+                   CornerRadius="12"
+                   HasShadow="True"
+                   Margin="0,0,0,20"
+                   AutomationId="AddSpotHeader"
+                   SemanticProperties.Description="En-tête de la page d'ajout de spot">
+                <StackLayout>
+                    <StackLayout Orientation="Horizontal">
+                        <StackLayout HorizontalOptions="StartAndExpand">
+                            <Label Text="➕ Ajouter un Spot"
+                                   FontSize="24" 
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   AutomationId="PageTitle"
+                                   SemanticProperties.HeadingLevel="Level1"
+                                   SemanticProperties.Description="Titre principal : Ajouter un nouveau spot de plongée"/>
+                            <Label Text="Partagez vos découvertes avec la communauté"
+                                   FontSize="14"
+                                   TextColor="White"
+                                   Opacity="0.9"
+                                   AutomationId="PageSubtitle"
+                                   SemanticProperties.Description="Sous-titre : Partagez vos découvertes avec la communauté de plongeurs"/>
+                        </StackLayout>
+                        <Button Text="🔧"
+                                BackgroundColor="Transparent"
+                                TextColor="White"
+                                FontSize="20"
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                Command="{Binding ToggleDiagnosticsCommand}"
+                                AutomationId="DiagnosticButton"
+                                SemanticProperties.Description="Afficher le diagnostic"/>
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Diagnostic Panel -->
+            <Frame BackgroundColor="Black"
+                   Padding="15"
+                   CornerRadius="8"
+                   IsVisible="{Binding ShowDiagnostics}"
+                   Margin="0,0,0,10"
+                   AutomationId="DiagnosticPanel">
+                <StackLayout>
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="🔧 DIAGNOSTIC"
+                               TextColor="Yellow"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               HorizontalOptions="StartAndExpand"
+                               VerticalOptions="Center"/>
+                        <Button Text="🔄 Force Refresh"
+                                BackgroundColor="Red"
+                                TextColor="White"
+                                FontSize="12"
+                                Padding="10,5"
+                                CornerRadius="15"
+                                Command="{Binding ForceRefreshAllCommand}"
+                                AutomationId="ForceRefreshButton"/>
+                    </StackLayout>
+                    <Label Text="{Binding DiagnosticInfo}"
+                           TextColor="White"
+                           FontSize="12"
+                           FontFamily="Courier"
+                           AutomationId="DiagnosticInfo"/>
+                </StackLayout>
+            </Frame>
+
+            <!-- API Status and Connection Indicator - Only show when there are actual issues -->
+            <Frame BackgroundColor="{StaticResource Warning}"
+                   Padding="15"
+                   CornerRadius="8"
+                   IsVisible="{Binding HasRecoverableError}"
+                   AutomationId="ApiStatusPanel"
+                   SemanticProperties.Description="Panneau de statut de connexion API">
+                <StackLayout Orientation="Horizontal" Spacing="10">
+                    <Label Text="⚠️" 
+                           FontSize="18" 
+                           VerticalOptions="Center"
+                           AutomationId="WarningIcon"
+                           SemanticProperties.Description="Icône d'avertissement"/>
+                    <StackLayout VerticalOptions="Center" HorizontalOptions="FillAndExpand">
+                        <Label Text="API non disponible"
+                               TextColor="White"
+                               FontSize="14" FontAttributes="Bold"
+                               AutomationId="ApiStatusMessage"
+                               SemanticProperties.Description="Message de statut API : Service temporairement indisponible"/>
+                        <Label Text="{Binding ConnectionStatus}"
+                               TextColor="White"
+                               FontSize="12"
+                               Opacity="0.9"
+                               AutomationId="ConnectionStatusMessage"
+                               SemanticProperties.Description="État de la connexion réseau"/>
+                    </StackLayout>
+                    <Button Text="🔄"
+                            Background="Transparent"
+                            TextColor="White"
+                            FontSize="16"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            Command="{Binding RetryLastOperationCommand}"
+                            IsVisible="{Binding CanRetry}"
+                            AutomationId="RetryButton"
+                            SemanticProperties.Description="Bouton réessayer la connexion API"
+                            SemanticProperties.Hint="Appuyez pour réessayer la connexion au service"/>
+                </StackLayout>
+            </Frame>
+
+            <!-- Error Recovery Panel -->
+            <Frame BackgroundColor="{StaticResource Error}"
+                   Padding="15"
+                   CornerRadius="8"
+                   IsVisible="{Binding HasRecoverableError}"
+                   Margin="0,0,0,10"
+                   AutomationId="ErrorRecoveryPanel"
+                   SemanticProperties.Description="Panneau de récupération d'erreur avec options de résolution">
+                <StackLayout Spacing="10">
+                    <StackLayout Orientation="Horizontal" Spacing="10">
+                        <Label Text="🚨" 
+                               FontSize="18" 
+                               VerticalOptions="Center"
+                               AutomationId="AlertIcon"
+                               SemanticProperties.Description="Icône d'alerte critique"/>
+                        <Label Text="Erreur récupérable détectée"
+                               TextColor="White"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"
+                               AutomationId="ErrorTitle"
+                               SemanticProperties.HeadingLevel="Level2"
+                               SemanticProperties.Description="Alerte : Une erreur récupérable a été détectée"/>
+                    </StackLayout>
+                    
+                    <Label Text="{Binding LastErrorMessage}"
+                           TextColor="White"
+                           FontSize="12"
+                           Opacity="0.9"
+                           IsVisible="{Binding LastErrorMessage, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                           AutomationId="ErrorDetailsMessage"
+                           SemanticProperties.Description="Détails de l'erreur rencontrée"/>
+                    
+                    <StackLayout Orientation="Horizontal" Spacing="10" HorizontalOptions="End" 
+                                AutomationId="ErrorActionButtons"
+                                SemanticProperties.Description="Boutons d'actions de récupération d'erreur">
+                        <Button Text="🧹 Effacer"
+                                Background="Transparent"
+                                TextColor="White"
+                                FontSize="12"
+                                Padding="10,5"
+                                Command="{Binding ClearAllErrorsCommand}"
+                                AutomationId="ClearErrorsButton"
+                                SemanticProperties.Description="Effacer tous les messages d'erreur"
+                                SemanticProperties.Hint="Appuyez pour nettoyer l'état d'erreur"/>
+                        <Button Text="🔄 Réessayer"
+                                BackgroundColor="White"
+                                TextColor="{StaticResource Error}"
+                                FontSize="12"
+                                Padding="10,5"
+                                Command="{Binding RetryLastOperationCommand}"
+                                AutomationId="RetryErrorButton"
+                                SemanticProperties.Description="Réessayer la dernière opération échouée"
+                                SemanticProperties.Hint="Appuyez pour relancer l'opération qui a échoué"/>
+                        <Button Text="🔄 Actualiser tout"
+                                BackgroundColor="White"
+                                TextColor="{StaticResource Error}"
+                                FontSize="12"
+                                Padding="10,5"
+                                Command="{Binding RefreshAllDataCommand}"
+                                AutomationId="RefreshAllButton"
+                                SemanticProperties.Description="Actualiser toutes les données de la page"
+                                SemanticProperties.Hint="Appuyez pour recharger complètement les données"/>
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Spot Information Section -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                   Padding="20"
+                   CornerRadius="12"
+                   HasShadow="False"
+                   BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
+                   AutomationId="SpotInformationSection"
+                   SemanticProperties.Description="Section des informations principales du spot de plongée">
+                
+                <StackLayout Spacing="15">
+                    <Label Text="📝 Informations du Spot"
+                           FontSize="18" 
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                           AutomationId="SpotInfoSectionTitle"
+                           SemanticProperties.HeadingLevel="Level2"
+                           SemanticProperties.Description="Section : Informations principales du spot"/>
+
+                    <!-- Spot Name -->
+                    <StackLayout AutomationId="SpotNameGroup"
+                                SemanticProperties.Description="Groupe de saisie du nom du spot">
+                        <Label Text="Nom du spot *"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                               AutomationId="SpotNameLabel"
+                               SemanticProperties.Description="Étiquette : Nom du spot, champ obligatoire"/>
+                        <Entry Text="{Binding SpotName}"
+                               Placeholder="Entrez le nom du spot..."
+                               BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
+                               TextColor="{AppThemeBinding Light={StaticResource InputText}, Dark={StaticResource InputTextDark}}"
+                               PlaceholderColor="{AppThemeBinding Light={StaticResource InputPlaceholder}, Dark={StaticResource InputPlaceholderDark}}"
+                               FontSize="16"
+                               MaxLength="100"
+                               AutomationId="SpotNameEntry"
+                               SemanticProperties.Description="Champ de saisie obligatoire : Nom du spot de plongée"
+                               SemanticProperties.Hint="Saisissez le nom du spot, maximum 100 caractères. Ce champ est obligatoire"
+                               ReturnType="Next"/>
+                        <!-- Validation Error for Spot Name -->
+                        <Label Text="{Binding SpotNameError}"
+                               TextColor="{StaticResource Error}"
+                               FontSize="12"
+                               IsVisible="{Binding SpotNameError, Converter={StaticResource StringToVisibilityConverter}}"
+                               Margin="0,5,0,0"
+                               AutomationId="SpotNameError"
+                               SemanticProperties.Description="Message d'erreur de validation pour le nom du spot"/>
+                    </StackLayout>
+
+                    <!-- Spot Description -->
+                    <StackLayout AutomationId="SpotDescriptionGroup"
+                                SemanticProperties.Description="Groupe de saisie de la description du spot">
+                        <Label Text="Description"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                               AutomationId="SpotDescriptionLabel"
+                               SemanticProperties.Description="Étiquette : Description du spot, champ optionnel"/>
+                        <Editor Text="{Binding SpotDescription}"
+                                Placeholder="Décrivez le spot, ses particularités, la faune, la flore..."
+                                BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
+                                TextColor="{AppThemeBinding Light={StaticResource InputText}, Dark={StaticResource InputTextDark}}"
+                                PlaceholderColor="{AppThemeBinding Light={StaticResource InputPlaceholder}, Dark={StaticResource InputPlaceholderDark}}"
+                                FontSize="16"
+                                HeightRequest="120"
+                                MaxLength="500"
+                                AutomationId="SpotDescriptionEditor"
+                                SemanticProperties.Description="Champ de saisie multi-lignes : Description détaillée du spot"
+                                SemanticProperties.Hint="Décrivez les caractéristiques, la faune, la flore du spot. Maximum 500 caractères, champ optionnel"/>
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Location Section -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                   Padding="20"
+                   CornerRadius="12"
+                   HasShadow="False"
+                   BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
+                   AutomationId="LocationSection"
+                   SemanticProperties.Description="Section de localisation GPS du spot de plongée">
+                
+                <StackLayout Spacing="15">
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="📍 Localisation"
+                               FontSize="18" 
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                               VerticalOptions="Center"
+                               HorizontalOptions="StartAndExpand"
+                               AutomationId="LocationSectionTitle"
+                               SemanticProperties.HeadingLevel="Level2"
+                               SemanticProperties.Description="Section : Localisation GPS du spot"/>
+                        
+                        <!-- Location Action Buttons -->
+                        <StackLayout Orientation="Horizontal" Spacing="5" HorizontalOptions="End"
+                                    AutomationId="LocationActionButtons"
+                                    SemanticProperties.Description="Boutons d'actions pour la localisation GPS">
+                            <Button Text="🗺️"
+                                    Command="{Binding ToggleLocationPickerCommand}"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    TextColor="White"
+                                    FontSize="14"
+                                    WidthRequest="35"
+                                    HeightRequest="35"
+                                    CornerRadius="17"
+                                    AutomationId="MapPickerButton"
+                                    SemanticProperties.Description="Bouton sélectionner sur carte"
+                                    SemanticProperties.Hint="Appuyez pour ouvrir la sélection de position sur carte interactive"/>
+                            
+                            <Button Text="📍"
+                                    Command="{Binding GetCurrentLocationCommand}"
+                                    BackgroundColor="{StaticResource Secondary}"
+                                    TextColor="White"
+                                    FontSize="14"
+                                    WidthRequest="35"
+                                    HeightRequest="35"
+                                    CornerRadius="17"
+                                    AutomationId="GetLocationButton"
+                                    SemanticProperties.Description="Bouton obtenir position actuelle"
+                                    SemanticProperties.Hint="Appuyez pour obtenir automatiquement votre position GPS actuelle"/>
+                                    
+                            <Button Text="🔄"
+                                    Command="{Binding RefreshLocationAccuracyCommand}"
+                                    BackgroundColor="{StaticResource Accent}"
+                                    TextColor="White"
+                                    FontSize="14"
+                                    WidthRequest="35"
+                                    HeightRequest="35"
+                                    CornerRadius="17"
+                                    IsVisible="{Binding IsLocationAccurate, Converter={StaticResource InverseBoolConverter}}"
+                                    AutomationId="RefreshLocationButton"
+                                    SemanticProperties.Description="Bouton améliorer précision GPS"
+                                    SemanticProperties.Hint="Appuyez pour relancer la géolocalisation et améliorer la précision"/>
+                        </StackLayout>
+                    </StackLayout>
+                    
+                    <!-- Location Display -->
+                    <Frame BackgroundColor="{Binding IsLocationAccurate, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Success|Warning'}"
+                           Padding="10"
+                           CornerRadius="8"
+                           Margin="0,10,0,0"
+                           AutomationId="LocationStatusDisplay"
+                           SemanticProperties.Description="Affichage du statut de localisation GPS">
+                        <Label Text="{Binding LocationDisplayName}"
+                               TextColor="White"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               AutomationId="LocationDisplay"
+                               SemanticProperties.Description="Position GPS actuelle et niveau de précision"/>
+                    </Frame>
+
+                    <!-- Coordinates Display -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10"
+                          AutomationId="CoordinatesDisplayGrid"
+                          SemanticProperties.Description="Affichage des coordonnées GPS actuelles">
+                        <Frame Grid.Column="0" 
+                               BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
+                               Padding="10"
+                               CornerRadius="5"
+                               AutomationId="LatitudeDisplay"
+                               SemanticProperties.Description="Affichage de la latitude actuelle">
+                            <StackLayout Spacing="2">
+                                <Label Text="Latitude"
+                                       FontSize="12"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                       AutomationId="LatitudeLabel"
+                                       SemanticProperties.Description="Étiquette : Latitude en degrés décimaux"/>
+                                <Label Text="{Binding Latitude, StringFormat='{0:F6}°'}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                       AutomationId="LatitudeValue"
+                                       SemanticProperties.Description="Valeur de la latitude actuelle"/>
+                            </StackLayout>
+                        </Frame>
+                        <Frame Grid.Column="1"
+                               BackgroundColor="{AppThemeBinding Light={StaticResource InputBackground}, Dark={StaticResource InputBackgroundDark}}"
+                               Padding="10"
+                               CornerRadius="5"
+                               AutomationId="LongitudeDisplay"
+                               SemanticProperties.Description="Affichage de la longitude actuelle">
+                            <StackLayout Spacing="2">
+                                <Label Text="Longitude"
+                                       FontSize="12"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                       AutomationId="LongitudeLabel"
+                                       SemanticProperties.Description="Étiquette : Longitude en degrés décimaux"/>
+                                <Label Text="{Binding Longitude, StringFormat='{0:F6}°'}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                       AutomationId="LongitudeValue"
+                                       SemanticProperties.Description="Valeur de la longitude actuelle"/>
+                            </StackLayout>
+                        </Frame>
+                    </Grid>
+                    
+                    <!-- Location Validation Error -->
+                    <Label Text="{Binding LocationError}"
+                           TextColor="{StaticResource Error}"
+                           FontSize="12"
+                           IsVisible="{Binding LocationError, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                           Margin="0,10,0,0"
+                           HorizontalOptions="Center"
+                           AutomationId="LocationError"
+                           SemanticProperties.Description="Message d'erreur de validation pour la localisation GPS"/>
+                </StackLayout>
+            </Frame>
+
+            <!-- Spot Type Section -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                   Padding="20"
+                   CornerRadius="12"
+                   HasShadow="False"
+                   BorderColor="{AppThemeBinding Light={StaticResource BorderColor}, Dark={StaticResource BorderColorDark}}"
+                   AutomationId="SpotTypeSection"
+                   SemanticProperties.Description="Section de sélection du type de spot de plongée">
+                
+                <StackLayout Spacing="15">
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="🏷️ Type de Spot"
+                               FontSize="18" 
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                               VerticalOptions="Center"
+                               HorizontalOptions="StartAndExpand"
+                               AutomationId="SpotTypeSectionTitle"
+                               SemanticProperties.HeadingLevel="Level2"
+                               SemanticProperties.Description="Section : Type de spot de plongée, sélection obligatoire"/>
+                        <Button Text="🔄 Recharger"
+                                Command="{Binding LoadSpotTypesCommand}"
+                                BackgroundColor="{StaticResource Accent}"
+                                TextColor="White"
+                                FontSize="12"
+                                Padding="10,5"
+                                CornerRadius="15"
+                                HorizontalOptions="End"
+                                IsVisible="{Binding IsLoadingSpotTypes, Converter={StaticResource InverseBoolConverter}}"
+                                AutomationId="ReloadTypesButton"
+                                SemanticProperties.Description="Bouton recharger les types de spots"
+                                SemanticProperties.Hint="Appuyez pour recharger la liste des types de spots disponibles"/>
+                    </StackLayout>
+
+                    <!-- Loading Indicator -->
+                    <StackLayout Orientation="Horizontal" 
+                                 IsVisible="{Binding IsLoadingSpotTypes}"
+                                 HorizontalOptions="Center"
+                                 AutomationId="SpotTypesLoadingIndicator"
+                                 SemanticProperties.Description="Indicateur de chargement des types de spots">
+                        <ActivityIndicator IsRunning="{Binding IsLoadingSpotTypes}"
+                                           Color="{StaticResource Primary}"
+                                           VerticalOptions="Center"
+                                           AutomationId="SpotTypesActivityIndicator"
+                                           SemanticProperties.Description="Animation de chargement"/>
+                        <Label Text="Chargement des types..."
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                               VerticalOptions="Center"
+                               Margin="10,0,0,0"
+                               AutomationId="SpotTypesLoadingText"
+                               SemanticProperties.Description="Message de chargement des types de spots"/>
+                    </StackLayout>
+
+                    <!-- Spot Types Collection - Enhanced -->
+                    <StackLayout IsVisible="{Binding IsLoadingSpotTypes, Converter={StaticResource InverseBoolConverter}}"
+                                 AutomationId="SpotTypesCollection"
+                                 SemanticProperties.Description="Liste de sélection des types de spots disponibles">
+                        
+                        <!-- Show total count for diagnostic -->
+                        <Label Text="{Binding SpotTypes.Count, StringFormat='📋 {0} types disponibles'}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="Blue"
+                               Margin="0,0,0,10"/>
+                        
+                        <CollectionView ItemsSource="{Binding SpotTypes}"
+                                        SelectionMode="None"
+                                        HeightRequest="300">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8"/>
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:SpotTypeItem">
+                                    <Frame BackgroundColor="{Binding BackgroundColor}"
+                                           BorderColor="Navy"
+                                           Padding="12"
+                                           CornerRadius="10"
+                                           HasShadow="True"
+                                           Margin="3"
+                                           AutomationId="{Binding SpotType.Name, StringFormat='SpotTypeItem_{0}'}">
+                                        <Frame.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={x:Reference AddSpotPageRoot}, Path=BindingContext.SelectSpotTypeCommand}"
+                                                                  CommandParameter="{Binding}"/>
+                                        </Frame.GestureRecognizers>
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <!-- Category Icon -->
+                                            <Label Grid.Column="0" 
+                                                   Text="📍"
+                                                   FontSize="20"
+                                                   VerticalOptions="Center"
+                                                   Margin="0,0,10,0"/>
+                                            
+                                            <!-- Content -->
+                                            <StackLayout Grid.Column="1" Spacing="3">
+                                                <Label Text="{Binding SpotType.Name}"
+                                                       FontSize="16"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{Binding TextColor}"/>
+                                                <Label Text="{Binding SpotType.Description}"
+                                                       FontSize="12"
+                                                       TextColor="Gray"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="2"/>
+                                            </StackLayout>
+                                            
+                                            <!-- Selection indicator -->
+                                            <Label Grid.Column="2"
+                                                   Text="✅"
+                                                   FontSize="16"
+                                                   VerticalOptions="Center"
+                                                   IsVisible="{Binding IsSelected}"/>
+                                        </Grid>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                            <CollectionView.EmptyView>
+                                <StackLayout Padding="20" HorizontalOptions="Center">
+                                    <Label Text="❌ Aucun type de spot disponible"
+                                           FontSize="16"
+                                           TextColor="Red"
+                                           HorizontalOptions="Center"/>
+                                    <Label Text="Appuyez sur 'Force Refresh' dans le diagnostic"
+                                           FontSize="14"
+                                           TextColor="Gray"
+                                           HorizontalOptions="Center"/>
+                                </StackLayout>
+                            </CollectionView.EmptyView>
+                        </CollectionView>
+                    </StackLayout>
+                    
+                    <!-- Spot Type Validation Error -->
+                    <Label Text="{Binding SpotTypeError}"
+                           TextColor="{StaticResource Error}"
+                           FontSize="12"
+                           IsVisible="{Binding SpotTypeError, Converter={StaticResource StringToVisibilityConverter}}"
+                           Margin="0,10,0,0"
+                           HorizontalOptions="Center"
+                           AutomationId="SpotTypeError"/>
+                </StackLayout>
+            </Frame>
+
+            <!-- Error Display -->
+            <Frame BackgroundColor="{StaticResource Error}"
+                   Padding="15"
+                   CornerRadius="8"
+                   IsVisible="{Binding IsError}"
+                   Margin="0,0,0,10">
+                <StackLayout Orientation="Horizontal">
+                    <Label Text="❌" FontSize="18" VerticalOptions="Center" TextColor="White"/>
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="White"
+                           VerticalOptions="Center"
+                           FontSize="14"
+                           HorizontalOptions="StartAndExpand"/>
+                </StackLayout>
+            </Frame>
+
+            <!-- Validation Summary - Single Frame -->
+            <Frame BackgroundColor="{Binding HasValidationErrors, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Warning|Success'}"
+                   Padding="15"
+                   CornerRadius="8"
+                   IsVisible="{Binding ValidationSummary, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                   Margin="0,10,0,0"
+                   AutomationId="ValidationSummaryFrame"
+                   SemanticProperties.Description="Résumé de la validation du formulaire">
+                <StackLayout Orientation="Horizontal">
+                    <!-- Show different icons based on validation state -->
+                    <Label Text="⚠️" 
+                           FontSize="16" 
+                           VerticalOptions="Center"
+                           IsVisible="{Binding HasValidationErrors}"
+                           AutomationId="ValidationErrorIcon"/>
+                    <Label Text="✅" 
+                           FontSize="16" 
+                           VerticalOptions="Center"
+                           IsVisible="{Binding HasValidationErrors, Converter={StaticResource InverseBoolConverter}}"
+                           AutomationId="ValidationSuccessIcon"/>
+                    <Label Text="{Binding ValidationSummary}"
+                           TextColor="White"
+                           VerticalOptions="Center"
+                           FontSize="14"
+                           HorizontalOptions="StartAndExpand"
+                           AutomationId="ValidationMessage"/>
+                </StackLayout>
+            </Frame>
+
+            <!-- Form Actions -->
+            <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Margin="0,15,0,0"
+                         IsVisible="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}">
+                <Button Text="🔄 Réinitialiser"
+                        Command="{Binding ClearFormCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource SecondaryDark}}"
+                        TextColor="White"
+                        FontSize="14"
+                        Padding="15,8"
+                        CornerRadius="20"
+                        Margin="0,0,10,0"
+                        AutomationId="ClearFormButton"
+                        SemanticProperties.Description="Réinitialiser le formulaire"
+                        SemanticProperties.Hint="Appuyez pour vider tous les champs"/>
+            </StackLayout>
+
+            <!-- Action Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,20,0,0">
+                <!-- Cancel Button -->
+                <Button Grid.Column="0"
+                        Text="❌ Annuler"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        Padding="0,15"
+                        CornerRadius="25"
+                        Command="{Binding CancelCommand}"
+                        AutomationId="CancelButton"
+                        SemanticProperties.Description="Annuler la création du spot"
+                        SemanticProperties.Hint="Appuyez pour annuler et retourner en arrière"/>
+
+                <!-- Create Button -->
+                <Button Grid.Column="1"
+                        Text="✅ Créer le Spot"
+                        BackgroundColor="{StaticResource Success}"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        Padding="0,15"
+                        CornerRadius="25"
+                        Command="{Binding CreateSpotCommand}"
+                        IsEnabled="{Binding CanCreateSpot}"
+                        AutomationId="CreateSpotButton"
+                        SemanticProperties.Description="Créer le nouveau spot"
+                        SemanticProperties.Hint="Appuyez pour créer le spot avec les informations saisies"/>
+            </Grid>
+
+            <!-- Enhanced Loading Overlay -->
+            <Frame BackgroundColor="Black"
+                   Opacity="0.8"
+                   Padding="40"
+                   CornerRadius="20"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   IsVisible="{Binding IsCreatingSpot}"
+                   InputTransparent="False">
+                <StackLayout Spacing="20" HorizontalOptions="Center" WidthRequest="250">
+                    <!-- Progress Ring -->
+                    <Frame Background="Transparent"
+                           BorderColor="White"
+                           CornerRadius="40"
+                           HeightRequest="80"
+                           WidthRequest="80"
+                           HorizontalOptions="Center">
+                        <ActivityIndicator IsRunning="{Binding IsCreatingSpot}"
+                                           Color="White"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"/>
+                    </Frame>
+                    
+                    <!-- Progress Text -->
+                    <Label Text="{Binding CreationProgress}"
+                           TextColor="White"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"/>
+                    
+                    <!-- Progress Bar -->
+                    <ProgressBar Progress="{Binding ProgressPercentage, Converter={StaticResource PercentageToProgressConverter}}"
+                                 ProgressColor="White"
+                                 BackgroundColor="Gray"
+                                 HeightRequest="8"/>
+                                 
+                    <!-- Progress Percentage -->
+                    <Label Text="{Binding ProgressPercentage, StringFormat='{0:F0}% terminé'}"
+                           TextColor="White"
+                           FontSize="14"
+                           HorizontalOptions="Center"
+                           Opacity="0.8"/>
+                </StackLayout>
+            </Frame>
+            
+            <!-- Location Loading Indicator -->
+            <Frame BackgroundColor="{StaticResource Primary}"
+                   Opacity="0.9"
+                   Padding="20"
+                   CornerRadius="25"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   IsVisible="{Binding IsGettingLocation}"
+                   InputTransparent="False">
+                <StackLayout Spacing="10" HorizontalOptions="Center" Orientation="Horizontal">
+                    <ActivityIndicator IsRunning="{Binding IsGettingLocation}"
+                                       Color="White"
+                                       VerticalOptions="Center"/>
+                    <Label Text="📍 Localisation en cours..."
+                           TextColor="White"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"/>
+                </StackLayout>
+            </Frame>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

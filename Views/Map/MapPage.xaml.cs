@@ -2,6 +2,7 @@ using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
 using SubExplore.ViewModels.Map;
 using SubExplore.Services.Interfaces;
+using SubExplore.Models.Domain;
 using System.Linq;
 using System.Diagnostics;
 
@@ -45,12 +46,12 @@ namespace SubExplore.Views.Map
             System.Diagnostics.Debug.WriteLine("[INFO] Map loaded event fired");
             _isMapLoaded = true;
 
-            if (SpotMiniWindow != null)
+            if (EntityMiniWindow != null)
             {
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[ERROR] SpotMiniWindow is null!");
+                System.Diagnostics.Debug.WriteLine("[ERROR] EntityMiniWindow is null!");
             }
 
             if (MainMap != null && _platformMapService != null)
@@ -68,7 +69,7 @@ namespace SubExplore.Views.Map
 
             if (ViewModel != null)
             {
-                ViewModel.InitializeMapPosition();
+                // Note: InitializeMapPosition removed in new architecture
                 UpdateMapPosition();
                 
                 // Subscribe to spots changes to update custom markers
@@ -82,11 +83,10 @@ namespace SubExplore.Views.Map
         
         private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ViewModel.Spots))
-            {
-                UpdateCustomMarkers();
-            }
-            else if (e.PropertyName == nameof(ViewModel.Pins))
+            if (e.PropertyName == nameof(ViewModel.PracticeSpots) ||
+                e.PropertyName == nameof(ViewModel.Organizations) ||
+                e.PropertyName == nameof(ViewModel.Businesses) ||
+                e.PropertyName == nameof(ViewModel.Pins))
             {
                 UpdateCustomMarkers();
             }
@@ -102,72 +102,12 @@ namespace SubExplore.Views.Map
                 }
                 
                 
-                // Get spots from filtered pins instead of all spots
-                var filteredSpots = ViewModel.Pins.Where(p => p.BindingContext is Models.Domain.Spot).Select(p => p.BindingContext as Models.Domain.Spot).Where(s => s != null).ToList();
-                
-                
-                
-                // Calculate dynamic marker size based on current zoom level
-                var markerRadius = CalculateDynamicMarkerSize();
-                var strokeWidth = CalculateDynamicStrokeWidth();
-                
-                
                 // Clear existing markers
                 MainMap.MapElements.Clear();
                 
-                // Add custom circle markers for each filtered spot
-                foreach (var spot in filteredSpots)
-                {
-                    try
-                    {
-                        double lat = Convert.ToDouble(spot.Latitude);
-                        double lon = Convert.ToDouble(spot.Longitude);
-                        
-                        // Validate coordinates
-                        if (double.IsNaN(lat) || double.IsInfinity(lat) || lat < -90 || lat > 90 ||
-                            double.IsNaN(lon) || double.IsInfinity(lon) || lon < -180 || lon > 180)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[WARNING] Invalid coordinates for spot {spot.Name}: {lat}, {lon}");
-                            continue;
-                        }
-                        
-                        // Get spot type color if available, otherwise use blue
-                        var spotColor = GetSpotTypeColor(spot);
-                        
-                        // Create a double-circle system for maximum visibility
-                        // 1. Outer circle - white background for contrast
-                        var outerCircle = new Microsoft.Maui.Controls.Maps.Circle
-                        {
-                            Center = new Location(lat, lon),
-                            Radius = Distance.FromMeters(markerRadius * 1.15), // Seulement 15% plus grand
-                            StrokeColor = Colors.DarkGray,
-                            StrokeWidth = 1,
-                            FillColor = Colors.White // Fond blanc
-                        };
-                        
-                        // 2. Inner circle - colored for spot type
-                        var innerCircle = new Microsoft.Maui.Controls.Maps.Circle
-                        {
-                            Center = new Location(lat, lon),
-                            Radius = Distance.FromMeters(markerRadius),
-                            StrokeColor = Colors.DarkGray,
-                            StrokeWidth = 1,
-                            FillColor = spotColor // Couleur du type de spot
-                        };
-                        
-                        // Store spot reference for click detection on both circles
-                        outerCircle.ClassId = spot.Id.ToString();
-                        innerCircle.ClassId = spot.Id.ToString();
-                        
-                        // Add both circles (outer first, then inner)
-                        MainMap.MapElements.Add(outerCircle);
-                        MainMap.MapElements.Add(innerCircle);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to create marker for spot {spot.Name}: {ex.Message}");
-                    }
-                }
+                // Add markers for each entity type
+                CreateMarkersFromEntities();
+                
                 
             }
             catch (Exception ex)
@@ -278,49 +218,218 @@ namespace SubExplore.Views.Map
             }
         }
         
-        private Color GetSpotTypeColor(Models.Domain.Spot spot)
+        private void CreateMarkersFromEntities()
         {
             try
             {
-                // Si le spot a un type avec une couleur définie
-                if (spot.Type?.ColorCode != null && !string.IsNullOrEmpty(spot.Type.ColorCode))
-                {
-                    return Color.FromArgb(spot.Type.ColorCode);
-                }
+                var markerRadius = CalculateDynamicMarkerSize();
                 
-                // Couleurs par défaut selon le type d'activité - Plus vives pour meilleure visibilité
-                if (spot.Type != null)
+                // Create markers for Spots
+                if (ViewModel?.PracticeSpots != null)
                 {
-                    return spot.Type.Name?.ToLowerInvariant() switch
+                    foreach (var spot in ViewModel.PracticeSpots)
                     {
-                        "plongée" or "diving" => Color.FromArgb("#0077FF"), // Bleu vif
-                        "apnée" or "freediving" => Color.FromArgb("#00CC55"), // Vert vif
-                        "snorkeling" or "randonnée palmée" => Color.FromArgb("#FF7700"), // Orange vif
-                        "exploration" => Color.FromArgb("#AA00FF"), // Violet vif
-                        "pêche" or "fishing" => Color.FromArgb("#FF4444"), // Rouge
-                        "photographie" or "photography" => Color.FromArgb("#FFAA00"), // Jaune/orange
-                        _ => Color.FromArgb("#0099FF") // Bleu vif par défaut
-                    };
+                        CreateMarkerFromPracticeSpot(spot, markerRadius);
+                    }
                 }
                 
-                return Color.FromArgb("#0099FF"); // Bleu vif par défaut
+                // Create markers for Spots
+                if (ViewModel?.Organizations != null)
+                {
+                    foreach (var org in ViewModel.Organizations)
+                    {
+                        CreateMarkerFromOrganization(org, markerRadius);
+                    }
+                }
+                
+                // Create markers for Spots
+                if (ViewModel?.Businesses != null)
+                {
+                    foreach (var business in ViewModel.Businesses)
+                    {
+                        CreateMarkerFromBusiness(business, markerRadius);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to get spot type color: {ex.Message}");
-                return Color.FromArgb("#0088FF"); // Safe fallback
+                System.Diagnostics.Debug.WriteLine($"[ERROR] CreateMarkersFromEntities failed: {ex.Message}");
             }
         }
         
-
-        private void OnPlatformPinClicked(object sender, MapPinClickedEventArgs e)
+        private void CreateMarkerFromPracticeSpot(Models.Supabase.SupabasePracticeSpot spot, double markerRadius)
         {
             try
             {
-                if (e.Pin?.BindingContext is Models.Domain.Spot spot)
+                double lat = (double)spot.Latitude;
+                double lon = (double)spot.Longitude;
+                
+                // Validate coordinates
+                if (double.IsNaN(lat) || double.IsInfinity(lat) || lat < -90 || lat > 90 ||
+                    double.IsNaN(lon) || double.IsInfinity(lon) || lon < -180 || lon > 180)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[INFO] Pin clicked: {spot.Name}");
-                    ViewModel?.ShowSpotMiniWindowCommand?.Execute(spot);
+                    System.Diagnostics.Debug.WriteLine($"[WARNING] Invalid coordinates for practice spot {spot.Name}: {lat}, {lon}");
+                    return;
+                }
+                
+                var spotColor = GetMarkerColorForPracticeSpot(spot);
+                CreateDoubleCircleMarker(lat, lon, markerRadius, spotColor, spot.Id.ToString());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to create marker for practice spot {spot.Name}: {ex.Message}");
+            }
+        }
+        
+        private void CreateMarkerFromOrganization(Models.Supabase.SupabaseOrganization org, double markerRadius)
+        {
+            try
+            {
+                double lat = (double)org.Latitude;
+                double lon = (double)org.Longitude;
+                
+                // Validate coordinates
+                if (double.IsNaN(lat) || double.IsInfinity(lat) || lat < -90 || lat > 90 ||
+                    double.IsNaN(lon) || double.IsInfinity(lon) || lon < -180 || lon > 180)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WARNING] Invalid coordinates for organization {org.Name}: {lat}, {lon}");
+                    return;
+                }
+                
+                var orgColor = GetMarkerColorForOrganization(org);
+                CreateDoubleCircleMarker(lat, lon, markerRadius, orgColor, org.Id.ToString());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to create marker for organization {org.Name}: {ex.Message}");
+            }
+        }
+        
+        private void CreateMarkerFromBusiness(Models.Supabase.SupabaseBusiness business, double markerRadius)
+        {
+            try
+            {
+                double lat = (double)business.Latitude;
+                double lon = (double)business.Longitude;
+                
+                // Validate coordinates
+                if (double.IsNaN(lat) || double.IsInfinity(lat) || lat < -90 || lat > 90 ||
+                    double.IsNaN(lon) || double.IsInfinity(lon) || lon < -180 || lon > 180)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WARNING] Invalid coordinates for business {business.Name}: {lat}, {lon}");
+                    return;
+                }
+                
+                var businessColor = GetMarkerColorForBusiness(business);
+                CreateDoubleCircleMarker(lat, lon, markerRadius, businessColor, business.Id.ToString());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to create marker for business {business.Name}: {ex.Message}");
+            }
+        }
+        
+        private void CreateDoubleCircleMarker(double lat, double lon, double markerRadius, Color color, string id)
+        {
+            try
+            {
+                // Create a double-circle system for maximum visibility
+                // 1. Outer circle - white background for contrast
+                var outerCircle = new Microsoft.Maui.Controls.Maps.Circle
+                {
+                    Center = new Location(lat, lon),
+                    Radius = Distance.FromMeters(markerRadius * 1.15), // 15% larger
+                    StrokeColor = Colors.DarkGray,
+                    StrokeWidth = 1,
+                    FillColor = Colors.White
+                };
+                
+                // 2. Inner circle - colored for entity type
+                var innerCircle = new Microsoft.Maui.Controls.Maps.Circle
+                {
+                    Center = new Location(lat, lon),
+                    Radius = Distance.FromMeters(markerRadius),
+                    StrokeColor = Colors.DarkGray,
+                    StrokeWidth = 1,
+                    FillColor = color
+                };
+                
+                // Store entity reference for click detection
+                outerCircle.ClassId = id;
+                innerCircle.ClassId = id;
+                
+                // Add both circles
+                MainMap.MapElements.Add(outerCircle);
+                MainMap.MapElements.Add(innerCircle);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] CreateDoubleCircleMarker failed: {ex.Message}");
+            }
+        }
+        
+        private Color GetMarkerColorForPracticeSpot(Models.Supabase.SupabasePracticeSpot spot)
+        {
+            try
+            {
+                // Dans la nouvelle architecture 3-tables, les practice spots utilisent une couleur fixe
+                // Couleur bleu pour les spots de pratique
+                return Color.FromArgb("#0077FF"); // Bleu vif pour les spots de pratique
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to get practice spot color: {ex.Message}");
+                return Color.FromArgb("#0077FF"); // Safe fallback
+            }
+        }
+        
+        private Color GetMarkerColorForOrganization(Models.Supabase.SupabaseOrganization org)
+        {
+            try
+            {
+                // Couleur verte pour les organisations
+                return Color.FromArgb("#00CC55");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to get organization color: {ex.Message}");
+                return Color.FromArgb("#00CC55"); // Safe fallback
+            }
+        }
+        
+        private Color GetMarkerColorForBusiness(Models.Supabase.SupabaseBusiness business)
+        {
+            try
+            {
+                // Couleurs selon le type de business (BusinessType est maintenant un string dans Supabase)
+                return business.BusinessType?.ToLowerInvariant() switch
+                {
+                    "dive_shop" or "diveshop" => Color.FromArgb("#FF7700"), // Orange pour dive shops
+                    "equipment_rental" or "equipmentrental" => Color.FromArgb("#AA00FF"), // Violet pour location
+                    "boat_charter" or "boatcharter" => Color.FromArgb("#FF4444"), // Rouge pour bateaux
+                    _ => Color.FromArgb("#FFAA00") // Jaune par défaut pour commerces
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to get business color: {ex.Message}");
+                return Color.FromArgb("#FFAA00"); // Safe fallback
+            }
+        }
+
+        private async void OnPlatformPinClicked(object sender, MapPinClickedEventArgs e)
+        {
+            try
+            {
+                if (e.Pin?.BindingContext != null)
+                {
+                    var context = (dynamic)e.Pin.BindingContext;
+                    string type = context.Type;
+                    var data = context.Data;
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Pin clicked: {type}");
+                    
+                    // Show mini window with entity data
+                    ViewModel?.ShowEntityMiniWindowCommand?.Execute(data);
                 }
             }
             catch (Exception ex)
@@ -352,8 +461,8 @@ namespace SubExplore.Views.Map
                         ViewModel.CloseSpotMiniWindowCommand?.Execute(null);
                     }
                     
-                    // Handle normal map click for adding spots at specific location
-                    ViewModel?.MapClickedCommand?.Execute(e);
+                    // Note: MapClickedCommand removed in new architecture
+                    // Handle normal map click for future functionality
                 }
             }
             catch (Exception ex)
@@ -366,38 +475,8 @@ namespace SubExplore.Views.Map
         {
             try
             {
-                if (ViewModel?.PinSelectionService == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("[WARNING] PinSelectionService not available, falling back to original logic");
-                    return await CheckNearbyPinsFromMapClickLegacy(clickedLocation);
-                }
-
-                
-                var selectedSpot = await ViewModel.PinSelectionService.SelectPinAsync(
-                    clickedLocation, 
-                    ViewModel.Pins,
-                    MainMap?.VisibleRegion,
-                    ViewModel.Pins?.Count ?? 0);
-
-                if (selectedSpot != null)
-                {
-                    
-                    await MainThread.InvokeOnMainThreadAsync(() =>
-                    {
-                        try
-                        {
-                            ViewModel.ShowSpotMiniWindowCommand?.Execute(selectedSpot);
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[ERROR] ShowSpotMiniWindowCommand execution failed: {ex.Message}");
-                        }
-                    });
-                    
-                    return true;
-                }
-                
-                return false;
+                // Note: PinSelectionService not implemented in new architecture, using legacy approach
+                return await CheckNearbyPinsFromMapClickLegacy(clickedLocation);
             }
             catch (Exception ex)
             {
@@ -414,19 +493,50 @@ namespace SubExplore.Views.Map
                 var toleranceKm = CalculateDynamicTolerance();
                 
                 
-                if (ViewModel?.Spots == null)
+                // Check all entity collections for nearby items
+                var allEntities = new List<object>();
+                if (ViewModel?.PracticeSpots != null)
+                    allEntities.AddRange(ViewModel.PracticeSpots.Cast<object>());
+                if (ViewModel?.Organizations != null)
+                    allEntities.AddRange(ViewModel.Organizations.Cast<object>());
+                if (ViewModel?.Businesses != null)
+                    allEntities.AddRange(ViewModel.Businesses.Cast<object>());
+                
+                if (!allEntities.Any())
                 {
                     return false;
                 }
                 
-                foreach (var spot in ViewModel.Spots)
+                foreach (var entity in allEntities)
                 {
-                    if (spot != null)
+                    if (entity != null)
                     {
                         try
                         {
-                            double lat = Convert.ToDouble(spot.Latitude);
-                            double lon = Convert.ToDouble(spot.Longitude);
+                            double lat, lon;
+                            string name;
+                            
+                            // Extract coordinates based on entity type
+                            switch (entity)
+                            {
+                                case Models.Supabase.SupabasePracticeSpot spot:
+                                    lat = (double)spot.Latitude;
+                                    lon = (double)spot.Longitude;
+                                    name = spot.Name;
+                                    break;
+                                case Models.Supabase.SupabaseOrganization org:
+                                    lat = (double)org.Latitude;
+                                    lon = (double)org.Longitude;
+                                    name = org.Name;
+                                    break;
+                                case Models.Supabase.SupabaseBusiness business:
+                                    lat = (double)business.Latitude;
+                                    lon = (double)business.Longitude;
+                                    name = business.Name;
+                                    break;
+                                default:
+                                    continue;
+                            }
                             
                             var distance = CalculateDistance(
                                 clickedLocation.Latitude, clickedLocation.Longitude,
@@ -435,26 +545,28 @@ namespace SubExplore.Views.Map
                             
                             if (distance <= toleranceKm)
                             {
-                                // Found a nearby spot - show mini window
+                                // Found a nearby entity - navigate to details
                                 
-                                await MainThread.InvokeOnMainThreadAsync(() =>
+                                await MainThread.InvokeOnMainThreadAsync(async () =>
                                 {
                                     try
                                     {
-                                        ViewModel.ShowSpotMiniWindowCommand?.Execute(spot);
+                                        // Show mini window instead of direct navigation
+                                        ViewModel.ShowEntityMiniWindowCommand?.Execute(entity);
                                     }
                                     catch (Exception ex)
                                     {
-                                        System.Diagnostics.Debug.WriteLine($"[ERROR] ShowSpotMiniWindowCommand execution failed in MapClick (legacy): {ex.Message}");
+                                        System.Diagnostics.Debug.WriteLine($"[ERROR] Entity details navigation failed in MapClick (legacy): {ex.Message}");
                                     }
                                 });
                                 
-                                return true; // Found a spot
+                                return true; // Found an entity
                             }
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"[ERROR] Error processing spot {spot.Name}: {ex.Message}");
+                            var entityType = entity.GetType().Name;
+                            System.Diagnostics.Debug.WriteLine($"[ERROR] Error processing {entityType}: {ex.Message}");
                         }
                     }
                 }
@@ -588,47 +700,8 @@ namespace SubExplore.Views.Map
         {
             try
             {
-                if (ViewModel?.PinSelectionService == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("[WARNING] PinSelectionService not available for gesture, falling back to legacy logic");
-                    await CheckNearbyPinsLegacy(clickedLocation);
-                    return;
-                }
-
-                
-                var selectedSpot = await ViewModel.PinSelectionService.SelectPinAsync(
-                    clickedLocation, 
-                    ViewModel.Pins,
-                    MainMap?.VisibleRegion,
-                    ViewModel.Pins?.Count ?? 0);
-
-                if (selectedSpot != null)
-                {
-                    
-                    await MainThread.InvokeOnMainThreadAsync(() =>
-                    {
-                        try
-                        {
-                            ViewModel.ShowSpotMiniWindowCommand?.Execute(selectedSpot);
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[ERROR] ShowSpotMiniWindowCommand execution failed (gesture): {ex.Message}");
-                        }
-                    });
-                }
-                else
-                {
-                    
-                    // Close mini window if open (tap-to-close on empty map)
-                    await MainThread.InvokeOnMainThreadAsync(() =>
-                    {
-                        if (ViewModel != null && ViewModel.IsSpotMiniWindowVisible)
-                        {
-                            ViewModel.CloseSpotMiniWindowCommand?.Execute(null);
-                        }
-                    });
-                }
+                // Note: PinSelectionService not implemented in new architecture, using legacy approach
+                await CheckNearbyPinsLegacy(clickedLocation);
             }
             catch (Exception ex)
             {
@@ -644,19 +717,50 @@ namespace SubExplore.Views.Map
                 var toleranceKm = CalculateDynamicTolerance() * 1.5; // 50% more generous for gestures
                 
                 
-                if (ViewModel?.Spots == null)
+                // Check all entity collections for nearby items
+                var allEntities = new List<object>();
+                if (ViewModel?.PracticeSpots != null)
+                    allEntities.AddRange(ViewModel.PracticeSpots.Cast<object>());
+                if (ViewModel?.Organizations != null)
+                    allEntities.AddRange(ViewModel.Organizations.Cast<object>());
+                if (ViewModel?.Businesses != null)
+                    allEntities.AddRange(ViewModel.Businesses.Cast<object>());
+                
+                if (!allEntities.Any())
                 {
                     return;
                 }
                 
-                foreach (var spot in ViewModel.Spots)
+                foreach (var entity in allEntities)
                 {
-                    if (spot != null)
+                    if (entity != null)
                     {
                         try
                         {
-                            double lat = Convert.ToDouble(spot.Latitude);
-                            double lon = Convert.ToDouble(spot.Longitude);
+                            double lat, lon;
+                            string name;
+                            
+                            // Extract coordinates based on entity type
+                            switch (entity)
+                            {
+                                case Models.Supabase.SupabasePracticeSpot spot:
+                                    lat = (double)spot.Latitude;
+                                    lon = (double)spot.Longitude;
+                                    name = spot.Name;
+                                    break;
+                                case Models.Supabase.SupabaseOrganization org:
+                                    lat = (double)org.Latitude;
+                                    lon = (double)org.Longitude;
+                                    name = org.Name;
+                                    break;
+                                case Models.Supabase.SupabaseBusiness business:
+                                    lat = (double)business.Latitude;
+                                    lon = (double)business.Longitude;
+                                    name = business.Name;
+                                    break;
+                                default:
+                                    continue;
+                            }
                             
                             var distance = CalculateDistance(
                                 clickedLocation.Latitude, clickedLocation.Longitude,
@@ -665,17 +769,18 @@ namespace SubExplore.Views.Map
                             
                             if (distance <= toleranceKm)
                             {
-                                // Found a nearby spot - show mini window
+                                // Found a nearby entity - navigate to details
                                 
-                                await MainThread.InvokeOnMainThreadAsync(() =>
+                                await MainThread.InvokeOnMainThreadAsync(async () =>
                                 {
                                     try
                                     {
-                                        ViewModel.ShowSpotMiniWindowCommand?.Execute(spot);
+                                        // Show mini window instead of direct navigation
+                                        ViewModel.ShowEntityMiniWindowCommand?.Execute(entity);
                                     }
                                     catch (Exception ex)
                                     {
-                                        System.Diagnostics.Debug.WriteLine($"[ERROR] ShowSpotMiniWindowCommand execution failed (legacy): {ex.Message}");
+                                        System.Diagnostics.Debug.WriteLine($"[ERROR] Entity details navigation failed (legacy gesture): {ex.Message}");
                                     }
                                 });
                                 foundNearbySpot = true;
@@ -684,14 +789,14 @@ namespace SubExplore.Views.Map
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"[ERROR] Error processing spot {spot.Name} in gesture: {ex.Message}");
+                            var entityType = entity.GetType().Name;
+                            System.Diagnostics.Debug.WriteLine($"[ERROR] Error processing {entityType} in gesture: {ex.Message}");
                         }
                     }
                 }
                 
                 if (!foundNearbySpot)
                 {
-                    
                     // Close mini window if open (tap-to-close on empty map)
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
@@ -718,7 +823,7 @@ namespace SubExplore.Views.Map
                 await ViewModel.InitializeAsync();
                 await Application.Current.Dispatcher.DispatchAsync(() =>
                 {
-                    ViewModel.ForceMapRefresh();
+                    // Note: ForceMapRefresh not implemented in new architecture
                     UpdateMapPosition();
                 });
             }
@@ -803,7 +908,7 @@ namespace SubExplore.Views.Map
                         if (HasRegionChanged(currentRegion))
                         {
                             _lastKnownRegion = currentRegion;
-                            ViewModel.VisibleRegion = currentRegion;
+                            // Note: VisibleRegion property removed in new architecture
                             
                             // Debounce marker updates
                             _markerUpdateTimer?.Stop();

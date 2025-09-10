@@ -26,9 +26,10 @@
     </ContentPage.Resources>
 
 
-    <ContentPage.Behaviors>
+    <!-- Note: InitializeMapCommand removed in new architecture - initialization handled in code-behind -->
+    <!--<ContentPage.Behaviors>
         <toolkit:EventToCommandBehavior Command="{Binding InitializeMapCommand}" EventName="Appearing" />
-    </ContentPage.Behaviors>
+    </ContentPage.Behaviors>-->
 
     <Grid>
         <!-- Custom Navigation Bar - GUARANTEED VISIBLE FLYOUT BUTTON -->
@@ -58,17 +59,18 @@
                            Margin="5,0"
                            ClearButtonVisibility="WhileEditing"
                            Placeholder="Rechercher un spot, lieu ou type..."
-                           ReturnCommand="{Binding SearchSpotsCommand}"
+                           ReturnCommand="{Binding SearchCommand}"
                            ReturnType="Search"
                            Text="{Binding SearchText}"
                            FontSize="{Binding Source={x:Static Device.RuntimePlatform}, Converter={StaticResource ResponsiveFontSizeConverter}, ConverterParameter='1.0'}"
-                           IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
+                           IsEnabled="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}"
                            AutomationId="SearchEntry"
                            SemanticProperties.Description="Rechercher des spots de plongée par nom, localisation ou type"
                            SemanticProperties.Hint="Entrez le nom d'un spot, d'une localisation ou d'un type d'activité">
-                        <Entry.Behaviors>
+                        <!-- Note: SearchTextChangedCommand removed in new architecture -->
+                        <!--<Entry.Behaviors>
                             <toolkit:EventToCommandBehavior EventName="TextChanged" Command="{Binding SearchTextChangedCommand}" />
-                        </Entry.Behaviors>
+                        </Entry.Behaviors>-->
                     </Entry>
                     
                     <!-- Clear Button -->
@@ -88,13 +90,13 @@
                     
                     <!-- Search Button -->
                     <Button Grid.Column="2"
-                            Command="{Binding SearchSpotsCommand}"
+                            Command="{Binding SearchCommand}"
                             Style="{StaticResource ButtonActionStyle}"
                             Text="🔍"
                             FontSize="16"
                             WidthRequest="40"
                             HeightRequest="35"
-                            IsEnabled="{Binding IsSearching, Converter={StaticResource InvertBoolConverter}}"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}"
                             AutomationId="SearchButton"
                             SemanticProperties.Description="Lancer la recherche de spots"
                             SemanticProperties.Hint="Appuyez pour rechercher des spots correspondant au texte saisi">
@@ -108,7 +110,7 @@
             </Frame>
             
             <!-- Search Suggestions Dropdown -->
-            <Frame IsVisible="{Binding AreSuggestionsVisible}"
+            <Frame IsVisible="False"
                    BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                    BorderColor="{StaticResource Gray200}"
                    CornerRadius="15"
@@ -117,7 +119,7 @@
                    Margin="15,0,15,5"
                    AutomationId="SuggestionsFrame"
                    SemanticProperties.Description="Suggestions de recherche">
-                <CollectionView ItemsSource="{Binding SearchSuggestions}"
+                <CollectionView ItemsSource="{x:Null}"
                                 SelectionMode="None"
                                 VerticalOptions="Start"
                                 AutomationId="SuggestionsList"
@@ -160,7 +162,7 @@
             </Frame>
         </StackLayout>
         
-        <RefreshView Grid.Row="1" Command="{Binding LoadSpotsCommand}" IsRefreshing="{Binding IsBusy}">
+        <RefreshView Grid.Row="1" Command="{Binding LoadDataCommand}" IsRefreshing="{Binding IsBusy}">
             <Grid RowDefinitions="Auto,400,Auto">
                 
                 <!-- Nouvelle organisation des filtres : 4 boutons principaux + sous-filtres -->
@@ -190,7 +192,7 @@
 
                         <!-- Bouton Activités -->
                         <Button Grid.Column="1"
-                                Command="{Binding FilterByCategoryCommand}"
+                                Command="{x:Null}"
                                 CommandParameter="Activités"
                                 Style="{StaticResource ButtonFilterStyle}"
                                 Text="Activités"
@@ -211,7 +213,7 @@
 
                         <!-- Bouton Structures -->
                         <Button Grid.Column="2"
-                                Command="{Binding FilterByCategoryCommand}"
+                                Command="{x:Null}"
                                 CommandParameter="Structures"
                                 Style="{StaticResource ButtonFilterStyle}"
                                 Text="Structures"
@@ -232,7 +234,7 @@
 
                         <!-- Bouton Boutiques -->
                         <Button Grid.Column="3"
-                                Command="{Binding FilterByCategoryCommand}"
+                                Command="{x:Null}"
                                 CommandParameter="Boutiques"
                                 Style="{StaticResource ButtonFilterStyle}"
                                 Text="Boutiques"
@@ -253,7 +255,7 @@
                     </Grid>
                     
                     <!-- Indicateur de filtrage actif -->
-                    <Frame IsVisible="{Binding IsAnyFilterActive}"
+                    <Frame IsVisible="{Binding IsLoading}"
                            BackgroundColor="{AppThemeBinding Light={StaticResource Info}, Dark={StaticResource Info}}"
                            BorderColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            CornerRadius="8"
@@ -292,7 +294,7 @@
                     </Frame>
                     
                     <!-- Menu de sous-filtres (visible uniquement si une catégorie est sélectionnée) -->
-                    <Frame IsVisible="{Binding IsSubFiltersVisible}"
+                    <Frame IsVisible="{Binding IsLoading}"
                            BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                            BorderColor="{StaticResource Gray200}"
                            CornerRadius="12"
@@ -302,7 +304,7 @@
                            AutomationId="SubFiltersFrame">
                         
                         <ScrollView HorizontalScrollBarVisibility="Never" Orientation="Horizontal">
-                            <CollectionView ItemsSource="{Binding CurrentSubFilters}"
+                            <CollectionView ItemsSource="{Binding SpotTypes}"
                                             SelectionMode="None"
                                             AutomationId="SubFiltersList">
                                 <CollectionView.ItemsLayout>
@@ -398,7 +400,7 @@
                     HorizontalOptions="Center" />
                 <Button
                     Text="Réessayer"
-                    Command="{Binding LoadSpotsCommand}"
+                    Command="{Binding LoadDataCommand}"
                     Style="{StaticResource ButtonPrimaryStyle}"
                     HorizontalOptions="Center" />
             </StackLayout>
@@ -416,7 +418,7 @@
             <!-- Button 1: Actualiser -->
             <Button
                 Grid.Column="0"
-                Command="{Binding LoadSpotsCommand}"
+                Command="{Binding LoadDataCommand}"
                 Style="{StaticResource ButtonMapActionStyle}"
                 Text="Actualiser"
                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"
@@ -434,7 +436,7 @@
             <!-- Button 2: Ma position -->
             <Button
                 Grid.Column="1"
-                Command="{Binding RefreshLocationCommand}"
+                Command="{Binding GetCurrentLocationCommand}"
                 Style="{StaticResource ButtonMapActionStyle}"
                 Text="Localiser"
                 AutomationId="MyLocationButton"
@@ -494,8 +496,8 @@
         </Grid>
         </Grid>
         
-        <!-- Custom Spot Window - Shows spot info with details button -->
-        <Frame x:Name="SpotMiniWindow"
+        <!-- Custom Entity Window - Shows entity info with details button -->
+        <Frame x:Name="EntityMiniWindow"
                IsVisible="{Binding IsSpotMiniWindowVisible}"
                BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
                BorderColor="{StaticResource Primary}"
@@ -508,8 +510,8 @@
                WidthRequest="300"
                HeightRequest="200"
                InputTransparent="False"
-               AutomationId="SpotMiniWindow"
-               SemanticProperties.Description="Aperçu du spot sélectionné">
+               AutomationId="EntityMiniWindow"
+               SemanticProperties.Description="Aperçu de l'entité sélectionnée">
             
             <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
                 <!-- Close Button -->
@@ -526,11 +528,11 @@
                         CornerRadius="15"
                         Padding="0"
                         AutomationId="CloseMiniWindowButton"
-                        SemanticProperties.Description="Fermer l'aperçu du spot" />
+                        SemanticProperties.Description="Fermer l'aperçu de l'entité" />
                 
-                <!-- Spot Name -->
+                <!-- Entity Name -->
                 <Label Grid.Row="1"
-                       Text="{Binding SelectedSpot.Name}"
+                       Text="{Binding SelectedEntityName}"
                        FontSize="18"
                        FontAttributes="Bold"
                        TextColor="{StaticResource TextPrimary}"
@@ -538,25 +540,25 @@
                        HorizontalTextAlignment="Center"
                        LineBreakMode="TailTruncation"
                        MaxLines="2"
-                       AutomationId="SpotNameLabel"
-                       SemanticProperties.Description="Nom du spot" />
+                       AutomationId="EntityNameLabel"
+                       SemanticProperties.Description="Nom de l'entité" />
                 
-                <!-- Activity Type and Level -->
+                <!-- Entity Type and Info -->
                 <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10">
                     <Frame Grid.Column="0"
-                           BackgroundColor="{Binding SelectedSpot.Type.ColorCode, FallbackValue={StaticResource Primary}}"
+                           BackgroundColor="{StaticResource Primary}"
                            CornerRadius="8"
                            Padding="8,4"
                            HasShadow="False">
-                        <Label Text="{Binding SelectedSpot.Type.Name, FallbackValue='Spot'}"
+                        <Label Text="Entité"
                                FontSize="12"
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
                                LineBreakMode="TailTruncation"
-                               AutomationId="SpotTypeLabel"
-                               SemanticProperties.Description="Type d'activité" />
+                               AutomationId="EntityTypeLabel"
+                               SemanticProperties.Description="Type d'entité" />
                     </Frame>
                     
                     <Frame Grid.Column="1"
@@ -564,26 +566,21 @@
                            CornerRadius="8"
                            Padding="8,4"
                            HasShadow="False">
-                        <Label FontSize="12"
+                        <Label Text="Détails"
+                               FontSize="12"
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource PrimaryDarkText}}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
-                               AutomationId="SpotLevelLabel"
-                               SemanticProperties.Description="Niveau de difficulté">
-                            <Label.Text>
-                                <MultiBinding StringFormat="Niveau {0}">
-                                    <Binding Path="SelectedSpot.DifficultyLevel" Converter="{StaticResource DifficultyLevelToFrenchConverter}" />
-                                </MultiBinding>
-                            </Label.Text>
-                        </Label>
+                               AutomationId="EntityInfoLabel"
+                               SemanticProperties.Description="Information de l'entité" />
                     </Frame>
                 </Grid>
                 
                 <!-- View Details Button -->
                 <Button Grid.Row="3"
                         Text="Voir les détails"
-                        Command="{Binding ViewSpotDetailsCommand}"
+                        Command="{Binding ViewEntityDetailsCommand}"
                         Style="{StaticResource ButtonPrimaryStyle}"
                         FontSize="14"
                         CornerRadius="8"

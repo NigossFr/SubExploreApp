@@ -45,7 +45,7 @@ namespace SubExplore.Services.Implementations
 
                 var result = await client
                     .From<SupabaseSpot>()
-                    .Filter("validation_status", Postgrest.Constants.Operator.Equals, 1) // Approved = 1
+                    .Filter("validation_status", Postgrest.Constants.Operator.Equals, "approved")
                     .Get();
 
                 _logger.LogInformation($"✅ {result.Models.Count} spots approuvés récupérés");
@@ -91,7 +91,7 @@ namespace SubExplore.Services.Implementations
 
                 spot.Id = Guid.NewGuid();
                 spot.CreatedAt = DateTime.UtcNow;
-                spot.ValidationStatus = 0; // Pending
+                spot.ValidationStatus = "pending"; // Pending
 
                 var result = await client
                     .From<SupabaseSpot>()
@@ -164,7 +164,7 @@ namespace SubExplore.Services.Implementations
 
                 var result = await client
                     .From<SupabaseSpot>()
-                    .Filter("validation_status", Postgrest.Constants.Operator.Equals, 1)
+                    .Filter("validation_status", Postgrest.Constants.Operator.Equals, "approved")
                     .Filter("name", Postgrest.Constants.Operator.ILike, $"%{searchText}%")
                     .Get();
 
@@ -276,7 +276,7 @@ namespace SubExplore.Services.Implementations
                 SafetyNotes = supabaseSpot.SafetyNotes,
                 BestConditions = supabaseSpot.BestConditions,
                 CreatedAt = supabaseSpot.CreatedAt,
-                ValidationStatus = (SpotValidationStatus)supabaseSpot.ValidationStatus,
+                ValidationStatus = ConvertStringToValidationStatus(supabaseSpot.ValidationStatus),
                 LastSafetyReview = supabaseSpot.LastSafetyReview,
                 MaxDepth = supabaseSpot.MaxDepth.HasValue ? Convert.ToInt32(supabaseSpot.MaxDepth.Value) : (int?)null,
                 CurrentStrength = supabaseSpot.CurrentStrength != null ? (CurrentStrength)supabaseSpot.CurrentStrength : (CurrentStrength?)null,
@@ -301,12 +301,44 @@ namespace SubExplore.Services.Implementations
                 SafetyNotes = spot.SafetyNotes,
                 BestConditions = spot.BestConditions,
                 CreatedAt = spot.CreatedAt,
-                ValidationStatus = (int)spot.ValidationStatus,
+                ValidationStatus = ConvertValidationStatusToString(spot.ValidationStatus),
                 LastSafetyReview = spot.LastSafetyReview,
                 MaxDepth = spot.MaxDepth.HasValue ? Convert.ToDecimal(spot.MaxDepth.Value) : (decimal?)null,
                 CurrentStrength = spot.CurrentStrength.HasValue ? (int)spot.CurrentStrength.Value : 0,
                 HasMooring = spot.HasMooring ?? false,
                 BottomType = spot.BottomType
+            };
+        }
+
+        private SpotValidationStatus ConvertStringToValidationStatus(string status)
+        {
+            return status?.ToLower() switch
+            {
+                "draft" => SpotValidationStatus.Draft,
+                "pending" => SpotValidationStatus.Pending,
+                "under_review" => SpotValidationStatus.UnderReview,
+                "needs_revision" => SpotValidationStatus.NeedsRevision,
+                "safety_review" => SpotValidationStatus.SafetyReview,
+                "approved" => SpotValidationStatus.Approved,
+                "rejected" => SpotValidationStatus.Rejected,
+                "archived" => SpotValidationStatus.Archived,
+                _ => SpotValidationStatus.Pending
+            };
+        }
+
+        private string ConvertValidationStatusToString(SpotValidationStatus status)
+        {
+            return status switch
+            {
+                SpotValidationStatus.Draft => "draft",
+                SpotValidationStatus.Pending => "pending",
+                SpotValidationStatus.UnderReview => "under_review",
+                SpotValidationStatus.NeedsRevision => "needs_revision",
+                SpotValidationStatus.SafetyReview => "safety_review",
+                SpotValidationStatus.Approved => "approved",
+                SpotValidationStatus.Rejected => "rejected",
+                SpotValidationStatus.Archived => "archived",
+                _ => "pending"
             };
         }
 

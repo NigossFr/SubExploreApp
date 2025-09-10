@@ -131,18 +131,6 @@ namespace SubExplore.Models.DTOs
         public List<string> SubmittedDocuments { get; set; } = new();
     }
 
-    /// <summary>
-    /// Verification status enum
-    /// </summary>
-    public enum VerificationStatus
-    {
-        Pending,
-        UnderReview,
-        Approved,
-        Rejected,
-        RequiresMoreInfo,
-        Expired
-    }
 
     /// <summary>
     /// Moderator application status

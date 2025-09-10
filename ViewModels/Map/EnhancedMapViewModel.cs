@@ -399,9 +399,9 @@ namespace SubExplore.ViewModels.Map
                     return;
                 }
 
-                // TODO: Naviguer vers la page d'ajout de spot quand elle sera recréée
-                await _dialogService.ShowToastAsync("Ajout de spot temporairement indisponible");
-                System.Diagnostics.Debug.WriteLine("📍 Demande d'ajout de spot");
+                // Naviguer vers la page d'ajout de spot
+                await Shell.Current.GoToAsync("//addspot");
+                System.Diagnostics.Debug.WriteLine("📍 Navigation vers l'ajout de spot");
             }
             catch (Exception ex)
             {

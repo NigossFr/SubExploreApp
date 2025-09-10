@@ -361,6 +361,8 @@ namespace SubExplore.Services.Implementations
                 "SpotValidationPage" => "SubExplore.Views.Admin.SpotValidationPage",
                 "LoginPage" => "SubExplore.Views.Auth.LoginPage",
                 "RegistrationPage" => "SubExplore.Views.Auth.RegistrationPage",
+                "OrganizationDetailsPage" => "SubExplore.Views.Organizations.OrganizationDetailsPage",
+                "BusinessDetailsPage" => "SubExplore.Views.Businesses.BusinessDetailsPage",
                 _ => $"SubExplore.Views.{viewTypeName}" // Default fallback
             };
         }

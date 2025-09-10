@@ -572,7 +572,7 @@ namespace SubExplore.Services.Implementations
                     SafetyNotes = supabaseSpot.SafetyNotes,
                     BestConditions = supabaseSpot.BestConditions,
                     CreatedAt = supabaseSpot.CreatedAt,
-                    ValidationStatus = (SpotValidationStatus)supabaseSpot.ValidationStatus,
+                    ValidationStatus = ConvertStringToValidationStatus(supabaseSpot.ValidationStatus),
                     LastSafetyReview = supabaseSpot.LastSafetyReview,
                     MaxDepth = (int?)supabaseSpot.MaxDepth,
                     CurrentStrength = (CurrentStrength)supabaseSpot.CurrentStrength,
@@ -592,6 +592,42 @@ namespace SubExplore.Services.Implementations
                 _logger.LogError(ex, "❌ Erreur lors de la conversion du spot {SpotId}", supabaseSpot.Id);
                 return null;
             }
+        }
+
+        #endregion
+
+        #region Conversion Methods
+
+        private SpotValidationStatus ConvertStringToValidationStatus(string status)
+        {
+            return status?.ToLower() switch
+            {
+                "draft" => SpotValidationStatus.Draft,
+                "pending" => SpotValidationStatus.Pending,
+                "under_review" => SpotValidationStatus.UnderReview,
+                "needs_revision" => SpotValidationStatus.NeedsRevision,
+                "safety_review" => SpotValidationStatus.SafetyReview,
+                "approved" => SpotValidationStatus.Approved,
+                "rejected" => SpotValidationStatus.Rejected,
+                "archived" => SpotValidationStatus.Archived,
+                _ => SpotValidationStatus.Pending
+            };
+        }
+
+        private string ConvertValidationStatusToString(SpotValidationStatus status)
+        {
+            return status switch
+            {
+                SpotValidationStatus.Draft => "draft",
+                SpotValidationStatus.Pending => "pending",
+                SpotValidationStatus.UnderReview => "under_review",
+                SpotValidationStatus.NeedsRevision => "needs_revision",
+                SpotValidationStatus.SafetyReview => "safety_review",
+                SpotValidationStatus.Approved => "approved",
+                SpotValidationStatus.Rejected => "rejected",
+                SpotValidationStatus.Archived => "archived",
+                _ => "pending"
+            };
         }
 
         #endregion

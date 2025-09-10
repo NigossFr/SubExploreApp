@@ -45,7 +45,7 @@ namespace SubExplore.Services.Implementations
 
                 var result = await client
                     .From<SupabaseSpotType>()
-                    .Filter("is_active", Postgrest.Constants.Operator.Equals, true)
+                    .Where(x => x.IsActive == true)
                     .Order("name", Postgrest.Constants.Ordering.Ascending)
                     .Get();
 
@@ -89,8 +89,7 @@ namespace SubExplore.Services.Implementations
 
                 var result = await client
                     .From<SupabaseSpotType>()
-                    .Filter("is_active", Postgrest.Constants.Operator.Equals, true)
-                    .Filter("category", Postgrest.Constants.Operator.Equals, category)
+                    .Where(x => x.IsActive == true && x.Category == category)
                     .Order("name", Postgrest.Constants.Ordering.Ascending)
                     .Get();
 

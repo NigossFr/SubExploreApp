@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Page Headers -->
+  <data name="PageTitle" xml:space="preserve">
+    <value>Ajouter un Spot</value>
+    <comment>Main page title</comment>
+  </data>
+  <data name="PageSubtitle" xml:space="preserve">
+    <value>Partagez vos découvertes avec la communauté</value>
+    <comment>Page subtitle description</comment>
+  </data>
+  
+  <!-- Connection Status -->
+  <data name="ConnectionConnected" xml:space="preserve">
+    <value>Connecté</value>
+    <comment>Connected status</comment>
+  </data>
+  <data name="ConnectionOffline" xml:space="preserve">
+    <value>Hors ligne</value>
+    <comment>Offline status</comment>
+  </data>
+  <data name="ApiNotAvailable" xml:space="preserve">
+    <value>API non disponible</value>
+    <comment>API unavailable message</comment>
+  </data>
+  
+  <!-- Error Messages -->
+  <data name="RecoverableErrorDetected" xml:space="preserve">
+    <value>Erreur récupérable détectée</value>
+    <comment>Recoverable error title</comment>
+  </data>
+  <data name="ClearButtonText" xml:space="preserve">
+    <value>🧹 Effacer</value>
+    <comment>Clear errors button</comment>
+  </data>
+  <data name="RetryButtonText" xml:space="preserve">
+    <value>🔄 Réessayer</value>
+    <comment>Retry button text</comment>
+  </data>
+  <data name="RefreshAllButtonText" xml:space="preserve">
+    <value>🔄 Actualiser tout</value>
+    <comment>Refresh all button text</comment>
+  </data>
+  
+  <!-- Spot Information Section -->
+  <data name="SpotInformationTitle" xml:space="preserve">
+    <value>📝 Informations du Spot</value>
+    <comment>Spot information section title</comment>
+  </data>
+  <data name="SpotNameLabel" xml:space="preserve">
+    <value>Nom du spot *</value>
+    <comment>Spot name field label</comment>
+  </data>
+  <data name="SpotNamePlaceholder" xml:space="preserve">
+    <value>Entrez le nom du spot...</value>
+    <comment>Spot name field placeholder</comment>
+  </data>
+  <data name="SpotDescriptionLabel" xml:space="preserve">
+    <value>Description</value>
+    <comment>Spot description field label</comment>
+  </data>
+  <data name="SpotDescriptionPlaceholder" xml:space="preserve">
+    <value>Décrivez le spot, ses particularités, la faune, la flore...</value>
+    <comment>Spot description field placeholder</comment>
+  </data>
+  
+  <!-- Location Section -->
+  <data name="LocationTitle" xml:space="preserve">
+    <value>📍 Localisation</value>
+    <comment>Location section title</comment>
+  </data>
+  <data name="LatitudeLabel" xml:space="preserve">
+    <value>Latitude</value>
+    <comment>Latitude field label</comment>
+  </data>
+  <data name="LongitudeLabel" xml:space="preserve">
+    <value>Longitude</value>
+    <comment>Longitude field label</comment>
+  </data>
+  <data name="NoLocationSelected" xml:space="preserve">
+    <value>Aucune position sélectionnée</value>
+    <comment>No location selected message</comment>
+  </data>
+  
+  <!-- Spot Type Section -->
+  <data name="SpotTypeTitle" xml:space="preserve">
+    <value>🏷️ Type de Spot</value>
+    <comment>Spot type section title</comment>
+  </data>
+  <data name="ReloadTypesButton" xml:space="preserve">
+    <value>🔄 Recharger</value>
+    <comment>Reload types button text</comment>
+  </data>
+  <data name="LoadingTypes" xml:space="preserve">
+    <value>Chargement des types...</value>
+    <comment>Loading types message</comment>
+  </data>
+  <data name="NoTypesAvailable" xml:space="preserve">
+    <value>❌ Aucun type de spot disponible</value>
+    <comment>No types available message</comment>
+  </data>
+  <data name="CheckConnectionRetry" xml:space="preserve">
+    <value>Vérifiez votre connexion et réessayez</value>
+    <comment>Connection check message</comment>
+  </data>
+  
+  <!-- Action Buttons -->
+  <data name="CreateSpotButton" xml:space="preserve">
+    <value>✨ Créer le Spot</value>
+    <comment>Create spot button text</comment>
+  </data>
+  <data name="ClearFormButton" xml:space="preserve">
+    <value>🗑️ Vider le formulaire</value>
+    <comment>Clear form button text</comment>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>❌ Annuler</value>
+    <comment>Cancel button text</comment>
+  </data>
+  
+  <!-- Validation Messages -->
+  <data name="ValidationSummaryValid" xml:space="preserve">
+    <value>✅ Tous les champs sont valides</value>
+    <comment>All fields valid message</comment>
+  </data>
+  <data name="ValidationErrorsFound" xml:space="preserve">
+    <value>⚠️ {0} erreur(s) trouvée(s)</value>
+    <comment>Validation errors found message</comment>
+  </data>
+  
+  <!-- Accessibility Descriptions -->
+  <data name="AddSpotPageDescription" xml:space="preserve">
+    <value>Page d'ajout de nouveau spot de plongée</value>
+    <comment>Page accessibility description</comment>
+  </data>
+  <data name="RequiredFieldDescription" xml:space="preserve">
+    <value>Champ obligatoire</value>
+    <comment>Required field accessibility description</comment>
+  </data>
+  <data name="OptionalFieldDescription" xml:space="preserve">
+    <value>Champ optionnel</value>
+    <comment>Optional field accessibility description</comment>
+  </data>
+  
+</root>

@@ -34,7 +34,7 @@ namespace SubExplore
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AppShell] Constructor error: {ex.Message}");
+                // AppShell constructor error
                 // Fallback initialization - but don't create fallback services silently
                 throw new InvalidOperationException("Failed to initialize AppShell dependencies. Please check service registration.", ex);
             }
@@ -112,7 +112,7 @@ namespace SubExplore
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AppShell] OnMenuButtonTapped error: {ex.Message}");
+                // AppShell menu button error
             }
         }
 
@@ -144,7 +144,7 @@ namespace SubExplore
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AppShell] OnLogoutButtonTapped error: {ex.Message}");
+                // AppShell logout button error
             }
         }
 
@@ -216,7 +216,7 @@ namespace SubExplore
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AppShell] SetFlyoutMenuContext error: {ex.Message}");
+                // AppShell flyout menu context error
             }
         }
         
@@ -248,18 +248,18 @@ namespace SubExplore
                             : user.Username ?? "Utilisateur SubExplore";
                         
                         userNameLabel.Text = displayName;
-                        System.Diagnostics.Debug.WriteLine($"[AppShell] Updated user name to: {displayName}");
+                        // User name updated
                     }
                     else if (userNameLabel != null)
                     {
                         userNameLabel.Text = "Utilisateur SubExplore";
-                        System.Diagnostics.Debug.WriteLine($"[AppShell] Set default user name");
+                        // Default user name set
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AppShell] UpdateUserInfo error: {ex.Message}");
+                // AppShell user info update error
             }
         }
         
@@ -268,7 +268,7 @@ namespace SubExplore
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[AppShell] 🔧 Simple Shell configuration");
+                // Simple Shell configuration
                 
                 // Simple, reliable configuration
                 this.FlyoutBehavior = FlyoutBehavior.Flyout;
@@ -277,11 +277,11 @@ namespace SubExplore
                 // Use default MAUI hamburger icon
                 this.FlyoutIcon = null;
                 
-                System.Diagnostics.Debug.WriteLine("[AppShell] ✅ Simple Shell configuration applied");
+                // Simple Shell configuration applied
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AppShell] ❌ Simple configuration failed: {ex.Message}");
+                // Simple configuration failed
             }
         }
         
@@ -290,18 +290,18 @@ namespace SubExplore
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[AppShell] 🔧 Applying simple Shell configuration");
+                // Applying simple Shell configuration
                 
                 // Keep it simple - use MAUI defaults
                 this.FlyoutBehavior = FlyoutBehavior.Flyout;
                 Shell.SetNavBarIsVisible(this, true);
                 this.FlyoutIcon = null; // Let MAUI handle the default hamburger icon
                 
-                System.Diagnostics.Debug.WriteLine("[AppShell] ✅ Simple Shell configuration applied");
+                // Simple Shell configuration applied
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AppShell] ❌ Simple configuration failed: {ex.Message}");
+                // Simple configuration failed
             }
         }
 

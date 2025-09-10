@@ -199,7 +199,9 @@ namespace SubExplore.Services.Implementations
                 { "AboutPage", "SubExplore.Views.Settings" },
                 { "LoginPage", "SubExplore.Views.Auth" },
                 { "RegistrationPage", "SubExplore.Views.Auth" },
-                { "CompleteLoginPage", "SubExplore.Views.Auth" }
+                { "CompleteLoginPage", "SubExplore.Views.Auth" },
+                { "OrganizationDetailsPage", "SubExplore.Views.Organizations" },
+                { "BusinessDetailsPage", "SubExplore.Views.Businesses" }
             };
 
             if (namespaceMappings.TryGetValue(viewName, out var specificNamespace))

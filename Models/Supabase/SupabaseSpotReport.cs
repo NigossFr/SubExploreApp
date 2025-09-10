@@ -7,13 +7,13 @@ namespace SubExplore.Models.Supabase
     public class SupabaseSpotReport : BaseModel
     {
         [PrimaryKey("id")]
-        public Guid Id { get; set; }
+        public int Id { get; set; }  // SERIAL en DB → int en C#
 
         [Column("spot_id")]
-        public Guid SpotId { get; set; }
+        public int SpotId { get; set; }  // Référence vers practice_spots/organizations/businesses.id
 
         [Column("reporter_id")]
-        public Guid ReporterId { get; set; }
+        public Guid ReporterId { get; set; }  // UUID vers users.id
 
         [Column("report_type")]
         public int ReportType { get; set; }
@@ -37,7 +37,7 @@ namespace SubExplore.Models.Supabase
         public DateTime? ReviewedAt { get; set; }
 
         [Column("reviewed_by")]
-        public Guid? ReviewedBy { get; set; }
+        public Guid? ReviewedBy { get; set; }  // UUID vers users.id
 
         [Column("review_notes")]
         public string? ReviewNotes { get; set; }

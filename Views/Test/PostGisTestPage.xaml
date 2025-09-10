@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Test.PostGisTestPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="{Binding Title}">
+    
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+            
+            <!-- Header -->
+            <Label Text="Test des fonctions PostGIS"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   Margin="0,10,0,20" />
+                   
+            <Label Text="Cette page teste les 3 fonctions PostGIS hybrides :"
+                   FontSize="16"
+                   TextColor="Gray"
+                   HorizontalOptions="Center" />
+                   
+            <Label Text="• find_practice_spots_near_location()&#x0a;• find_organizations_near_location()&#x0a;• find_businesses_near_location()"
+                   FontSize="14"
+                   TextColor="Gray"
+                   HorizontalOptions="Center"
+                   Margin="0,5,0,20" />
+
+            <!-- Test Buttons -->
+            <Button Text="🧪 Lancer le test complet"
+                    Command="{Binding RunPostGisTestCommand}"
+                    IsEnabled="{Binding IsTestRunning, Converter={StaticResource InvertedBoolConverter}}"
+                    BackgroundColor="Green"
+                    TextColor="White"
+                    CornerRadius="10"
+                    HeightRequest="50" />
+                    
+            <Button Text="🔍 Test avec filtres"
+                    Command="{Binding RunFilterTestCommand}"
+                    IsEnabled="{Binding IsTestRunning, Converter={StaticResource InvertedBoolConverter}}"
+                    BackgroundColor="Blue"
+                    TextColor="White"
+                    CornerRadius="10"
+                    HeightRequest="50" />
+
+            <!-- Loading indicator -->
+            <ActivityIndicator IsVisible="{Binding IsTestRunning}"
+                               IsRunning="{Binding IsTestRunning}"
+                               Color="Blue"
+                               WidthRequest="50"
+                               HeightRequest="50"
+                               HorizontalOptions="Center" />
+                               
+            <Label Text="Test en cours..."
+                   IsVisible="{Binding IsTestRunning}"
+                   HorizontalOptions="Center"
+                   FontAttributes="Italic" />
+
+            <!-- Results -->
+            <Frame BackgroundColor="LightGray"
+                   Padding="15"
+                   CornerRadius="10"
+                   IsVisible="{Binding HasTestResults}">
+                <ScrollView HeightRequest="300">
+                    <Label Text="{Binding TestResults}"
+                           FontFamily="Courier"
+                           FontSize="12"
+                           TextColor="Black" />
+                </ScrollView>
+            </Frame>
+
+            <!-- Clear button -->
+            <Button Text="🧹 Effacer les résultats"
+                    Command="{Binding ClearResultsCommand}"
+                    IsVisible="{Binding HasTestResults}"
+                    BackgroundColor="Gray"
+                    TextColor="White"
+                    CornerRadius="5"
+                    HeightRequest="40" />
+                    
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

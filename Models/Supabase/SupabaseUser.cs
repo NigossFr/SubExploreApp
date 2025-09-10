@@ -78,46 +78,6 @@ namespace SubExplore.Models.Supabase
         public Guid? OrganizationId { get; set; }
     }
 
-    /// <summary>
-    /// Modèle SpotType pour l'API Supabase
-    /// </summary>
-    [Table("spot_types")]
-    public class SupabaseSpotType : BaseModel
-    {
-        [PrimaryKey("id")]
-        public Guid Id { get; set; }
-
-        [Column("name")]
-        public string Name { get; set; } = string.Empty;
-
-        [Column("icon_path")]
-        public string? IconPath { get; set; }
-
-        [Column("color_code")]
-        public string ColorCode { get; set; } = "#000000";
-
-        [Column("requires_expert_validation")]
-        public bool RequiresExpertValidation { get; set; }
-
-        [Column("validation_criteria")]
-        public object? ValidationCriteria { get; set; }
-
-        // Enum stocké comme string
-        [Column("category")]
-        public string Category { get; set; } = "Activity";
-
-        [Column("description")]
-        public string? Description { get; set; }
-
-        [Column("is_active")]
-        public bool IsActive { get; set; } = true;
-
-        [Column("created_at")]
-        public DateTime CreatedAt { get; set; }
-
-        [Column("updated_at")]
-        public DateTime UpdatedAt { get; set; }
-    }
 
     /// <summary>
     /// Modèle Spot pour l'API Supabase
@@ -162,7 +122,7 @@ namespace SubExplore.Models.Supabase
         public DateTime CreatedAt { get; set; }
 
         [Column("validation_status")]
-        public int ValidationStatus { get; set; } = 0;
+        public string ValidationStatus { get; set; } = "pending";
 
         [Column("last_safety_review")]
         public DateTime? LastSafetyReview { get; set; }
