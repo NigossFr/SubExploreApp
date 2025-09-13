@@ -519,7 +519,24 @@ public static class MauiProgram
             // Log fatal exception through proper logging when app is running
         };
 
-        return builder.Build();
+        var app = builder.Build();
+
+        // ✅ Initialize services including route registry
+        Task.Run(async () =>
+        {
+            try
+            {
+                var serviceProvider = app.Services;
+                var isHealthy = await serviceProvider.ValidateAndInitializeServicesAsync();
+                System.Diagnostics.Debug.WriteLine($"[MauiProgram] Service initialization completed. Healthy: {isHealthy}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MauiProgram] Service initialization failed: {ex.Message}");
+            }
+        });
+
+        return app;
     }
 
     /// <summary>

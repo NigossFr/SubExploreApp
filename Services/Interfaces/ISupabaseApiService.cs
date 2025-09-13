@@ -58,6 +58,25 @@ namespace SubExplore.Services.Interfaces
         /// </summary>
         Task<List<SupabaseBusiness>> GetBusinessesAsync();
 
+        // ========================================
+        // RECHERCHE DIRECTE PAR ID (OPTIMISÉE)
+        // ========================================
+
+        /// <summary>
+        /// Récupère un spot de pratique par son ID
+        /// </summary>
+        Task<SupabasePracticeSpot?> GetPracticeSpotByIdAsync(int id);
+
+        /// <summary>
+        /// Récupère une organisation par son ID
+        /// </summary>
+        Task<SupabaseOrganization?> GetOrganizationByIdAsync(int id);
+
+        /// <summary>
+        /// Récupère un commerce par son ID
+        /// </summary>
+        Task<SupabaseBusiness?> GetBusinessByIdAsync(int id);
+
         /// <summary>
         /// Crée un nouveau spot de pratique
         /// </summary>

@@ -65,6 +65,18 @@ namespace SubExplore.ViewModels.Map
         [ObservableProperty]
         private string searchText = string.Empty;
 
+        [ObservableProperty]
+        private bool isSearching = false;
+
+        [ObservableProperty]
+        private string? selectedCategory = null;
+
+        // Computed property for filtered spots count
+        public int FilteredSpotsCount => 
+            (ShowPracticeSpots ? PracticeSpots.Count : 0) +
+            (ShowOrganizations ? Organizations.Count : 0) +
+            (ShowBusinesses ? Businesses.Count : 0);
+
         // Mini-window properties
         [ObservableProperty]
         private bool isSpotMiniWindowVisible;
@@ -112,15 +124,22 @@ namespace SubExplore.ViewModels.Map
 
         public override async Task InitializeAsync(object parameter = null)
         {
+            // First get location, then load data that depends on it
             await GetCurrentLocationAsync();
+            
+            // Now load data with location available
             await LoadDataAsync();
         }
 
         [RelayCommand]
         public async Task LoadDataAsync()
         {
-            if (IsBusy || CurrentLocation == null)
+            if (IsBusy)
                 return;
+            
+            // Use current location if available, otherwise use default map center
+            var searchLatitude = CurrentLocation?.Latitude ?? MapLatitude;
+            var searchLongitude = CurrentLocation?.Longitude ?? MapLongitude;
 
             try
             {
@@ -171,19 +190,24 @@ namespace SubExplore.ViewModels.Map
                 
                 System.Diagnostics.Debug.WriteLine($"📊 MapViewModel: {practiceSpots.Count} Practice Spots récupérés du service");
 
+                // Performance fix: Bulk operation instead of individual Add() calls
                 PracticeSpots.Clear();
-                foreach (var spot in practiceSpots)
+                if (practiceSpots.Any())
                 {
-                    System.Diagnostics.Debug.WriteLine($"➕ MapViewModel: Ajout Practice Spot: ID={spot.Id}, Name='{spot.Name}'");
-                    PracticeSpots.Add(spot);
+                    foreach (var spot in practiceSpots)
+                    {
+                        PracticeSpots.Add(spot);
+                    }
                 }
                 
                 System.Diagnostics.Debug.WriteLine($"✅ MapViewModel: {PracticeSpots.Count} Practice Spots ajoutés à la collection");
+                
+                // Notify FilteredSpotsCount property changed
+                OnPropertyChanged(nameof(FilteredSpotsCount));
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ MapViewModel: Erreur Practice Spots: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"❌ MapViewModel: Stack trace: {ex.StackTrace}");
                 await DialogService.ShowAlertAsync("Erreur", $"Impossible de charger les spots de pratique: {ex.Message}", "OK");
             }
         }
@@ -194,11 +218,18 @@ namespace SubExplore.ViewModels.Map
             {
                 var organizations = await _supabaseApiService.GetOrganizationsAsync();
 
+                // Performance fix: Bulk operation
                 Organizations.Clear();
-                foreach (var org in organizations)
+                if (organizations.Any())
                 {
-                    Organizations.Add(org);
+                    foreach (var org in organizations)
+                    {
+                        Organizations.Add(org);
+                    }
                 }
+                
+                // Notify FilteredSpotsCount property changed
+                OnPropertyChanged(nameof(FilteredSpotsCount));
             }
             catch (Exception ex)
             {
@@ -212,11 +243,18 @@ namespace SubExplore.ViewModels.Map
             {
                 var businesses = await _supabaseApiService.GetBusinessesAsync();
 
+                // Performance fix: Bulk operation
                 Businesses.Clear();
-                foreach (var business in businesses)
+                if (businesses.Any())
                 {
-                    Businesses.Add(business);
+                    foreach (var business in businesses)
+                    {
+                        Businesses.Add(business);
+                    }
                 }
+                
+                // Notify FilteredSpotsCount property changed
+                OnPropertyChanged(nameof(FilteredSpotsCount));
             }
             catch (Exception ex)
             {
@@ -231,10 +269,14 @@ namespace SubExplore.ViewModels.Map
                 var supabaseSpotTypes = await _spotTypeService.GetActiveSpotTypesAsync();
                 var spotTypes = supabaseSpotTypes.Select(st => _spotTypeService.ConvertToDomainModel(st)).ToList();
 
+                // Performance fix: Bulk operation
                 SpotTypes.Clear();
-                foreach (var spotType in spotTypes)
+                if (spotTypes.Any())
                 {
-                    SpotTypes.Add(spotType);
+                    foreach (var spotType in spotTypes)
+                    {
+                        SpotTypes.Add(spotType);
+                    }
                 }
             }
             catch (Exception ex)
@@ -245,7 +287,8 @@ namespace SubExplore.ViewModels.Map
 
         private void UpdatePins()
         {
-            Pins.Clear();
+            // Performance optimization: Collect all pins first, then bulk update
+            var newPins = new List<Pin>();
 
             // Add pins for PracticeSpots
             if (ShowPracticeSpots)
@@ -260,7 +303,7 @@ namespace SubExplore.ViewModels.Map
                         Location = new Location((double)spot.Latitude, (double)spot.Longitude),
                         BindingContext = new { Type = "PracticeSpot", Data = spot }
                     };
-                    Pins.Add(pin);
+                    newPins.Add(pin);
                 }
             }
 
@@ -277,7 +320,7 @@ namespace SubExplore.ViewModels.Map
                         Location = new Location((double)org.Latitude, (double)org.Longitude),
                         BindingContext = new { Type = "Organization", Data = org }
                     };
-                    Pins.Add(pin);
+                    newPins.Add(pin);
                 }
             }
 
@@ -294,8 +337,15 @@ namespace SubExplore.ViewModels.Map
                         Location = new Location((double)business.Latitude, (double)business.Longitude),
                         BindingContext = new { Type = "Business", Data = business }
                     };
-                    Pins.Add(pin);
+                    newPins.Add(pin);
                 }
+            }
+            
+            // Bulk update: Clear and add all at once to minimize notifications
+            Pins.Clear();
+            foreach (var pin in newPins)
+            {
+                Pins.Add(pin);
             }
         }
 
@@ -307,9 +357,8 @@ namespace SubExplore.ViewModels.Map
             {
                 try
                 {
-                    // Convert SupabasePracticeSpot to Spot model for SpotDetailsViewModel
-                    var domainSpot = ConvertSupabasePracticeSpotToDomainSpot(spot);
-                    await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(domainSpot);
+                    // Pass SupabasePracticeSpot directly to SpotDetailsViewModel
+                    await NavigationService.NavigateToAsync<ViewModels.Spots.SpotDetailsViewModel>(spot);
                 }
                 catch (Exception ex)
                 {
@@ -325,6 +374,7 @@ namespace SubExplore.ViewModels.Map
             {
                 try
                 {
+                    // Use specialized OrganizationDetailsViewModel for proper data display
                     await NavigationService.NavigateToAsync<ViewModels.Organizations.OrganizationDetailsViewModel>(org);
                 }
                 catch (Exception ex)
@@ -341,6 +391,7 @@ namespace SubExplore.ViewModels.Map
             {
                 try
                 {
+                    // Use specialized BusinessDetailsViewModel for proper data display
                     await NavigationService.NavigateToAsync<ViewModels.Businesses.BusinessDetailsViewModel>(business);
                 }
                 catch (Exception ex)

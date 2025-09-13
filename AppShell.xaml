@@ -11,6 +11,8 @@
     xmlns:admin="clr-namespace:SubExplore.Views.Admin"
     xmlns:auth="clr-namespace:SubExplore.Views.Auth"
     xmlns:settings="clr-namespace:SubExplore.Views.Settings"
+    xmlns:organizations="clr-namespace:SubExplore.Views.Organizations"
+    xmlns:businesses="clr-namespace:SubExplore.Views.Businesses"
     xmlns:controls="clr-namespace:SubExplore.Controls"
     xmlns:viewmodels="clr-namespace:SubExplore.ViewModels"
     xmlns:converters="clr-namespace:SubExplore.Helpers.Converters"
@@ -281,32 +283,32 @@
         ContentTemplate="{DataTemplate map:MapPage}"
         Route="map"
         Icon="dotnet_bot.png"
-        FlyoutItemIsVisible="False" />
+        FlyoutItemIsVisible="True" />
 
     <!-- Routes activées avec pages placeholder simples -->
     <ShellContent
         Title="Mes Spots"
         ContentTemplate="{DataTemplate spots:MySpotsPage}"
         Route="myspots"
-        FlyoutItemIsVisible="False" />
+        FlyoutItemIsVisible="True" />
 
     <ShellContent
         Title="Favoris"
         ContentTemplate="{DataTemplate favorites:FavoritesPage}"
         Route="favorites"
-        FlyoutItemIsVisible="False" />
+        FlyoutItemIsVisible="True" />
 
     <ShellContent
         Title="Profil"
         ContentTemplate="{DataTemplate profile:UserProfilePage}"
         Route="userprofile"
-        FlyoutItemIsVisible="False" />
+        FlyoutItemIsVisible="True" />
 
     <ShellContent
         Title="Statistiques"
         ContentTemplate="{DataTemplate profile:UserStatsPage}"
         Route="userstats"
-        FlyoutItemIsVisible="False" />
+        FlyoutItemIsVisible="True" />
 
     <!-- Modal Pages - Outside main navigation -->
     <!-- Add Spot Page Route -->
@@ -334,6 +336,20 @@
         Title="Édition du Spot"
         ContentTemplate="{DataTemplate spots:SpotEditPage}"
         Route="spotedit" 
+        FlyoutItemIsVisible="False" />
+
+    <!-- Organization Details Page Route -->
+    <ShellContent
+        Title="Détails de l'Organisation"
+        ContentTemplate="{DataTemplate organizations:OrganizationDetailsPage}"
+        Route="organizationdetails" 
+        FlyoutItemIsVisible="False" />
+
+    <!-- Business Details Page Route -->
+    <ShellContent
+        Title="Détails du Commerce"
+        ContentTemplate="{DataTemplate businesses:BusinessDetailsPage}"
+        Route="businessdetails" 
         FlyoutItemIsVisible="False" />
 
     <!-- Admin route - Hidden - Admin validation page -->

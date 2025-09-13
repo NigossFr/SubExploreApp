@@ -10,7 +10,8 @@ using Microsoft.Extensions.Logging;
 namespace SubExplore.ViewModels.Organizations
 {
     [ShellRoute("organizationdetails", FriendlyName = "🏢 Détails Organisation", IsVisible = false)]
-    public partial class OrganizationDetailsViewModel : ViewModelBase
+    [QueryProperty(nameof(OrganizationId), "id")]
+    public partial class OrganizationDetailsViewModel : ViewModelBase, IQueryAttributable
     {
         private readonly ISupabaseApiService _supabaseApiService;
         private readonly INavigationService _navigationService;
@@ -59,6 +60,9 @@ namespace SubExplore.ViewModels.Organizations
         [ObservableProperty]
         private string _operatingHoursDisplay = string.Empty;
 
+        // QueryProperty must be a public property, not ObservableProperty
+        public string OrganizationId { get; set; } = string.Empty;
+
         // Property change handler for dynamic title updates
         partial void OnOrganizationChanged(SupabaseOrganization? value)
         {
@@ -90,6 +94,40 @@ namespace SubExplore.ViewModels.Organizations
             Title = "Détails de l'Organisation";
         }
 
+        // ✅ IQueryAttributable implementation for Shell navigation
+        public async void ApplyQueryAttributes(IDictionary<string, object> query)
+        {
+            _logger?.LogInformation("ApplyQueryAttributes called with {Count} parameters", query.Count);
+            
+            if (query.TryGetValue("id", out var idValue))
+            {
+                OrganizationId = idValue?.ToString() ?? string.Empty;
+                _logger?.LogInformation("ApplyQueryAttributes: OrganizationId set to {OrganizationId}", OrganizationId);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel ApplyQueryAttributes: OrganizationId set to '{OrganizationId}'");
+                
+                // 🚀 CRITICAL FIX: Initialize immediately when QueryProperty is received
+                if (!string.IsNullOrEmpty(OrganizationId))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel ApplyQueryAttributes: Triggering initialization with OrganizationId '{OrganizationId}'");
+                    await InitializeAsync();
+                }
+            }
+            
+            if (query.TryGetValue("organizationId", out var orgIdValue))
+            {
+                OrganizationId = orgIdValue?.ToString() ?? string.Empty;
+                _logger?.LogInformation("ApplyQueryAttributes: OrganizationId (alt) set to {OrganizationId}", OrganizationId);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel ApplyQueryAttributes: OrganizationId (alt) set to '{OrganizationId}'");
+                
+                // 🚀 CRITICAL FIX: Initialize immediately when QueryProperty is received (alt)
+                if (!string.IsNullOrEmpty(OrganizationId))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel ApplyQueryAttributes: Triggering initialization (alt) with OrganizationId '{OrganizationId}'");
+                    await InitializeAsync();
+                }
+            }
+        }
+
         public override async Task InitializeAsync(object parameter = null)
         {
             try
@@ -97,27 +135,60 @@ namespace SubExplore.ViewModels.Organizations
                 IsLoading = true;
                 IsError = false;
 
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 1 - Starting initialization");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 2 - Parameter is: {parameter?.GetType().Name ?? "null"} = {parameter}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 3 - OrganizationId QueryProperty: '{OrganizationId}'");
+
+                // Check QueryProperty first (Shell navigation)
+                if (!string.IsNullOrEmpty(OrganizationId))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 4A - Found OrganizationId from QueryProperty: '{OrganizationId}'");
+                    
+                    if (int.TryParse(OrganizationId, out var queryOrganizationId))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 4B - Successfully parsed OrganizationId as integer: {queryOrganizationId}");
+                        _logger?.LogInformation("Found OrganizationId from QueryProperty as integer: {OrganizationId}", queryOrganizationId);
+                        await LoadOrganizationById(queryOrganizationId);
+                        return;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 4C - Failed to parse OrganizationId as integer: '{OrganizationId}'");
+                        _logger?.LogWarning("OrganizationId from QueryProperty is not a valid integer: {OrganizationId}", OrganizationId);
+                    }
+                }
+
+                // Handle direct parameter navigation (legacy/programmatic)
                 if (parameter is SupabaseOrganization organization)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 5A - Parameter is SupabaseOrganization object");
                     Organization = organization;
                     await LoadOrganizationDetails();
+                    return; // Important: Exit after successful direct object loading
                 }
                 else if (parameter is int organizationId)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 5B - Parameter is integer: {organizationId}");
                     await LoadOrganizationById(organizationId);
+                    return; // Exit after processing integer parameter
                 }
                 else if (parameter is string stringParam && int.TryParse(stringParam, out var idFromString))
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 5C - Parameter is string that parses as integer: {idFromString}");
                     await LoadOrganizationById(idFromString);
+                    return; // Exit after processing string parameter
                 }
                 else
                 {
-                    if (parameter == null)
+                    if (parameter == null && string.IsNullOrEmpty(OrganizationId))
                     {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 6A - No parameters found");
                         IsLoading = false;
                         return;
                     }
                     
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] OrganizationDetailsViewModel InitializeAsync: STEP 6B - Invalid parameter type");
+                    _logger?.LogError("Invalid navigation parameter: {Parameter}", parameter);
                     await _dialogService.ShowAlertAsync("Erreur", "Paramètre de navigation invalide", "OK");
                     await _navigationService.GoBackAsync();
                 }
@@ -145,6 +216,8 @@ namespace SubExplore.ViewModels.Organizations
                 
                 if (targetOrganization == null)
                 {
+                    IsError = true;
+                    ErrorMessage = $"Organisation non trouvée (ID: {organizationId})";
                     await _dialogService.ShowAlertAsync("Erreur", $"Organisation non trouvée (ID: {organizationId})", "OK");
                     await _navigationService.GoBackAsync();
                     return;
@@ -158,12 +231,16 @@ namespace SubExplore.ViewModels.Organizations
                 }
                 else
                 {
+                    IsError = true;
+                    ErrorMessage = "Impossible de charger les données de l'organisation";
                     await _dialogService.ShowAlertAsync("Erreur", "Impossible de charger les données de l'organisation", "OK");
                     await _navigationService.GoBackAsync();
                 }
             }
             catch (TimeoutException)
             {
+                IsError = true;
+                ErrorMessage = "Le chargement a pris trop de temps. Vérifiez votre connexion réseau.";
                 await _dialogService.ShowAlertAsync("Timeout", 
                     "Le chargement a pris trop de temps. Vérifiez votre connexion réseau.", "OK");
                 await _navigationService.GoBackAsync();
@@ -171,8 +248,14 @@ namespace SubExplore.ViewModels.Organizations
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error loading organization by ID: {OrganizationId}", organizationId);
+                IsError = true;
+                ErrorMessage = $"Erreur API Supabase: {ex.Message}";
                 await _dialogService.ShowAlertAsync("Erreur", $"Erreur API Supabase: {ex.Message}", "OK");
                 await _navigationService.GoBackAsync();
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 

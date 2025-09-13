@@ -4,6 +4,7 @@ using SubExplore.Models.Domain;
 using SubExplore.Models.Navigation;
 using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels.Base;
+using SubExplore.Navigation;
 using System.Collections.ObjectModel;
 using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
@@ -11,7 +12,11 @@ using Microsoft.Extensions.Logging;
 
 namespace SubExplore.ViewModels.Spots
 {
-    public partial class SpotDetailsViewModel : ViewModelBase
+    [QueryProperty(nameof(SpotId), "id")]
+    [QueryProperty(nameof(SpotIdParam), "spotId")]
+    [QueryProperty(nameof(SpotIdParam), "spotid")]
+    [ShellRoute("spotdetails", FriendlyName = "🏊 Détails Spot", IsVisible = false)]
+    public partial class SpotDetailsViewModel : ViewModelBase, IQueryAttributable
     {
         private readonly ISupabaseApiService _supabaseApiService;
         private readonly INavigationService _navigationService;
@@ -105,6 +110,11 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private string _validationMode = string.Empty;
 
+        // ✅ QueryProperty parameters for Shell navigation
+        public string SpotId { get; set; } = string.Empty;
+        
+        public string SpotIdParam { get; set; } = string.Empty;
+
         // Property change handler for dynamic title updates
         partial void OnSpotChanged(Spot? value)
         {
@@ -148,17 +158,121 @@ namespace SubExplore.ViewModels.Spots
             Title = "Détails du Spot";
         }
 
+        // ✅ IQueryAttributable implementation for Shell navigation
+        public void ApplyQueryAttributes(IDictionary<string, object> query)
+        {
+            _logger?.LogInformation("ApplyQueryAttributes called with {Count} parameters", query.Count);
+            
+            if (query.TryGetValue("id", out var idValue))
+            {
+                SpotId = idValue?.ToString() ?? string.Empty;
+                _logger?.LogInformation("ApplyQueryAttributes: SpotId set to {SpotId}", SpotId);
+            }
+            
+            if (query.TryGetValue("spotId", out var spotIdValue) || query.TryGetValue("spotid", out spotIdValue))
+            {
+                SpotIdParam = spotIdValue?.ToString() ?? string.Empty;
+                _logger?.LogInformation("ApplyQueryAttributes: SpotIdParam set to {SpotIdParam}", SpotIdParam);
+            }
+        }
+
         public override async Task InitializeAsync(object parameter = null)
         {
+            System.Diagnostics.Debug.WriteLine("[DEBUG] SpotDetailsViewModel.InitializeAsync: *** METHOD ENTRY ***");
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] SpotDetailsViewModel.InitializeAsync: Parameter type: {parameter?.GetType().Name ?? "null"}, value: {parameter?.ToString() ?? "null"}");
+            
             try
             {
-                IsLoading = true;
+                System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 0 - Calling base.InitializeAsync");
+                await base.InitializeAsync(parameter);
+                System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 0.5 - base.InitializeAsync completed");
+                
+                System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 1 - About to set IsLoading = true");
+                try 
+                {
+                    IsLoading = true;
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 2 - IsLoading set successfully");
+                }
+                catch (Exception isLoadingEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] InitializeAsync: Exception setting IsLoading: {isLoadingEx.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] InitializeAsync: StackTrace: {isLoadingEx.StackTrace}");
+                    throw;
+                }
+                
+                _logger?.LogInformation("InitializeAsync: Called with parameter type: {ParameterType}, value: {Parameter}", 
+                    parameter?.GetType().Name ?? "null", parameter?.ToString() ?? "null");
+                System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 3 - Logger call completed");
+                
+                // ✅ Check QueryProperty parameters first (from Shell navigation)
+                System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 4 - Starting QueryProperty check");
+                Guid? querySpotId = null;
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync: STEP 5 - SpotId value: '{SpotId}', SpotIdParam value: '{SpotIdParam}'");
+                
+                // Try to parse as GUID first (legacy navigation)
+                if (!string.IsNullOrEmpty(SpotId) && Guid.TryParse(SpotId, out var parsedSpotId))
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 6A - SpotId parse as GUID successful");
+                    querySpotId = parsedSpotId;
+                    _logger?.LogInformation("Found SpotId from QueryProperty as GUID: {SpotId}", parsedSpotId);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync: STEP 6B - querySpotId set to: {querySpotId}");
+                }
+                // Try to parse as integer ID (new Shell navigation)
+                else if (!string.IsNullOrEmpty(SpotId) && int.TryParse(SpotId, out var intSpotId))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync: STEP 6C - SpotId parse as integer successful: {intSpotId}");
+                    // Create a practice spot GUID pattern for the integer ID
+                    // This will trigger the parallel search since we don't know the entity type from the URL
+                    querySpotId = CreateFallbackGuidFromInt(intSpotId);
+                    _logger?.LogInformation("Found SpotId from QueryProperty as integer: {IntId}, created GUID: {SpotId}", intSpotId, querySpotId);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync: STEP 6D - Created fallback GUID: {querySpotId}");
+                }
+                else if (!string.IsNullOrEmpty(SpotIdParam) && Guid.TryParse(SpotIdParam, out var parsedSpotIdParam))
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 7A - SpotIdParam parse as GUID successful");
+                    querySpotId = parsedSpotIdParam;
+                    _logger?.LogInformation("Found SpotIdParam from QueryProperty as GUID: {SpotId}", parsedSpotIdParam);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync: STEP 7B - querySpotId set to: {querySpotId}");
+                }
+                // Try to parse SpotIdParam as integer ID (new Shell navigation)
+                else if (!string.IsNullOrEmpty(SpotIdParam) && int.TryParse(SpotIdParam, out var intSpotIdParam))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync: STEP 7C - SpotIdParam parse as integer successful: {intSpotIdParam}");
+                    querySpotId = CreateFallbackGuidFromInt(intSpotIdParam);
+                    _logger?.LogInformation("Found SpotIdParam from QueryProperty as integer: {IntId}, created GUID: {SpotId}", intSpotIdParam, querySpotId);
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync: STEP 7D - Created fallback GUID: {querySpotId}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 8 - No QueryProperty parameters found");
+                }
+                
+                if (querySpotId.HasValue)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync: STEP 9 - Calling LoadSpotById with: {querySpotId.Value}");
+                    await LoadSpotById(querySpotId.Value);
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 10 - LoadSpotById completed, returning");
+                    return;
+                }
+                System.Diagnostics.Debug.WriteLine("[DEBUG] InitializeAsync: STEP 11 - No querySpotId found, continuing to parameter check");
 
                 if (parameter is Spot spot)
                 {
                     Spot = spot;
                     await LoadSpotDetails();
                 }
+                else if (parameter is Models.Supabase.SupabasePracticeSpot practiceSpot)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] InitializeAsync: Received SupabasePracticeSpot with ID: {practiceSpot.Id}");
+                    _logger?.LogInformation("Loading SupabasePracticeSpot directly: {SpotId}", practiceSpot.Id);
+                    
+                    // Convert to domain Spot and load details
+                    Spot = ConvertPracticeSpotToDomainSpot(practiceSpot);
+                    await LoadSpotDetails();
+                    return;
+                }
+                // Note: Organizations and Businesses now use their specialized ViewModels
+                // They are no longer handled by SpotDetailsViewModel
                 else if (parameter is FavoriteNavigationParameter favoriteParam)
                 {
                     // Handle favorite navigation parameter
@@ -231,46 +345,263 @@ namespace SubExplore.ViewModels.Spots
 
         private async Task LoadSpotById(Guid spotId)
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: *** METHOD ENTRY *** with SpotId: {spotId}");
+            
             try
             {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotById: STEP 1 - Starting optimized load process");
+                _logger?.LogInformation("LoadSpotById: Starting optimized load for SpotId: {SpotId}", spotId);
                 
-                var supabaseSpots = await _supabaseApiService.GetSpotsAsync().WaitAsync(cts.Token);
-                var targetSupabaseSpot = supabaseSpots.FirstOrDefault(s => s.Id == spotId);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)); // Reduced timeout since we're doing direct lookups
                 
-                if (targetSupabaseSpot == null)
+                // Extract int ID and determine table type from Guid pattern
+                var spotIdString = spotId.ToString();
+                int intId = ExtractIntIdFromGuid(spotId);
+                var tableType = DetermineTableTypeFromGuid(spotId);
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Detected - intId: {intId}, tableType: {tableType}");
+                _logger?.LogInformation("LoadSpotById: Detected ID mapping - IntId: {IntId}, Table: {Table}", intId, tableType);
+                
+                // Use direct lookup based on detected table type
+                switch (tableType)
                 {
-                    await _dialogService.ShowAlertAsync("Erreur", $"Spot non trouvé (ID: {spotId})", "OK");
-                    await _navigationService.GoBackAsync();
-                    return;
+                    case "practice":
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotById: Querying practice_spots table directly");
+                        try
+                        {
+                            var practiceSpot = await _supabaseApiService.GetPracticeSpotByIdAsync(intId).WaitAsync(cts.Token);
+                            if (practiceSpot != null)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Found practice spot: {practiceSpot.Name}");
+                                Spot = ConvertPracticeSpotToDomainSpot(practiceSpot);
+                                if (Spot != null)
+                                {
+                                    await LoadSpotDetails();
+                                    return;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotById: Practice spot API failed: {ex.Message}");
+                            _logger?.LogError(ex, "Failed to load practice spot with ID: {IntId}", intId);
+                        }
+                        break;
+                        
+                    case "organization":
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotById: Querying organizations table directly");
+                        try
+                        {
+                            var organization = await _supabaseApiService.GetOrganizationByIdAsync(intId).WaitAsync(cts.Token);
+                            if (organization != null)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Found organization: {organization.Name}");
+                                Spot = ConvertOrganizationToDomainSpot(organization);
+                                if (Spot != null)
+                                {
+                                    await LoadSpotDetails();
+                                    return;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotById: Organization API failed: {ex.Message}");
+                            _logger?.LogError(ex, "Failed to load organization with ID: {IntId}", intId);
+                        }
+                        break;
+                        
+                    case "business":
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotById: Querying businesses table directly");
+                        try
+                        {
+                            var business = await _supabaseApiService.GetBusinessByIdAsync(intId).WaitAsync(cts.Token);
+                            if (business != null)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[DEBUG] LoadSpotById: Found business: {business.Name}");
+                                Spot = ConvertBusinessToDomainSpot(business);
+                                if (Spot != null)
+                                {
+                                    await LoadSpotDetails();
+                                    return;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[ERROR] LoadSpotById: Business API failed: {ex.Message}");
+                            _logger?.LogError(ex, "Failed to load business with ID: {IntId}", intId);
+                        }
+                        break;
+                        
+                    default:
+                        // If we can't determine the type, try all tables in parallel (fallback approach)
+                        System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotById: Unknown type, trying parallel search as fallback");
+                        break;
                 }
                 
-                // Récupérer les types de spots pour la conversion
-                var supabaseSpotTypes = await _supabaseApiService.GetSpotTypesAsync().WaitAsync(cts.Token);
-                var spotTypes = supabaseSpotTypes.Select(st => ConvertToDomainSpotType(st)).Where(st => st != null).ToList();
+                // If we reach here, the direct lookup failed or type was unknown - try fallback
+                System.Diagnostics.Debug.WriteLine("[DEBUG] LoadSpotById: Direct lookup failed, trying parallel fallback");
+                await SearchAllTablesInParallel(intId, cts.Token);
                 
-                // Convertir vers le modèle de domaine avec les types
-                Spot = ConvertToDomainSpot(targetSupabaseSpot, spotTypes);
-                
-                if (Spot != null)
-                {
-                    await LoadSpotDetails();
-                }
-                else
-                {
-                    await _dialogService.ShowAlertAsync("Erreur", "Impossible de convertir les données du spot", "OK");
-                    await _navigationService.GoBackAsync();
-                }
+                // If SearchAllTablesInParallel also fails, it will handle the "not found" case
             }
-            catch (TimeoutException)
+            catch (TimeoutException ex)
             {
+                _logger?.LogError("LoadSpotById: Timeout exception: {Exception}", ex);
                 await _dialogService.ShowAlertAsync("Timeout", 
                     "Le chargement a pris trop de temps. Vérifiez votre connexion réseau.", "OK");
                 await _navigationService.GoBackAsync();
             }
             catch (Exception ex)
             {
+                _logger?.LogError("LoadSpotById: Exception: {Exception}", ex);
                 await _dialogService.ShowAlertAsync("Erreur", $"Erreur API Supabase: {ex.Message}", "OK");
+                await _navigationService.GoBackAsync();
+            }
+        }
+
+        /// <summary>
+        /// Extract the integer ID from the Guid pattern
+        /// </summary>
+        private int ExtractIntIdFromGuid(Guid guid)
+        {
+            var guidString = guid.ToString(); // Keep dashes for pattern matching
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] ExtractIntIdFromGuid: Input Guid: {guidString}");
+            
+            // Based on conversion patterns from migration guide:
+            // Practice spots: 00000001-0000-0000-0000-000000000000 (ID: 1)
+            // Organizations: 00000001-1000-0000-0000-000000000000 (ID: 1)  
+            // Businesses: 00000001-2000-0000-0000-000000000000 (ID: 1)
+            
+            var firstEightChars = guidString.Substring(0, 8);
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] ExtractIntIdFromGuid: First 8 chars: '{firstEightChars}'");
+            
+            // Try to parse as hex number first
+            if (int.TryParse(firstEightChars, System.Globalization.NumberStyles.HexNumber, null, out int hexResult))
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ExtractIntIdFromGuid: Hex parsing successful: {hexResult}");
+                return hexResult;
+            }
+            
+            // If hex fails, try decimal (removing leading zeros)
+            var trimmedChars = firstEightChars.TrimStart('0');
+            if (string.IsNullOrEmpty(trimmedChars)) 
+                trimmedChars = "0"; // Handle case of all zeros
+                
+            if (int.TryParse(trimmedChars, out int decimalResult))
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ExtractIntIdFromGuid: Decimal parsing successful: {decimalResult}");
+                return decimalResult;
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] ExtractIntIdFromGuid: All parsing failed, returning 0");
+            return 0; // Default fallback
+        }
+
+        /// <summary>
+        /// Create a fallback GUID from integer ID that will trigger parallel search
+        /// Since we don't know the entity type from URL, we create a pattern that will be "unknown"
+        /// </summary>
+        private Guid CreateFallbackGuidFromInt(int intId)
+        {
+            // Create a GUID pattern with a unique signature that won't match any specific table type
+            // This will cause DetermineTableTypeFromGuid to return "unknown" and trigger parallel search
+            var guidString = $"{intId:00000000}-9999-0000-0000-000000000000";
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] CreateFallbackGuidFromInt: Created GUID {guidString} for integer ID {intId}");
+            return new Guid(guidString);
+        }
+
+        /// <summary>
+        /// Determine which table type based on Guid pattern
+        /// </summary>
+        private string DetermineTableTypeFromGuid(Guid guid)
+        {
+            var guidString = guid.ToString();
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] DetermineTableTypeFromGuid: Input Guid: {guidString}");
+            
+            // Based on patterns from migration guide:
+            // Practice spots: XXXXXXXX-0000-0000-0000-000000000000
+            // Organizations: XXXXXXXX-1000-0000-0000-000000000000  
+            // Businesses: XXXXXXXX-2000-0000-0000-000000000000
+            
+            string tableType = "unknown";
+            
+            if (guidString.Contains("-1000-0000-0000-"))
+                tableType = "organization";
+            else if (guidString.Contains("-2000-0000-0000-"))
+                tableType = "business";
+            else if (guidString.Contains("-0000-0000-0000-"))
+                tableType = "practice";
+            
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] DetermineTableTypeFromGuid: Determined table type: {tableType}");
+            return tableType;
+        }
+
+        /// <summary>
+        /// Fallback method to search all tables in parallel when type cannot be determined
+        /// </summary>
+        private async Task SearchAllTablesInParallel(int intId, CancellationToken cancellationToken)
+        {
+            System.Diagnostics.Debug.WriteLine("[DEBUG] SearchAllTablesInParallel: Starting parallel search");
+            
+            try
+            {
+                // Run all three queries in parallel for maximum performance
+                var practiceTask = _supabaseApiService.GetPracticeSpotByIdAsync(intId);
+                var organizationTask = _supabaseApiService.GetOrganizationByIdAsync(intId);
+                var businessTask = _supabaseApiService.GetBusinessByIdAsync(intId);
+                
+                await Task.WhenAll(practiceTask, organizationTask, businessTask).WaitAsync(cancellationToken);
+                
+                // Check results in order of priority
+                var practiceSpot = await practiceTask;
+                if (practiceSpot != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Found in practice_spots: {practiceSpot.Name}");
+                    Spot = ConvertPracticeSpotToDomainSpot(practiceSpot);
+                    if (Spot != null)
+                    {
+                        await LoadSpotDetails();
+                        return;
+                    }
+                }
+                
+                var organization = await organizationTask;
+                if (organization != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Found in organizations: {organization.Name}");
+                    Spot = ConvertOrganizationToDomainSpot(organization);
+                    if (Spot != null)
+                    {
+                        await LoadSpotDetails();
+                        return;
+                    }
+                }
+                
+                var business = await businessTask;
+                if (business != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Found in businesses: {business.Name}");
+                    Spot = ConvertBusinessToDomainSpot(business);
+                    if (Spot != null)
+                    {
+                        await LoadSpotDetails();
+                        return;
+                    }
+                }
+                
+                // Not found in any table - handle gracefully
+                System.Diagnostics.Debug.WriteLine("[DEBUG] SearchAllTablesInParallel: Not found in any table");
+                _logger?.LogWarning("SearchAllTablesInParallel: Spot not found with IntId: {IntId}", intId);
+                await _dialogService.ShowAlertAsync("Erreur", $"Spot non trouvé (ID: {intId})", "OK");
+                await _navigationService.GoBackAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] SearchAllTablesInParallel: Exception: {ex.Message}");
+                _logger?.LogError(ex, "SearchAllTablesInParallel failed for IntId: {IntId}", intId);
+                await _dialogService.ShowAlertAsync("Erreur", $"Erreur lors du chargement: {ex.Message}", "OK");
                 await _navigationService.GoBackAsync();
             }
         }
@@ -974,6 +1305,154 @@ namespace SubExplore.ViewModels.Spots
             {
                 await _dialogService.ShowAlertAsync("Erreur", $"Erreur lors de la soumission: {ex.Message}", "OK");
             }
+        }
+
+        #endregion
+
+        #region Practice Spot Conversion Methods
+
+        /// <summary>
+        /// Convert SupabasePracticeSpot to Domain Spot
+        /// </summary>
+        private Spot? ConvertPracticeSpotToDomainSpot(Models.Supabase.SupabasePracticeSpot practiceSpot)
+        {
+            if (practiceSpot == null) return null;
+
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Converting practice spot: Id={practiceSpot.Id}, Name='{practiceSpot.Name}'");
+                
+                // Generate a Guid from the int ID for consistency
+                var guidId = new Guid($"{practiceSpot.Id:00000000}-0000-0000-0000-000000000000");
+                
+                return new Spot
+                {
+                    Id = guidId,
+                    Name = practiceSpot.Name ?? string.Empty,
+                    Description = practiceSpot.Description ?? string.Empty,
+                    Latitude = (decimal)practiceSpot.Latitude,
+                    Longitude = (decimal)practiceSpot.Longitude,
+                    CreatedAt = practiceSpot.CreatedAt,
+                    ValidationStatus = Models.Enums.SpotValidationStatus.Approved,
+                    CreatorId = Guid.Empty, // TODO: Get from practice spot if available
+                    TypeId = Guid.NewGuid(), // Default practice spot type
+                    Type = new SpotType { Id = Guid.NewGuid(), Name = "Practice Spot", Category = Models.Enums.ActivityCategory.Activity },
+                    DifficultyLevel = ParseDifficultyLevel(practiceSpot.DifficultyLevel),
+                    RequiredEquipment = practiceSpot.RequiredEquipment ?? string.Empty,
+                    SafetyNotes = practiceSpot.SafetyNotes ?? string.Empty,
+                    BestConditions = practiceSpot.BestConditions ?? string.Empty,
+                    MaxDepth = (int?)practiceSpot.MaxDepth,
+                    LastSafetyReview = null,
+                    SafetyFlags = new Dictionary<string, object>(),
+                    Media = new List<SpotMedia>() // Empty for now
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to convert practice spot: {ex.Message}");
+                _logger?.LogError(ex, "Failed to convert practice spot to domain model");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Convert SupabaseOrganization to Domain Spot (placeholder)
+        /// </summary>
+        private Spot? ConvertOrganizationToDomainSpot(Models.Supabase.SupabaseOrganization organization)
+        {
+            if (organization == null) return null;
+
+            try
+            {
+                // Generate a Guid from the int ID for consistency
+                var guidId = new Guid($"{organization.Id:00000000}-1000-0000-0000-000000000000");
+                
+                return new Spot
+                {
+                    Id = guidId,
+                    Name = organization.Name ?? string.Empty,
+                    Description = organization.Description ?? string.Empty,
+                    Latitude = (decimal)organization.Latitude,
+                    Longitude = (decimal)organization.Longitude,
+                    CreatedAt = organization.CreatedAt,
+                    ValidationStatus = Models.Enums.SpotValidationStatus.Approved,
+                    CreatorId = Guid.Empty,
+                    TypeId = Guid.NewGuid(), // Organization type
+                    Type = new SpotType { Id = Guid.NewGuid(), Name = "Organization", Category = Models.Enums.ActivityCategory.Structure },
+                    DifficultyLevel = Models.Enums.DifficultyLevel.Beginner,
+                    RequiredEquipment = string.Empty,
+                    SafetyNotes = string.Empty,
+                    BestConditions = string.Empty,
+                    MaxDepth = null,
+                    LastSafetyReview = null,
+                    SafetyFlags = new Dictionary<string, object>(),
+                    Media = new List<SpotMedia>()
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to convert organization: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Convert SupabaseBusiness to Domain Spot (placeholder)
+        /// </summary>
+        private Spot? ConvertBusinessToDomainSpot(Models.Supabase.SupabaseBusiness business)
+        {
+            if (business == null) return null;
+
+            try
+            {
+                // Generate a Guid from the int ID for consistency
+                var guidId = new Guid($"{business.Id:00000000}-2000-0000-0000-000000000000");
+                
+                return new Spot
+                {
+                    Id = guidId,
+                    Name = business.Name ?? string.Empty,
+                    Description = business.Description ?? string.Empty,
+                    Latitude = (decimal)business.Latitude,
+                    Longitude = (decimal)business.Longitude,
+                    CreatedAt = business.CreatedAt,
+                    ValidationStatus = Models.Enums.SpotValidationStatus.Approved,
+                    CreatorId = Guid.Empty,
+                    TypeId = Guid.NewGuid(), // Business type
+                    Type = new SpotType { Id = Guid.NewGuid(), Name = "Business", Category = Models.Enums.ActivityCategory.Shop },
+                    DifficultyLevel = Models.Enums.DifficultyLevel.Beginner,
+                    RequiredEquipment = string.Empty,
+                    SafetyNotes = string.Empty,
+                    BestConditions = string.Empty,
+                    MaxDepth = null,
+                    LastSafetyReview = null,
+                    SafetyFlags = new Dictionary<string, object>(),
+                    Media = new List<SpotMedia>()
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Failed to convert business: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Parse difficulty level string to enum
+        /// </summary>
+        private Models.Enums.DifficultyLevel ParseDifficultyLevel(string? difficultyString)
+        {
+            if (string.IsNullOrEmpty(difficultyString))
+                return Models.Enums.DifficultyLevel.Beginner;
+
+            return difficultyString.ToLower() switch
+            {
+                "beginner" => Models.Enums.DifficultyLevel.Beginner,
+                "intermediate" => Models.Enums.DifficultyLevel.Intermediate,
+                "advanced" => Models.Enums.DifficultyLevel.Advanced,
+                "expert" => Models.Enums.DifficultyLevel.Expert,
+                _ => Models.Enums.DifficultyLevel.Beginner
+            };
         }
 
         #endregion

@@ -84,7 +84,9 @@ namespace SubExplore.Services.Implementations
                                 var queryParams = BuildQueryParameters(parameter);
                                 var fullRoute = string.IsNullOrEmpty(queryParams) ? route : $"{route}?{queryParams}";
                                 
+                                System.Diagnostics.Debug.WriteLine($"[NavigationService] Shell navigation to: {fullRoute}");
                                 await Shell.Current.GoToAsync(fullRoute, true); // Animate transitions
+                                System.Diagnostics.Debug.WriteLine($"[NavigationService] ✅ Shell navigation succeeded");
                             }
                             else
                             {
@@ -119,9 +121,39 @@ namespace SubExplore.Services.Implementations
                 {
                     await navigationPage.PushAsync(page);
                 }
+                else if (Application.Current?.MainPage is Shell shell)
+                {
+                    // If we have a Shell, avoid modal navigation which blocks flyout access
+                    System.Diagnostics.Debug.WriteLine("[NavigationService] MainPage is Shell, using regular Shell navigation to preserve flyout access");
+                    try
+                    {
+                        // Use regular navigation stack instead of modal to preserve flyout access
+                        await Shell.Current.Navigation.PushAsync(page);
+                        System.Diagnostics.Debug.WriteLine("[NavigationService] ✅ Successfully navigated using Shell navigation stack");
+                    }
+                    catch (Exception pushEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[NavigationService] ❌ Shell push navigation failed: {pushEx.Message}");
+                        // Try alternative Shell navigation
+                        try
+                        {
+                            // Try to find a matching route and use Shell navigation
+                            var routeName = page.GetType().Name.Replace("Page", "").ToLower();
+                            await Shell.Current.GoToAsync($"///{routeName}");
+                            System.Diagnostics.Debug.WriteLine($"[NavigationService] ✅ Used Shell route navigation to {routeName}");
+                        }
+                        catch (Exception routeEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[NavigationService] ❌ Shell route navigation failed: {routeEx.Message}");
+                            // Last resort: navigate to safe route to maintain Shell context
+                            await Shell.Current.GoToAsync("///map");
+                            System.Diagnostics.Debug.WriteLine("[NavigationService] ✅ Navigated to map as fallback to preserve Shell");
+                        }
+                    }
+                }
                 else
                 {
-                    // Create new navigation page
+                    // Only create new navigation page if there's no existing navigation structure
                     Application.Current.MainPage = new NavigationPage(page);
                 }
             }
@@ -417,13 +449,30 @@ namespace SubExplore.Services.Implementations
                             queryParams.Add($"longitude={spotParam.Longitude.Value}");
                         }
                     }
+                    // Handle Supabase entities - extract only the ID for navigation
+                    else if (parameter is SubExplore.Models.Supabase.SupabasePracticeSpot practiceSpot)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[NavigationService] Serializing SupabasePracticeSpot with ID: {practiceSpot.Id}");
+                        queryParams.Add($"id={practiceSpot.Id}");
+                    }
+                    else if (parameter is SubExplore.Models.Supabase.SupabaseOrganization organization)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[NavigationService] Serializing SupabaseOrganization with ID: {organization.Id}");
+                        queryParams.Add($"id={organization.Id}");
+                    }
+                    else if (parameter is SubExplore.Models.Supabase.SupabaseBusiness business)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[NavigationService] Serializing SupabaseBusiness with ID: {business.Id}");
+                        queryParams.Add($"id={business.Id}");
+                    }
                     else
                     {
-                        // Handle anonymous objects and regular objects
+                        // Handle anonymous objects and regular objects (fallback)
+                        // Only serialize simple properties to avoid serialization errors
                         foreach (var property in parameterType.GetProperties())
                         {
                             var value = property.GetValue(parameter);
-                            if (value != null)
+                            if (value != null && IsSimpleType(property.PropertyType))
                             {
                                 var encodedValue = System.Web.HttpUtility.UrlEncode(value.ToString());
                                 queryParams.Add($"{property.Name.ToLower()}={encodedValue}");
@@ -440,6 +489,19 @@ namespace SubExplore.Services.Implementations
                 System.Diagnostics.Debug.WriteLine($"[ERROR] BuildQueryParameters failed: {ex.Message}");
                 return string.Empty;
             }
+        }
+
+        /// <summary>
+        /// Checks if a type is simple enough to serialize as URL parameter
+        /// </summary>
+        private bool IsSimpleType(Type type)
+        {
+            return type.IsPrimitive || 
+                   type == typeof(string) || 
+                   type == typeof(decimal) || 
+                   type == typeof(DateTime) || 
+                   type == typeof(Guid) ||
+                   type.IsEnum;
         }
 
         /// <summary>

@@ -10,7 +10,8 @@ using Microsoft.Extensions.Logging;
 namespace SubExplore.ViewModels.Businesses
 {
     [ShellRoute("businessdetails", FriendlyName = "🏪 Détails Commerce", IsVisible = false)]
-    public partial class BusinessDetailsViewModel : ViewModelBase
+    [QueryProperty(nameof(BusinessId), "id")]
+    public partial class BusinessDetailsViewModel : ViewModelBase, IQueryAttributable
     {
         private readonly ISupabaseApiService _supabaseApiService;
         private readonly INavigationService _navigationService;
@@ -67,6 +68,9 @@ namespace SubExplore.ViewModels.Businesses
         [ObservableProperty]
         private bool _hasPaymentMethods = false;
 
+        // QueryProperty must be a public property, not ObservableProperty
+        public string BusinessId { get; set; } = string.Empty;
+
         // Property change handler for dynamic title updates
         partial void OnBusinessChanged(SupabaseBusiness? value)
         {
@@ -98,6 +102,40 @@ namespace SubExplore.ViewModels.Businesses
             Title = "Détails du Commerce";
         }
 
+        // ✅ IQueryAttributable implementation for Shell navigation
+        public async void ApplyQueryAttributes(IDictionary<string, object> query)
+        {
+            _logger?.LogInformation("ApplyQueryAttributes called with {Count} parameters", query.Count);
+            
+            if (query.TryGetValue("id", out var idValue))
+            {
+                BusinessId = idValue?.ToString() ?? string.Empty;
+                _logger?.LogInformation("ApplyQueryAttributes: BusinessId set to {BusinessId}", BusinessId);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel ApplyQueryAttributes: BusinessId set to '{BusinessId}'");
+                
+                // 🚀 CRITICAL FIX: Initialize immediately when QueryProperty is received
+                if (!string.IsNullOrEmpty(BusinessId))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel ApplyQueryAttributes: Triggering initialization with BusinessId '{BusinessId}'");
+                    await InitializeAsync();
+                }
+            }
+            
+            if (query.TryGetValue("businessId", out var bizIdValue))
+            {
+                BusinessId = bizIdValue?.ToString() ?? string.Empty;
+                _logger?.LogInformation("ApplyQueryAttributes: BusinessId (alt) set to {BusinessId}", BusinessId);
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel ApplyQueryAttributes: BusinessId (alt) set to '{BusinessId}'");
+                
+                // 🚀 CRITICAL FIX: Initialize immediately when QueryProperty is received (alt)
+                if (!string.IsNullOrEmpty(BusinessId))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel ApplyQueryAttributes: Triggering initialization (alt) with BusinessId '{BusinessId}'");
+                    await InitializeAsync();
+                }
+            }
+        }
+
         public override async Task InitializeAsync(object parameter = null)
         {
             try
@@ -105,27 +143,57 @@ namespace SubExplore.ViewModels.Businesses
                 IsLoading = true;
                 IsError = false;
 
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 1 - Starting initialization");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 2 - Parameter is: {parameter?.GetType().Name ?? "null"} = {parameter}");
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 3 - BusinessId QueryProperty: '{BusinessId}'");
+
+                // Check QueryProperty first (Shell navigation)
+                if (!string.IsNullOrEmpty(BusinessId))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 4A - Found BusinessId from QueryProperty: '{BusinessId}'");
+                    
+                    if (int.TryParse(BusinessId, out var queryBusinessId))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 4B - Successfully parsed BusinessId as integer: {queryBusinessId}");
+                        _logger?.LogInformation("Found BusinessId from QueryProperty as integer: {BusinessId}", queryBusinessId);
+                        await LoadBusinessById(queryBusinessId);
+                        return;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 4C - Failed to parse BusinessId as integer: '{BusinessId}'");
+                        _logger?.LogWarning("BusinessId from QueryProperty is not a valid integer: {BusinessId}", BusinessId);
+                    }
+                }
+
+                // Handle direct parameter navigation (legacy/programmatic)
                 if (parameter is SupabaseBusiness business)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 5A - Parameter is SupabaseBusiness object");
                     Business = business;
                     await LoadBusinessDetails();
                 }
                 else if (parameter is int businessId)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 5B - Parameter is integer: {businessId}");
                     await LoadBusinessById(businessId);
                 }
                 else if (parameter is string stringParam && int.TryParse(stringParam, out var idFromString))
                 {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 5C - Parameter is string that parses as integer: {idFromString}");
                     await LoadBusinessById(idFromString);
                 }
                 else
                 {
-                    if (parameter == null)
+                    if (parameter == null && string.IsNullOrEmpty(BusinessId))
                     {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 6A - No parameters found");
                         IsLoading = false;
                         return;
                     }
                     
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] BusinessDetailsViewModel InitializeAsync: STEP 6B - Invalid parameter type");
+                    _logger?.LogError("Invalid navigation parameter: {Parameter}", parameter);
                     await _dialogService.ShowAlertAsync("Erreur", "Paramètre de navigation invalide", "OK");
                     await _navigationService.GoBackAsync();
                 }

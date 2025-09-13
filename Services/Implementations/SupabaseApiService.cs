@@ -302,6 +302,106 @@ namespace SubExplore.Services.Implementations
             }
         }
 
+        // ========================================
+        // RECHERCHE DIRECTE PAR ID (OPTIMISÉE)
+        // ========================================
+
+        /// <summary>
+        /// Récupère un spot de pratique par son ID
+        /// </summary>
+        public async Task<SupabasePracticeSpot?> GetPracticeSpotByIdAsync(int id)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+                _logger.LogInformation("🔍 Recherche du spot de pratique ID: {Id}", id);
+                
+                var result = await client.From<SupabasePracticeSpot>()
+                    .Where(s => s.Id == id)
+                    .Single();
+
+                if (result != null)
+                {
+                    _logger.LogInformation("✅ Spot de pratique trouvé: {Name}", result.Name);
+                }
+                else
+                {
+                    _logger.LogInformation("⚠️ Aucun spot de pratique trouvé avec l'ID: {Id}", id);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la récupération du spot de pratique ID: {Id}", id);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Récupère une organisation par son ID
+        /// </summary>
+        public async Task<SupabaseOrganization?> GetOrganizationByIdAsync(int id)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+                _logger.LogInformation("🔍 Recherche de l'organisation ID: {Id}", id);
+                
+                var result = await client.From<SupabaseOrganization>()
+                    .Where(o => o.Id == id)
+                    .Single();
+
+                if (result != null)
+                {
+                    _logger.LogInformation("✅ Organisation trouvée: {Name}", result.Name);
+                }
+                else
+                {
+                    _logger.LogInformation("⚠️ Aucune organisation trouvée avec l'ID: {Id}", id);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la récupération de l'organisation ID: {Id}", id);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Récupère un commerce par son ID
+        /// </summary>
+        public async Task<SupabaseBusiness?> GetBusinessByIdAsync(int id)
+        {
+            try
+            {
+                var client = await GetClientAsync();
+                _logger.LogInformation("🔍 Recherche du commerce ID: {Id}", id);
+                
+                var result = await client.From<SupabaseBusiness>()
+                    .Where(b => b.Id == id)
+                    .Single();
+
+                if (result != null)
+                {
+                    _logger.LogInformation("✅ Commerce trouvé: {Name}", result.Name);
+                }
+                else
+                {
+                    _logger.LogInformation("⚠️ Aucun commerce trouvé avec l'ID: {Id}", id);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erreur lors de la récupération du commerce ID: {Id}", id);
+                return null;
+            }
+        }
+
         /// <summary>
         /// Crée un nouveau spot de pratique
         /// </summary>

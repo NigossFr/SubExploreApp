@@ -7,13 +7,12 @@ using System.ComponentModel;
 
 namespace SubExplore.Views.Spots;
 
-public partial class SpotDetailsPage : ContentPage, IQueryAttributable
+public partial class SpotDetailsPage : ContentPage
 {
 	private readonly SpotDetailsViewModel _viewModel;
 	private bool _hasInitialized = false;
-	private string _spotIdFromQuery = null;
-	private bool _isValidationMode = false;
-	private string _validationMode = null;
+	// ✅ REMOVED: SpotId handling moved to ViewModel QueryProperty system
+	// ✅ REMOVED: Validation mode handling moved to ViewModel
 
 	public SpotDetailsPage(SpotDetailsViewModel viewModel)
 	{
@@ -43,6 +42,9 @@ public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 		base.OnAppearing();
 		
 		Debug.WriteLine($"[DEBUG] SpotDetailsPage.OnAppearing - HasInitialized: {_hasInitialized}");
+		
+		// ✅ HAMBURGER FIX: Ensure event binding works
+		EnsureHamburgerEventBinding();
 		
 		// ✅ VALIDATION: Check CustomNavigationBar initialization
 		ValidateCustomNavigationBarSetup();
@@ -89,32 +91,18 @@ public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 			// Extract SpotId from query parameters with enhanced methods
 			object parameter = null;
 			
-			// ✅ PRIORITY METHOD: Use IQueryAttributable parameter if available
-			if (!string.IsNullOrEmpty(_spotIdFromQuery))
+			// ✅ PRIORITY METHOD: Let ViewModel handle QueryProperty parameters
+			// Since we removed IQueryAttributable from Page, ViewModel will receive Shell parameters directly
+			// Check if ViewModel already has SpotId from QueryProperty
+			if (!string.IsNullOrEmpty(_viewModel.SpotId) && Guid.TryParse(_viewModel.SpotId, out var viewModelSpotId))
 			{
-				if (Guid.TryParse(_spotIdFromQuery, out var querySpotId))
-				{
-					// Create validation parameter if validation mode is enabled
-					if (_isValidationMode)
-					{
-						parameter = new Dictionary<string, object>
-						{
-							["SpotId"] = querySpotId,
-							["IsValidationMode"] = _isValidationMode,
-							["ValidationMode"] = _validationMode ?? "Unknown"
-						};
-						System.Diagnostics.Debug.WriteLine($"[SUCCESS] Priority method: Using validation parameter for SpotId: {querySpotId}, ValidationMode: {_validationMode}");
-					}
-					else
-					{
-						parameter = querySpotId;
-						System.Diagnostics.Debug.WriteLine($"[SUCCESS] Priority method: Using IQueryAttributable SpotId: {querySpotId}");
-					}
-				}
-				else
-				{
-					System.Diagnostics.Debug.WriteLine($"[ERROR] Invalid SpotId from IQueryAttributable: {_spotIdFromQuery}");
-				}
+				parameter = viewModelSpotId;
+				System.Diagnostics.Debug.WriteLine($"[SUCCESS] Priority method: Using ViewModel QueryProperty SpotId: {viewModelSpotId}");
+			}
+			else if (!string.IsNullOrEmpty(_viewModel.SpotIdParam) && Guid.TryParse(_viewModel.SpotIdParam, out var viewModelSpotIdParam))
+			{
+				parameter = viewModelSpotIdParam;
+				System.Diagnostics.Debug.WriteLine($"[SUCCESS] Priority method: Using ViewModel QueryProperty SpotIdParam: {viewModelSpotIdParam}");
 			}
 			
 			// ✅ FALLBACK METHOD: Try to get parameter from URI if priority method failed
@@ -169,8 +157,20 @@ public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 			
 			// ✅ Initialize ViewModel with parameter
 			Debug.WriteLine($"[DEBUG] SpotDetailsPage - Calling InitializeAsync with parameter: {parameter}");
-			await _viewModel.InitializeAsync(parameter);
-			Debug.WriteLine("[DEBUG] SpotDetailsPage - ViewModel initialization completed");
+			Debug.WriteLine($"[DEBUG] SpotDetailsPage - ViewModel type: {_viewModel.GetType().Name}");
+			Debug.WriteLine($"[DEBUG] SpotDetailsPage - About to call InitializeAsync...");
+			
+			try
+			{
+				await _viewModel.InitializeAsync(parameter);
+				Debug.WriteLine("[DEBUG] SpotDetailsPage - ViewModel initialization completed successfully");
+			}
+			catch (Exception vmEx)
+			{
+				Debug.WriteLine($"[ERROR] SpotDetailsPage - ViewModel InitializeAsync failed: {vmEx.Message}");
+				Debug.WriteLine($"[ERROR] SpotDetailsPage - ViewModel Exception: {vmEx}");
+				throw; // Re-throw to be caught by outer catch
+			}
 			
 			// ✅ Configure map after delay
 			await Task.Delay(1000);
@@ -376,170 +376,262 @@ public partial class SpotDetailsPage : ContentPage, IQueryAttributable
 	}
 
 	/// <summary>
-	/// Implémentation IQueryAttributable pour recevoir les paramètres de navigation directement
+	/// ✅ REMOVED: IQueryAttributable implementation moved to ViewModel only
+	/// This prevents Page from intercepting Shell navigation parameters that should go to ViewModel
 	/// </summary>
-	public void ApplyQueryAttributes(IDictionary<string, object> query)
+
+	/// <summary>
+	/// Custom hamburger button clicked - guaranteed flyout access with multiple fallback methods
+	/// </summary>
+	private async void OnCustomHamburgerClicked(object sender, EventArgs e)
 	{
-		if (query != null)
+		try
 		{
-			foreach (var kvp in query)
-			{
-				Debug.WriteLine($"[DEBUG] Query parameter: {kvp.Key} = {kvp.Value}");
-			}
+			Debug.WriteLine("[SpotDetailsPage] Custom hamburger button clicked - bypassing MAUI Shell bugs");
 			
-			if (query.ContainsKey("spotId"))
-			{
-				_spotIdFromQuery = query["spotId"]?.ToString();
-				Debug.WriteLine($"[DEBUG] Extracted SpotId: {_spotIdFromQuery}");
-			}
+			bool flyoutOpened = false;
 			
-			if (query.ContainsKey("isValidationMode"))
+			// Method 1: Direct Shell.Current access
+			if (Shell.Current != null)
 			{
-				if (bool.TryParse(query["isValidationMode"]?.ToString(), out bool validationMode))
+				Shell.Current.FlyoutIsPresented = true;
+				flyoutOpened = true;
+				Debug.WriteLine("[SpotDetailsPage] ✅ Flyout opened via Shell.Current");
+			}
+			else
+			{
+				Debug.WriteLine("[SpotDetailsPage] ❌ Shell.Current is null - trying alternative methods");
+				
+				// Method 2: Access Shell via Application.Current.MainPage
+				if (Application.Current?.MainPage is Shell appShell)
 				{
-					_isValidationMode = validationMode;
-					Debug.WriteLine($"[DEBUG] Extracted IsValidationMode: {_isValidationMode}");
+					appShell.FlyoutIsPresented = true;
+					flyoutOpened = true;
+					Debug.WriteLine("[SpotDetailsPage] ✅ Flyout opened via Application.Current.MainPage as Shell");
+				}
+				// Method 3: Try to find Shell in the visual tree
+				else if (Application.Current?.MainPage != null)
+				{
+					var shell = FindShellInVisualTree(Application.Current.MainPage);
+					if (shell != null)
+					{
+						shell.FlyoutIsPresented = true;
+						flyoutOpened = true;
+						Debug.WriteLine("[SpotDetailsPage] ✅ Flyout opened via Shell found in visual tree");
+					}
+					else
+					{
+						Debug.WriteLine("[SpotDetailsPage] ❌ No Shell found in visual tree");
+					}
+				}
+				
+				// Method 4: Try to access Shell via Parent hierarchy
+				if (!flyoutOpened)
+				{
+					var shell = FindShellFromParent(this);
+					if (shell != null)
+					{
+						shell.FlyoutIsPresented = true;
+						flyoutOpened = true;
+						Debug.WriteLine("[SpotDetailsPage] ✅ Flyout opened via Shell found in parent hierarchy");
+					}
+					else
+					{
+						Debug.WriteLine("[SpotDetailsPage] ❌ No Shell found in parent hierarchy");
+					}
+				}
+				
+				// Method 5: Direct messaging to main application
+				if (!flyoutOpened)
+				{
+					Debug.WriteLine("[SpotDetailsPage] 🔄 All Shell access methods failed - trying direct messaging");
+					try
+					{
+						// Use MessagingCenter to send flyout request to main application
+						MessagingCenter.Send<object>(this, "OpenFlyoutMenu");
+						Debug.WriteLine("[SpotDetailsPage] ✅ Flyout request sent via MessagingCenter");
+						
+						// Give MessagingCenter time to process the request
+						await Task.Delay(100);
+						
+						flyoutOpened = true; // Assume it will work
+					}
+					catch (Exception msgEx)
+					{
+						Debug.WriteLine($"[SpotDetailsPage] ❌ MessagingCenter failed: {msgEx.Message}");
+						
+						// Final fallback: Navigate to main page
+						try
+						{
+							Debug.WriteLine("[SpotDetailsPage] 🔄 Final fallback: Navigate to main page");
+							Device.BeginInvokeOnMainThread(async () =>
+							{
+								try
+								{
+									// Navigate to a page that has Shell access
+									await Shell.Current?.GoToAsync("///map");
+									// Small delay to let navigation complete
+									await Task.Delay(200);
+									// Try to open flyout from there
+									if (Shell.Current != null)
+									{
+										Shell.Current.FlyoutIsPresented = true;
+										Debug.WriteLine("[SpotDetailsPage] ✅ Flyout opened after navigation to main page");
+									}
+								}
+								catch (Exception navEx)
+								{
+									Debug.WriteLine($"[SpotDetailsPage] ❌ Final navigation fallback failed: {navEx.Message}");
+								}
+							});
+						}
+						catch (Exception finalEx)
+						{
+							Debug.WriteLine($"[SpotDetailsPage] ❌ Final fallback setup failed: {finalEx.Message}");
+						}
+					}
 				}
 			}
 			
-			if (query.ContainsKey("validationMode"))
+			if (!flyoutOpened)
 			{
-				_validationMode = query["validationMode"]?.ToString();
-				Debug.WriteLine($"[DEBUG] Extracted ValidationMode: {_validationMode}");
+				Debug.WriteLine("[SpotDetailsPage] ⚠️ All flyout access methods failed");
 			}
+			
+		}
+		catch (Exception ex)
+		{
+			Debug.WriteLine($"[SpotDetailsPage] ❌ Custom hamburger error: {ex.Message}");
 		}
 	}
 
 	/// <summary>
-	/// Custom hamburger button clicked - UNIVERSAL SOLUTION for any navigation context
+	/// Find Shell in visual tree by traversing all elements
 	/// </summary>
-	private void OnCustomHamburgerClicked(object sender, EventArgs e)
+	private Shell FindShellInVisualTree(Element element)
 	{
 		try
 		{
-			Debug.WriteLine("[SpotDetailsPage] 🍔 Custom hamburger button clicked - UNIVERSAL FLYOUT ACCESS");
-			Debug.WriteLine($"[SpotDetailsPage] Context: Shell.Current={(Shell.Current != null ? "✅" : "❌")}, MainPage={Application.Current?.MainPage?.GetType().Name}");
-			
-			bool flyoutOpened = false;
+			if (element is Shell shell)
+				return shell;
 
-			// 🎯 METHOD 1: Shell.Current (when available)
-			if (Shell.Current != null)
+			if (element is IVisualTreeElement visualElement)
 			{
-				try
+				foreach (var child in visualElement.GetVisualChildren())
 				{
-					Shell.Current.FlyoutIsPresented = true;
-					flyoutOpened = true;
-					Debug.WriteLine("[SpotDetailsPage] ✅ Method 1: Shell.Current flyout opened successfully");
-				}
-				catch (Exception shellEx)
-				{
-					Debug.WriteLine($"[SpotDetailsPage] ⚠️ Method 1 failed: {shellEx.Message}");
-				}
-			}
-
-			// 🎯 METHOD 2: Application.Current.MainPage as Shell (fallback #1)
-			if (!flyoutOpened && Application.Current?.MainPage is Shell appShell)
-			{
-				try
-				{
-					appShell.FlyoutIsPresented = true;
-					flyoutOpened = true;
-					Debug.WriteLine("[SpotDetailsPage] ✅ Method 2: Application.Current.MainPage flyout opened successfully");
-				}
-				catch (Exception appEx)
-				{
-					Debug.WriteLine($"[SpotDetailsPage] ⚠️ Method 2 failed: {appEx.Message}");
-				}
-			}
-
-			// 🎯 METHOD 3: Navigate back to Shell context (fallback #2)
-			if (!flyoutOpened && Application.Current?.MainPage is NavigationPage navPage)
-			{
-				try
-				{
-					Debug.WriteLine("[SpotDetailsPage] 🔄 Detected NavigationPage context - navigating back to Shell");
-					
-					// Navigate back to map with flyout open
-					MainThread.BeginInvokeOnMainThread(async () =>
+					if (child is Element childElement)
 					{
-						try
-						{
-							await Shell.Current.GoToAsync("///map");
-							// Small delay to ensure navigation completes
-							await Task.Delay(300);
-							if (Shell.Current != null)
-							{
-								Shell.Current.FlyoutIsPresented = true;
-								Debug.WriteLine("[SpotDetailsPage] ✅ Method 3: Navigated to Shell and opened flyout");
-							}
-						}
-						catch (Exception navEx)
-						{
-							Debug.WriteLine($"[SpotDetailsPage] ❌ Method 3 navigation failed: {navEx.Message}");
-						}
-					});
-					flyoutOpened = true; // Assume success for async operation
-				}
-				catch (Exception navEx)
-				{
-					Debug.WriteLine($"[SpotDetailsPage] ⚠️ Method 3 failed: {navEx.Message}");
+						var foundShell = FindShellInVisualTree(childElement);
+						if (foundShell != null)
+							return foundShell;
+					}
 				}
 			}
 
-			// 🎯 METHOD 4: Force Shell creation/navigation (emergency fallback)
-			if (!flyoutOpened)
+			// Also try LogicalChildren for older MAUI versions
+			if (element.LogicalChildren != null)
 			{
-				try
+				foreach (var child in element.LogicalChildren)
 				{
-					Debug.WriteLine("[SpotDetailsPage] 🚨 Emergency: Creating new Shell navigation context");
-					
-					MainThread.BeginInvokeOnMainThread(async () =>
+					if (child is Element childElement)
 					{
-						try
-						{
-							// Force navigate back to a known Shell route
-							if (Application.Current?.MainPage != null)
-							{
-								var shell = new AppShell();
-								Application.Current.MainPage = shell;
-								await Task.Delay(500); // Allow Shell initialization
-								shell.FlyoutIsPresented = true;
-								Debug.WriteLine("[SpotDetailsPage] ✅ Method 4: Emergency Shell creation succeeded");
-							}
-						}
-						catch (Exception emergencyEx)
-						{
-							Debug.WriteLine($"[SpotDetailsPage] ❌ Method 4 emergency fallback failed: {emergencyEx.Message}");
-							
-							// Final fallback: Show user message
-							await Application.Current?.MainPage?.DisplayAlert(
-								"Menu indisponible", 
-								"Le menu est temporairement indisponible. Veuillez redémarrer l'application.", 
-								"OK");
-						}
-					});
-				}
-				catch (Exception emergencyEx)
-				{
-					Debug.WriteLine($"[SpotDetailsPage] ❌ Emergency method setup failed: {emergencyEx.Message}");
+						var foundShell = FindShellInVisualTree(childElement);
+						if (foundShell != null)
+							return foundShell;
+					}
 				}
 			}
 
-			// 📊 Log final status
-			if (flyoutOpened)
-			{
-				Debug.WriteLine("[SpotDetailsPage] 🎉 SUCCESS: Flyout menu access achieved!");
-			}
-			else
-			{
-				Debug.WriteLine("[SpotDetailsPage] ❌ FAILED: All flyout access methods failed");
-			}
+			return null;
 		}
 		catch (Exception ex)
 		{
-			Debug.WriteLine($"[SpotDetailsPage] ❌ CRITICAL ERROR in OnCustomHamburgerClicked: {ex.Message}");
-			Debug.WriteLine($"[SpotDetailsPage] Stack trace: {ex.StackTrace}");
+			Debug.WriteLine($"[SpotDetailsPage] Error finding Shell in visual tree: {ex.Message}");
+			return null;
 		}
+	}
+
+	/// <summary>
+	/// Find Shell by traversing up the Parent hierarchy
+	/// </summary>
+	private Shell FindShellFromParent(Element element)
+	{
+		try
+		{
+			var current = element;
+			while (current != null)
+			{
+				if (current is Shell shell)
+					return shell;
+				current = current.Parent;
+			}
+			return null;
+		}
+		catch (Exception ex)
+		{
+			Debug.WriteLine($"[SpotDetailsPage] Error finding Shell from parent: {ex.Message}");
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// Ensure hamburger button event binding works - FIX FOR NON-WORKING HAMBURGER
+	/// </summary>
+	private void EnsureHamburgerEventBinding()
+	{
+		try
+		{
+			Debug.WriteLine("[SpotDetailsPage] Ensuring hamburger event binding...");
+			
+			if (CustomNavBar == null)
+			{
+				Debug.WriteLine("[SpotDetailsPage] ❌ CustomNavBar is null - cannot bind event");
+				return;
+			}
+			
+			// Remove any existing subscription to prevent duplicates
+			CustomNavBar.HamburgerClicked -= OnCustomHamburgerClicked;
+			// Add the subscription
+			CustomNavBar.HamburgerClicked += OnCustomHamburgerClicked;
+			Debug.WriteLine("[SpotDetailsPage] ✅ Manual hamburger event binding applied");
+			
+			// Also ensure direct button access as fallback
+			var hamburgerButton = CustomNavBar.FindByName<Button>("HamburgerButton");
+			if (hamburgerButton != null)
+			{
+				hamburgerButton.Clicked -= OnHamburgerButtonDirectClick; // Remove existing
+				hamburgerButton.Clicked += OnHamburgerButtonDirectClick; // Add direct handler
+				Debug.WriteLine("[SpotDetailsPage] ✅ Direct hamburger button event binding applied as fallback");
+				
+				// Verify button state
+				Debug.WriteLine($"[SpotDetailsPage] HamburgerButton.IsVisible: {hamburgerButton.IsVisible}");
+				Debug.WriteLine($"[SpotDetailsPage] HamburgerButton.IsEnabled: {hamburgerButton.IsEnabled}");
+				Debug.WriteLine($"[SpotDetailsPage] HamburgerButton.Text: '{hamburgerButton.Text}'");
+			}
+			else
+			{
+				Debug.WriteLine("[SpotDetailsPage] ❌ HamburgerButton not found in CustomNavBar");
+			}
+			
+			// Ensure CustomNavigationBar is on top of all content
+			CustomNavBar.ZIndex = 1000; // Very high Z-Index
+			Debug.WriteLine("[SpotDetailsPage] CustomNavBar ZIndex set to 1000");
+			
+		}
+		catch (Exception ex)
+		{
+			Debug.WriteLine($"[SpotDetailsPage] ❌ Hamburger event binding failed: {ex.Message}");
+		}
+	}
+
+	/// <summary>
+	/// Direct hamburger button click handler - fallback method
+	/// </summary>
+	private void OnHamburgerButtonDirectClick(object sender, EventArgs e)
+	{
+		Debug.WriteLine("[SpotDetailsPage] Direct hamburger button clicked - fallback method");
+		// Delegate to main handler
+		OnCustomHamburgerClicked(sender, e);
 	}
 
 	/// <summary>

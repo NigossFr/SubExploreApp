@@ -8,6 +8,7 @@ using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels;
 using SubExplore.Controls;
 using SubExplore.Helpers;
+using System.Diagnostics;
 
 namespace SubExplore
 {
@@ -48,6 +49,127 @@ namespace SubExplore
             {
                 _authenticationService.StateChanged += OnAuthenticationStateChanged;
             }
+            
+            // Subscribe to flyout menu requests from isolated pages (like SpotDetailsPage)
+            MessagingCenter.Subscribe<object>(this, "OpenFlyoutMenu", (sender) =>
+            {
+                try
+                {
+                    Debug.WriteLine("[AppShell] Received flyout request via MessagingCenter");
+                    Debug.WriteLine($"[AppShell] This Shell instance: {this.GetHashCode()}");
+                    Debug.WriteLine($"[AppShell] Application.Current.MainPage: {Application.Current?.MainPage?.GetHashCode()}");
+                    Debug.WriteLine($"[AppShell] Shell.Current: {Shell.Current?.GetHashCode() ?? -1}");
+                    
+                    // Try multiple approaches to open flyout
+                    bool flyoutOpened = false;
+                    
+                    // Method 1: Try on Application.Current.MainPage (most reliable)
+                    try
+                    {
+                        var mainPage = Application.Current?.MainPage;
+                        Debug.WriteLine($"[AppShell] Method 1: MainPage type: {mainPage?.GetType().Name}");
+                        
+                        if (mainPage is Shell mainPageShell)
+                        {
+                            Debug.WriteLine($"[AppShell] Method 1: MainPage is Shell, setting FlyoutIsPresented = true");
+                            mainPageShell.FlyoutIsPresented = true;
+                            flyoutOpened = true;
+                            Debug.WriteLine("[AppShell] ✅ Method 1: Flyout opened on Application.Current.MainPage Shell");
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"[AppShell] Method 1: MainPage is not Shell, it's {mainPage?.GetType().Name}");
+                        }
+                    }
+                    catch (Exception ex1)
+                    {
+                        Debug.WriteLine($"[AppShell] ❌ Method 1 failed: {ex1.Message}");
+                    }
+                    
+                    // Method 2: Try on this instance if Method 1 failed
+                    if (!flyoutOpened)
+                    {
+                        try
+                        {
+                            Debug.WriteLine($"[AppShell] Method 2: Trying on this instance (hash: {this.GetHashCode()})");
+                            this.FlyoutIsPresented = true;
+                            flyoutOpened = true;
+                            Debug.WriteLine("[AppShell] ✅ Method 2: Flyout opened on this Shell instance");
+                        }
+                        catch (Exception ex2)
+                        {
+                            Debug.WriteLine($"[AppShell] ❌ Method 2 failed: {ex2.Message}");
+                        }
+                    }
+                    
+                    // Method 3: Try on Shell.Current if different and exists
+                    if (!flyoutOpened && Shell.Current != null)
+                    {
+                        try
+                        {
+                            Debug.WriteLine($"[AppShell] Method 3: Trying on Shell.Current (hash: {Shell.Current.GetHashCode()})");
+                            Shell.Current.FlyoutIsPresented = true;
+                            flyoutOpened = true;
+                            Debug.WriteLine("[AppShell] ✅ Method 3: Flyout opened on Shell.Current");
+                        }
+                        catch (Exception ex3)
+                        {
+                            Debug.WriteLine($"[AppShell] ❌ Method 3 failed: {ex3.Message}");
+                        }
+                    }
+                    
+                    // Method 4: Force using MainThread dispatch (last resort)
+                    if (!flyoutOpened)
+                    {
+                        try
+                        {
+                            Debug.WriteLine("[AppShell] Method 4: Trying with MainThread dispatch as last resort");
+                            MainThread.BeginInvokeOnMainThread(async () =>
+                            {
+                                try
+                                {
+                                    // Small delay to ensure UI is ready
+                                    await Task.Delay(50);
+                                    
+                                    var mainPage = Application.Current?.MainPage;
+                                    if (mainPage is Shell shell)
+                                    {
+                                        shell.FlyoutIsPresented = true;
+                                        Debug.WriteLine("[AppShell] ✅ Method 4: Flyout opened via MainThread dispatch");
+                                    }
+                                    else
+                                    {
+                                        this.FlyoutIsPresented = true;
+                                        Debug.WriteLine("[AppShell] ✅ Method 4: Flyout opened on this instance via MainThread dispatch");
+                                    }
+                                }
+                                catch (Exception ex4Inner)
+                                {
+                                    Debug.WriteLine($"[AppShell] ❌ Method 4 inner failed: {ex4Inner.Message}");
+                                }
+                            });
+                            flyoutOpened = true; // Assume it will work
+                        }
+                        catch (Exception ex4)
+                        {
+                            Debug.WriteLine($"[AppShell] ❌ Method 4 failed: {ex4.Message}");
+                        }
+                    }
+                    
+                    if (flyoutOpened)
+                    {
+                        Debug.WriteLine("[AppShell] ✅ Flyout opened via MessagingCenter");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("[AppShell] ❌ All flyout opening methods failed");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[AppShell] ❌ MessagingCenter flyout failed: {ex.Message}");
+                }
+            });
             
             // Configure Shell icon using unified service with explicit icon
             ConfigureShellIcon();
