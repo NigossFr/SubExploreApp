@@ -44,112 +44,6 @@
             </Frame>
 
 
-            <!-- API Status and Connection Indicator - Only show when there are actual issues -->
-            <Frame BackgroundColor="{StaticResource Warning}"
-                   Padding="15"
-                   CornerRadius="8"
-                   IsVisible="{Binding HasRecoverableError}"
-                   AutomationId="ApiStatusPanel"
-                   SemanticProperties.Description="Panneau de statut de connexion API">
-                <StackLayout Orientation="Horizontal" Spacing="10">
-                    <Label Text="⚠️" 
-                           FontSize="18" 
-                           VerticalOptions="Center"
-                           AutomationId="WarningIcon"
-                           SemanticProperties.Description="Icône d'avertissement"/>
-                    <StackLayout VerticalOptions="Center" HorizontalOptions="FillAndExpand">
-                        <Label Text="API non disponible"
-                               TextColor="White"
-                               FontSize="14" FontAttributes="Bold"
-                               AutomationId="ApiStatusMessage"
-                               SemanticProperties.Description="Message de statut API : Service temporairement indisponible"/>
-                        <Label Text="{Binding ConnectionStatus}"
-                               TextColor="White"
-                               FontSize="12"
-                               Opacity="0.9"
-                               AutomationId="ConnectionStatusMessage"
-                               SemanticProperties.Description="État de la connexion réseau"/>
-                    </StackLayout>
-                    <Button Text="🔄"
-                            Background="Transparent"
-                            TextColor="White"
-                            FontSize="16"
-                            WidthRequest="40"
-                            HeightRequest="40"
-                            Command="{Binding RetryLastOperationCommand}"
-                            IsVisible="{Binding CanRetry}"
-                            AutomationId="RetryButton"
-                            SemanticProperties.Description="Bouton réessayer la connexion API"
-                            SemanticProperties.Hint="Appuyez pour réessayer la connexion au service"/>
-                </StackLayout>
-            </Frame>
-
-            <!-- Error Recovery Panel -->
-            <Frame BackgroundColor="{StaticResource Error}"
-                   Padding="15"
-                   CornerRadius="8"
-                   IsVisible="{Binding HasRecoverableError}"
-                   Margin="0,0,0,10"
-                   AutomationId="ErrorRecoveryPanel"
-                   SemanticProperties.Description="Panneau de récupération d'erreur avec options de résolution">
-                <StackLayout Spacing="10">
-                    <StackLayout Orientation="Horizontal" Spacing="10">
-                        <Label Text="🚨" 
-                               FontSize="18" 
-                               VerticalOptions="Center"
-                               AutomationId="AlertIcon"
-                               SemanticProperties.Description="Icône d'alerte critique"/>
-                        <Label Text="Erreur récupérable détectée"
-                               TextColor="White"
-                               FontSize="14"
-                               FontAttributes="Bold"
-                               VerticalOptions="Center"
-                               AutomationId="ErrorTitle"
-                               SemanticProperties.HeadingLevel="Level2"
-                               SemanticProperties.Description="Alerte : Une erreur récupérable a été détectée"/>
-                    </StackLayout>
-                    
-                    <Label Text="{Binding LastErrorMessage}"
-                           TextColor="White"
-                           FontSize="12"
-                           Opacity="0.9"
-                           IsVisible="{Binding LastErrorMessage, Converter={StaticResource StringNotEmptyToBoolConverter}}"
-                           AutomationId="ErrorDetailsMessage"
-                           SemanticProperties.Description="Détails de l'erreur rencontrée"/>
-                    
-                    <StackLayout Orientation="Horizontal" Spacing="10" HorizontalOptions="End" 
-                                AutomationId="ErrorActionButtons"
-                                SemanticProperties.Description="Boutons d'actions de récupération d'erreur">
-                        <Button Text="🧹 Effacer"
-                                Background="Transparent"
-                                TextColor="White"
-                                FontSize="12"
-                                Padding="10,5"
-                                Command="{Binding ClearAllErrorsCommand}"
-                                AutomationId="ClearErrorsButton"
-                                SemanticProperties.Description="Effacer tous les messages d'erreur"
-                                SemanticProperties.Hint="Appuyez pour nettoyer l'état d'erreur"/>
-                        <Button Text="🔄 Réessayer"
-                                BackgroundColor="White"
-                                TextColor="{StaticResource Error}"
-                                FontSize="12"
-                                Padding="10,5"
-                                Command="{Binding RetryLastOperationCommand}"
-                                AutomationId="RetryErrorButton"
-                                SemanticProperties.Description="Réessayer la dernière opération échouée"
-                                SemanticProperties.Hint="Appuyez pour relancer l'opération qui a échoué"/>
-                        <Button Text="🔄 Actualiser tout"
-                                BackgroundColor="White"
-                                TextColor="{StaticResource Error}"
-                                FontSize="12"
-                                Padding="10,5"
-                                Command="{Binding RefreshAllDataCommand}"
-                                AutomationId="RefreshAllButton"
-                                SemanticProperties.Description="Actualiser toutes les données de la page"
-                                SemanticProperties.Hint="Appuyez pour recharger complètement les données"/>
-                    </StackLayout>
-                </StackLayout>
-            </Frame>
 
             <!-- Spot Information Section -->
             <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
@@ -272,18 +166,6 @@
                                     SemanticProperties.Description="Bouton obtenir position actuelle"
                                     SemanticProperties.Hint="Appuyez pour obtenir automatiquement votre position GPS actuelle"/>
                                     
-                            <Button Text="🔄"
-                                    Command="{Binding RefreshLocationAccuracyCommand}"
-                                    BackgroundColor="{StaticResource Accent}"
-                                    TextColor="White"
-                                    FontSize="14"
-                                    WidthRequest="35"
-                                    HeightRequest="35"
-                                    CornerRadius="17"
-                                    IsVisible="{Binding IsLocationAccurate, Converter={StaticResource InverseBoolConverter}}"
-                                    AutomationId="RefreshLocationButton"
-                                    SemanticProperties.Description="Bouton améliorer précision GPS"
-                                    SemanticProperties.Hint="Appuyez pour relancer la géolocalisation et améliorer la précision"/>
                         </StackLayout>
                     </StackLayout>
                     
@@ -480,7 +362,7 @@
                                            FontSize="16"
                                            TextColor="Red"
                                            HorizontalOptions="Center"/>
-                                    <Label Text="Appuyez sur 'Force Refresh' dans le diagnostic"
+                                    <Label Text="Vérifiez votre connexion et réessayez"
                                            FontSize="14"
                                            TextColor="Gray"
                                            HorizontalOptions="Center"/>
@@ -516,34 +398,6 @@
                 </StackLayout>
             </Frame>
 
-            <!-- Validation Summary - Single Frame -->
-            <Frame BackgroundColor="{Binding HasValidationErrors, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Warning|Success'}"
-                   Padding="15"
-                   CornerRadius="8"
-                   IsVisible="{Binding HasValidationErrors}"
-                   Margin="0,10,0,0"
-                   AutomationId="ValidationSummaryFrame"
-                   SemanticProperties.Description="Résumé de la validation du formulaire">
-                <StackLayout Orientation="Horizontal">
-                    <!-- Show different icons based on validation state -->
-                    <Label Text="⚠️" 
-                           FontSize="16" 
-                           VerticalOptions="Center"
-                           IsVisible="{Binding HasValidationErrors}"
-                           AutomationId="ValidationErrorIcon"/>
-                    <Label Text="✅" 
-                           FontSize="16" 
-                           VerticalOptions="Center"
-                           IsVisible="{Binding HasValidationErrors, Converter={StaticResource InverseBoolConverter}}"
-                           AutomationId="ValidationSuccessIcon"/>
-                    <Label Text="{Binding ValidationSummary}"
-                           TextColor="White"
-                           VerticalOptions="Center"
-                           FontSize="14"
-                           HorizontalOptions="StartAndExpand"
-                           AutomationId="ValidationMessage"/>
-                </StackLayout>
-            </Frame>
 
             <!-- Form Actions -->
             <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Margin="0,15,0,0"
@@ -615,7 +469,7 @@
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center"/>
                     </Frame>
-                    
+
                     <!-- Progress Text -->
                     <Label Text="{Binding CreationProgress}"
                            TextColor="White"
@@ -623,13 +477,13 @@
                            FontAttributes="Bold"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center"/>
-                    
+
                     <!-- Progress Bar -->
                     <ProgressBar Progress="{Binding ProgressPercentage, Converter={StaticResource PercentageToProgressConverter}}"
                                  ProgressColor="White"
                                  BackgroundColor="Gray"
                                  HeightRequest="8"/>
-                                 
+
                     <!-- Progress Percentage -->
                     <Label Text="{Binding ProgressPercentage, StringFormat='{0:F0}% terminé'}"
                            TextColor="White"
@@ -638,7 +492,7 @@
                            Opacity="0.8"/>
                 </StackLayout>
             </Frame>
-            
+
             <!-- Location Loading Indicator -->
             <Frame BackgroundColor="{StaticResource Primary}"
                    Opacity="0.9"

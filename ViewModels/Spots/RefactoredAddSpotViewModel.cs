@@ -56,7 +56,6 @@ namespace SubExplore.ViewModels.Spots
 
         partial void OnSpotTypesChanged(ObservableCollection<SpotTypeItem> value)
         {
-            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: OnSpotTypesChanged called - new count: " + value?.Count);
             OnPropertyChanged(nameof(SpotTypesCount));
         }
 
@@ -115,25 +114,6 @@ namespace SubExplore.ViewModels.Spots
         private double _locationAccuracy;
         #endregion
 
-        #region Diagnostic Properties
-        [ObservableProperty]
-        private bool _showDiagnostics = false;
-
-        [ObservableProperty]
-        private string _diagnosticInfo = string.Empty;
-
-        [ObservableProperty]
-        private bool _hasRecoverableError = false;
-
-        [ObservableProperty]
-        private string _connectionStatus = "Connected";
-
-        [ObservableProperty]
-        private bool _canRetry = false;
-
-        [ObservableProperty]
-        private string _lastErrorMessage = string.Empty;
-        #endregion
 
         #region Constructor and Initialization
         public RefactoredAddSpotViewModel(
@@ -159,41 +139,23 @@ namespace SubExplore.ViewModels.Spots
 
             Title = "Ajouter un Spot";
 
-            // Force visible diagnostic that won't be dropped
-            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: RefactoredAddSpotViewModel CONSTRUCTOR called");
-            _logger.LogInformation("🔍 DIAGNOSTIC: RefactoredAddSpotViewModel CONSTRUCTOR called");
-
             // Setup real-time validation
             PropertyChanged += OnPropertyChanged;
-
-            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: RefactoredAddSpotViewModel CONSTRUCTOR completed");
-            _logger.LogInformation("🔍 DIAGNOSTIC: RefactoredAddSpotViewModel CONSTRUCTOR completed");
         }
 
         public override async Task InitializeAsync(IDictionary<string, object> parameters)
         {
             try
             {
-                // Force visible diagnostic that won't be dropped
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: RefactoredAddSpotViewModel.InitializeAsync() CALLED - parameters count: " + (parameters?.Count ?? -1));
-                _logger.LogInformation("🔍 DIAGNOSTIC: RefactoredAddSpotViewModel.InitializeAsync() CALLED - parameters count: {Count}", parameters?.Count ?? -1);
                 _logger.LogInformation("🎯 Initializing RefactoredAddSpotViewModel...");
-
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: About to call LoadSpotTypesAsync() from InitializeAsync()");
-                _logger.LogInformation("🔍 DIAGNOSTIC: About to call LoadSpotTypesAsync() from InitializeAsync()");
                 await LoadSpotTypesAsync();
-
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: LoadSpotTypesAsync() completed from InitializeAsync()");
-                _logger.LogInformation("🔍 DIAGNOSTIC: LoadSpotTypesAsync() completed from InitializeAsync()");
 
                 ValidateForm();
 
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: RefactoredAddSpotViewModel initialized successfully");
                 _logger.LogInformation("✅ RefactoredAddSpotViewModel initialized successfully");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: ERROR in RefactoredAddSpotViewModel.InitializeAsync(): " + ex.Message);
                 _logger.LogError(ex, "❌ Error initializing RefactoredAddSpotViewModel");
                 ShowError("Erreur lors de l'initialisation de la page");
             }
@@ -215,7 +177,6 @@ namespace SubExplore.ViewModels.Spots
         {
             if (IsLoadingSpotTypes)
             {
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: LoadSpotTypesAsync called while already loading");
                 _logger.LogWarning("⚠️ LoadSpotTypesAsync called while already loading");
                 return;
             }
@@ -223,64 +184,44 @@ namespace SubExplore.ViewModels.Spots
             try
             {
                 IsLoadingSpotTypes = true;
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: IsLoadingSpotTypes set to TRUE");
                 ClearError();
 
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: LoadSpotTypesAsync starting - forceReload: " + forceReload);
                 _logger.LogInformation("🎯 Loading spot types... (forceReload: {ForceReload})", forceReload);
 
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: About to call _spotTypeService.LoadSpotTypesAsync()");
                 var result = await _spotTypeService.LoadSpotTypesAsync();
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: _spotTypeService.LoadSpotTypesAsync() returned, success: " + result.IsSuccess);
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Result.SpotTypes count: " + (result.SpotTypes?.Count ?? -1));
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Result.ErrorMessage: " + (result.ErrorMessage ?? "null"));
 
                 if (result.IsSuccess)
                 {
-                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Entering SUCCESS branch - result.IsSuccess = true");
                     _logger.LogInformation("🎯 SpotTypeService returned {Count} spot types", result.SpotTypes?.Count ?? 0);
 
-                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: About to call CreateSpotTypeItems");
                     var spotTypeItems = _spotTypeService.CreateSpotTypeItems(result.SpotTypes);
-                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: CreateSpotTypeItems returned " + spotTypeItems.Count + " items");
                     _logger.LogInformation("🎯 Created {Count} SpotTypeItems for UI", spotTypeItems.Count);
 
-                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: About to call MainThread.InvokeOnMainThreadAsync");
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
                         try
                         {
-                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Inside MainThread - clearing SpotTypes collection");
                             _logger.LogInformation("🎯 Clearing existing {Count} items from SpotTypes collection", SpotTypes.Count);
                             SpotTypes.Clear();
 
-                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: SpotTypes.Clear() called, count now: " + SpotTypes.Count);
-
-                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Adding " + spotTypeItems.Count + " items to SpotTypes collection");
                             foreach (var item in spotTypeItems)
                             {
                                 SpotTypes.Add(item);
-                                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Added SpotTypeItem: " + item.Name + " - Collection count now: " + SpotTypes.Count);
                                 _logger.LogDebug("🎯 Added SpotTypeItem: {Name}", item.Name);
                             }
 
-                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Final SpotTypes collection count: " + SpotTypes.Count);
                             _logger.LogInformation("✅ SpotTypes collection now has {Count} items", SpotTypes.Count);
 
                             // Force PropertyChanged notification just in case
                             OnPropertyChanged(nameof(SpotTypes));
                             OnPropertyChanged(nameof(SpotTypesCount));
-                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: OnPropertyChanged(nameof(SpotTypes)) called");
-                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: OnPropertyChanged(nameof(SpotTypesCount)) called - count: " + SpotTypesCount);
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: EXCEPTION in MainThread: " + ex.Message);
                             _logger.LogError(ex, "❌ Exception while updating SpotTypes collection");
                         }
                     });
 
-                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: LoadSpotTypesAsync SUCCESS completed");
                     _logger.LogInformation($"✅ Loaded {result.FilteredCount} spot types successfully");
                 }
                 else
@@ -330,7 +271,6 @@ namespace SubExplore.ViewModels.Spots
             finally
             {
                 IsLoadingSpotTypes = false;
-                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: IsLoadingSpotTypes set to FALSE - UI should show now!");
                 _logger.LogInformation("🎯 LoadSpotTypesAsync finished, calling ValidateForm()");
                 ValidateForm();
             }
@@ -578,51 +518,11 @@ namespace SubExplore.ViewModels.Spots
         }
         #endregion
 
-        #region Diagnostic Commands
-        [RelayCommand]
-        private void ToggleDiagnostics()
-        {
-            ShowDiagnostics = !ShowDiagnostics;
-            UpdateDiagnosticInfo();
-        }
-
-        [RelayCommand]
-        private async Task ForceRefreshAllAsync()
-        {
-            await LoadSpotTypesAsync(forceReload: true);
-            ValidateForm();
-        }
-
-        [RelayCommand]
-        private async Task RetryLastOperationAsync()
-        {
-            await LoadSpotTypesAsync(forceReload: true);
-        }
-
-        [RelayCommand]
-        private void ClearAllErrors()
-        {
-            HasRecoverableError = false;
-            LastErrorMessage = string.Empty;
-            CanRetry = false;
-        }
-
-        [RelayCommand]
-        private async Task RefreshAllDataAsync()
-        {
-            await LoadSpotTypesAsync(forceReload: true);
-        }
-
+        #region Additional Commands
         [RelayCommand]
         private void ToggleLocationPicker()
         {
             IsLocationPickerVisible = !IsLocationPickerVisible;
-        }
-
-        [RelayCommand]
-        private async Task RefreshLocationAccuracyAsync()
-        {
-            await GetCurrentLocationAsync();
         }
 
         [RelayCommand]
@@ -642,14 +542,6 @@ namespace SubExplore.ViewModels.Spots
                 await NavigationService.GoBackAsync();
             }
         }
-
-        private void UpdateDiagnosticInfo()
-        {
-            if (ShowDiagnostics)
-            {
-                DiagnosticInfo = $"Spot Types: {SpotTypes.Count}, Loading: {IsLoadingSpotTypes}, Selected: {SelectedSpotTypes.Count}";
-            }
-        }
         #endregion
 
         #region Public Methods for UI Binding Fix
@@ -659,10 +551,8 @@ namespace SubExplore.ViewModels.Spots
         /// </summary>
         public void ForceSpotTypesPropertyChanged()
         {
-            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: ForceSpotTypesPropertyChanged() called");
             OnPropertyChanged(nameof(SpotTypes));
             OnPropertyChanged(nameof(SpotTypesCount));
-            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: PropertyChanged notifications sent for SpotTypes and SpotTypesCount");
         }
         #endregion
 
