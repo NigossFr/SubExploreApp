@@ -5,6 +5,9 @@ using SubExplore.Services.Interfaces;
 using SubExplore.Models.Domain;
 using System.Linq;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using SubExplore.Views.Spots;
+using SubExplore.ViewModels.Spots;
 
 namespace SubExplore.Views.Map
 {
@@ -14,15 +17,17 @@ namespace SubExplore.Views.Map
         private MapViewModel? ViewModel => BindingContext as MapViewModel;
         private bool _isMapLoaded = false;
         private readonly IPlatformMapService? _platformMapService;
+        private readonly ILogger<MapPage> _logger;
         private System.Timers.Timer? _markerUpdateTimer;
         private System.Timers.Timer? _regionMonitorTimer;
         private MapSpan? _lastKnownRegion;
 
-        public MapPage(MapViewModel viewModel, IPlatformMapService platformMapService = null)
+        public MapPage(MapViewModel viewModel, IPlatformMapService platformMapService = null, ILogger<MapPage> logger = null)
         {
             InitializeComponent();
             BindingContext = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
             _platformMapService = platformMapService;
+            _logger = logger;
 
             if (MainMap != null)
             {
@@ -454,15 +459,16 @@ namespace SubExplore.Views.Map
                 
                 if (!foundNearbySpot)
                 {
-                    
+
                     // Close mini window if open (clicking empty space)
                     if (ViewModel != null && ViewModel.IsSpotMiniWindowVisible)
                     {
                         ViewModel.CloseSpotMiniWindowCommand?.Execute(null);
                     }
-                    
-                    // Note: MapClickedCommand removed in new architecture
-                    // Handle normal map click for future functionality
+
+                    // ✅ NOUVELLE FONCTIONNALITÉ: Ajouter spot au clic sur carte
+                    // Si pas de spot trouvé à proximité, proposer d'ajouter un nouveau spot
+                    await PromptAddSpotAtLocation(clickedLocation);
                 }
             }
             catch (Exception ex)
@@ -798,11 +804,17 @@ namespace SubExplore.Views.Map
                 if (!foundNearbySpot)
                 {
                     // Close mini window if open (tap-to-close on empty map)
-                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
                         if (ViewModel != null && ViewModel.IsSpotMiniWindowVisible)
                         {
                             ViewModel.CloseSpotMiniWindowCommand?.Execute(null);
+                        }
+                        else
+                        {
+                            // ✅ NOUVELLE FONCTIONNALITÉ: Ajouter spot au tap sur carte vide
+                            // Si pas de spot trouvé et pas de mini-window ouverte, proposer d'ajouter un spot
+                            await PromptAddSpotAtLocation(clickedLocation);
                         }
                     });
                 }
@@ -974,7 +986,7 @@ namespace SubExplore.Views.Map
             try
             {
                 Debug.WriteLine("[MapPage] Custom hamburger button clicked - bypassing MAUI Shell bugs");
-                
+
                 if (Shell.Current != null)
                 {
                     Shell.Current.FlyoutIsPresented = true;
@@ -988,6 +1000,117 @@ namespace SubExplore.Views.Map
             catch (Exception ex)
             {
                 Debug.WriteLine($"[MapPage] ❌ Custom hamburger error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// ✅ NOUVELLE MÉTHODE: Proposer d'ajouter un spot à un emplacement cliqué avec sélection du type
+        /// </summary>
+        private async Task PromptAddSpotAtLocation(Location location)
+        {
+            try
+            {
+                if (ViewModel == null) return;
+
+                // Afficher un ActionSheet pour choisir le type de spot
+                var spotTypeChoice = await Application.Current.MainPage.DisplayActionSheet(
+                    $"Ajouter un spot à cet emplacement\nCoordonnées: {location.Latitude:F6}, {location.Longitude:F6}",
+                    "Annuler",
+                    null,
+                    "🏊 Spot de Pratique",
+                    "🏢 Organisation/Club",
+                    "🛍️ Commerce/Boutique"
+                );
+
+                if (spotTypeChoice != null && spotTypeChoice != "Annuler")
+                {
+                    // Naviguer vers la page appropriée selon le choix
+                    await NavigateToSpotCreation(location, spotTypeChoice);
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Navigating to {spotTypeChoice} creation at: {location.Latitude}, {location.Longitude}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] PromptAddSpotAtLocation failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Navigation vers la page de création appropriée selon le type de spot
+        /// </summary>
+        private async Task NavigateToSpotCreation(Location location, string spotType)
+        {
+            try
+            {
+                _logger?.LogInformation("🔍 DIAGNOSTIC: NavigateToSpotCreation START - spotType: {spotType}", spotType);
+
+                // Test manual instantiation to check dependency injection
+                try
+                {
+                    _logger?.LogInformation("🔍 DIAGNOSTIC: Testing manual AddSpotPage instantiation...");
+                    var serviceProvider = Handler?.MauiContext?.Services ?? Application.Current?.Handler?.MauiContext?.Services;
+                    if (serviceProvider != null)
+                    {
+                        var addSpotPage = serviceProvider.GetService<AddSpotPage>();
+                        _logger?.LogInformation("🔍 DIAGNOSTIC: Manual AddSpotPage instantiation: {Result}", addSpotPage != null ? "SUCCESS" : "FAILED");
+
+                        var viewModel = serviceProvider.GetService<RefactoredAddSpotViewModel>();
+                        _logger?.LogInformation("🔍 DIAGNOSTIC: Manual RefactoredAddSpotViewModel instantiation: {Result}", viewModel != null ? "SUCCESS" : "FAILED");
+                    }
+                    else
+                    {
+                        _logger?.LogWarning("🔍 DIAGNOSTIC: ServiceProvider not available for manual testing");
+                    }
+                }
+                catch (Exception testEx)
+                {
+                    _logger?.LogError(testEx, "🔍 DIAGNOSTIC: Manual instantiation test FAILED: {Error}", testEx.Message);
+                }
+
+                var parameters = new Dictionary<string, object>
+                {
+                    ["Latitude"] = location.Latitude,
+                    ["Longitude"] = location.Longitude,
+                    ["Mode"] = "create"
+                };
+
+                _logger?.LogInformation("🔍 DIAGNOSTIC: Parameters created successfully");
+
+                switch (spotType)
+                {
+                    case "🏊 Spot de Pratique":
+                        _logger?.LogInformation("🔍 DIAGNOSTIC: About to navigate to //addspot");
+                        // Navigation vers SimpleApiAddSpotViewModel (spots de pratique)
+                        await Shell.Current.GoToAsync("//addspot", parameters);
+                        _logger?.LogInformation("🔍 DIAGNOSTIC: Navigation to //addspot COMPLETED");
+                        break;
+
+                    case "🏢 Organisation/Club":
+                        // Navigation vers OrganizationAddViewModel (à créer)
+                        await Shell.Current.GoToAsync("//addorganization", parameters);
+                        break;
+
+                    case "🛍️ Commerce/Boutique":
+                        // Navigation vers BusinessAddViewModel (à créer)
+                        await Shell.Current.GoToAsync("//addbusiness", parameters);
+                        break;
+
+                    default:
+                        _logger?.LogWarning("🔍 DIAGNOSTIC: Unknown spot type: {spotType}", spotType);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "🔍 DIAGNOSTIC: NavigateToSpotCreation EXCEPTION: {Error}", ex.Message);
+                _logger?.LogError("🔍 DIAGNOSTIC: Exception StackTrace: {StackTrace}", ex.StackTrace);
+
+                // Fallback: afficher un message d'erreur à l'utilisateur
+                await Application.Current.MainPage.DisplayAlert(
+                    "Erreur",
+                    "Impossible d'ouvrir la page de création de spot. Veuillez réessayer.",
+                    "OK"
+                );
             }
         }
     }

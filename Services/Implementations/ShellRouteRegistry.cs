@@ -179,7 +179,19 @@ namespace SubExplore.Services.Implementations
         {
             var viewModelName = viewModelType.Name;
             var viewName = viewModelName.Replace("ViewModel", "Page");
-            
+
+            // Special case mappings for ViewModels that don't follow standard naming
+            var specialMappings = new Dictionary<string, string>
+            {
+                { "RefactoredAddSpotViewModel", "AddSpotPage" },
+                { "SpotTypeSelectionViewModel", "SpotTypeSelectionPage" }
+            };
+
+            if (specialMappings.TryGetValue(viewModelName, out var specialViewName))
+            {
+                viewName = specialViewName;
+            }
+
             // Try different namespace patterns
             var assembly = Assembly.GetExecutingAssembly();
             
@@ -190,6 +202,7 @@ namespace SubExplore.Services.Implementations
                 { "FavoriteSpotsPage", "SubExplore.Views.Favorites" },
                 { "FavoritesPage", "SubExplore.Views.Favorites" },
                 { "AddSpotPage", "SubExplore.Views.Spots" },
+                { "SpotTypeSelectionPage", "SubExplore.Views.Spots" },
                 { "SpotDetailsPage", "SubExplore.Views.Spots" },
                 { "MySpotsPage", "SubExplore.Views.Spots" },
                 { "UserProfilePage", "SubExplore.Views.Profile" },

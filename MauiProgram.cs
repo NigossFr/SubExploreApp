@@ -28,6 +28,10 @@ using SubExplore.ViewModels.Settings;
 using SubExplore.ViewModels.Map;
 using SubExplore.Constants;
 using SubExplore.ViewModels.Spots;
+using SubExplore.ViewModels.Organizations;
+using SubExplore.ViewModels.Businesses;
+using SubExplore.Views.Organizations;
+using SubExplore.Views.Businesses;
 using SubExplore.ViewModels.Profile;
 // 🚫 ViewModels.Menu supprimé
 // using SubExplore.ViewModels.Menu;
@@ -154,6 +158,11 @@ public static class MauiProgram
         builder.Services.AddScoped<ISupabaseSpotService, SupabaseSpotService>();
         builder.Services.AddScoped<ISupabaseSpotTypeService, SupabaseSpotTypeService>();
         builder.Services.AddScoped<ISupabaseUserService, SupabaseUserService>();
+
+        // 🎯 ADD SPOT FORM SERVICES - Refactored form logic for better maintainability
+        builder.Services.AddScoped<IAddSpotFormService, AddSpotFormService>();
+        builder.Services.AddScoped<ISpotTypeService, SpotTypeService>();
+        builder.Services.AddScoped<ISpotTypeTestDataService, SpotTypeTestDataService>();
         
         // 🔐 SERVICE D'AUTHENTIFICATION AVANCÉ
         builder.Services.AddSingleton<ISimpleAuthenticationService, EnhancedAuthenticationService>();
@@ -385,6 +394,10 @@ public static class MauiProgram
         // 🚫 DatabaseTestViewModel supprimé - utilisait des services Entity Framework
         // builder.Services.AddTransient<DatabaseTestViewModel>();
         builder.Services.AddTransient<SimpleApiAddSpotViewModel>();
+        builder.Services.AddTransient<RefactoredAddSpotViewModel>();
+        builder.Services.AddTransient<SpotTypeSelectionViewModel>();
+        builder.Services.AddTransient<OrganizationAddViewModel>();
+        builder.Services.AddTransient<BusinessAddViewModel>();
         builder.Services.AddTransient<MapViewModel>();
         builder.Services.AddTransient<OptimizedMapViewModel>();
         // ✅ NOUVEAU VIEWMODEL AVANCÉ 100% SUPABASE
@@ -439,6 +452,9 @@ public static class MauiProgram
         // ✅ NOUVELLE PAGE AVANCÉE 100% SUPABASE
         builder.Services.AddTransient<EnhancedMapPage>();
         builder.Services.AddTransient<AddSpotPage>();
+        builder.Services.AddTransient<SpotTypeSelectionPage>();
+        builder.Services.AddTransient<OrganizationAddPage>();
+        builder.Services.AddTransient<BusinessAddPage>();
         builder.Services.AddTransient<SpotDetailsPage>();
         builder.Services.AddTransient<SpotPhotosPage>();
         builder.Services.AddTransient<SpotEditPage>();

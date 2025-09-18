@@ -130,9 +130,24 @@
                            FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                            Margin="15,15,15,5" />
-                    
+
+                    <!-- Ajouter un Spot -->
+                    <controls:StagedMenuButton
+                        Title="Ajouter un Spot"
+                        Description="Créer un nouveau spot"
+                        Icon="➕"
+                        Stage="Success"
+                        ShowIcon="True"
+                        ShowDescription="True"
+                        ShowBadge="False"
+                        Tapped="OnAddSpotButtonTapped"
+                        AccessibilityName="Ajouter un Spot, créer un nouveau spot"
+                        AccessibilityDescription="Créer un nouveau spot de plongée, organisation ou commerce"
+                        AccessibilityHint="Appuyez deux fois pour ajouter un spot"
+                        IconAccessibilityText="Icône d'ajout" />
+
                     <!-- Mes Spots -->
-                    <controls:StagedMenuButton 
+                    <controls:StagedMenuButton
                         Title="Mes Spots"
                         Description="Spots que vous avez créés"
                         Icon=""
@@ -316,6 +331,18 @@
         Title="Ajouter un Spot"
         ContentTemplate="{DataTemplate spots:AddSpotPage}"
         Route="addspot" />
+
+    <!-- Add Organization Page Route -->
+    <ShellContent
+        Title="Ajouter une Organisation"
+        ContentTemplate="{DataTemplate organizations:OrganizationAddPage}"
+        Route="addorganization" />
+
+    <!-- Add Business Page Route -->
+    <ShellContent
+        Title="Ajouter un Commerce"
+        ContentTemplate="{DataTemplate businesses:BusinessAddPage}"
+        Route="addbusiness" />
 
     <!-- Spot Details Page Route -->
     <ShellContent

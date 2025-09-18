@@ -21,13 +21,15 @@ using SubExplore.ViewModels.Base;
 
 namespace SubExplore.ViewModels.Spots
 {
-    public partial class SimpleApiAddSpotViewModel : ViewModelBase
+    public partial class SimpleApiAddSpotViewModel : ViewModelBase, IDisposable
     {
         private readonly ISupabaseApiService _apiService;
         private readonly ILocationService _locationService;
         private readonly ISimpleAuthenticationService _authService;
         private readonly ILogger<SimpleApiAddSpotViewModel> _logger;
         private readonly IApplicationPerformanceService? _performanceService;
+        private readonly IAddSpotFormService _formService;
+        private readonly ISpotTypeService _spotTypeService;
 
         [ObservableProperty]
         private string _spotName = string.Empty;
@@ -63,7 +65,7 @@ namespace SubExplore.ViewModels.Spots
         private string _spotTypeError = string.Empty;
 
         [ObservableProperty]
-        private bool _hasValidationErrors;
+        private bool _hasValidationErrors = false;
 
         [ObservableProperty]
         private string _validationSummary = string.Empty;
@@ -98,6 +100,10 @@ namespace SubExplore.ViewModels.Spots
         [ObservableProperty]
         private bool _isConnected = true;
 
+        // Concurrency protection for loading spot types
+        private readonly SemaphoreSlim _loadingSemaphore = new SemaphoreSlim(1, 1);
+        private volatile bool _isLoadingSpotTypesInProgress = false;
+
         [ObservableProperty]
         private string _connectionStatus = "Connecté";
 
@@ -122,6 +128,8 @@ namespace SubExplore.ViewModels.Spots
             ILocationService locationService,
             ISimpleAuthenticationService authService,
             ILogger<SimpleApiAddSpotViewModel> logger,
+            IAddSpotFormService formService,
+            ISpotTypeService spotTypeService,
             IApplicationPerformanceService? performanceService = null,
             IDialogService? dialogService = null,
             INavigationService? navigationService = null) : base(dialogService, navigationService)
@@ -131,6 +139,8 @@ namespace SubExplore.ViewModels.Spots
             _authService = authService;
             _logger = logger;
             _performanceService = performanceService;
+            _formService = formService;
+            _spotTypeService = spotTypeService;
             Title = "Ajouter un Spot";
 
             // Observer les changements pour valider avec debouncing pour réduire la pression mémoire
@@ -220,19 +230,45 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
-                // Simplified API initialization - assume it works for now
-                IsApiReady = true;
-                ClearError();
-                
-                // Test if we can actually load spot types
-                if (SpotTypes.Count == 0)
+                // ✅ FIXED: Proper API service verification before marking as ready
+                _logger?.LogInformation("🔧 Starting API initialization...");
+                _logger?.LogInformation($"📊 _apiService null check: {_apiService == null}");
+
+                if (_apiService == null)
                 {
-                    await LoadSpotTypesAsync();
+                    _logger?.LogError("❌ ISupabaseApiService is null - dependency injection failed");
+                    IsApiReady = false;
+                    ShowError("Service API indisponible. Vérifiez la configuration.");
+                    return;
+                }
+
+                // Test actual connectivity
+                _logger?.LogInformation("🔄 Testing API connectivity...");
+                bool connectionTest = await _apiService.TestConnectionAsync();
+                _logger?.LogInformation($"📊 Connection test result: {connectionTest}");
+
+                if (connectionTest)
+                {
+                    IsApiReady = true;
+                    _logger?.LogInformation("✅ API initialization successful");
+                    ClearError();
+
+                    // Test if we can actually load spot types
+                    if (SpotTypes.Count == 0)
+                    {
+                        await LoadSpotTypesAsync();
+                    }
+                }
+                else
+                {
+                    IsApiReady = false;
+                    _logger?.LogWarning("⚠️ API connection test failed");
+                    ShowError("Connexion Supabase échouée. Utilisation des types locaux.");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "SPOT_ADD_API_ERROR: API initialization failed");
+                _logger?.LogError(ex, "❌ SPOT_ADD_API_ERROR: API initialization failed");
                 IsApiReady = false;
                 await HandleApiErrorAsync(ex, "Impossible d'initialiser l'API");
             }
@@ -500,72 +536,154 @@ namespace SubExplore.ViewModels.Spots
         }
 
         [RelayCommand]
-        private async Task LoadSpotTypesAsync()
+        private async Task LoadSpotTypesAsync(bool forceReload = false)
         {
+            // CRITICAL FIX: Smart loading - avoid unnecessary calls
+            var currentThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+            _logger?.LogError($"🔴 CRITICAL - LoadSpotTypesAsync called on thread {currentThreadId}, forceReload: {forceReload}");
+
+            // Skip if spot types already exist and it's not a force reload
+            if (!forceReload && SpotTypes?.Any() == true)
+            {
+                _logger?.LogError($"🔴 CRITICAL - SpotTypes already loaded ({SpotTypes.Count} items), skipping unnecessary reload on thread {currentThreadId}");
+                return;
+            }
+
+            // Prevent concurrent loading
+            if (_isLoadingSpotTypesInProgress)
+            {
+                _logger?.LogError($"🔴 CRITICAL - LoadSpotTypesAsync already in progress, skipping duplicate call on thread {currentThreadId}");
+                return;
+            }
+
+            bool semaphoreAcquired = false;
             try
             {
-                IsLoadingSpotTypes = true;
-                ClearError();
-                _logger?.LogInformation("🏷️ Starting to load spot types...");
+                _logger?.LogError($"🔴 CRITICAL - Attempting to acquire semaphore on thread {currentThreadId}");
+                semaphoreAcquired = await _loadingSemaphore.WaitAsync(5000); // 5 second timeout
 
-                // Toujours créer les types locaux en premier
-                await CreateLocalSpotTypesAsync();
-                _logger?.LogInformation($"✅ Created {SpotTypes.Count} local spot types as fallback");
-
-                // Vérifier et potentiellement corriger Supabase
-                if (_apiService != null && IsApiReady)
+                if (!semaphoreAcquired)
                 {
-                    await CheckAndRepairSupabaseAsync();
+                    _logger?.LogError($"🔴 CRITICAL - Semaphore timeout on thread {currentThreadId}");
+                    return;
                 }
 
-                // Essayer de charger depuis l'API maintenant que c'est potentiellement réparé
-                /*
+                _logger?.LogError($"🔴 CRITICAL - Semaphore acquired on thread {currentThreadId}");
+
+                if (_isLoadingSpotTypesInProgress)
+                {
+                    _logger?.LogError($"🔴 CRITICAL - LoadSpotTypesAsync already in progress inside semaphore, skipping on thread {currentThreadId}");
+                    return;
+                }
+
+                _isLoadingSpotTypesInProgress = true;
+                IsLoadingSpotTypes = true;
+                ClearError();
+                _logger?.LogError($"🏷️ DIAGNOSTIC - Starting to load spot types on thread {currentThreadId}...");
+                _logger?.LogError($"🔧 DIAGNOSTIC - API Service null check: {_apiService == null}");
+                _logger?.LogError($"🔧 DIAGNOSTIC - IsApiReady: {IsApiReady}");
+
+                // Créer les types locaux seulement si nécessaire
+                if (SpotTypes?.Any() != true)
+                {
+                    await CreateLocalSpotTypesAsync();
+                    _logger?.LogInformation($"✅ Created {SpotTypes.Count} local spot types as fallback");
+
+                    // Force UI update
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        OnPropertyChanged(nameof(SpotTypes));
+                        _logger?.LogError($"🔄 CRITICAL - Forced UI update for SpotTypes ({SpotTypes.Count} items)");
+                    });
+                }
+                else
+                {
+                    _logger?.LogInformation($"✅ Keeping existing {SpotTypes.Count} spot types");
+                }
+
+                // ✅ CRITICAL FIX: Removed separate CheckAndRepairSupabaseAsync call to prevent double collection clearing
+                // Corruption check is now integrated into the main API loading logic below
+
+                // ✅ FIXED: Essayer de charger depuis l'API maintenant que c'est potentiellement réparé
+                // ✅ FIXED: Code réactivé pour nouvelle architecture 3-tables - charge uniquement les types d'activités pour practice spots
                 try
                 {
                     if (_apiService != null && IsApiReady)
                     {
-                        _logger?.LogInformation("Attempting to load spot types from API...");
+                        _logger?.LogInformation("🔄 Attempting to load spot types from Supabase API...");
                         var supabaseSpotTypes = await _apiService.GetSpotTypesAsync();
-                        if (supabaseSpotTypes?.Any() == true && supabaseSpotTypes.Count >= SpotTypes.Count)
+
+                        if (supabaseSpotTypes?.Any() == true)
                         {
-                            // Only replace if API has at least as many types as local
-                            _logger?.LogInformation($"API returned {supabaseSpotTypes.Count} spot types, replacing local ones");
-                            var spotTypes = SupabaseModelConverter.ToEfModels(supabaseSpotTypes);
-                            var spotTypeItems = spotTypes
-                                .Where(st => st.IsActive)
+                            _logger?.LogInformation($"📥 API returned {supabaseSpotTypes.Count} total spot types from Supabase");
+
+                            // ✅ CRITICAL FIX: Check for corruption first before processing
+                            var isCorrupted = IsSupabaseDatabaseCorrupted(supabaseSpotTypes);
+                            if (isCorrupted)
+                            {
+                                _logger?.LogWarning("🚨 Base Supabase corrompue détectée! Skipping API load, will use local fallback.");
+                                ShowError("Base de données corrompue détectée. Utilisation des types locaux.");
+                                // Don't return here, let it fall through to local fallback
+                            }
+                            else
+                            {
+                                // ✅ FIXED: Pour les practice spots, filtrer uniquement les types d'activités (non structures/commerces)
+                                var spotTypes = SupabaseModelConverter.ToEfModels(supabaseSpotTypes);
+                                var activitySpotTypes = spotTypes
+                                .Where(st => st.IsActive && st.Category == ActivityCategory.Activity) // ✅ FIXED: Uniquement les activités
                                 .OrderBy(st => st.Name)
                                 .Select(st => new SpotTypeItem { SpotType = st })
                                 .ToList();
 
-                            if (spotTypeItems.Any())
+                            if (activitySpotTypes.Any())
                             {
                                 MainThread.BeginInvokeOnMainThread(() =>
                                 {
-                                    SpotTypes.Clear();
-                                    foreach (var item in spotTypeItems)
+                                    // Only clear if we actually have new data to replace with
+                                    if (forceReload || SpotTypes?.Any() != true)
                                     {
-                                        SpotTypes.Add(item);
+                                        SpotTypes.Clear();
+                                        foreach (var item in activitySpotTypes)
+                                        {
+                                            SpotTypes.Add(item);
+                                        }
+                                        _logger?.LogInformation($"✅ Replaced with {SpotTypes.Count} activity types from API (filtered for practice spots)");
+
+                                        // Force UI notification
+                                        OnPropertyChanged(nameof(SpotTypes));
+                                        _logger?.LogError($"🔄 CRITICAL - Forced UI update for API SpotTypes ({SpotTypes.Count} items)");
                                     }
-                                    _logger?.LogInformation($"Replaced local types with {SpotTypes.Count} API types");
+                                    else
+                                    {
+                                        _logger?.LogInformation($"✅ API data available but keeping existing {SpotTypes.Count} spot types (no force reload)");
+                                    }
                                 });
+
+                                // Success - nous avons chargé les types depuis l'API
+                                UpdateDiagnosticInfo();
+                                return;
                             }
+                            else
+                            {
+                                _logger?.LogWarning($"⚠️ No valid activity types found in API response, keeping {SpotTypes.Count} local ones");
+                            }
+                            } // Close the else block for corruption check
                         }
                         else
                         {
-                            _logger?.LogWarning($"API returned {supabaseSpotTypes?.Count ?? 0} spot types, keeping {SpotTypes.Count} local ones");
+                            _logger?.LogWarning($"⚠️ API returned {supabaseSpotTypes?.Count ?? 0} spot types, keeping {SpotTypes.Count} local ones");
                         }
                     }
                     else
                     {
-                        _logger?.LogWarning($"API not ready (IsApiReady: {IsApiReady}), using local types");
+                        _logger?.LogWarning($"⚠️ API not ready (IsApiReady: {IsApiReady}), using local types");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger?.LogWarning(ex, "Could not load from API, using local types");
+                    _logger?.LogWarning(ex, "❌ Could not load from API, using local types as fallback");
                     // Keep the local types that were already created
                 }
-                */
 
                 _logger?.LogInformation($"Final result: {SpotTypes.Count} spot types loaded successfully");
                 UpdateDiagnosticInfo();
@@ -590,7 +708,30 @@ namespace SubExplore.ViewModels.Spots
             }
             finally
             {
+                var finalThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+                _isLoadingSpotTypesInProgress = false;
                 IsLoadingSpotTypes = false;
+
+                // CRITICAL UI STATE DIAGNOSIS
+                _logger?.LogError($"🔍 UI STATE DIAGNOSIS:");
+                _logger?.LogError($"  - SpotTypes.Count: {SpotTypes?.Count ?? -1}");
+                _logger?.LogError($"  - IsLoadingSpotTypes: {IsLoadingSpotTypes}");
+                _logger?.LogError($"  - SelectedSpotType: {SelectedSpotType?.Name ?? "NULL"}");
+                _logger?.LogError($"  - SpotTypeError: '{SpotTypeError}'");
+
+                // Force validate to see current state
+                ValidateFieldsRealTime();
+                _logger?.LogError($"  - After validation - SpotTypeError: '{SpotTypeError}'");
+
+                if (semaphoreAcquired)
+                {
+                    _loadingSemaphore.Release();
+                    _logger?.LogError($"🔴 CRITICAL - LoadSpotTypesAsync completed, released semaphore on thread {finalThreadId}");
+                }
+                else
+                {
+                    _logger?.LogError($"🔴 CRITICAL - LoadSpotTypesAsync completed, no semaphore to release on thread {finalThreadId}");
+                }
             }
         }
 
@@ -601,10 +742,14 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
-                _logger?.LogInformation("🔍 Vérification de l'intégrité de Supabase...");
-                
+                _logger?.LogError("🔍 DIAGNOSTIC - Vérification de l'intégrité de Supabase...");
+                _logger?.LogError($"🔧 DIAGNOSTIC - About to call GetSpotTypesAsync()");
+
                 var supabaseSpotTypes = await _apiService.GetSpotTypesAsync();
+                _logger?.LogError($"🔧 DIAGNOSTIC - GetSpotTypesAsync returned {supabaseSpotTypes?.Count ?? 0} types");
+
                 var isCorrupted = IsSupabaseDatabaseCorrupted(supabaseSpotTypes);
+                _logger?.LogError($"🔧 DIAGNOSTIC - IsSupabaseDatabaseCorrupted returned: {isCorrupted}");
                 
                 if (isCorrupted)
                 {
@@ -620,11 +765,13 @@ namespace SubExplore.ViewModels.Spots
                     _logger?.LogInformation("✅ Base Supabase semble intacte, tentative de chargement");
                     
                     // Si la base n'est pas corrompue, essayer de charger normalement
-                    if (supabaseSpotTypes?.Any() == true && supabaseSpotTypes.Count >= 8)
+                    // ✅ FIXED: Updated threshold from 8 to 3 for practice spots (activities only)
+                    if (supabaseSpotTypes?.Any() == true && supabaseSpotTypes.Count >= 3)
                     {
                         var spotTypes = SupabaseModelConverter.ToEfModels(supabaseSpotTypes);
+                        // ✅ FIXED: Filter only activity types for practice spots
                         var spotTypeItems = spotTypes
-                            .Where(st => st.IsActive)
+                            .Where(st => st.IsActive && st.Category == ActivityCategory.Activity)
                             .OrderBy(st => st.Name)
                             .Select(st => new SpotTypeItem { SpotType = st })
                             .ToList();
@@ -639,6 +786,10 @@ namespace SubExplore.ViewModels.Spots
                                     SpotTypes.Add(item);
                                 }
                                 _logger?.LogInformation($"✅ Remplacé par {SpotTypes.Count} types Supabase intacts");
+
+                                // CRITICAL FIX: Force UI refresh for Supabase data
+                                OnPropertyChanged(nameof(SpotTypes));
+                                _logger?.LogError($"🔄 CRITICAL - Forced UI refresh after Supabase data load");
                             });
                         }
                     }
@@ -656,52 +807,77 @@ namespace SubExplore.ViewModels.Spots
         /// </summary>
         private bool IsSupabaseDatabaseCorrupted(List<SupabaseSpotType>? spotTypes)
         {
+            _logger?.LogError($"🔧 DIAGNOSTIC - IsSupabaseDatabaseCorrupted called with {spotTypes?.Count ?? 0} types");
+
             if (spotTypes == null || spotTypes.Count == 0)
             {
-                _logger?.LogWarning("🚨 Aucun type trouvé dans Supabase");
+                _logger?.LogError("🚨 DIAGNOSTIC - Aucun type trouvé dans Supabase");
                 return true;
             }
 
-            if (spotTypes.Count < 8)
+            _logger?.LogError($"🔧 DIAGNOSTIC - Spot types found: {string.Join(", ", spotTypes.Select(st => $"'{st.Name}' ({st.Category})"))}.");
+
+            // ✅ FIXED: Updated for new 3-table architecture with UUID-based spot types
+            // For practice spots, we need at least activity types (not structures/commerces)
+            if (spotTypes.Count < 3)
             {
-                _logger?.LogWarning($"🚨 Seulement {spotTypes.Count} types au lieu de 8");
+                _logger?.LogWarning($"🚨 Seulement {spotTypes.Count} types au lieu de minimum 3 activités");
                 return true;
             }
 
-            var expectedNames = new HashSet<string>
+            // ✅ FIXED: Updated expected spot type names for new architecture
+            // Based on claude_code_migration_guide.md - new spot types structure
+            var actualNames = new HashSet<string>(spotTypes.Select(st => st.Name ?? "").Where(n => !string.IsNullOrEmpty(n)));
+            var actualCategories = new HashSet<string>(spotTypes.Select(st => st.Category ?? "").Where(c => !string.IsNullOrEmpty(c)));
+
+            // Check for essential activity types (minimum requirement)
+            var essentialActivityTypes = new HashSet<string>
             {
-                "Plongée bouteille", "Apnée", "Randonnée sous-marine", "Photo sous-marine",
-                "Clubs", "Professionnels", "Bases fédérales", "Boutiques"
+                "Plongée bouteille", "Apnée", "Plongée technique"
             };
 
-            var actualNames = new HashSet<string>(spotTypes.Select(st => st.Name ?? "").Where(n => !string.IsNullOrEmpty(n)));
-            var missingNames = expectedNames.Except(actualNames).ToList();
-            var truncatedTypes = spotTypes.Where(st => 
-                string.IsNullOrWhiteSpace(st.Name) || 
+            var hasEssentialActivities = essentialActivityTypes.Any(essential => actualNames.Contains(essential));
+
+            var truncatedTypes = spotTypes.Where(st =>
+                string.IsNullOrWhiteSpace(st.Name) ||
                 st.Name.Length < 3 ||
-                st.Name.Equals("Cl", StringComparison.OrdinalIgnoreCase)
+                st.Name.Equals("Cl", StringComparison.OrdinalIgnoreCase) ||
+                st.Id == Guid.Empty // ✅ FIXED: Check for valid UUID
             ).ToList();
 
-            if (missingNames.Any())
+            if (!hasEssentialActivities)
             {
-                _logger?.LogWarning($"🚨 Types manquants: [{string.Join(", ", missingNames)}]");
+                _logger?.LogWarning($"🚨 Types d'activités essentiels manquants. Types trouvés: [{string.Join(", ", actualNames)}]");
                 return true;
             }
 
             if (truncatedTypes.Any())
             {
-                _logger?.LogWarning($"🚨 Données tronquées: {truncatedTypes.Count} types");
+                _logger?.LogWarning($"🚨 Types corrompus détectés: [{string.Join(", ", truncatedTypes.Select(t => $"{t.Name} (ID: {t.Id})"))}]");
                 return true;
             }
 
+            // ✅ FIXED: Check for valid UUID-based IDs
+            var invalidUuidTypes = spotTypes.Where(st => st.Id == Guid.Empty).ToList();
+            if (invalidUuidTypes.Any())
+            {
+                _logger?.LogWarning($"🚨 Types avec UUID invalides: [{string.Join(", ", invalidUuidTypes.Select(t => t.Name))}]");
+                return true;
+            }
+
+            _logger?.LogInformation($"✅ Base Supabase semble intacte: {spotTypes.Count} types UUID valides, activités essentielles présentes");
             return false;
         }
 
+        /// <summary>
+        /// ✅ FIXED: Crée uniquement les types d'activités locaux comme fallback pour les practice spots
+        /// ✅ MIGRATION 3-TABLES: Types filtrés pour nouvelle architecture - practice spots uniquement
+        /// </summary>
         private async Task CreateLocalSpotTypesAsync()
         {
             try
             {
-                _logger?.LogInformation("Creating spot types based on existing database schema...");
+                _logger?.LogInformation("Creating fallback local spot types for practice spots (activities only)...");
                 
                 // Utilisation des vrais types de spots basés sur le schéma de base de données existant
                 // Source: migrate_spot_types.sql et SpotTypeDataMigrationService.cs
@@ -775,74 +951,43 @@ namespace SubExplore.ViewModels.Spots
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow
                     },
-
-                    // === STRUCTURES (variations de verts) ===
-                    new SpotType 
-                    { 
-                        Id = Guid.NewGuid(), 
-                        Name = "Clubs", 
-                        IconPath = "marker_club.png",
-                        ColorCode = "#228B22", // Vert foncé
-                        Category = ActivityCategory.Structure,
-                        Description = "Clubs de plongée et associations",
-                        RequiresExpertValidation = false,
-                        ValidationCriteria = new Dictionary<string, object>
-                        {
-                            { "RequiredFields", new[] { "Description" } }
-                        },
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    },
-                    new SpotType 
-                    { 
-                        Id = Guid.NewGuid(), 
-                        Name = "Professionnels", 
-                        IconPath = "marker_pro.png",
-                        ColorCode = "#32CD32", // Vert lime
-                        Category = ActivityCategory.Structure,
-                        Description = "Centres de plongée, instructeurs et guides professionnels",
+                    new SpotType
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Plongée technique",
+                        IconPath = "marker_technical.png",
+                        ColorCode = "#0047AB", // Bleu royal (plus foncé)
+                        Category = ActivityCategory.Activity,
+                        Description = "Sites de plongée technique avancée (épaves, grottes, grande profondeur)",
                         RequiresExpertValidation = true,
                         ValidationCriteria = new Dictionary<string, object>
                         {
-                            { "RequiredFields", new[] { "Description", "SafetyNotes" } }
+                            { "RequiredFields", new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes", "RequiredEquipment" } },
+                            { "MaxDepthRange", new[] { 30, 100 } },
+                            { "MinCertificationLevel", "Advanced" }
                         },
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow
                     },
-                    new SpotType 
-                    { 
-                        Id = Guid.NewGuid(), 
-                        Name = "Bases fédérales", 
-                        IconPath = "marker_federal.png",
-                        ColorCode = "#90EE90", // Vert clair
-                        Category = ActivityCategory.Structure,
-                        Description = "Bases fédérales et structures officielles",
-                        RequiresExpertValidation = true,
-                        ValidationCriteria = new Dictionary<string, object>
-                        {
-                            { "RequiredFields", new[] { "Description", "SafetyNotes" } }
-                        },
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    },
-
-                    // === BOUTIQUES (tons oranges) ===
-                    new SpotType 
-                    { 
-                        Id = Guid.NewGuid(), 
-                        Name = "Boutiques", 
-                        IconPath = "marker_shop.png",
-                        ColorCode = "#FF8C00", // Orange principal
-                        Category = ActivityCategory.Shop,
-                        Description = "Magasins de matériel de plongée et équipements sous-marins",
+                    new SpotType
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Formation",
+                        IconPath = "marker_training.png",
+                        ColorCode = "#6495ED", // Bleu cornflower
+                        Category = ActivityCategory.Activity,
+                        Description = "Sites adaptés à la formation et à l'enseignement de la plongée",
                         RequiresExpertValidation = false,
                         ValidationCriteria = new Dictionary<string, object>
                         {
-                            { "RequiredFields", new[] { "Description" } }
+                            { "RequiredFields", new[] { "MaxDepth", "DifficultyLevel", "SafetyNotes" } },
+                            { "MaxDepthRange", new[] { 0, 20 } },
+                            { "RequiredFeatures", new[] { "EasyAccess", "CalmWater" } }
                         },
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow
                     }
+                    // ✅ REMOVED: Structures et commerces supprimés - uniquement des activités pour practice spots
                 };
 
                 MainThread.BeginInvokeOnMainThread(() =>
@@ -1132,7 +1277,7 @@ namespace SubExplore.ViewModels.Spots
                           !HasValidationErrors;
         }
 
-        private static readonly TimeSpan ValidationThrottleInterval = TimeSpan.FromMilliseconds(200);
+        private static readonly TimeSpan ValidationThrottleInterval = TimeSpan.FromMilliseconds(500);
         private DateTime _lastValidationTime = DateTime.MinValue;
         private bool _validationScheduled = false;
         
@@ -1247,9 +1392,23 @@ namespace SubExplore.ViewModels.Spots
 
         private string ValidateSpotType(SpotType? spotType)
         {
+            // Only show error if spot types are not available or failed to load
+            // Don't show error during normal initial state when spot types are loaded but none selected
             if (spotType == null)
-                return "Veuillez sélectionner un type de spot";
-            
+            {
+                // If spot types are still loading, don't show error yet
+                if (IsLoadingSpotTypes)
+                    return string.Empty;
+
+                // If no spot types are available at all, show error
+                if (SpotTypes == null || SpotTypes.Count == 0)
+                    return "Aucun type de spot disponible";
+
+                // Spot types are available but none selected - only show error during final validation
+                // For real-time validation, don't show error to avoid confusing users
+                return string.Empty;
+            }
+
             return string.Empty;
         }
 
@@ -1464,7 +1623,7 @@ namespace SubExplore.ViewModels.Spots
                 // Recharger les types de spots
                 if (IsApiReady)
                 {
-                    await LoadSpotTypesAsync();
+                    await LoadSpotTypesAsync(forceReload: true);
                 }
 
                 // Rafraîchir la position GPS
@@ -1525,25 +1684,36 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
+                var currentThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+                _logger?.LogError($"🔴 CRITICAL - ForceRefreshAllAsync called on thread {currentThreadId}");
+
                 DiagnosticInfo = "🔄 Force refresh démarré...";
-                
+
                 // Force refresh API
                 IsApiReady = false;
                 await InitializeApiAsync();
                 DiagnosticInfo += $"\n✅ API: {IsApiReady}";
-                
+
+                // CRITICAL FIX: Wait for any existing LoadSpotTypesAsync to complete
+                _logger?.LogError($"🔴 CRITICAL - ForceRefreshAllAsync waiting for existing LoadSpotTypesAsync to complete");
+                while (_isLoadingSpotTypesInProgress)
+                {
+                    _logger?.LogError($"🔴 CRITICAL - ForceRefreshAllAsync waiting... IsLoadingSpotTypes: {IsLoadingSpotTypes}");
+                    await Task.Delay(100);
+                }
+
                 // Force refresh spot types
-                SpotTypes.Clear();
-                await LoadSpotTypesAsync();
+                _logger?.LogError($"🔴 CRITICAL - ForceRefreshAllAsync about to call LoadSpotTypesAsync with forceReload=true");
+                await LoadSpotTypesAsync(forceReload: true);
                 DiagnosticInfo += $"\n✅ SpotTypes: {SpotTypes.Count}";
-                
-                // Force refresh location  
+
+                // Force refresh location
                 if (Latitude == 0 && Longitude == 0)
                 {
                     await GetCurrentLocationAsync();
                 }
                 DiagnosticInfo += $"\n✅ Location: {Latitude:F2}, {Longitude:F2}";
-                
+
                 // Update validation
                 ValidateFieldsRealTime();
                 DiagnosticInfo += $"\n✅ Validation terminée";
@@ -1637,6 +1807,30 @@ namespace SubExplore.ViewModels.Spots
                 ShowError("Erreur lors de l'annulation");
             }
         }
+
+        #region IDisposable Implementation
+
+        private bool _disposed = false;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _loadingSemaphore?.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
+        #endregion
 
     }
 }

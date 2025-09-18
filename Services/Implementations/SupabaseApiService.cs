@@ -129,15 +129,35 @@ namespace SubExplore.Services.Implementations
         {
             try
             {
+                _logger.LogInformation("🔍 DIAGNOSTIC: Starting GetSpotTypesAsync()");
+
                 var client = await GetClientAsync();
+                _logger.LogInformation("🔍 DIAGNOSTIC: Client obtained successfully");
 
                 _logger.LogInformation("📥 Récupération des types de spots...");
-                
+
                 var result = await client.From<SupabaseSpotType>()
                     .Order("name", Postgrest.Constants.Ordering.Ascending)
                     .Get();
 
+                _logger.LogInformation("🔍 DIAGNOSTIC: Database query executed");
+                _logger.LogInformation("🔍 DIAGNOSTIC: Result is null: {IsNull}", result == null);
+                _logger.LogInformation("🔍 DIAGNOSTIC: Result.Models is null: {IsNull}", result?.Models == null);
+                _logger.LogInformation("🔍 DIAGNOSTIC: Result.Models count: {Count}", result?.Models?.Count ?? -1);
+
                 _logger.LogInformation($"✅ {result.Models.Count} type(s) de spot récupéré(s)");
+
+                // Log details of first few types
+                if (result.Models.Count > 0)
+                {
+                    for (int i = 0; i < Math.Min(3, result.Models.Count); i++)
+                    {
+                        var spotType = result.Models[i];
+                        _logger.LogInformation("🔍 DIAGNOSTIC: SpotType[{Index}] - Id: {Id}, Name: '{Name}', Category: '{Category}'",
+                            i, spotType.Id, spotType.Name, spotType.Category);
+                    }
+                }
+
                 return result.Models;
             }
             catch (Exception ex)

@@ -206,5 +206,277 @@ namespace SubExplore.Services.Implementations
         {
             return supabaseSpotTypes.Select(ToEfModel).ToList();
         }
+
+        // ========================================
+        // CONVERSIONS POUR NOUVELLE ARCHITECTURE 3-TABLES
+        // ========================================
+
+        // ========================================
+        // CONVERSION PRACTICE SPOT : EF → SUPABASE
+        // ========================================
+
+        public static SupabasePracticeSpot ToSupabaseModel(PracticeSpot efPracticeSpot)
+        {
+            return new SupabasePracticeSpot
+            {
+                Id = efPracticeSpot.Id,
+                Name = efPracticeSpot.Name,
+                Description = efPracticeSpot.Description,
+                Latitude = efPracticeSpot.Latitude,
+                Longitude = efPracticeSpot.Longitude,
+                CreatorId = efPracticeSpot.CreatorId,
+
+                // Difficulty level enum to string
+                DifficultyLevel = efPracticeSpot.DifficultyLevel.ToString(),
+
+                MaxDepth = efPracticeSpot.MaxDepth,
+
+                // Current strength enum to string
+                CurrentStrength = efPracticeSpot.CurrentStrength.ToString(),
+
+                BottomType = efPracticeSpot.BottomType,
+                HasMooring = efPracticeSpot.HasMooring,
+                RequiredEquipment = efPracticeSpot.RequiredEquipment,
+                SafetyNotes = efPracticeSpot.SafetyNotes,
+                BestConditions = efPracticeSpot.BestConditions,
+
+                // Validation status enum to string
+                ValidationStatus = efPracticeSpot.ValidationStatus.ToString(),
+
+                LastSafetyReview = efPracticeSpot.LastSafetyReview,
+                SafetyFlags = efPracticeSpot.SafetyFlags,
+
+                CreatedAt = efPracticeSpot.CreatedAt,
+                UpdatedAt = efPracticeSpot.UpdatedAt
+            };
+        }
+
+        // ========================================
+        // CONVERSION PRACTICE SPOT : SUPABASE → EF
+        // ========================================
+
+        public static PracticeSpot ToEfModel(SupabasePracticeSpot supabasePracticeSpot)
+        {
+            return new PracticeSpot
+            {
+                Id = supabasePracticeSpot.Id,
+                Name = supabasePracticeSpot.Name,
+                Description = supabasePracticeSpot.Description ?? string.Empty,
+                Latitude = supabasePracticeSpot.Latitude,
+                Longitude = supabasePracticeSpot.Longitude,
+                CreatorId = supabasePracticeSpot.CreatorId,
+
+                // String to enum conversions with safe parsing
+                DifficultyLevel = ParseEnum<DifficultyLevel>(supabasePracticeSpot.DifficultyLevel, DifficultyLevel.Beginner),
+
+                MaxDepth = (int?)supabasePracticeSpot.MaxDepth,
+
+                CurrentStrength = ParseEnum<CurrentStrength>(supabasePracticeSpot.CurrentStrength, CurrentStrength.None),
+
+                BottomType = supabasePracticeSpot.BottomType,
+                HasMooring = supabasePracticeSpot.HasMooring,
+                RequiredEquipment = supabasePracticeSpot.RequiredEquipment ?? string.Empty,
+                SafetyNotes = supabasePracticeSpot.SafetyNotes ?? string.Empty,
+                BestConditions = supabasePracticeSpot.BestConditions ?? string.Empty,
+
+                ValidationStatus = ParseEnum<SpotValidationStatus>(supabasePracticeSpot.ValidationStatus, SpotValidationStatus.Pending),
+
+                LastSafetyReview = supabasePracticeSpot.LastSafetyReview,
+                SafetyFlags = supabasePracticeSpot.SafetyFlags?.ToString(),
+
+                CreatedAt = supabasePracticeSpot.CreatedAt,
+                UpdatedAt = supabasePracticeSpot.UpdatedAt ?? DateTime.UtcNow
+            };
+        }
+
+        // ========================================
+        // CONVERSION ORGANIZATION : EF → SUPABASE
+        // ========================================
+
+        public static SupabaseOrganization ToSupabaseModel(Organization efOrganization)
+        {
+            return new SupabaseOrganization
+            {
+                Id = efOrganization.Id,
+                Name = efOrganization.Name,
+                Description = efOrganization.Description,
+                Latitude = efOrganization.Latitude,
+                Longitude = efOrganization.Longitude,
+                Address = efOrganization.Address,
+                City = efOrganization.City,
+                PostalCode = efOrganization.PostalCode,
+                Country = efOrganization.Country,
+                Phone = efOrganization.Phone,
+                Email = efOrganization.Email,
+                Website = efOrganization.Website,
+
+                // Organization type enum to string
+                OrganizationType = efOrganization.OrganizationType.ToString(),
+
+                // JSON fields
+                Services = efOrganization.ServicesOffered,
+                Certifications = efOrganization.Certifications,
+                OperatingHours = efOrganization.BusinessHours,
+
+                CreatedAt = efOrganization.CreatedAt,
+                UpdatedAt = efOrganization.UpdatedAt
+            };
+        }
+
+        // ========================================
+        // CONVERSION ORGANIZATION : SUPABASE → EF
+        // ========================================
+
+        public static Organization ToEfModel(SupabaseOrganization supabaseOrganization)
+        {
+            return new Organization
+            {
+                Id = supabaseOrganization.Id,
+                Name = supabaseOrganization.Name,
+                Description = supabaseOrganization.Description,
+                Latitude = supabaseOrganization.Latitude,
+                Longitude = supabaseOrganization.Longitude,
+                Address = supabaseOrganization.Address,
+                City = supabaseOrganization.City,
+                PostalCode = supabaseOrganization.PostalCode,
+                Country = supabaseOrganization.Country,
+                Phone = supabaseOrganization.Phone,
+                Email = supabaseOrganization.Email,
+                Website = supabaseOrganization.Website,
+
+                // String to enum conversion
+                OrganizationType = ParseEnum<OrganizationType>(supabaseOrganization.OrganizationType, OrganizationType.ClubFFESSM),
+
+                // JSON fields
+                ServicesOffered = supabaseOrganization.Services?.ToString(),
+                Certifications = supabaseOrganization.Certifications?.ToString(),
+                BusinessHours = supabaseOrganization.OperatingHours?.ToString(),
+
+                CreatedAt = supabaseOrganization.CreatedAt,
+                UpdatedAt = supabaseOrganization.UpdatedAt ?? DateTime.UtcNow
+            };
+        }
+
+        // ========================================
+        // CONVERSION BUSINESS : EF → SUPABASE
+        // ========================================
+
+        public static SupabaseBusiness ToSupabaseModel(Business efBusiness)
+        {
+            return new SupabaseBusiness
+            {
+                Id = efBusiness.Id,
+                Name = efBusiness.Name,
+                Description = efBusiness.Description,
+                Latitude = efBusiness.Latitude,
+                Longitude = efBusiness.Longitude,
+                Address = efBusiness.Address,
+                City = efBusiness.City,
+                PostalCode = efBusiness.PostalCode,
+                Country = efBusiness.Country,
+                Phone = efBusiness.Phone,
+                Email = efBusiness.Email,
+                Website = efBusiness.Website,
+
+                // Business type enum to string
+                BusinessType = efBusiness.BusinessType.ToString(),
+
+                // JSON fields
+                Services = efBusiness.ProductsServices,
+                PriceRange = efBusiness.PriceRange.ToString(),
+                PaymentMethods = efBusiness.AcceptsCreditCards ? "cards" : "cash",
+                OperatingHours = efBusiness.BusinessHours,
+
+                CreatedAt = efBusiness.CreatedAt,
+                UpdatedAt = efBusiness.UpdatedAt
+            };
+        }
+
+        // ========================================
+        // CONVERSION BUSINESS : SUPABASE → EF
+        // ========================================
+
+        public static Business ToEfModel(SupabaseBusiness supabaseBusiness)
+        {
+            return new Business
+            {
+                Id = supabaseBusiness.Id,
+                Name = supabaseBusiness.Name,
+                Description = supabaseBusiness.Description,
+                Latitude = supabaseBusiness.Latitude,
+                Longitude = supabaseBusiness.Longitude,
+                Address = supabaseBusiness.Address,
+                City = supabaseBusiness.City,
+                PostalCode = supabaseBusiness.PostalCode,
+                Country = supabaseBusiness.Country,
+                Phone = supabaseBusiness.Phone,
+                Email = supabaseBusiness.Email,
+                Website = supabaseBusiness.Website,
+
+                // String to enum conversions
+                BusinessType = ParseEnum<BusinessType>(supabaseBusiness.BusinessType, BusinessType.DiveShop),
+                PriceRange = ParseEnum<PriceRange>(supabaseBusiness.PriceRange, PriceRange.MidRange),
+
+                // JSON fields
+                ProductsServices = supabaseBusiness.Services?.ToString(),
+                AcceptsCreditCards = supabaseBusiness.PaymentMethods?.ToString()?.Contains("cards") ?? true,
+                BusinessHours = supabaseBusiness.OperatingHours?.ToString(),
+
+                CreatedAt = supabaseBusiness.CreatedAt,
+                UpdatedAt = supabaseBusiness.UpdatedAt ?? DateTime.UtcNow
+            };
+        }
+
+        // ========================================
+        // MÉTHODES DE CONVERSION EN LOTS - NOUVELLE ARCHITECTURE
+        // ========================================
+
+        /// <summary>
+        /// Convertit une liste de practice spots EF vers Supabase
+        /// </summary>
+        public static List<SupabasePracticeSpot> ToSupabaseModels(IEnumerable<PracticeSpot> efPracticeSpots)
+        {
+            return efPracticeSpots.Select(ToSupabaseModel).ToList();
+        }
+
+        /// <summary>
+        /// Convertit une liste de practice spots Supabase vers EF
+        /// </summary>
+        public static List<PracticeSpot> ToEfModels(IEnumerable<SupabasePracticeSpot> supabasePracticeSpots)
+        {
+            return supabasePracticeSpots.Select(ToEfModel).ToList();
+        }
+
+        /// <summary>
+        /// Convertit une liste d'organizations EF vers Supabase
+        /// </summary>
+        public static List<SupabaseOrganization> ToSupabaseModels(IEnumerable<Organization> efOrganizations)
+        {
+            return efOrganizations.Select(ToSupabaseModel).ToList();
+        }
+
+        /// <summary>
+        /// Convertit une liste d'organizations Supabase vers EF
+        /// </summary>
+        public static List<Organization> ToEfModels(IEnumerable<SupabaseOrganization> supabaseOrganizations)
+        {
+            return supabaseOrganizations.Select(ToEfModel).ToList();
+        }
+
+        /// <summary>
+        /// Convertit une liste de businesses EF vers Supabase
+        /// </summary>
+        public static List<SupabaseBusiness> ToSupabaseModels(IEnumerable<Business> efBusinesses)
+        {
+            return efBusinesses.Select(ToSupabaseModel).ToList();
+        }
+
+        /// <summary>
+        /// Convertit une liste de businesses Supabase vers EF
+        /// </summary>
+        public static List<Business> ToEfModels(IEnumerable<SupabaseBusiness> supabaseBusinesses)
+        {
+            return supabaseBusinesses.Select(ToEfModel).ToList();
+        }
     }
 }

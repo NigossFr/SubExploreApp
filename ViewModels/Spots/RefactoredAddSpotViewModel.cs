@@ -1,0 +1,666 @@
+// ========================================
+// REFACTORED ADD SPOT VIEWMODEL
+// ========================================
+// Clean architecture with separated concerns
+// Uses new form services for better maintainability
+
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using SubExplore.Models.Domain;
+using SubExplore.Models.ViewModels;
+using SubExplore.Models.Enums;
+using SubExplore.Models.Supabase;
+using SubExplore.Services.Interfaces;
+using SubExplore.Services.Implementations;
+using SubExplore.ViewModels.Base;
+
+namespace SubExplore.ViewModels.Spots
+{
+    /// <summary>
+    /// Refactored Add Spot ViewModel with clean architecture
+    /// Separated concerns using dedicated services
+    /// </summary>
+    public partial class RefactoredAddSpotViewModel : ViewModelBase, IDisposable
+    {
+        #region Services
+        private readonly ISupabaseApiService _apiService;
+        private readonly ILocationService _locationService;
+        private readonly ISimpleAuthenticationService _authService;
+        private readonly ILogger<RefactoredAddSpotViewModel> _logger;
+        private readonly IAddSpotFormService _formService;
+        private readonly ISpotTypeService _spotTypeService;
+        private readonly ISpotTypeTestDataService _testDataService;
+        private readonly IApplicationPerformanceService? _performanceService;
+        #endregion
+
+        #region Form Data Properties
+        [ObservableProperty]
+        private string _spotName = string.Empty;
+
+        [ObservableProperty]
+        private string _spotDescription = string.Empty;
+
+        [ObservableProperty]
+        private double _latitude = 43.6047; // Default to Marseille
+
+        [ObservableProperty]
+        private double _longitude = 1.4442; // Default to Toulouse area
+
+        [ObservableProperty]
+        private SpotType? _selectedSpotType;
+
+        [ObservableProperty]
+        private ObservableCollection<SpotTypeItem> _spotTypes = new();
+
+        partial void OnSpotTypesChanged(ObservableCollection<SpotTypeItem> value)
+        {
+            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: OnSpotTypesChanged called - new count: " + value?.Count);
+            OnPropertyChanged(nameof(SpotTypesCount));
+        }
+
+        // Propriété calculée pour le count
+        public int SpotTypesCount => SpotTypes?.Count ?? 0;
+        #endregion
+
+        #region UI State Properties
+        [ObservableProperty]
+        private bool _isLoadingSpotTypes;
+
+        [ObservableProperty]
+        private bool _canCreateSpot;
+
+        [ObservableProperty]
+        private bool _isCreatingSpot;
+
+        [ObservableProperty]
+        private bool _isGettingLocation;
+
+        [ObservableProperty]
+        private string _creationProgress = string.Empty;
+
+        [ObservableProperty]
+        private double _progressPercentage;
+        #endregion
+
+        #region Validation Properties
+        [ObservableProperty]
+        private string _spotNameError = string.Empty;
+
+        [ObservableProperty]
+        private string _locationError = string.Empty;
+
+        [ObservableProperty]
+        private string _spotTypeError = string.Empty;
+
+        [ObservableProperty]
+        private bool _hasValidationErrors = false;
+
+        [ObservableProperty]
+        private string _validationSummary = string.Empty;
+        #endregion
+
+        #region Location Properties
+        [ObservableProperty]
+        private bool _isLocationPickerVisible;
+
+        [ObservableProperty]
+        private string _locationDisplayName = "📍 France, Sud-Ouest (par défaut)";
+
+        [ObservableProperty]
+        private bool _isLocationAccurate = true;
+
+        [ObservableProperty]
+        private double _locationAccuracy;
+        #endregion
+
+        #region Diagnostic Properties
+        [ObservableProperty]
+        private bool _showDiagnostics = false;
+
+        [ObservableProperty]
+        private string _diagnosticInfo = string.Empty;
+
+        [ObservableProperty]
+        private bool _hasRecoverableError = false;
+
+        [ObservableProperty]
+        private string _connectionStatus = "Connected";
+
+        [ObservableProperty]
+        private bool _canRetry = false;
+
+        [ObservableProperty]
+        private string _lastErrorMessage = string.Empty;
+        #endregion
+
+        #region Constructor and Initialization
+        public RefactoredAddSpotViewModel(
+            ISupabaseApiService apiService,
+            ILocationService locationService,
+            ISimpleAuthenticationService authService,
+            ILogger<RefactoredAddSpotViewModel> logger,
+            IAddSpotFormService formService,
+            ISpotTypeService spotTypeService,
+            ISpotTypeTestDataService testDataService,
+            IApplicationPerformanceService? performanceService = null,
+            IDialogService? dialogService = null,
+            INavigationService? navigationService = null) : base(dialogService, navigationService)
+        {
+            _apiService = apiService;
+            _locationService = locationService;
+            _authService = authService;
+            _logger = logger;
+            _formService = formService;
+            _spotTypeService = spotTypeService;
+            _testDataService = testDataService;
+            _performanceService = performanceService;
+
+            Title = "Ajouter un Spot";
+
+            // Force visible diagnostic that won't be dropped
+            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: RefactoredAddSpotViewModel CONSTRUCTOR called");
+            _logger.LogInformation("🔍 DIAGNOSTIC: RefactoredAddSpotViewModel CONSTRUCTOR called");
+
+            // Setup real-time validation
+            PropertyChanged += OnPropertyChanged;
+
+            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: RefactoredAddSpotViewModel CONSTRUCTOR completed");
+            _logger.LogInformation("🔍 DIAGNOSTIC: RefactoredAddSpotViewModel CONSTRUCTOR completed");
+        }
+
+        public override async Task InitializeAsync(IDictionary<string, object> parameters)
+        {
+            try
+            {
+                // Force visible diagnostic that won't be dropped
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: RefactoredAddSpotViewModel.InitializeAsync() CALLED - parameters count: " + (parameters?.Count ?? -1));
+                _logger.LogInformation("🔍 DIAGNOSTIC: RefactoredAddSpotViewModel.InitializeAsync() CALLED - parameters count: {Count}", parameters?.Count ?? -1);
+                _logger.LogInformation("🎯 Initializing RefactoredAddSpotViewModel...");
+
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: About to call LoadSpotTypesAsync() from InitializeAsync()");
+                _logger.LogInformation("🔍 DIAGNOSTIC: About to call LoadSpotTypesAsync() from InitializeAsync()");
+                await LoadSpotTypesAsync();
+
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: LoadSpotTypesAsync() completed from InitializeAsync()");
+                _logger.LogInformation("🔍 DIAGNOSTIC: LoadSpotTypesAsync() completed from InitializeAsync()");
+
+                ValidateForm();
+
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: RefactoredAddSpotViewModel initialized successfully");
+                _logger.LogInformation("✅ RefactoredAddSpotViewModel initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: ERROR in RefactoredAddSpotViewModel.InitializeAsync(): " + ex.Message);
+                _logger.LogError(ex, "❌ Error initializing RefactoredAddSpotViewModel");
+                ShowError("Erreur lors de l'initialisation de la page");
+            }
+        }
+
+        private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(SpotName) or nameof(SpotDescription) or
+                nameof(Latitude) or nameof(Longitude) or nameof(SelectedSpotType))
+            {
+                ValidateForm();
+            }
+        }
+        #endregion
+
+        #region Spot Type Management
+        [RelayCommand]
+        private async Task LoadSpotTypesAsync(bool forceReload = false)
+        {
+            if (IsLoadingSpotTypes)
+            {
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: LoadSpotTypesAsync called while already loading");
+                _logger.LogWarning("⚠️ LoadSpotTypesAsync called while already loading");
+                return;
+            }
+
+            try
+            {
+                IsLoadingSpotTypes = true;
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: IsLoadingSpotTypes set to TRUE");
+                ClearError();
+
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: LoadSpotTypesAsync starting - forceReload: " + forceReload);
+                _logger.LogInformation("🎯 Loading spot types... (forceReload: {ForceReload})", forceReload);
+
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: About to call _spotTypeService.LoadSpotTypesAsync()");
+                var result = await _spotTypeService.LoadSpotTypesAsync();
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: _spotTypeService.LoadSpotTypesAsync() returned, success: " + result.IsSuccess);
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Result.SpotTypes count: " + (result.SpotTypes?.Count ?? -1));
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Result.ErrorMessage: " + (result.ErrorMessage ?? "null"));
+
+                if (result.IsSuccess)
+                {
+                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Entering SUCCESS branch - result.IsSuccess = true");
+                    _logger.LogInformation("🎯 SpotTypeService returned {Count} spot types", result.SpotTypes?.Count ?? 0);
+
+                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: About to call CreateSpotTypeItems");
+                    var spotTypeItems = _spotTypeService.CreateSpotTypeItems(result.SpotTypes);
+                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: CreateSpotTypeItems returned " + spotTypeItems.Count + " items");
+                    _logger.LogInformation("🎯 Created {Count} SpotTypeItems for UI", spotTypeItems.Count);
+
+                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: About to call MainThread.InvokeOnMainThreadAsync");
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        try
+                        {
+                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Inside MainThread - clearing SpotTypes collection");
+                            _logger.LogInformation("🎯 Clearing existing {Count} items from SpotTypes collection", SpotTypes.Count);
+                            SpotTypes.Clear();
+
+                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: SpotTypes.Clear() called, count now: " + SpotTypes.Count);
+
+                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Adding " + spotTypeItems.Count + " items to SpotTypes collection");
+                            foreach (var item in spotTypeItems)
+                            {
+                                SpotTypes.Add(item);
+                                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Added SpotTypeItem: " + item.Name + " - Collection count now: " + SpotTypes.Count);
+                                _logger.LogDebug("🎯 Added SpotTypeItem: {Name}", item.Name);
+                            }
+
+                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: Final SpotTypes collection count: " + SpotTypes.Count);
+                            _logger.LogInformation("✅ SpotTypes collection now has {Count} items", SpotTypes.Count);
+
+                            // Force PropertyChanged notification just in case
+                            OnPropertyChanged(nameof(SpotTypes));
+                            OnPropertyChanged(nameof(SpotTypesCount));
+                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: OnPropertyChanged(nameof(SpotTypes)) called");
+                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: OnPropertyChanged(nameof(SpotTypesCount)) called - count: " + SpotTypesCount);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: EXCEPTION in MainThread: " + ex.Message);
+                            _logger.LogError(ex, "❌ Exception while updating SpotTypes collection");
+                        }
+                    });
+
+                    System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: LoadSpotTypesAsync SUCCESS completed");
+                    _logger.LogInformation($"✅ Loaded {result.FilteredCount} spot types successfully");
+                }
+                else
+                {
+                    _logger.LogError($"❌ Failed to load spot types: {result.ErrorMessage}");
+
+                    // Try to initialize basic spot types if none found
+                    if (result.ErrorMessage?.Contains("Aucun type de spot") == true)
+                    {
+                        _logger.LogInformation("🎯 No spot types found, initializing basic data...");
+                        try
+                        {
+                            await _testDataService.EnsureBasicSpotTypesAsync();
+                            _logger.LogInformation("✅ Basic spot types initialized, retrying load...");
+
+                            // Retry loading after initialization
+                            var retryResult = await _spotTypeService.LoadSpotTypesAsync();
+                            if (retryResult.IsSuccess)
+                            {
+                                var spotTypeItems = _spotTypeService.CreateSpotTypeItems(retryResult.SpotTypes);
+                                await MainThread.InvokeOnMainThreadAsync(() =>
+                                {
+                                    SpotTypes.Clear();
+                                    foreach (var item in spotTypeItems)
+                                    {
+                                        SpotTypes.Add(item);
+                                    }
+                                });
+                                _logger.LogInformation($"✅ Loaded {retryResult.FilteredCount} spot types after initialization");
+                                return; // Success, exit early
+                            }
+                        }
+                        catch (Exception initEx)
+                        {
+                            _logger.LogError(initEx, "❌ Failed to initialize basic spot types");
+                        }
+                    }
+
+                    ShowError(result.ErrorMessage ?? "Impossible de charger les types de spots");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Unexpected error loading spot types");
+                ShowError("Erreur inattendue lors du chargement des types");
+            }
+            finally
+            {
+                IsLoadingSpotTypes = false;
+                System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: IsLoadingSpotTypes set to FALSE - UI should show now!");
+                _logger.LogInformation("🎯 LoadSpotTypesAsync finished, calling ValidateForm()");
+                ValidateForm();
+            }
+        }
+
+        [RelayCommand]
+        private void SelectSpotType(SpotTypeItem spotTypeItem)
+        {
+            try
+            {
+                _logger.LogInformation($"🎯 Selecting spot type: {spotTypeItem.Name}");
+
+                // Update selection states
+                foreach (var item in SpotTypes)
+                {
+                    item.IsSelected = item == spotTypeItem;
+                }
+
+                SelectedSpotType = spotTypeItem.SpotType;
+                ValidateForm();
+
+                _logger.LogInformation($"✅ Selected spot type: {SelectedSpotType?.Name}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ Error selecting spot type: {spotTypeItem?.Name}");
+            }
+        }
+        #endregion
+
+        #region Location Management
+        [RelayCommand]
+        private async Task GetCurrentLocationAsync()
+        {
+            if (IsGettingLocation) return;
+
+            try
+            {
+                IsGettingLocation = true;
+                ClearError();
+
+                _logger.LogInformation("🎯 Getting current location...");
+
+                var location = await _locationService.GetCurrentLocationAsync();
+                if (location != null)
+                {
+                    Latitude = (double)location.Latitude;
+                    Longitude = (double)location.Longitude;
+                    LocationAccuracy = location.Accuracy;
+                    IsLocationAccurate = location.Accuracy <= 50; // Within 50 meters
+
+                    // Update display name
+                    LocationDisplayName = $"📍 {location.Latitude:F4}, {location.Longitude:F4}";
+
+                    _logger.LogInformation($"✅ Location updated: {Latitude:F4}, {Longitude:F4}");
+                }
+                else
+                {
+                    ShowError("Impossible d'obtenir la localisation actuelle");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error getting current location");
+                ShowError("Erreur lors de l'obtention de la localisation");
+            }
+            finally
+            {
+                IsGettingLocation = false;
+                ValidateForm();
+            }
+        }
+
+        public void UpdateLocationFromMap(double latitude, double longitude)
+        {
+            Latitude = latitude;
+            Longitude = longitude;
+            LocationDisplayName = $"📍 {latitude:F4}, {longitude:F4}";
+            IsLocationAccurate = true; // User-selected location is considered accurate
+
+            _logger.LogInformation($"🎯 Location updated from map: {latitude:F4}, {longitude:F4}");
+            ValidateForm();
+        }
+        #endregion
+
+        #region Form Validation
+        private void ValidateForm()
+        {
+            try
+            {
+                _logger.LogDebug("🎯 ValidateForm called - SpotTypes.Count: {Count}, SelectedSpotType: {Selected}",
+                    SpotTypes.Count, SelectedSpotType?.Name ?? "None");
+
+                // Validate individual sections
+                var basicInfoResult = _formService.ValidateBasicInfo(SpotName, SpotDescription);
+                var locationResult = _formService.ValidateLocation(Latitude, Longitude, IsLocationAccurate, LocationAccuracy);
+                var spotTypeResult = _formService.ValidateSpotType(SelectedSpotType, SpotTypes.Any());
+
+                _logger.LogDebug("🎯 Validation results - Basic: {Basic}, Location: {Location}, SpotType: {SpotType}",
+                    basicInfoResult.IsValid, locationResult.IsValid, spotTypeResult.IsValid);
+
+                // Update individual error messages
+                SpotNameError = basicInfoResult.IsValid ? string.Empty : string.Join("; ", basicInfoResult.Errors);
+                LocationError = locationResult.IsValid ? string.Empty : string.Join("; ", locationResult.Errors);
+                SpotTypeError = spotTypeResult.IsValid ? string.Empty : string.Join("; ", spotTypeResult.Errors);
+
+                // Check overall form validity
+                var formData = new AddSpotFormData
+                {
+                    Name = SpotName,
+                    Description = SpotDescription,
+                    Latitude = Latitude,
+                    Longitude = Longitude,
+                    IsAccurate = IsLocationAccurate,
+                    Accuracy = LocationAccuracy,
+                    SelectedSpotType = SelectedSpotType,
+                    HasAvailableTypes = SpotTypes.Any()
+                };
+
+                var overallResult = _formService.ValidateCompleteForm(formData);
+                HasValidationErrors = !overallResult.IsValid;
+                CanCreateSpot = overallResult.IsValid && !IsCreatingSpot;
+
+                if (HasValidationErrors)
+                {
+                    var results = new List<Models.Validation.StepValidationResult> { basicInfoResult, locationResult, spotTypeResult };
+                    ValidationSummary = _formService.CreateValidationSummary(results);
+                    _logger.LogDebug("🎯 HasValidationErrors=true, ValidationSummary length: {Length}", ValidationSummary?.Length ?? 0);
+                }
+                else
+                {
+                    ValidationSummary = string.Empty;
+                    _logger.LogDebug("🎯 HasValidationErrors=false, form is valid");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error during form validation");
+            }
+        }
+        #endregion
+
+        #region Spot Creation
+        [RelayCommand]
+        private async Task CreateSpotAsync()
+        {
+            if (IsCreatingSpot || !CanCreateSpot) return;
+
+            try
+            {
+                IsCreatingSpot = true;
+                CanCreateSpot = false;
+                CreationProgress = "Validation des données...";
+                ProgressPercentage = 10;
+
+                // Final validation
+                if (!_formService.CanSubmitForm(new AddSpotFormData
+                {
+                    Name = SpotName,
+                    Description = SpotDescription,
+                    Latitude = Latitude,
+                    Longitude = Longitude,
+                    IsAccurate = IsLocationAccurate,
+                    Accuracy = LocationAccuracy,
+                    SelectedSpotType = SelectedSpotType,
+                    HasAvailableTypes = SpotTypes.Any()
+                }))
+                {
+                    ShowError("Le formulaire contient des erreurs. Veuillez les corriger.");
+                    return;
+                }
+
+                CreationProgress = "Récupération de l'utilisateur...";
+                ProgressPercentage = 30;
+
+                var currentUser = await _authService.GetCurrentUserAsync();
+                if (currentUser == null)
+                {
+                    ShowError("Vous devez être connecté pour créer un spot");
+                    return;
+                }
+
+                CreationProgress = "Création du spot...";
+                ProgressPercentage = 60;
+
+                // Create the practice spot
+                var newSpot = new SupabasePracticeSpot
+                {
+                    Name = SpotName.Trim(),
+                    Description = SpotDescription.Trim(),
+                    Latitude = (decimal)Latitude,
+                    Longitude = (decimal)Longitude,
+                    CreatorId = currentUser.Id,
+                    CreatedAt = DateTime.UtcNow,
+                    ValidationStatus = "pending"
+                };
+
+                CreationProgress = "Envoi vers l'API...";
+                ProgressPercentage = 80;
+
+                var createdSpot = await _apiService.CreatePracticeSpotAsync(newSpot);
+
+                if (createdSpot != null && createdSpot.Id > 0)
+                {
+                    CreationProgress = "Spot créé avec succès!";
+                    ProgressPercentage = 100;
+
+                    _logger.LogInformation($"✅ Practice spot created successfully: {newSpot.Name} with ID: {createdSpot.Id}");
+
+                    // Navigate back or show success
+                    if (NavigationService != null)
+                    {
+                        await NavigationService.GoBackAsync();
+                    }
+                }
+                else
+                {
+                    _logger.LogError($"❌ Failed to create practice spot");
+                    ShowError("Erreur lors de la création du spot");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Unexpected error creating spot");
+                ShowError("Erreur inattendue lors de la création du spot");
+            }
+            finally
+            {
+                IsCreatingSpot = false;
+                CreationProgress = string.Empty;
+                ProgressPercentage = 0;
+                ValidateForm(); // This will update CanCreateSpot
+            }
+        }
+        #endregion
+
+        #region Diagnostic Commands
+        [RelayCommand]
+        private void ToggleDiagnostics()
+        {
+            ShowDiagnostics = !ShowDiagnostics;
+            UpdateDiagnosticInfo();
+        }
+
+        [RelayCommand]
+        private async Task ForceRefreshAllAsync()
+        {
+            await LoadSpotTypesAsync(forceReload: true);
+            ValidateForm();
+        }
+
+        [RelayCommand]
+        private async Task RetryLastOperationAsync()
+        {
+            await LoadSpotTypesAsync(forceReload: true);
+        }
+
+        [RelayCommand]
+        private void ClearAllErrors()
+        {
+            HasRecoverableError = false;
+            LastErrorMessage = string.Empty;
+            CanRetry = false;
+        }
+
+        [RelayCommand]
+        private async Task RefreshAllDataAsync()
+        {
+            await LoadSpotTypesAsync(forceReload: true);
+        }
+
+        [RelayCommand]
+        private void ToggleLocationPicker()
+        {
+            IsLocationPickerVisible = !IsLocationPickerVisible;
+        }
+
+        [RelayCommand]
+        private async Task RefreshLocationAccuracyAsync()
+        {
+            await GetCurrentLocationAsync();
+        }
+
+        [RelayCommand]
+        private void ClearForm()
+        {
+            SpotName = string.Empty;
+            SpotDescription = string.Empty;
+            SelectedSpotType = null;
+            ValidateForm();
+        }
+
+        [RelayCommand]
+        private async Task CancelAsync()
+        {
+            if (NavigationService != null)
+            {
+                await NavigationService.GoBackAsync();
+            }
+        }
+
+        private void UpdateDiagnosticInfo()
+        {
+            if (ShowDiagnostics)
+            {
+                DiagnosticInfo = $"Spot Types: {SpotTypes.Count}, Loading: {IsLoadingSpotTypes}, Selected: {SelectedSpotType?.Name ?? "None"}";
+            }
+        }
+        #endregion
+
+        #region Public Methods for UI Binding Fix
+        /// <summary>
+        /// Force PropertyChanged notifications for SpotTypes collection
+        /// Called from code-behind to fix MAUI BindingContext instance mismatch
+        /// </summary>
+        public void ForceSpotTypesPropertyChanged()
+        {
+            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: ForceSpotTypesPropertyChanged() called");
+            OnPropertyChanged(nameof(SpotTypes));
+            OnPropertyChanged(nameof(SpotTypesCount));
+            System.Diagnostics.Debug.WriteLine("🚨 FORCE DEBUG: PropertyChanged notifications sent for SpotTypes and SpotTypesCount");
+        }
+        #endregion
+
+        #region IDisposable
+        public void Dispose()
+        {
+            PropertyChanged -= OnPropertyChanged;
+            _logger.LogInformation("🧹 RefactoredAddSpotViewModel disposed");
+        }
+        #endregion
+    }
+}

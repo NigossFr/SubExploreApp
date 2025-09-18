@@ -636,7 +636,20 @@ namespace SubExplore.ViewModels.Map
         [RelayCommand]
         public async Task NavigateToAddSpotAsync()
         {
-            await NavigationService.NavigateToAsync<ViewModels.Spots.SimpleApiAddSpotViewModel>();
+            await NavigationService.NavigateToAsync<ViewModels.Spots.SpotTypeSelectionViewModel>();
+        }
+
+        [RelayCommand]
+        public async Task NavigateToAddSpotWithLocationAsync(Location location)
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                ["Latitude"] = location.Latitude,
+                ["Longitude"] = location.Longitude,
+                ["Mode"] = "create"
+            };
+
+            await NavigationService.NavigateToAsync<ViewModels.Spots.SpotTypeSelectionViewModel>(parameters);
         }
 
         /// <summary>

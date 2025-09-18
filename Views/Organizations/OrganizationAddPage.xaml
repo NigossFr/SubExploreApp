@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SubExplore.Views.Organizations.OrganizationAddPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Organizations"
+    x:DataType="viewmodels:OrganizationAddViewModel"
+    Title="Ajouter une Organisation"
+    Shell.NavBarIsVisible="True"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}">
+
+    <ScrollView>
+        <StackLayout Padding="16" Spacing="12">
+
+            <!-- Titre -->
+            <Label
+                Text="🏢 Nouvelle Organisation/Club"
+                FontSize="24"
+                FontAttributes="Bold"
+                TextColor="{StaticResource Primary}"
+                HorizontalOptions="Center"
+                Margin="0,0,0,16" />
+
+            <!-- Message de validation -->
+            <Frame
+                IsVisible="{Binding HasValidationErrors}"
+                BackgroundColor="{StaticResource Error}"
+                BorderColor="{StaticResource Error}"
+                CornerRadius="8"
+                Padding="12"
+                Margin="0,0,0,8">
+                <Label
+                    Text="{Binding ValidationMessage}"
+                    TextColor="White"
+                    FontSize="14" />
+            </Frame>
+
+            <!-- Informations de base -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                   BorderColor="{StaticResource Primary}"
+                   CornerRadius="12"
+                   Padding="16"
+                   HasShadow="True">
+                <StackLayout Spacing="12">
+                    <Label Text="📋 Informations de base"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}" />
+
+                    <!-- Nom -->
+                    <StackLayout>
+                        <Label Text="Nom de l'organisation *" FontAttributes="Bold" />
+                        <Entry Text="{Binding Name}"
+                               Placeholder="Nom de l'organisation"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                    </StackLayout>
+
+                    <!-- Type d'organisation -->
+                    <StackLayout>
+                        <Label Text="Type d'organisation *" FontAttributes="Bold" />
+                        <Picker ItemsSource="{Binding OrganizationTypes}"
+                                SelectedItem="{Binding SelectedOrganizationType}"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                    </StackLayout>
+
+                    <!-- Description -->
+                    <StackLayout>
+                        <Label Text="Description" FontAttributes="Bold" />
+                        <Editor Text="{Binding Description}"
+                                Placeholder="Décrivez votre organisation..."
+                                HeightRequest="80"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Localisation -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                   BorderColor="{StaticResource Secondary}"
+                   CornerRadius="12"
+                   Padding="16"
+                   HasShadow="True">
+                <StackLayout Spacing="12">
+                    <Label Text="📍 Localisation"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Secondary}" />
+
+                    <!-- Coordonnées GPS -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <StackLayout Grid.Column="0">
+                            <Label Text="Latitude" FontAttributes="Bold" />
+                            <Entry Text="{Binding Latitude}"
+                                   Keyboard="Numeric"
+                                   BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                        </StackLayout>
+                        <StackLayout Grid.Column="1">
+                            <Label Text="Longitude" FontAttributes="Bold" />
+                            <Entry Text="{Binding Longitude}"
+                                   Keyboard="Numeric"
+                                   BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                        </StackLayout>
+                    </Grid>
+
+                    <!-- Bouton localisation -->
+                    <Button Text="📍 Obtenir ma position"
+                            Command="{Binding GetCurrentLocationCommand}"
+                            IsEnabled="{Binding IsLocationLoading, Converter={StaticResource InvertBoolConverter}}"
+                            BackgroundColor="{StaticResource Secondary}"
+                            TextColor="White" />
+
+                    <!-- Adresse -->
+                    <StackLayout>
+                        <Label Text="Adresse *" FontAttributes="Bold" />
+                        <Entry Text="{Binding Address}"
+                               Placeholder="Adresse complète"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                    </StackLayout>
+
+                    <!-- Ville et code postal -->
+                    <Grid ColumnDefinitions="*,100" ColumnSpacing="8">
+                        <StackLayout Grid.Column="0">
+                            <Label Text="Ville *" FontAttributes="Bold" />
+                            <Entry Text="{Binding City}"
+                                   Placeholder="Ville"
+                                   BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                        </StackLayout>
+                        <StackLayout Grid.Column="1">
+                            <Label Text="Code postal" FontAttributes="Bold" />
+                            <Entry Text="{Binding PostalCode}"
+                                   Placeholder="00000"
+                                   Keyboard="Numeric"
+                                   BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                        </StackLayout>
+                    </Grid>
+
+                    <!-- Pays -->
+                    <StackLayout>
+                        <Label Text="Pays" FontAttributes="Bold" />
+                        <Entry Text="{Binding Country}"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Contact -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                   BorderColor="{StaticResource Accent}"
+                   CornerRadius="12"
+                   Padding="16"
+                   HasShadow="True">
+                <StackLayout Spacing="12">
+                    <Label Text="📞 Contact"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Accent}" />
+
+                    <!-- Téléphone -->
+                    <StackLayout>
+                        <Label Text="Téléphone" FontAttributes="Bold" />
+                        <Entry Text="{Binding Phone}"
+                               Placeholder="+33 1 23 45 67 89"
+                               Keyboard="Telephone"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                    </StackLayout>
+
+                    <!-- Email -->
+                    <StackLayout>
+                        <Label Text="Email" FontAttributes="Bold" />
+                        <Entry Text="{Binding Email}"
+                               Placeholder="contact@organisation.com"
+                               Keyboard="Email"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                    </StackLayout>
+
+                    <!-- Site web -->
+                    <StackLayout>
+                        <Label Text="Site web" FontAttributes="Bold" />
+                        <Entry Text="{Binding Website}"
+                               Placeholder="https://www.organisation.com"
+                               Keyboard="Url"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Services -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
+                   BorderColor="{StaticResource Success}"
+                   CornerRadius="12"
+                   Padding="16"
+                   HasShadow="True">
+                <StackLayout Spacing="12">
+                    <Label Text="⚙️ Services proposés"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Success}" />
+
+                    <!-- Services offerts -->
+                    <StackLayout>
+                        <Label Text="Détail des services" FontAttributes="Bold" />
+                        <Editor Text="{Binding ServicesOffered}"
+                                Placeholder="Décrivez les services proposés..."
+                                HeightRequest="80"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray600}}" />
+                    </StackLayout>
+
+                    <!-- Options -->
+                    <StackLayout>
+                        <Label Text="Options disponibles" FontAttributes="Bold" />
+
+                        <StackLayout Orientation="Horizontal" Spacing="8">
+                            <CheckBox IsChecked="{Binding EquipmentRental}" />
+                            <Label Text="Location d'équipement"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
+
+                        <StackLayout Orientation="Horizontal" Spacing="8">
+                            <CheckBox IsChecked="{Binding Accommodation}" />
+                            <Label Text="Hébergement"
+                                   VerticalOptions="Center" />
+                        </StackLayout>
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Boutons d'action -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,16,0,0">
+                <Button Grid.Column="0"
+                        Text="Annuler"
+                        Command="{Binding CancelCommand}"
+                        BackgroundColor="{StaticResource Gray400}"
+                        TextColor="White" />
+
+                <Button Grid.Column="1"
+                        Text="Créer l'organisation"
+                        Command="{Binding SubmitOrganizationCommand}"
+                        IsEnabled="{Binding IsSubmitting, Converter={StaticResource InvertBoolConverter}}"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White" />
+            </Grid>
+
+            <!-- Indicateur de chargement -->
+            <ActivityIndicator IsRunning="{Binding IsSubmitting}"
+                               IsVisible="{Binding IsSubmitting}"
+                               Color="{StaticResource Primary}"
+                               Margin="0,16,0,0" />
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

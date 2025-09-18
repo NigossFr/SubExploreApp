@@ -7,7 +7,7 @@ namespace SubExplore.Services.Implementations
     /// <summary>
     /// Service pour créer des données de test des types de spots
     /// </summary>
-    public class SpotTypeTestDataService
+    public class SpotTypeTestDataService : ISpotTypeTestDataService
     {
         private readonly ISupabaseApiService _apiService;
         private readonly ILogger<SpotTypeTestDataService> _logger;
@@ -23,7 +23,7 @@ namespace SubExplore.Services.Implementations
         /// <summary>
         /// Crée les types de spots de base si ils n'existent pas
         /// </summary>
-        public async Task EnsureBasicSpotTypesExistAsync()
+        public async Task EnsureBasicSpotTypesAsync()
         {
             try
             {

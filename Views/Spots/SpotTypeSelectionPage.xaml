@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="SubExplore.Views.Spots.SpotTypeSelectionPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:SubExplore.ViewModels.Spots"
+             x:DataType="viewmodels:SpotTypeSelectionViewModel"
+             Title="Quel type de spot voulez-vous ajouter ?"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Background}, Dark={StaticResource BackgroundDark}}">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="25">
+
+            <!-- Header Information -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                   CornerRadius="15"
+                   Padding="20"
+                   HasShadow="True">
+                <StackLayout Spacing="10">
+                    <Label Text="🎯 Choisissez le type de spot"
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center" />
+                    <Label Text="Sélectionnez le type de lieu que vous souhaitez ajouter à la carte communautaire SubExplore"
+                           FontSize="16"
+                           TextColor="White"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Frame>
+
+            <!-- Practice Spot Option -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}"
+                   CornerRadius="15"
+                   Padding="20"
+                   HasShadow="True">
+                <Grid ColumnDefinitions="80,*,Auto" RowDefinitions="Auto,Auto">
+
+                    <!-- Icon -->
+                    <Frame Grid.RowSpan="2"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                           CornerRadius="40"
+                           WidthRequest="80"
+                           HeightRequest="80"
+                           Padding="0"
+                           HasShadow="False"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center">
+                        <Label Text="🤿"
+                               FontSize="36"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Frame>
+
+                    <!-- Title and Description -->
+                    <StackLayout Grid.Column="1" Margin="20,0,0,0" Spacing="5">
+                        <Label Text="Spot de Pratique"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}" />
+                        <Label Text="Lieu de plongée, d'apnée ou de snorkeling"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
+                    </StackLayout>
+
+                    <!-- Details -->
+                    <StackLayout Grid.Column="1" Grid.Row="1" Margin="20,10,0,0" Spacing="3">
+                        <Label Text="• Profondeur, courants, type de fond"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
+                        <Label Text="• Équipement requis et consignes de sécurité"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
+                        <Label Text="• Validation par un modérateur requise"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                               FontAttributes="Italic" />
+                    </StackLayout>
+
+                    <!-- Action Button -->
+                    <Button Grid.Column="2" Grid.RowSpan="2"
+                            Text="Créer"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                            TextColor="White"
+                            CornerRadius="10"
+                            WidthRequest="80"
+                            HeightRequest="40"
+                            Command="{Binding CreatePracticeSpotCommand}"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End" />
+                </Grid>
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CreatePracticeSpotCommand}" />
+                </Frame.GestureRecognizers>
+            </Frame>
+
+            <!-- Organization Option -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}"
+                   CornerRadius="15"
+                   Padding="20"
+                   HasShadow="True">
+                <Grid ColumnDefinitions="80,*,Auto" RowDefinitions="Auto,Auto">
+
+                    <!-- Icon -->
+                    <Frame Grid.RowSpan="2"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource SecondaryDark}}"
+                           CornerRadius="40"
+                           WidthRequest="80"
+                           HeightRequest="80"
+                           Padding="0"
+                           HasShadow="False"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center">
+                        <Label Text="🏛️"
+                               FontSize="36"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Frame>
+
+                    <!-- Title and Description -->
+                    <StackLayout Grid.Column="1" Margin="20,0,0,0" Spacing="5">
+                        <Label Text="Organisation"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}" />
+                        <Label Text="Club, SCA, base fédérale ou centre de plongée"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
+                    </StackLayout>
+
+                    <!-- Details -->
+                    <StackLayout Grid.Column="1" Grid.Row="1" Margin="20,10,0,0" Spacing="3">
+                        <Label Text="• Informations légales et certifications"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
+                        <Label Text="• Services, tarifs et horaires"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
+                        <Label Text="• Vérification des documents requise"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource SecondaryDark}}"
+                               FontAttributes="Italic" />
+                    </StackLayout>
+
+                    <!-- Action Button -->
+                    <Button Grid.Column="2" Grid.RowSpan="2"
+                            Text="Créer"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource SecondaryDark}}"
+                            TextColor="White"
+                            CornerRadius="10"
+                            WidthRequest="80"
+                            HeightRequest="40"
+                            Command="{Binding CreateOrganizationCommand}"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End" />
+                </Grid>
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CreateOrganizationCommand}" />
+                </Frame.GestureRecognizers>
+            </Frame>
+
+            <!-- Business Option -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray800}}"
+                   CornerRadius="15"
+                   Padding="20"
+                   HasShadow="True">
+                <Grid ColumnDefinitions="80,*,Auto" RowDefinitions="Auto,Auto">
+
+                    <!-- Icon -->
+                    <Frame Grid.RowSpan="2"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource TertiaryDark}}"
+                           CornerRadius="40"
+                           WidthRequest="80"
+                           HeightRequest="80"
+                           Padding="0"
+                           HasShadow="False"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center">
+                        <Label Text="🛒"
+                               FontSize="36"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Frame>
+
+                    <!-- Title and Description -->
+                    <StackLayout Grid.Column="1" Margin="20,0,0,0" Spacing="5">
+                        <Label Text="Commerce"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource PrimaryDarkText}}" />
+                        <Label Text="Magasin, location d'équipement ou service bateau"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
+                    </StackLayout>
+
+                    <!-- Details -->
+                    <StackLayout Grid.Column="1" Grid.Row="1" Margin="20,10,0,0" Spacing="3">
+                        <Label Text="• Produits, services et marques proposées"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
+                        <Label Text="• Informations commerciales et horaires"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}" />
+                        <Label Text="• Vérification du SIRET requise"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource TertiaryDark}}"
+                               FontAttributes="Italic" />
+                    </StackLayout>
+
+                    <!-- Action Button -->
+                    <Button Grid.Column="2" Grid.RowSpan="2"
+                            Text="Créer"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource TertiaryDark}}"
+                            TextColor="White"
+                            CornerRadius="10"
+                            WidthRequest="80"
+                            HeightRequest="40"
+                            Command="{Binding CreateBusinessCommand}"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End" />
+                </Grid>
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CreateBusinessCommand}" />
+                </Frame.GestureRecognizers>
+            </Frame>
+
+            <!-- Cancel Button -->
+            <Button Text="Annuler"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
+                    BorderColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource SecondaryDarkText}}"
+                    BorderWidth="1"
+                    CornerRadius="10"
+                    Command="{Binding CancelCommand}"
+                    Margin="0,10,0,20" />
+
+            <!-- Location Info (if provided) -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource Info}, Dark={StaticResource InfoDark}}"
+                   CornerRadius="10"
+                   Padding="15"
+                   IsVisible="{Binding HasLocationData}"
+                   HasShadow="False">
+                <StackLayout Orientation="Horizontal" Spacing="10">
+                    <Label Text="📍"
+                           FontSize="16"
+                           VerticalOptions="Center" />
+                    <StackLayout>
+                        <Label Text="Position sélectionnée sur la carte"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource InfoText}, Dark={StaticResource InfoTextDark}}" />
+                        <Label Text="{Binding LocationDescription}"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource InfoText}, Dark={StaticResource InfoTextDark}}" />
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

@@ -238,6 +238,30 @@ namespace SubExplore
             }
         }
 
+        private async void OnAddSpotButtonTapped(object sender, StagedMenuButtonTappedEventArgs e)
+        {
+            try
+            {
+                // Navigate to the spot type selection page using the navigation service
+                var serviceProvider = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services;
+                if (serviceProvider != null)
+                {
+                    var navigationService = serviceProvider.GetService<SubExplore.Services.Interfaces.INavigationService>();
+                    if (navigationService != null)
+                    {
+                        await navigationService.NavigateToAsync<SubExplore.ViewModels.Spots.SpotTypeSelectionViewModel>();
+                    }
+                }
+
+                FlyoutIsPresented = false;
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                await DisplayAlert("Erreur", "Impossible d'ouvrir la page d'ajout de spot", "OK");
+            }
+        }
+
         private async void OnLogoutButtonTapped(object sender, StagedMenuButtonTappedEventArgs e)
         {
             try

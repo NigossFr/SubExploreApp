@@ -7,6 +7,7 @@ using SubExplore.Services.Interfaces;
 using SubExplore.ViewModels.Base;
 using System.Reflection;
 using System.Web;
+using SubExplore.Exceptions;
 
 namespace SubExplore.Services.Implementations
 {
@@ -135,19 +136,22 @@ namespace SubExplore.Services.Implementations
                     {
                         System.Diagnostics.Debug.WriteLine($"[NavigationService] ❌ Shell push navigation failed: {pushEx.Message}");
                         // Try alternative Shell navigation
+                        var routeName = page.GetType().Name.Replace("Page", "").ToLower();
                         try
                         {
                             // Try to find a matching route and use Shell navigation
-                            var routeName = page.GetType().Name.Replace("Page", "").ToLower();
                             await Shell.Current.GoToAsync($"///{routeName}");
                             System.Diagnostics.Debug.WriteLine($"[NavigationService] ✅ Used Shell route navigation to {routeName}");
                         }
                         catch (Exception routeEx)
                         {
                             System.Diagnostics.Debug.WriteLine($"[NavigationService] ❌ Shell route navigation failed: {routeEx.Message}");
-                            // Last resort: navigate to safe route to maintain Shell context
-                            await Shell.Current.GoToAsync("///map");
-                            System.Diagnostics.Debug.WriteLine("[NavigationService] ✅ Navigated to map as fallback to preserve Shell");
+                            System.Diagnostics.Debug.WriteLine($"[NavigationService] ❌ Route attempted: ///{routeName}");
+                            System.Diagnostics.Debug.WriteLine($"[NavigationService] ❌ Full error: {routeEx}");
+
+                            // CRITICAL: Don't automatically redirect to map - throw the real error
+                            // This was hiding the real navigation problem!
+                            throw new NavigationException($"Failed to navigate to {typeof(TViewModel).Name}. Route: ///{routeName}. Error: {routeEx.Message}", routeEx);
                         }
                     }
                 }
@@ -305,8 +309,23 @@ namespace SubExplore.Services.Implementations
                     // Fallback to old method for backward compatibility
                     var viewModelTypeName = typeof(TViewModel).Name;
                     var viewTypeName = viewModelTypeName.Replace("ViewModel", "Page");
+
+                    // Special case mappings for ViewModels that don't follow standard naming
+                    var specialMappings = new Dictionary<string, string>
+                    {
+                        { "RefactoredAddSpotViewModel", "AddSpotPage" },
+                        { "SpotTypeSelectionViewModel", "SpotTypeSelectionPage" },
+                        { "OrganizationAddViewModel", "OrganizationAddPage" },
+                        { "BusinessAddViewModel", "BusinessAddPage" }
+                    };
+
+                    if (specialMappings.TryGetValue(viewModelTypeName, out var specialViewName))
+                    {
+                        viewTypeName = specialViewName;
+                    }
+
                     var viewTypeFullName = GetViewTypeFullName(viewTypeName);
-                    
+
                     viewType = Assembly.GetExecutingAssembly().GetType(viewTypeFullName);
                 }
 
@@ -384,6 +403,7 @@ namespace SubExplore.Services.Implementations
                 "MapPage" => "SubExplore.Views.Map.MapPage",
                 "FavoriteSpotsPage" => "SubExplore.Views.Favorites.FavoriteSpotsPage",
                 "AddSpotPage" => "SubExplore.Views.Spots.AddSpotPage",
+                "SpotTypeSelectionPage" => "SubExplore.Views.Spots.SpotTypeSelectionPage",
                 "SpotDetailsPage" => "SubExplore.Views.Spots.SpotDetailsPage",
                 "MySpotsPage" => "SubExplore.Views.Spots.MySpotsPage",
                 "SettingsPage" => "SubExplore.Views.Settings.SettingsPage",
@@ -394,7 +414,9 @@ namespace SubExplore.Services.Implementations
                 "LoginPage" => "SubExplore.Views.Auth.LoginPage",
                 "RegistrationPage" => "SubExplore.Views.Auth.RegistrationPage",
                 "OrganizationDetailsPage" => "SubExplore.Views.Organizations.OrganizationDetailsPage",
+                "OrganizationAddPage" => "SubExplore.Views.Organizations.OrganizationAddPage",
                 "BusinessDetailsPage" => "SubExplore.Views.Businesses.BusinessDetailsPage",
+                "BusinessAddPage" => "SubExplore.Views.Businesses.BusinessAddPage",
                 _ => $"SubExplore.Views.{viewTypeName}" // Default fallback
             };
         }

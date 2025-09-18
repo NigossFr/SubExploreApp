@@ -62,7 +62,7 @@
                    IsVisible="{Binding HasTestResults}">
                 <ScrollView HeightRequest="300">
                     <Label Text="{Binding TestResults}"
-                           FontFamily="Courier"
+                           FontFamily="{OnPlatform Default='monospace', Android='monospace', iOS='Courier', WinUI='Consolas'}"
                            FontSize="12"
                            TextColor="Black" />
                 </ScrollView>
