@@ -38,6 +38,21 @@ namespace SubExplore.Services.Implementations
             return _spotTypeValidator.Validate(data);
         }
 
+        public StepValidationResult ValidateSpotTypes(ICollection<SpotType> selectedSpotTypes, bool hasAvailableTypes)
+        {
+            if (!hasAvailableTypes)
+            {
+                return StepValidationResult.Failure("Types de Spot", "Aucun type de spot disponible");
+            }
+
+            if (selectedSpotTypes == null || !selectedSpotTypes.Any())
+            {
+                return StepValidationResult.Failure("Types de Spot", "Veuillez sélectionner au moins un type de spot");
+            }
+
+            return StepValidationResult.Success("Types de Spot");
+        }
+
         public StepValidationResult ValidateCompleteForm(AddSpotFormData formData)
         {
             var results = new List<StepValidationResult>

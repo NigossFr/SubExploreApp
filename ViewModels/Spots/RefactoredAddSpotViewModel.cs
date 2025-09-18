@@ -49,7 +49,7 @@ namespace SubExplore.ViewModels.Spots
         private double _longitude = 1.4442; // Default to Toulouse area
 
         [ObservableProperty]
-        private SpotType? _selectedSpotType;
+        private ObservableCollection<SpotType> _selectedSpotTypes = new();
 
         [ObservableProperty]
         private ObservableCollection<SpotTypeItem> _spotTypes = new();
@@ -202,7 +202,7 @@ namespace SubExplore.ViewModels.Spots
         private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName is nameof(SpotName) or nameof(SpotDescription) or
-                nameof(Latitude) or nameof(Longitude) or nameof(SelectedSpotType))
+                nameof(Latitude) or nameof(Longitude) or nameof(SelectedSpotTypes))
             {
                 ValidateForm();
             }
@@ -341,22 +341,33 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
-                _logger.LogInformation($"🎯 Selecting spot type: {spotTypeItem.Name}");
+                _logger.LogInformation($"🎯 Toggle spot type selection: {spotTypeItem.Name}");
 
-                // Update selection states
-                foreach (var item in SpotTypes)
+                // Toggle selection state
+                spotTypeItem.IsSelected = !spotTypeItem.IsSelected;
+
+                // Update SelectedSpotTypes collection
+                if (spotTypeItem.IsSelected)
                 {
-                    item.IsSelected = item == spotTypeItem;
+                    if (!SelectedSpotTypes.Contains(spotTypeItem.SpotType))
+                    {
+                        SelectedSpotTypes.Add(spotTypeItem.SpotType);
+                        _logger.LogInformation($"✅ Added spot type: {spotTypeItem.SpotType.Name}");
+                    }
+                }
+                else
+                {
+                    SelectedSpotTypes.Remove(spotTypeItem.SpotType);
+                    _logger.LogInformation($"➖ Removed spot type: {spotTypeItem.SpotType.Name}");
                 }
 
-                SelectedSpotType = spotTypeItem.SpotType;
                 ValidateForm();
 
-                _logger.LogInformation($"✅ Selected spot type: {SelectedSpotType?.Name}");
+                _logger.LogInformation($"📊 Total selected types: {SelectedSpotTypes.Count}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"❌ Error selecting spot type: {spotTypeItem?.Name}");
+                _logger.LogError(ex, $"❌ Error toggling spot type: {spotTypeItem?.Name}");
             }
         }
         #endregion
@@ -421,13 +432,13 @@ namespace SubExplore.ViewModels.Spots
         {
             try
             {
-                _logger.LogDebug("🎯 ValidateForm called - SpotTypes.Count: {Count}, SelectedSpotType: {Selected}",
-                    SpotTypes.Count, SelectedSpotType?.Name ?? "None");
+                _logger.LogDebug("🎯 ValidateForm called - SpotTypes.Count: {Count}, SelectedSpotTypes: {Selected}",
+                    SpotTypes.Count, SelectedSpotTypes.Count);
 
                 // Validate individual sections
                 var basicInfoResult = _formService.ValidateBasicInfo(SpotName, SpotDescription);
                 var locationResult = _formService.ValidateLocation(Latitude, Longitude, IsLocationAccurate, LocationAccuracy);
-                var spotTypeResult = _formService.ValidateSpotType(SelectedSpotType, SpotTypes.Any());
+                var spotTypeResult = _formService.ValidateSpotTypes(SelectedSpotTypes, SpotTypes.Any());
 
                 _logger.LogDebug("🎯 Validation results - Basic: {Basic}, Location: {Location}, SpotType: {SpotType}",
                     basicInfoResult.IsValid, locationResult.IsValid, spotTypeResult.IsValid);
@@ -446,7 +457,7 @@ namespace SubExplore.ViewModels.Spots
                     Longitude = Longitude,
                     IsAccurate = IsLocationAccurate,
                     Accuracy = LocationAccuracy,
-                    SelectedSpotType = SelectedSpotType,
+                    SelectedSpotTypes = SelectedSpotTypes.ToList(),
                     HasAvailableTypes = SpotTypes.Any()
                 };
 
@@ -495,7 +506,7 @@ namespace SubExplore.ViewModels.Spots
                     Longitude = Longitude,
                     IsAccurate = IsLocationAccurate,
                     Accuracy = LocationAccuracy,
-                    SelectedSpotType = SelectedSpotType,
+                    SelectedSpotTypes = SelectedSpotTypes.ToList(),
                     HasAvailableTypes = SpotTypes.Any()
                 }))
                 {
@@ -619,7 +630,7 @@ namespace SubExplore.ViewModels.Spots
         {
             SpotName = string.Empty;
             SpotDescription = string.Empty;
-            SelectedSpotType = null;
+            SelectedSpotTypes.Clear();
             ValidateForm();
         }
 
@@ -636,7 +647,7 @@ namespace SubExplore.ViewModels.Spots
         {
             if (ShowDiagnostics)
             {
-                DiagnosticInfo = $"Spot Types: {SpotTypes.Count}, Loading: {IsLoadingSpotTypes}, Selected: {SelectedSpotType?.Name ?? "None"}";
+                DiagnosticInfo = $"Spot Types: {SpotTypes.Count}, Loading: {IsLoadingSpotTypes}, Selected: {SelectedSpotTypes.Count}";
             }
         }
         #endregion

@@ -20,9 +20,14 @@ namespace SubExplore.Services.Interfaces
         StepValidationResult ValidateLocation(double latitude, double longitude, bool isAccurate, double accuracy);
 
         /// <summary>
-        /// Validates spot type selection
+        /// Validates spot type selection (single)
         /// </summary>
         StepValidationResult ValidateSpotType(SpotType? selectedSpotType, bool hasAvailableTypes);
+
+        /// <summary>
+        /// Validates spot type selection (multiple)
+        /// </summary>
+        StepValidationResult ValidateSpotTypes(ICollection<SpotType> selectedSpotTypes, bool hasAvailableTypes);
 
         /// <summary>
         /// Validates the complete form for final submission
@@ -51,7 +56,8 @@ namespace SubExplore.Services.Interfaces
         public double Longitude { get; set; }
         public bool IsAccurate { get; set; }
         public double Accuracy { get; set; }
-        public SpotType? SelectedSpotType { get; set; }
+        public SpotType? SelectedSpotType { get; set; } // Keep for backward compatibility
+        public List<SpotType> SelectedSpotTypes { get; set; } = new(); // New multiple selection
         public bool HasAvailableTypes { get; set; }
     }
 }

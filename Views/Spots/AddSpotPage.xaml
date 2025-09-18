@@ -374,15 +374,15 @@
                 
                 <StackLayout Spacing="15">
                     <StackLayout Orientation="Horizontal">
-                        <Label Text="🏷️ Type de Spot"
-                               FontSize="18" 
+                        <Label Text="🏷️ Types de Spot (sélection multiple)"
+                               FontSize="18"
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                VerticalOptions="Center"
                                HorizontalOptions="StartAndExpand"
                                AutomationId="SpotTypeSectionTitle"
                                SemanticProperties.HeadingLevel="Level2"
-                               SemanticProperties.Description="Section : Type de spot de plongée, sélection obligatoire"/>
+                               SemanticProperties.Description="Section : Types de spot de plongée, sélection multiple obligatoire"/>
                         <Button Text="🔄 Recharger"
                                 Command="{Binding LoadSpotTypesCommand}"
                                 BackgroundColor="{StaticResource Accent}"
@@ -442,32 +442,34 @@
                                                                   CommandParameter="{Binding}"/>
                                         </Frame.GestureRecognizers>
                                         <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <!-- Category Icon -->
-                                            <Label Grid.Column="0" 
-                                                   Text="📍"
-                                                   FontSize="20"
-                                                   VerticalOptions="Center"
-                                                   Margin="0,0,10,0"/>
-                                            
+                                            <!-- Selection CheckBox -->
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsSelected}"
+                                                      Color="{StaticResource Primary}"
+                                                      VerticalOptions="Center"
+                                                      Margin="0,0,10,0"
+                                                      AutomationId="{Binding SpotType.Name, StringFormat='SpotTypeCheckBox_{0}'}"
+                                                      SemanticProperties.Description="{Binding SpotType.Name, StringFormat='Sélectionner le type {0}'}"/>
+
                                             <!-- Content -->
                                             <StackLayout Grid.Column="1" Spacing="3">
                                                 <Label Text="{Binding SpotType.Name}"
                                                        FontSize="16"
                                                        FontAttributes="Bold"
-                                                       TextColor="{Binding TextColor}"/>
+                                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"/>
                                                 <Label Text="{Binding SpotType.Description}"
                                                        FontSize="12"
-                                                       TextColor="Gray"
+                                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                                        LineBreakMode="TailTruncation"
                                                        MaxLines="2"/>
                                             </StackLayout>
-                                            
-                                            <!-- Selection indicator -->
+
+                                            <!-- Category Icon -->
                                             <Label Grid.Column="2"
-                                                   Text="✅"
-                                                   FontSize="16"
+                                                   Text="📍"
+                                                   FontSize="18"
                                                    VerticalOptions="Center"
-                                                   IsVisible="{Binding IsSelected}"/>
+                                                   Opacity="0.7"/>
                                         </Grid>
                                     </Frame>
                                 </DataTemplate>
